@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Glowé – Join the Community</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Montserrat', sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+    }
+
+    /* ── LEFT PANEL ── */
+    .left-panel {
+      position: relative;
+      width: 50%;
+      height: 100vh;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .left-panel img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      display: block;
+    }
+
+    .brand-logo {
+      position: absolute;
+      top: 28px;
+      left: 36px;
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 400;
+      font-size: 18px;
+      letter-spacing: 0.15em;
+      color: #fff;
+      text-transform: uppercase;
+    }
+
+    .bottom-text {
+      position: absolute;
+      bottom: 40px;
+      left: 36px;
+    }
+
+    .bottom-text h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 700;
+      font-size: clamp(36px, 4vw, 56px);
+      color: #fff;
+      line-height: 1.1;
+      letter-spacing: 0.01em;
+    }
+
+    .bottom-text p {
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      color: rgba(255,255,255,0.85);
+      text-transform: uppercase;
+      margin-top: 6px;
+    }
+
+    /* ── RIGHT PANEL ── */
+    .right-panel {
+      width: 50%;
+      height: 100vh;
+      background-color: #f5f2ed;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 60px 72px 60px;
+      overflow-y: auto;
+    }
+
+    .form-container {
+      width: 100%;
+      max-width: 360px;
+    }
+
+    .form-container h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 400;
+      font-size: clamp(28px, 2.6vw, 36px);
+      color: #2a1f14;
+      line-height: 1.15;
+      margin-bottom: 10px;
+    }
+
+    .form-container .subtitle {
+      font-size: 12px;
+      color: #7a6e64;
+      line-height: 1.7;
+      margin-bottom: 24px;
+      font-weight: 300;
+    }
+
+    .field-group {
+      margin-bottom: 16px;
+    }
+
+    .field-group label {
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      color: #4a3f35;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .field-wrapper {
+      position: relative;
+    }
+
+    .field-wrapper input {
+      width: 100%;
+      border: none;
+      border-bottom: 1px solid #c4b9af;
+      background: transparent;
+      padding: 8px 36px 10px 0;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 13px;
+      color: #2a1f14;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .field-wrapper input::placeholder {
+      color: #b0a49a;
+      font-weight: 300;
+    }
+
+    .field-wrapper input:focus {
+      border-bottom-color: #2a1f14;
+    }
+
+    .toggle-eye {
+      position: absolute;
+      right: 2px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #b0a49a;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      padding: 0;
+    }
+
+    .eye-icon {
+      width: 18px;
+      height: 18px;
+    }
+
+    .btn-create {
+      width: 100%;
+      margin-top: 24px;
+      padding: 17px 20px;
+      background-color: #2a1f14;
+      color: #f5f2ed;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: background 0.2s;
+    }
+
+    .btn-create:hover { background-color: #3d2e20; }
+
+    .btn-create svg { width: 14px; height: 14px; }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 24px 0;
+    }
+
+    .divider hr {
+      flex: 1;
+      border: none;
+      border-top: 1px solid #d6cdc5;
+    }
+
+    .divider span {
+      font-size: 10px;
+      color: #9e9188;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .btn-google {
+      width: 100%;
+      padding: 15px 20px;
+      background-color: #fff;
+      border: 1px solid #e0d8d1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+      text-decoration: none;
+    }
+
+    .btn-google:hover { background-color: #f9f6f2; }
+
+    .google-g { width: 20px; height: 20px; }
+
+    .signin-row {
+      text-align: center;
+      margin-top: 28px;
+      font-size: 12px;
+      color: #7a6e64;
+      font-weight: 300;
+    }
+
+    .signin-row a {
+      color: #2a1f14;
+      font-weight: 600;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      cursor: pointer;
+    }
+
+    .right-panel::-webkit-scrollbar { width: 4px; }
+    .right-panel::-webkit-scrollbar-thumb { background: #c4b9af; border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+  <div class="left-panel">
+    <img
+      src="https://i.pinimg.com/1200x/74/1d/49/741d4955152bda1d44c2bbf981a793de.jpg"
+      alt="Glowé Women"
+    />
+    <div class="brand-logo">GLOWÉ</div>
+    <div class="bottom-text">
+      <h2>Glowé Women</h2>
+      <p>ê Kincare Collection</p>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="form-container">
+      <h1>Join the Glowé<br>Community</h1>
+      <p class="subtitle">Unlock exclusive collections and early access to our newest arrivals.</p>
+
+      <form action="sig" method="POST">
+        {% csrf_token %}
+        
+        <div class="field-group">
+          <label for="fullname">Full Name</label>
+          <div class="field-wrapper">
+            <input type="text" id="fullname" name="full_name" placeholder="Sarah Jenkins" required />
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label for="email">Email Address</label>
+          <div class="field-wrapper">
+            <input type="email" id="email" name="email" placeholder="yourname@example.com" required />
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label for="password">Password</label>
+          <div class="field-wrapper">
+            <input type="password" id="password" name="password" placeholder="Create a password" required />
+            <button type="button" class="toggle-eye" onclick="togglePwd('password', this)" aria-label="Toggle password visibility">
+              <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+                <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label for="confirm">Confirm Password</label>
+          <div class="field-wrapper">
+            <input type="password" id="confirm" name="confirm_password" placeholder="Confirm your password" oninput="handleConfirmInput(this)" required />
+            <button type="button" class="toggle-eye" id="confirm-eye" onclick="togglePwd('confirm', this)" aria-label="Toggle confirm password visibility" style="display:none;">
+              <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+                <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-create">
+          Create Account
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="1" y1="7" x2="13" y2="7"/>
+            <polyline points="7 1 13 7 7 13"/>
+          </svg>
+        </button>
+      </form>
+
+      <div class="divider">
+        <hr /><span>or</span><hr />
+      </div>
+
+      <button type="button" class="btn-google">
+        <svg class="google-g" viewBox="0 0 48 48">
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.16 7.09-10.29 7.09-17.65z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.5-1.45-.78-2.99-.78-4.59s.27-3.14.78-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        </svg>
+      </button>
+
+      <p class="signin-row">Already a member? <a href="#">Sign In</a></p>
+    </div>
+  </div>
+
+  <script>
+    function handleConfirmInput(input) {
+      const eye = document.getElementById('confirm-eye');
+      eye.style.display = input.value.length > 0 ? 'flex' : 'none';
+    }
+
+    function togglePwd(id, btn) {
+      const input = document.getElementById(id);
+      const isHidden = input.type === 'password';
+      input.type = isHidden ? 'text' : 'password';
+      btn.innerHTML = isHidden
+        ? `<svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`
+        : `<svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+    }
+  </script>
+</body>
+</html>
