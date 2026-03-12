@@ -1,4 +1,6 @@
-// ── Auto-advance OTP boxes ──
+
+
+    // ── Auto-advance OTP boxes ──
     const boxes = [
       document.getElementById('otp1'),
       document.getElementById('otp2'),
@@ -41,7 +43,7 @@
     }
 
     // ── Countdown Timer ──
-    let totalSeconds = 119; // 01:59
+    let totalSeconds = 1; // 03:00
     const timerEl = document.getElementById('timer');
     const resendBtn = document.getElementById('resend-btn');
 
@@ -91,3 +93,4 @@
       const parts = val.split(`; ${name}=`);
       if (parts.length === 2) return parts.pop().split(';').shift();
     }
+  

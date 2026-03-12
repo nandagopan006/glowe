@@ -42,7 +42,7 @@ def signup_page(request):
             # in signup view — SAVE the email before redirecting
             request.session ['email']=user.email # it will store in broswer session
             
-            return redirect('otp_verfication')
+            return redirect('signup_otp_verify')
     else:
         # if the page is opened normally (GET request), create an empty form
         form = SignupForm()
@@ -63,7 +63,7 @@ def forget_password(request):
 
 
 
-def otp_verfication(request):
+def signup_otp_verify(request):
     if request.method == 'POST':
         entered_otp=request.POSt.get('otp_code')   # get otp entered by user
         email=request.seesion.get('email')
@@ -77,7 +77,7 @@ def otp_verfication(request):
         otp_age=timezone.now() - user.otp_create() #it calcut otp age
         
         if otp_age.seconds > 180 : #only 3min afther 3min it expires
-            return render (request,'otp_varfication.html',
+            return render (request,'signup_otp_verify.html',
                            {'error',"OTP has expired. Please resend again."})
         
         if user.otp == entered_otp :
@@ -88,16 +88,17 @@ def otp_verfication(request):
             user.save()
             return redirect('signin')
         else:
-            return render(request,'otp_verfication.htnl',
+            return render(request,'signup_otp_verify.htnl',
                           {'error':"Invalid OTP"})
         
             
         
     
+    return render(request,'signup_otp_verify.html')
+
+
+def otp_verfication(request):
     return render(request,'otp_verfication.html')
-
-
-
 def reset_password(request):
     
     return render(request,'reset_password.html')

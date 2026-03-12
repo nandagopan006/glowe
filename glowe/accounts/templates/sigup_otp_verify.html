@@ -1,0 +1,153 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Glowé – Verify Your Identity</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            cormorant: ['Cormorant Garamond', 'serif'],
+            montserrat: ['Montserrat', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              dark:        '#2a1f14',
+              darker:      '#3d2e20',
+              bg:          '#f5f2ed',
+              border:      '#c4b9af',
+              muted:       '#7a6e64',
+              label:       '#4a3f35',
+              placeholder: '#b0a49a',
+              divider:     '#d6cdc5',
+              divtext:     '#9e9188',
+              gborder:     '#e0d8d1',
+              ghover:      '#f9f6f2',
+            }
+          }
+        }
+      }
+    }
+  </script>
+    <link rel="stylesheet" href="{% static 'accounts/css/signup_otp_verify.css' %}">
+ 
+</head>
+
+<body class="flex h-screen overflow-hidden font-montserrat">
+
+  <!-- ── LEFT PANEL ── -->
+  <div class="relative hidden md:block w-1/2 h-screen flex-shrink-0 overflow-hidden">
+    <img
+      src="https://i.pinimg.com/736x/87/73/ac/8773ac09c14bccb57938093b456d2884.jpg"
+      alt="Glowé"
+      class="w-full h-full object-cover object-top"
+    />
+    <span class="absolute top-6 left-8 font-cormorant font-normal text-white text-[15px] tracking-[0.15em] uppercase">
+      GLOWÉ
+    </span>
+    <div class="absolute bottom-8 left-8">
+      <h2 class="font-cormorant font-bold text-white text-2xl lg:text-3xl xl:text-4xl leading-tight tracking-tight">
+        Glowé Women
+      </h2>
+      <p class="text-white/85 text-[9px] tracking-[0.25em] uppercase mt-1">
+        ê Skincare Collection
+      </p>
+    </div>
+  </div>
+
+  <!-- ── RIGHT PANEL ── -->
+  <div class="w-full md:w-1/2 h-screen bg-[#f5f2ed] flex items-center justify-center overflow-hidden px-8 sm:px-12 lg:px-16">
+    <div class="w-full max-w-sm lg:max-w-md">
+
+      <!-- brand name -->
+      <div class="fade-1 mb-5 lg:mb-7">
+        <span class="font-cormorant font-normal text-brand-dark text-[15px] tracking-[0.15em] uppercase">
+          GLOWÉ
+        </span>
+      </div>
+
+      <!-- heading -->
+      <div class="fade-2">
+        <h1 class="font-cormorant font-normal text-brand-dark text-[28px] lg:text-[34px] xl:text-[38px] leading-snug mb-1.5">
+          Verify Your Identity
+        </h1>
+        <p class="text-brand-muted text-[11px] font-light leading-relaxed mb-6 lg:mb-8">
+          Please enter the 4-digit verification code sent to your email address.
+        </p>
+      </div>
+
+      <!-- form -->
+      <form action="{% url 'signup_otp_verify' %}" method="POST" id="otp-form">
+        {% csrf_token %}
+
+        <!-- hidden input — collects all 4 digits as one value -->
+        <input type="hidden" name="otp" id="otp-hidden" />
+
+        <!-- django error message -->
+        {% if error %}
+          <p class="text-red-500 text-[10px] mb-4">{{ error }}</p>
+        {% endif %}
+
+        <!-- 4 otp boxes -->
+        <div class="fade-3 flex gap-3 mb-6 lg:mb-8" id="otp-boxes">
+          <input class="otp-input" type="text" maxlength="1" inputmode="numeric" autocomplete="off" />
+          <input class="otp-input" type="text" maxlength="1" inputmode="numeric" autocomplete="off" />
+          <input class="otp-input" type="text" maxlength="1" inputmode="numeric" autocomplete="off" />
+          <input class="otp-input" type="text" maxlength="1" inputmode="numeric" autocomplete="off" />
+        </div>
+
+        <!-- verify button -->
+        <div class="fade-4">
+          <button type="submit"
+            class="w-full py-[11px] lg:py-[13px] px-5 bg-brand-dark hover:bg-brand-darker text-[#f5f2ed] font-montserrat text-[10.5px] font-semibold tracking-[0.18em] uppercase border-none cursor-pointer flex items-center justify-center gap-2.5 transition-colors duration-200">
+            Verify Code
+            <svg class="w-3 h-3" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="1" y1="7" x2="13" y2="7"/>
+              <polyline points="7 1 13 7 7 13"/>
+            </svg>
+          </button>
+        </div>
+
+      </form>
+
+      <!-- resend + timer -->
+      <div class="fade-5 mt-4 lg:mt-5">
+
+        <!-- resend link — disabled until timer hits 0 -->
+        <p class="text-[11px] text-brand-muted font-light">
+          Didn't receive the code?
+          <a href="{% url 'resend_otp' %}"
+            id="resend-btn"
+            class="text-brand-dark font-semibold underline underline-offset-2 pointer-events-none opacity-40 transition-opacity duration-300">
+            Resend Code
+          </a>
+        </p>
+
+        <!-- countdown timer -->
+        <p class="text-[11px] font-semibold text-brand-dark mt-1" id="timer">
+          01:00 remaining
+        </p>
+
+        <!-- back to signin -->
+        <p class="mt-4 lg:mt-5 text-[11px] text-brand-muted font-light">
+          <a href="{% url 'signin' %}" class="text-brand-dark font-semibold underline underline-offset-2">
+            ← Back to Sign In
+          </a>
+        </p>
+
+      </div>
+
+    </div>
+  </div>
+<script src="{% static 'accounts/js/sigup_otp_verify.js' %}"></script>
+  
+</body>
+</html>
