@@ -1,0 +1,26 @@
+ html, body { height: 100vh; overflow: hidden; }
+
+    /* OTP input boxes */
+    .otp-box {
+      width: 68px;
+      height: 68px;
+      background: #ffffff;
+      border: 1.5px solid #e8e2db;
+      border-radius: 10px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 22px;
+      font-weight: 500;
+      color: #2a1f14;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      caret-color: #2a1f14;
+    }
+    .otp-box:focus {
+      border-color: #c4b9af;
+      box-shadow: 0 0 0 3px rgba(196,185,175,0.18);
+    }
+
+    @media (max-width: 400px) {
+      .otp-box { width: 56px; height: 56px; font-size: 18px; }
+    }

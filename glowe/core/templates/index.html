@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Glowé – Skincare</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          cormorant: ['"Cormorant Garamond"', 'serif'],
+          montserrat: ['Montserrat', 'sans-serif'],
+        }
+      }
+    }
+  }
+</script>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; overflow-x: hidden; }
+
+/* Buttons */
+.btn-pill {
+  display:inline-flex; align-items:center; justify-content:center;
+  background:rgba(108,104,98,0.55); backdrop-filter:blur(14px);
+  border-radius:9999px; padding:17px 52px;
+  font-family:'Montserrat',sans-serif; font-size:10px; font-weight:700;
+  letter-spacing:0.22em; text-transform:uppercase; color:#fff;
+  border:none; cursor:pointer; text-decoration:none; transition:background .25s;
+}
+.btn-pill:hover { background:rgba(108,104,98,0.75); }
+
+.btn-dark {
+  display:inline-flex; align-items:center; justify-content:center;
+  background:#1a1208; color:#fff;
+  font-family:'Montserrat',sans-serif; font-size:10px; font-weight:700;
+  letter-spacing:0.22em; text-transform:uppercase;
+  padding:16px 48px; border:none; cursor:pointer; text-decoration:none;
+  transition:background .2s;
+}
+.btn-dark:hover { background:#2d1f0e; }
+
+/* Image hover zoom */
+.iz { overflow:hidden; display:block; }
+.iz img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .5s ease; }
+.iz:hover img { transform:scale(1.04); }
+
+/* Desktop: Seasonal woman overlap */
+@media (min-width:768px) {
+  .seas-woman { margin-left:50vw; margin-top:-14vw; overflow:hidden; height:clamp(280px,54vw,680px); }
+  .seas-woman img { width:100%; height:100%; object-fit:cover; object-position:center top; display:block; }
+}
+
+/* Desktop: Summer 25 collage */
+.s25-scene { position:relative; height:clamp(500px,60vw,860px); }
+.s25-a { position:absolute; left:2%;  bottom:40px; width:41%; height:88%; overflow:hidden; }
+.s25-b { position:absolute; left:40%; bottom:40px; width:24%; height:57%; overflow:hidden; }
+.s25-c { position:absolute; left:66%; bottom:40px; width:24%; height:57%; overflow:hidden; }
+.s25-a img,.s25-b img,.s25-c img { width:100%; height:100%; object-fit:cover; object-position:center top; display:block; transition:transform .45s; }
+.s25-a:hover img,.s25-b:hover img,.s25-c:hover img { transform:scale(1.03); }
+.s25-ca { position:absolute; left:2%;  bottom:0; width:41%; text-align:center; }
+.s25-cb { position:absolute; left:40%; bottom:0; width:24%; text-align:center; }
+.s25-cc { position:absolute; left:66%; bottom:0; width:24%; text-align:center; }
+
+/* Desktop: Glow images */
+.glow-img { height:clamp(260px,41vw,560px); overflow:hidden; }
+.glow-img img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .5s; }
+.glow-img:hover img { transform:scale(1.03); }
+</style>
+</head>
+<body class="bg-[#f0ebe2] font-montserrat text-[#1a1208] overflow-x-hidden">
+
+
+<!-- ══════════════════════════════════
+  NAVBAR
+══════════════════════════════════ -->
+<header class="sticky top-0 z-50 bg-white border-b border-[#e6e0d8] h-16 flex items-center">
+  <div class="w-full px-5 md:px-8 flex items-center justify-between relative">
+
+    <!-- Mobile -->
+    <div class="flex md:hidden w-full items-center justify-between">
+      <button class="flex flex-col gap-[5px] p-1" aria-label="Menu">
+        <span class="w-[22px] h-[1.5px] bg-[#1a1208] block"></span>
+        <span class="w-[22px] h-[1.5px] bg-[#1a1208] block"></span>
+        <span class="w-[22px] h-[1.5px] bg-[#1a1208] block"></span>
+      </button>
+      <a href="#" class="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 no-underline">
+        <svg width="20" height="20" viewBox="0 0 28 28" fill="none" stroke="#1a1208" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 24C14 24 4 18 4 10C4 6 8 3 12 4C13 4 14 5 14 5"/>
+          <path d="M14 24C14 24 24 18 24 10C24 6 20 3 16 4C15 4 14 5 14 5"/>
+          <line x1="14" y1="24" x2="14" y2="10"/>
+        </svg>
+        <span class="font-cormorant text-[20px] font-semibold tracking-[0.04em] text-[#1a1208]">Glowé</span>
+      </a>
+      <div class="w-9 h-9 rounded-full border border-[#d8d2ca] flex items-center justify-center cursor-pointer shrink-0">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 0 1-8 0"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Desktop -->
+    <div class="hidden md:flex items-center justify-between w-full">
+      <a href="#" class="flex items-center gap-2.5 no-underline shrink-0">
+        <svg width="26" height="26" viewBox="0 0 28 28" fill="none" stroke="#1a1208" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 24C14 24 4 18 4 10C4 6 8 3 12 4C13 4 14 5 14 5"/>
+          <path d="M14 24C14 24 24 18 24 10C24 6 20 3 16 4 C15 4 14 5 14 5"/>
+          <line x1="14" y1="24" x2="14" y2="10"/>
+        </svg>
+        <span class="font-cormorant text-[22px] font-semibold tracking-[0.04em] text-[#1a1208]">Glowé</span>
+      </a>
+      <nav class="flex items-center gap-10 absolute left-1/2 -translate-x-1/2">
+        <a href="#" class="font-montserrat text-[11px] font-medium tracking-[0.16em] uppercase text-[#2a2018] no-underline hover:text-black">Shop</a>
+        <a href="#" class="font-montserrat text-[11px] font-medium tracking-[0.16em] uppercase text-[#2a2018] no-underline hover:text-black">Collections</a>
+        <a href="#" class="font-montserrat text-[11px] font-medium tracking-[0.16em] uppercase text-[#2a2018] no-underline hover:text-black">About</a>
+        <a href="#" class="font-montserrat text-[11px] font-medium tracking-[0.16em] uppercase text-[#2a2018] no-underline hover:text-black">Contact</a>
+      </nav>
+      <div class="flex items-center gap-5 shrink-0">
+        <svg class="w-5 h-5 cursor-pointer" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4.8-4.8"/></svg>
+        <svg class="w-5 h-5 cursor-pointer" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <svg class="w-5 h-5 cursor-pointer" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <div class="relative cursor-pointer">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          <span class="absolute -top-2 -right-2.5 bg-[#1a1208] text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center">2</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</header>
+
+
+<!-- ══════════════════════════════════
+  HERO
+══════════════════════════════════ -->
+<section class="relative w-full overflow-hidden h-[100svh] min-h-[600px] md:h-[calc(100vh-64px)] md:min-h-[580px] md:max-h-[820px]">
+  <img src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=1800&q=90&fit=crop"
+       alt="Hero" class="absolute inset-0 w-full h-full object-cover object-[center_20%]"/>
+
+  <!-- Gradients -->
+  <div class="absolute inset-0 hidden md:block" style="background:linear-gradient(to right,rgba(14,9,3,0.38) 0%,rgba(14,9,3,0.12) 44%,transparent 66%);"></div>
+  <div class="absolute inset-0 md:hidden" style="background:linear-gradient(to top,rgba(8,4,0,0.80) 0%,rgba(8,4,0,0.35) 35%,transparent 58%);"></div>
+
+  <!-- Desktop text -->
+  <div class="relative z-10 h-full hidden md:flex items-center" style="padding-left:8%;">
+    <div class="flex flex-col items-center max-w-[510px]">
+      <h1 class="font-cormorant font-bold italic text-white text-center leading-[1.1] mb-5" style="font-size:clamp(44px,5.2vw,70px); text-shadow:0 2px 30px rgba(6,2,0,0.22);">
+        Radiance Begins<br>With Ritual
+      </h1>
+      <p class="font-montserrat font-light text-white/90 text-[13px] text-center leading-[1.85] mb-8 max-w-[360px]" style="text-shadow:0 1px 8px rgba(0,0,0,0.16);">
+        Clean, science-backed formulas designed to restore<br>balance and reveal your natural glow.
+      </p>
+      <a href="#" class="btn-pill">SHOP THE PRODUCTS</a>
+    </div>
+  </div>
+
+  <!-- Mobile text: bottom pinned -->
+  <div class="absolute inset-0 z-10 flex flex-col justify-end md:hidden">
+    <div class="px-6 pb-5">
+      <h1 class="font-cormorant font-bold italic text-white leading-[1.05] mb-3 text-[36px]" style="text-shadow:0 2px 20px rgba(4,1,0,0.4);">
+        Radiance Begins<br>With Ritual
+      </h1>
+      <p class="font-montserrat font-light text-white/90 leading-[1.8] mb-5 text-[12px] max-w-[270px]" style="text-shadow:0 1px 8px rgba(0,0,0,0.25);">
+        Clean, science-backed formulas designed to restore balance and reveal your natural glow.
+      </p>
+    </div>
+    <a href="#" class="flex items-center justify-center w-full bg-white/93 text-[#1a1208] font-montserrat text-[10px] font-bold tracking-[0.22em] uppercase no-underline py-[18px]">EXPLORE MORE</a>
+    <div class="flex justify-center py-2.5 bg-white/93">
+      <svg width="14" height="8" viewBox="0 0 14 8" fill="none" stroke="#1a1208" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l6 6 6-6"/></svg>
+    </div>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════
+  OUR PHILOSOPHY
+══════════════════════════════════ -->
+<section class="bg-[#f0ebe2] pt-14 md:pt-[72px]">
+  <div class="text-center px-6 md:px-10 mb-10 md:mb-14">
+    <h2 class="font-montserrat font-bold uppercase text-[#1a1208] mb-6 tracking-[0.22em]" style="font-size:clamp(18px,2.4vw,32px);">Our Philosophy</h2>
+    <p class="font-montserrat font-light text-[#2a2018] text-[13px] md:text-[14px] text-center leading-[2.0] max-w-[600px] mx-auto">
+      Infused with potent botanicals and advanced actives,
+      our formulas restore balance and strengthen your skin barrier.
+      Revealing a luminous, healthy glow that feels effortlessly natural.
+    </p>
+  </div>
+  <!-- Images: mobile stacked, desktop side-by-side -->
+  <div class="flex flex-col md:flex-row md:gap-1" style="padding-right:0;">
+    <div class="iz w-full md:w-[54vw] md:shrink-0 h-[280px] md:h-[clamp(300px,38vw,530px)]">
+      <img src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=1100&q=90&fit=crop&crop=faces,top" alt="Philosophy 1" style="object-position:center top;"/>
+    </div>
+    <div class="iz w-full md:flex-1 h-[240px] md:h-[clamp(300px,38vw,530px)]">
+      <img src="https://i.pinimg.com/1200x/5f/64/2a/5f642a98aa0eeaba0a6ab4f375d76af1.jpg"/>
+    </div>
+  </div>
+</section>
+
+<!-- SHOP NOW -->
+<div class="bg-[#f0ebe2] py-10 md:py-[52px] px-6 md:px-0 text-center">
+  <!-- Mobile: full width, Desktop: auto width -->
+  <a href="#" class="flex md:inline-flex items-center justify-center bg-[#1a1208] text-white font-montserrat text-[10px] font-bold tracking-[0.22em] uppercase no-underline py-[18px] md:py-4 px-6 md:px-12 w-full md:w-auto transition-colors hover:bg-[#2d1f0e]">SHOP NOW</a>
+</div>
+
+
+<!-- ══════════════════════════════════
+  SHOP ALL PRODUCTS
+══════════════════════════════════ -->
+<section class="bg-[#f0ebe2] pb-14 md:pb-[72px]">
+  <h2 class="font-montserrat font-bold uppercase text-[#1a1208] text-center mb-8 md:mb-12 px-6 tracking-[0.22em]" style="font-size:clamp(16px,2.2vw,30px);">Shop All Products</h2>
+  <div class="grid grid-cols-2 md:grid-cols-4 w-full">
+
+    <div>
+      <div class="iz h-[190px] md:h-[clamp(190px,30vw,430px)]">
+        <img src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=700&q=90&fit=crop" alt="Serum"/>
+      </div>
+      <div class="px-3 pt-3.5 pb-5 text-center">
+        <p class="font-montserrat text-[9px] font-semibold tracking-[0.18em] uppercase text-[#6a5e52] mb-1">SERUM</p>
+        <p class="font-cormorant text-[17px] italic text-[#1a1208] mb-2 leading-snug">Collagen and Retinol Serum</p>
+        <div class="flex items-baseline justify-center gap-2">
+          <span class="font-montserrat text-[12px] font-semibold text-[#1a1208]">$45.00</span>
+          <span class="font-montserrat text-[12px] font-light text-[#b0a494] line-through">$55.00</span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="iz h-[190px] md:h-[clamp(190px,30vw,430px)]">
+        <img src="https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=700&q=90&fit=crop" alt="Cleanser"/>
+      </div>
+      <div class="px-3 pt-3.5 pb-5 text-center">
+        <p class="font-montserrat text-[9px] font-semibold tracking-[0.18em] uppercase text-[#6a5e52] mb-1">CLEANSER</p>
+        <p class="font-cormorant text-[17px] italic text-[#1a1208] mb-2 leading-snug">Balancing Toner</p>
+        <div class="flex items-baseline justify-center gap-2">
+          <span class="font-montserrat text-[12px] font-semibold text-[#1a1208]">$28.00</span>
+          <span class="font-montserrat text-[12px] font-light text-[#b0a494] line-through">$35.00</span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="iz h-[190px] md:h-[clamp(190px,30vw,430px)]">
+        <img src="https://images.unsplash.com/photo-1601049676869-702ea24cfd58?w=700&q=90&fit=crop" alt="Moisturizer"/>
+      </div>
+      <div class="px-3 pt-3.5 pb-5 text-center">
+        <p class="font-montserrat text-[9px] font-semibold tracking-[0.18em] uppercase text-[#6a5e52] mb-1">MOISTURIZER</p>
+        <p class="font-cormorant text-[17px] italic text-[#1a1208] mb-2 leading-snug">ReBalance Sensitive</p>
+        <div class="flex items-baseline justify-center gap-2">
+          <span class="font-montserrat text-[12px] font-semibold text-[#1a1208]">$37.00</span>
+          <span class="font-montserrat text-[12px] font-light text-[#b0a494] line-through">$45.00</span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="iz h-[190px] md:h-[clamp(190px,30vw,430px)]">
+        <img src="https://images.unsplash.com/photo-1614806687007-2215e7b3e3bb?w=700&q=90&fit=crop" alt="Suncream"/>
+      </div>
+      <div class="px-3 pt-3.5 pb-5 text-center">
+        <p class="font-montserrat text-[9px] font-semibold tracking-[0.18em] uppercase text-[#6a5e52] mb-1">SUNCREAM</p>
+        <p class="font-cormorant text-[17px] italic text-[#1a1208] mb-2 leading-snug">Belif Milky Niacinamide</p>
+        <div class="flex items-baseline justify-center gap-2">
+          <span class="font-montserrat text-[12px] font-semibold text-[#1a1208]">$68.00</span>
+          <span class="font-montserrat text-[12px] font-light text-[#b0a494] line-through">$85.00</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════
+  SEASONAL ESSENTIAL
+  Mobile: title → padded img → SUMMER HIT → body → full-width btn → full-bleed woman
+  Desktop: italic subtitle → side row beach+text, overlapping woman
+══════════════════════════════════ -->
+<section class="bg-[#f0ebe2] pt-14 md:pt-[68px] overflow-hidden">
+
+  <!-- Desktop: italic subtitle -->
+  <p class="hidden md:block font-cormorant italic text-[20px] text-[#1a1208] text-center mb-8">The Summer Glow Ritual</p>
+
+  <!-- Mobile: section title at top -->
+  <p class="md:hidden font-montserrat font-bold uppercase text-[#1a1208] text-center mb-6 text-[17px] tracking-[0.22em] px-6">SEASONAL ESSENTIAL</p>
+
+  <!-- Row: beach image + text block -->
+  <div class="flex flex-col md:flex-row md:items-start md:gap-10 md:pl-[7vw]">
+
+    <!-- Beach image -->
+    <div class="iz mx-6 md:mx-0 md:shrink-0 md:w-[43vw] h-[240px] md:h-[clamp(280px,44vw,560px)]">
+      <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=900&q=90&fit=crop" alt="Beach"/>
+    </div>
+
+    <!-- Text block -->
+    <div class="flex flex-col items-center md:items-start text-center md:text-left px-6 md:px-0 pt-7 md:pt-1.5 md:flex-1 md:pr-[18%]">
+      <p class="hidden md:block font-montserrat font-bold uppercase text-[#1a1208] text-[11px] tracking-[0.22em] mb-4">Seasonal Essential</p>
+      <p class="md:hidden font-montserrat font-bold uppercase text-[#1a1208] text-[20px] tracking-[0.18em] mb-4">SUMMER HIT</p>
+      <p class="font-montserrat font-light text-[#3a3028] text-[12px] leading-[1.95] mb-8 max-w-full md:max-w-[265px]">
+        Lightweight hydration meets powerful protection.
+        Our summer formulas defend against sun exposure
+        while preserving your skin's natural luminosity.
+      </p>
+      <!-- Mobile: full-width btn -->
+      <a href="#" class="flex md:hidden items-center justify-center w-full bg-[#1a1208] text-white font-montserrat text-[10px] font-bold tracking-[0.22em] uppercase no-underline py-[18px] mb-0 hover:bg-[#2d1f0e]">DISCOVER RELEASE</a>
+      <!-- Desktop: normal btn -->
+      <a href="#" class="hidden md:inline-flex btn-dark">DISCOVER RELEASE</a>
+    </div>
+  </div>
+
+  <!-- Woman image: mobile full-bleed, desktop overlapping -->
+  <div class="iz md:hidden w-full h-[300px] mt-0">
+    <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1600&q=90&fit=crop&crop=top" alt="Woman"/>
+  </div>
+  <div class="hidden md:block seas-woman">
+    <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1600&q=90&fit=crop&crop=top" alt="Woman"/>
+  </div>
+
+</section>
+
+
+<!-- ══════════════════════════════════
+  SUMMER 25 SEASON
+  Mobile: title → padded img → caption → full-width btn
+  Desktop: 3-col absolute collage
+══════════════════════════════════ -->
+<section class="bg-[#f0ebe2] md:pt-[72px] md:pb-[88px]">
+
+  <!-- DESKTOP -->
+  <div class="hidden md:block">
+    <h2 class="font-montserrat font-bold uppercase text-[#1a1208] text-center mb-11 tracking-[0.24em]" style="font-size:clamp(14px,1.7vw,22px);">Summer 25 Season</h2>
+    <div class="s25-scene">
+      <div class="s25-a"><img src="https://images.unsplash.com/photo-1604654894610-df63bc536371?w=900&q=90&fit=crop&crop=faces,top" alt="Cleaners"/></div>
+      <div class="s25-b"><img src="https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=700&q=90&fit=crop&crop=faces,top" alt="Serums"/></div>
+      <div class="s25-c"><img src="https://images.unsplash.com/photo-1526413232644-8a40f03cc03b?w=700&q=90&fit=crop&crop=faces" alt="Sun Cream"/></div>
+      <div class="s25-ca"><p class="font-montserrat font-semibold uppercase text-[11px] tracking-[0.2em] text-[#1a1208]">Cleaners</p></div>
+      <div class="s25-cb"><p class="font-montserrat font-semibold uppercase text-[11px] tracking-[0.2em] text-[#1a1208]">Serums</p></div>
+      <div class="s25-cc"><p class="font-montserrat font-semibold uppercase text-[11px] tracking-[0.2em] text-[#1a1208]">Sun Cream</p></div>
+    </div>
+    <div class="text-center mt-14">
+      <a href="#" class="btn-dark">SEE ALL CATEGORIES</a>
+    </div>
+  </div>
+
+  <!-- MOBILE -->
+  <div class="md:hidden">
+    <div class="text-center pt-9 pb-7 px-6">
+      <p class="font-montserrat font-bold uppercase text-[#1a1208] text-[17px] tracking-[0.22em]">SUMMER 25 SEASON</p>
+    </div>
+    <div class="iz mx-6 h-[320px]">
+      <img src="https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=700&q=90&fit=crop&crop=faces,top" alt="Season"/>
+    </div>
+    <p class="font-montserrat font-semibold uppercase text-[#1a1208] text-center text-[11px] tracking-[0.2em] py-5">SANDALS</p>
+    <div class="px-6 pb-12">
+      <a href="#" class="flex items-center justify-center w-full bg-[#1a1208] text-white font-montserrat text-[10px] font-bold tracking-[0.22em] uppercase no-underline py-[18px] hover:bg-[#2d1f0e]">SEE ALL CATEGORIES</a>
+    </div>
+  </div>
+
+</section>
+
+
+<!-- ══════════════════════════════════
+  WHAT'S NEW
+  Mobile: 1-col, full-width images, text centered
+  Desktop: 3-col
+══════════════════════════════════ -->
+<section class="bg-[#f0ebe2] border-t border-[#ddd6cc] pt-14 md:pt-[72px] pb-14 md:pb-[72px]">
+  <h2 class="font-montserrat font-bold uppercase text-[#1a1208] text-center mb-8 md:mb-10 px-6 md:px-10 tracking-[0.24em]" style="font-size:clamp(15px,1.8vw,22px);">What's New?</h2>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-0 md:gap-2.5 max-w-[1440px] mx-auto px-0 md:px-10">
+
+    <div>
+      <div class="iz h-[240px] md:h-[clamp(200px,14vw,215px)]">
+        <img src="https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=700&q=90&fit=crop&crop=faces" alt="Blog 1"/>
+      </div>
+      <div class="text-center md:text-left px-6 md:px-0 pt-5 pb-8 md:pb-0">
+        <p class="font-montserrat text-[9px] font-bold tracking-[0.16em] uppercase text-[#7a6e62] mb-1.5">BLOG POST 01</p>
+        <p class="font-montserrat text-[13px] font-bold text-[#1a1208] leading-snug mb-2 tracking-[0.05em]">PARIS FASHION WEEK 2024</p>
+        <p class="font-montserrat text-[11px] font-light text-[#5a4e42] leading-[1.75]">Sed ut perspiciatis unde omnis iste natus error sit volupt atem accusantium</p>
+      </div>
+    </div>
+
+    <div>
+      <div class="iz h-[240px] md:h-[clamp(200px,14vw,215px)]">
+        <img src="https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=700&q=90&fit=crop" alt="Blog 2"/>
+      </div>
+      <div class="text-center md:text-left px-6 md:px-0 pt-5 pb-8 md:pb-0">
+        <p class="font-montserrat text-[9px] font-bold tracking-[0.16em] uppercase text-[#7a6e62] mb-1.5">BLOG POST 02</p>
+        <p class="font-montserrat text-[13px] font-bold text-[#1a1208] leading-snug mb-2 tracking-[0.05em]">BRAZILIAN SUMMER VIBES</p>
+        <p class="font-montserrat text-[11px] font-light text-[#5a4e42] leading-[1.75]">Sed ut perspiciatis unde omnis iste natus error sit volupt atem accusantium</p>
+      </div>
+    </div>
+
+    <div>
+      <div class="iz h-[240px] md:h-[clamp(200px,14vw,215px)]">
+        <img src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=700&q=90&fit=crop&crop=faces,top" alt="Blog 3"/>
+      </div>
+      <div class="text-center md:text-left px-6 md:px-0 pt-5 pb-8 md:pb-0">
+        <p class="font-montserrat text-[9px] font-bold tracking-[0.16em] uppercase text-[#7a6e62] mb-1.5">BLOG POST 03</p>
+        <p class="font-montserrat text-[13px] font-bold text-[#1a1208] leading-snug mb-2 tracking-[0.05em]">WHITE IS THE NEW BLACK</p>
+        <p class="font-montserrat text-[11px] font-light text-[#5a4e42] leading-[1.75]">Sed ut perspiciatis unde omnis iste natus error sit volupt atem accusantium</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════
+  MOSTLY VIEWED
+  Mobile: 2-col, name & price LEFT aligned
+  Desktop: 4-col, centered
+══════════════════════════════════ -->
+<section class="bg-[#f0ebe2] py-14 md:py-[72px] px-4 md:px-10">
+  <h2 class="font-montserrat font-bold uppercase text-[#1a1208] text-center mb-8 md:mb-10 tracking-[0.24em]" style="font-size:clamp(15px,1.8vw,22px);">Mostly Viewed</h2>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-2.5 max-w-[1440px] mx-auto">
+
+    <div>
+      <div class="iz h-[170px] md:h-[clamp(140px,16vw,260px)]">
+        <img src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=700&q=90&fit=crop" alt="Hydra Glow Serum"/>
+      </div>
+      <p class="font-cormorant text-[15px] md:text-[16px] text-[#1a1208] mt-3 mb-1 text-left md:text-center">Hydra Glow Serum</p>
+      <div class="flex items-baseline gap-2 pb-4 justify-start md:justify-center">
+        <span class="font-montserrat text-[11px] md:text-[12px] font-semibold text-[#1a1208]">$30.00</span>
+        <span class="font-montserrat text-[11px] md:text-[12px] font-light text-[#b0a494] line-through">$43.00</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="iz h-[170px] md:h-[clamp(140px,16vw,260px)]">
+        <img src="https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=700&q=90&fit=crop" alt="Vitamin C Cleanser"/>
+      </div>
+      <p class="font-cormorant text-[15px] md:text-[16px] text-[#1a1208] mt-3 mb-1 text-left md:text-center">Vitamin C Cleanser</p>
+      <div class="flex items-baseline gap-2 pb-4 justify-start md:justify-center">
+        <span class="font-montserrat text-[11px] md:text-[12px] font-semibold text-[#1a1208]">$24.00</span>
+        <span class="font-montserrat text-[11px] md:text-[12px] font-light text-[#b0a494] line-through">$43.00</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="iz h-[170px] md:h-[clamp(140px,16vw,260px)]">
+        <img src="https://images.unsplash.com/photo-1631730486784-74757a9ea37f?w=700&q=90&fit=crop&crop=faces" alt="Barrier Repair Cream"/>
+      </div>
+      <p class="font-cormorant text-[15px] md:text-[16px] text-[#1a1208] mt-3 mb-1 text-left md:text-center">Barrier Repair Cream</p>
+      <div class="flex items-baseline gap-2 pb-4 justify-start md:justify-center">
+        <span class="font-montserrat text-[11px] md:text-[12px] font-semibold text-[#1a1208]">$35.00</span>
+        <span class="font-montserrat text-[11px] md:text-[12px] font-light text-[#b0a494] line-through">$43.00</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="iz h-[170px] md:h-[clamp(140px,16vw,260px)]">
+        <img src="https://images.unsplash.com/photo-1556229010-6c3f2c9ca5f8?w=700&q=90&fit=crop" alt="Daily Shield SPF 55+"/>
+      </div>
+      <p class="font-cormorant text-[15px] md:text-[16px] text-[#1a1208] mt-3 mb-1 text-left md:text-center">Daily Shield SPF 55+</p>
+      <div class="flex items-baseline gap-2 pb-4 justify-start md:justify-center">
+        <span class="font-montserrat text-[11px] md:text-[12px] font-semibold text-[#1a1208]">$35.00</span>
+        <span class="font-montserrat text-[11px] md:text-[12px] font-light text-[#b0a494] line-through">$43.00</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════
+  GLOW BEYOND (desktop) / GET READY (mobile)
+══════════════════════════════════ -->
+
+<!-- Desktop -->
+<section class="hidden md:block bg-[#f0ebe2] pt-20">
+  <div class="text-center px-10 mb-14">
+    <h2 class="font-cormorant font-bold uppercase text-[#1a1208] mb-6 tracking-[0.12em]" style="font-size:clamp(26px,3.5vw,48px);">Glow Beyond The Day</h2>
+    <p class="font-montserrat font-light text-[#3a3028] text-[14px] text-center leading-[2.0] mb-9 mx-auto max-w-[480px]">
+      From the warmth of candlelit rituals to the energy of city nights,<br>
+      our expertly crafted formulas restore balance, defend your barrier,<br>
+      and unveil a radiance that lingers long after the light fades.
+    </p>
+    <a href="#" class="btn-dark">SHOP NOW</a>
+  </div>
+  <div class="grid grid-cols-2">
+    <div class="glow-img"><img src="https://i.pinimg.com/1200x/96/fb/25/96fb2565dce46ddf8455524b2ae3d0b1.jpg" alt="Ritual"/></div>
+    <div class="glow-img"><img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=1100&q=90&fit=crop&crop=faces" alt="Night glow"/></div>
+  </div>
+</section>
+
+<!-- Mobile -->
+<section class="md:hidden bg-[#f0ebe2] pt-14">
+  <div class="px-6 text-center mb-0">
+    <h2 class="font-montserrat font-bold uppercase text-[#1a1208] text-[24px] tracking-[0.1em] leading-[1.2] mb-4">GET READY FOR<br>SUMMER</h2>
+    <p class="font-montserrat font-light text-[#3a3028] text-[12px] leading-[1.85] mb-6">
+      Dive into a world of vibrant colors, breezy silhouettes, and timeless elegance tailored for the sun-soaked days and balmy nights ahead.
+    </p>
+    <a href="#" class="flex items-center justify-center w-full bg-[#1a1208] text-white font-montserrat text-[10px] font-bold tracking-[0.22em] uppercase no-underline py-[18px] mb-7 hover:bg-[#2d1f0e]">SHOP NOW</a>
+  </div>
+  <div class="iz w-full h-[300px]">
+    <img src="https://i.pinimg.com/1200x/96/fb/25/96fb2565dce46ddf8455524b2ae3d0b1.jpg" alt="Collection 1"/>
+  </div>
+  <div class="iz w-full h-[180px]">
+    <img src="https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=900&q=90&fit=crop&crop=top" alt="Collection 2"/>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════
+  GET IN TOUCH
+══════════════════════════════════ -->
+<section class="bg-[#f0ebe2] py-16 md:py-20 text-center">
+  <a href="#" class="block hover:opacity-80 transition-opacity duration-300">
+    <div class="px-6 md:px-16">
+      <span class="font-montserrat font-medium tracking-[0.08em] text-[#1a1208] block leading-none" style="font-size:clamp(36px,7.5vw,96px);">
+        GET <em class="not-italic text-[#c0392b]">IN</em> TOUCH
+      </span>
+      <div class="h-[2px] bg-[#1a1208] mt-4 w-full mx-auto"></div>
+    </div>
+  </a>
+</section>
+<!-- ══════════════════════════════════
+  FOOTER
+══════════════════════════════════ -->
+<footer class="bg-[#3b2414]">
+  <div class="max-w-[1440px] mx-auto px-6 md:px-12 pt-10 md:pt-16 pb-6 md:pb-8">
+
+    <!-- Desktop: 4-col -->
+    <div class="hidden md:grid gap-10 mb-14" style="grid-template-columns:280px 1fr 1fr 1fr;">
+      <div>
+        <div class="flex items-center gap-2 mb-4">
+          <svg width="18" height="18" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 24C14 24 4 18 4 10C4 6 8 3 12 4C13 4 14 5 14 5"/>
+            <path d="M14 24C14 24 24 18 24 10C24 6 20 3 16 4C15 4 14 5 14 5"/>
+            <line x1="14" y1="24" x2="14" y2="10"/>
+          </svg>
+          <span class="font-cormorant text-white text-[20px] font-semibold tracking-[0.03em]">Glowé</span>
+        </div>
+        <p class="font-montserrat text-[12px] font-light leading-[1.8] text-white/50 mb-5 max-w-[240px]">Redefining natural skincare with premium ingredients that honor your skin and the planet.</p>
+        <div class="flex gap-4">
+          <a href="#" class="font-montserrat text-[11px] text-white/40 no-underline hover:text-white/70">FB</a>
+          <a href="#" class="font-montserrat text-[11px] text-white/40 no-underline hover:text-white/70">IG</a>
+          <a href="#" class="font-montserrat text-[11px] text-white/40 no-underline hover:text-white/70">TW</a>
+          <a href="#" class="font-montserrat text-[11px] text-white/40 no-underline hover:text-white/70">PI</a>
+        </div>
+      </div>
+      <div>
+        <p class="font-montserrat text-[10px] font-semibold tracking-[0.18em] uppercase text-white/90 mb-5">Pages</p>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Home</a>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Shop</a>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Collections</a>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">About</a>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline hover:text-white/90">Contact</a>
+      </div>
+      <div>
+        <p class="font-montserrat text-[10px] font-semibold tracking-[0.18em] uppercase text-white/90 mb-5">Categories</p>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Cleansers</a>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Toners</a>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Serums</a>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Moisturizers</a>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline hover:text-white/90">Bundles</a>
+      </div>
+      <div>
+        <p class="font-montserrat text-[10px] font-semibold tracking-[0.18em] uppercase text-white/90 mb-5">Support</p>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">FAQ</a>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Shipping &amp; Returns</a>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Privacy Policy</a>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline hover:text-white/90">Terms &amp; Conditions</a>
+      </div>
+    </div>
+
+    <!-- Mobile -->
+    <div class="md:hidden pb-2">
+      <div class="mb-7">
+        <div class="flex items-center gap-2 mb-3">
+          <svg width="15" height="15" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 24C14 24 4 18 4 10C4 6 8 3 12 4C13 4 14 5 14 5"/>
+            <path d="M14 24C14 24 24 18 24 10C24 6 20 3 16 4C15 4 14 5 14 5"/>
+            <line x1="14" y1="24" x2="14" y2="10"/>
+          </svg>
+          <span class="font-cormorant text-white text-[16px] font-semibold tracking-[0.04em]">Glowé</span>
+        </div>
+        <p class="font-montserrat text-[10px] font-light leading-[1.7] text-white/45 mb-3 max-w-[220px]">Redefining natural skincare with premium ingredients that honor your skin and the planet.</p>
+        <div class="flex gap-3.5">
+          <a href="#" class="font-montserrat text-[9px] text-white/40 no-underline">FB</a>
+          <a href="#" class="font-montserrat text-[9px] text-white/40 no-underline">IG</a>
+          <a href="#" class="font-montserrat text-[9px] text-white/40 no-underline">TW</a>
+          <a href="#" class="font-montserrat text-[9px] text-white/40 no-underline">PI</a>
+        </div>
+      </div>
+      <!-- Pages + Categories 2-col -->
+      <div class="grid grid-cols-2 gap-3 mb-6">
+        <div>
+          <p class="font-montserrat text-[8px] font-medium tracking-[0.18em] uppercase text-white/30 mb-3">Pages</p>
+          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Home</a>
+          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Shop</a>
+          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Collections</a>
+          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">About</a>
+          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline">Contact</a>
+        </div>
+        <div>
+          <p class="font-montserrat text-[8px] font-medium tracking-[0.18em] uppercase text-white/30 mb-3">Categories</p>
+          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Cleansers</a>
+          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Toners</a>
+          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Serums</a>
+          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Moisturizers</a>
+          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline">Bundles</a>
+        </div>
+      </div>
+      <!-- Support full-width -->
+      <div class="mb-7">
+        <p class="font-montserrat text-[8px] font-medium tracking-[0.18em] uppercase text-white/30 mb-3">Support</p>
+        <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">FAQ</a>
+        <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Shipping &amp; Returns</a>
+        <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Privacy Policy</a>
+        <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline">Terms &amp; Conditions</a>
+      </div>
+    </div>
+
+    <!-- Bottom bar -->
+    <div class="pt-5 border-t border-white/[0.08]">
+      <!-- Mobile -->
+      <div class="md:hidden flex flex-col gap-2">
+        <p class="font-montserrat text-[9px] font-light text-white/25">© 2023 Glowé Skincare. All rights reserved.</p>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        <div class="flex gap-4">
+          <a href="#" class="font-montserrat text-[9px] font-light text-white/32 no-underline">Privacy Policy</a>
+          <a href="#" class="font-montserrat text-[9px] font-light text-white/32 no-underline">Terms of Service</a>
+        </div>
+      </div>
+      <!-- Desktop -->
+      <div class="hidden md:flex items-center justify-between">
+        <span class="font-montserrat text-[11px] font-light text-white/35">© 2023 Glowé Skincare. All rights reserved.</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        <div class="flex gap-5">
+          <a href="#" class="font-montserrat text-[11px] font-light text-white/42 no-underline hover:text-white/70">Privacy Policy</a>
+          <a href="#" class="font-montserrat text-[11px] font-light text-white/42 no-underline hover:text-white/70">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</footer>
+
+</body>
+</html>

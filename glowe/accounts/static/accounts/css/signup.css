@@ -1,0 +1,15 @@
+html, body { height: 100vh; overflow: hidden; }
+    .input-field {
+      width: 100%;
+      border: none;
+      border-bottom: 1px solid #c4b9af;
+      background: transparent;
+      padding: 8px 36px 10px 0;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 13.5px;
+      color: #2a1f14;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .input-field::placeholder { color: #b0a49a; font-weight: 300; }
+    .input-field:focus { border-bottom-color: #2a1f14; }

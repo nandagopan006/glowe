@@ -37,7 +37,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    'users',
+    'accounts',
+    'core',
     'adminpanel',
 ]
 
@@ -79,11 +80,12 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'glowe_db',
         'USER': 'postgres',
-        'PASSWORD': 'yourpassword',
+        'PASSWORD': '1234',
         'HOST': 'localhost',
-        'PORT': '5050',
+        'PORT': '5432',
     }
 }
+
 
 
 # Password validation
@@ -121,3 +123,25 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = "static/"
+AUTH_USER_MODEL = "accounts.ProfileUser"
+
+
+
+
+#email settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gamil.com'
+EMAIL_PPRT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER ='nandhukr006@gmail.com'               #MY GMAIL
+EMAIL_HOST_PASSWORD = 'dsvc klqr gxgq yeak'           #MYY PASSWORD MAKED
+
+
+
+
+
+
+
+
+
+
