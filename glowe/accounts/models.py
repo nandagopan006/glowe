@@ -16,5 +16,6 @@ class ProfileUser(AbstractUser):
     #otp create time
     otp_created_at =models.DateTimeField(null=True,blank=True)
         
-    
+    resend_count = models.IntegerField(default=0)
+    resend_blocked_until = models.DateTimeField(null=True, blank=True)
 

@@ -130,11 +130,11 @@ AUTH_USER_MODEL = "accounts.ProfileUser"
 
 #email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gamil.com'
+EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PPRT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER ='nandhukr006@gmail.com'               #MY GMAIL
-EMAIL_HOST_PASSWORD = 'dsvc klqr gxgq yeak'           #MYY PASSWORD MAKED
+EMAIL_HOST_PASSWORD = 'hsiz qdbi wyge rhsd'           #MYY PASSWORD MAKED
 
 
 

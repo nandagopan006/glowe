@@ -43,7 +43,7 @@
 <body class="flex h-screen overflow-hidden font-montserrat">
 
   <!-- ── LEFT PANEL ── -->
-  <div class="relative hidden md:block w-1/2 h-screen flex-shrink-0 overflow-hidden">
+  <div class="left-panel relative hidden md:block w-1/2 h-screen flex-shrink-0 overflow-hidden">
     <img
       src="https://i.pinimg.com/736x/87/73/ac/8773ac09c14bccb57938093b456d2884.jpg"
       alt="Glowé Women"
@@ -60,37 +60,33 @@
   </div>
 
   <!-- ── RIGHT PANEL ── -->
-  <div class="w-full md:w-1/2 h-screen bg-[#f5f2ed] flex items-center justify-center overflow-hidden px-8 sm:px-12 lg:px-14">
+  <div class="right-panel w-full md:w-1/2 h-screen bg-[#f5f2ed] flex items-center justify-center overflow-hidden px-8 sm:px-12 lg:px-14">
     <div class="w-full max-w-[340px] lg:max-w-sm flex flex-col items-center">
 
       <!-- Brand Logo -->
-      <div class="flex items-center gap-2 mb-4 lg:mb-5">
+      <div class="anim-1 flex items-center gap-2 mb-4 lg:mb-5">
         <svg class="w-[22px] h-[22px]" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- left leaf -->
           <path d="M50 85 C50 85 20 70 18 45 C16 28 30 18 42 25 C46 27 49 32 50 38" stroke="#2a1f14" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-          <!-- right leaf -->
           <path d="M50 85 C50 85 80 70 82 45 C84 28 70 18 58 25 C54 27 51 32 50 38" stroke="#2a1f14" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-          <!-- center leaf -->
           <path d="M50 85 C50 85 50 55 50 38 C50 22 58 12 50 10 C42 12 50 22 50 38" stroke="#2a1f14" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-          <!-- stem -->
           <line x1="50" y1="85" x2="50" y2="72" stroke="#2a1f14" stroke-width="5.5" stroke-linecap="round"/>
         </svg>
         <span class="font-cormorant font-bold text-brand-dark text-[20px] tracking-[0.04em]">Glowé</span>
       </div>
 
       <!-- Heading -->
-      <h1 class="font-cormorant font-normal text-brand-dark text-[26px] lg:text-[32px] xl:text-[36px] leading-tight text-center whitespace-nowrap mb-4 lg:mb-5">
+      <h1 class="anim-2 font-cormorant font-normal text-brand-dark text-[26px] lg:text-[32px] xl:text-[36px] leading-tight text-center whitespace-nowrap mb-4 lg:mb-5">
         Welcome Back
       </h1>
 
       <div class="w-full">
 
         <!-- ── FORM ── -->
-        <form action="signin_page" method="POST">
+        <form action="{% url "signin" %}" method="POST">
           {% csrf_token %}
 
           <!-- Email -->
-          <div class="w-full mb-3 lg:mb-4">
+          <div class="anim-3 w-full mb-3 lg:mb-4">
             <label for="email" class="block text-[9.5px] font-semibold tracking-[0.14em] text-brand-label uppercase mb-1.5">
               Email Address
             </label>
@@ -108,7 +104,7 @@
           </div>
 
           <!-- Password -->
-          <div class="w-full mb-1">
+          <div class="anim-4 w-full mb-1">
             <label for="password" class="block text-[9.5px] font-semibold tracking-[0.14em] text-brand-label uppercase mb-1.5">
               Password
             </label>
@@ -137,15 +133,15 @@
           </div>
 
           <!-- Forgot Password -->
-          <div class="w-full flex justify-end mt-1 mb-1">
-            <a href="/password-reset/" class="text-[11px] text-brand-muted font-normal tracking-[0.02em] no-underline hover:text-brand-dark transition-colors duration-200 cursor-pointer">
+          <div class="anim-5 w-full flex justify-end mt-1 mb-1">
+            <a href="{% url 'forget_password'  %}" class="text-[11px] text-brand-muted font-normal tracking-[0.02em] no-underline hover:text-brand-dark transition-colors duration-200 cursor-pointer">
               Forgot Password?
             </a>
           </div>
 
           <!-- Sign In Button -->
           <button type="submit"
-            class="w-full mt-3 lg:mt-4 py-[11px] lg:py-[13px] px-5 bg-brand-dark hover:bg-brand-darker text-[#f5f2ed] font-montserrat text-[10.5px] font-semibold tracking-[0.18em] uppercase border-none cursor-pointer flex items-center justify-center gap-2.5 transition-colors duration-200">
+            class="anim-5 w-full mt-3 lg:mt-4 py-[11px] lg:py-[13px] px-5 bg-brand-dark hover:bg-brand-darker text-[#f5f2ed] font-montserrat text-[10.5px] font-semibold tracking-[0.18em] uppercase border-none cursor-pointer flex items-center justify-center gap-2.5 transition-colors duration-200">
             Sign In
             <svg class="w-[12px] h-[12px]" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <line x1="1" y1="7" x2="13" y2="7"/>
@@ -156,7 +152,7 @@
         </form>
 
         <!-- Divider -->
-        <div class="flex items-center gap-3.5 my-4 lg:my-5 w-full">
+        <div class="anim-6 flex items-center gap-3.5 my-4 lg:my-5 w-full">
           <hr class="flex-1 border-none" style="border-top: 1px solid #d6cdc5;" />
           <span class="text-[10px] text-brand-divtext tracking-[0.12em] uppercase">or</span>
           <hr class="flex-1 border-none" style="border-top: 1px solid #d6cdc5;" />
@@ -164,7 +160,7 @@
 
         <!-- Google Button -->
         <button type="button"
-          class="w-full py-[9px] lg:py-[11px] px-5 bg-white border border-brand-gborder hover:bg-brand-ghover cursor-pointer flex items-center justify-center transition-colors duration-200">
+          class="anim-6 w-full py-[9px] lg:py-[11px] px-5 bg-white border border-brand-gborder hover:bg-brand-ghover cursor-pointer flex items-center justify-center transition-colors duration-200">
           <svg class="w-[18px] h-[18px]" viewBox="0 0 48 48">
             <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.16 7.09-10.29 7.09-17.65z"/>
             <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
@@ -173,17 +169,15 @@
           </svg>
         </button>
 
-        <!-- Sign Up Link -->
-        <p class="text-center mt-4 lg:mt-5 text-[11px] text-brand-muted font-light">
+        <!-- SIGN UP Link -->
+        <p class="anim-7 text-center mt-4 lg:mt-5 text-[11px] text-brand-muted font-light">
           Don't have an account?
-          <a href="/register/" class="text-brand-dark font-semibold underline underline-offset-2 cursor-pointer">Sign Up</a>
+          <a href="{% url 'signup' %}" class="text-brand-dark font-semibold underline underline-offset-2 cursor-pointer">Sign Up</a>
         </p>
 
       </div>
     </div>
   </div>
-
-  
 
 <script src="{% static 'accounts/js/signin.js' %}"></script>
 </body>

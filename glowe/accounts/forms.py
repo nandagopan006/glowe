@@ -36,9 +36,13 @@ class SignupForm(forms.ModelForm):
     def clean_email(self):
         email=self.cleaned_data.get("email",'').strip().lower()
         
-        if ProfileUser.objects.filter(email=email).exists():
-            raise forms.ValidationError('Email already registered')
-        
+        existing =ProfileUser.objects.filter(email=email).first()
+        if existing :
+            if existing.is_verified:
+                raise forms.ValidationError('Email already registered')
+            else :
+                pass
+            
         return email
     
     #password vlidation

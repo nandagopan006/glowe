@@ -1,15 +1,79 @@
+/* ── BASE ── */
 html, body { height: 100vh; overflow: hidden; }
-    .input-field {
-      width: 100%;
-      border: none;
-      border-bottom: 1px solid #c4b9af;
-      background: transparent;
-      padding: 8px 36px 10px 0;
-      font-family: 'Montserrat', sans-serif;
-      font-size: 13.5px;
-      color: #2a1f14;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .input-field::placeholder { color: #b0a49a; font-weight: 300; }
-    .input-field:focus { border-bottom-color: #2a1f14; }
+
+/* ── INPUT FIELD ── */
+.input-field {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #c4b9af;
+  background: transparent;
+  padding: 8px 36px 10px 0;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13.5px;
+  color: #2a1f14;
+  outline: none;
+  position: relative;
+  background-image: linear-gradient(#2a1f14, #2a1f14);
+  background-size: 0% 1px;
+  background-position: left bottom;
+  background-repeat: no-repeat;
+  transition: background-size 0.3s ease, border-color 0.2s;
+}
+.input-field::placeholder { color: #b0a49a; font-weight: 300; }
+.input-field:focus {
+  border-bottom-color: transparent;
+  background-size: 100% 1px;
+}
+
+/* ── ANIMATIONS ── */
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+@keyframes scaleUp {
+  from { transform: scale(0.92) translateY(20px); opacity: 0; }
+  to   { transform: scale(1)    translateY(0);    opacity: 1; }
+}
+@keyframes springIn {
+  0%   { opacity: 0; transform: translateY(18px) scale(0.96); }
+  60%  { opacity: 1; transform: translateY(-3px) scale(1.01); }
+  100% { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+.left-panel  { animation: slideInLeft 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.right-panel { animation: scaleUp 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s forwards; opacity: 0; }
+
+.anim-1 { animation: springIn 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.3s forwards; opacity:0; }
+.anim-2 { animation: springIn 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.4s forwards; opacity:0; }
+.anim-3 { animation: springIn 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.5s forwards; opacity:0; }
+.anim-4 { animation: springIn 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.6s forwards; opacity:0; }
+.anim-5 { animation: springIn 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.7s forwards; opacity:0; }
+.anim-6 { animation: springIn 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.8s forwards; opacity:0; }
+.anim-7 { animation: springIn 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.9s forwards; opacity:0; }
+.anim-8 { animation: springIn 0.6s cubic-bezier(0.34,1.56,0.64,1) 1.0s forwards; opacity:0; }
+
+/* ── BUTTON LOADER — elegant dots ── */
+@keyframes dotPulse {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40%           { transform: scale(1);   opacity: 1;   }
+}
+
+.loader {
+  display: none;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.loader span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #f5f2ed;
+  display: inline-block;
+  animation: dotPulse 1.2s ease-in-out infinite;
+}
+.loader span:nth-child(1) { animation-delay: 0s;   }
+.loader span:nth-child(2) { animation-delay: 0.2s; }
+.loader span:nth-child(3) { animation-delay: 0.4s; }
+
+#submit-btn:disabled { opacity: 0.9; cursor: not-allowed; }
