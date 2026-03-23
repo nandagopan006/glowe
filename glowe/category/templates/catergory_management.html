@@ -1,23 +1,31 @@
+{% extends 'admin_base.html' %}
 {% load static %}
 
-<!-- Mobile Topbar (hamburger, mobile only) -->
-<div class="lg:hidden sticky top-0 z-30 flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-200">
-  <button onclick="toggleAdminSidebar()"
-          class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
-    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-      <path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/>
-    </svg>
-  </button>
-  <span class="font-bold text-gray-900">Categories</span>
-</div>
+{% block title %}Glowé Admin — Categories{% endblock %}
 
-<!-- Sidebar -->
+{% block extra_css %}
+<style>
+  .active\:scale-98:active { transform: scale(0.98); }
+</style>
+{% endblock %}
+
+{% block content %}
+
 {% include 'admin_sidebar.html' %}
 
-<!-- ══════════════════════════════════
-     MAIN CONTENT
-══════════════════════════════════ -->
 <div class="lg:ml-[240px] min-h-screen flex flex-col bg-gray-50">
+
+  <!-- Mobile Topbar -->
+  <div class="lg:hidden sticky top-0 z-30 flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-200">
+    <button onclick="toggleAdminSidebar()"
+            class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
+      <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+    </button>
+    <span class="font-bold text-gray-900">Categories</span>
+  </div>
+
   <main class="flex-1 p-5 sm:p-8">
 
     <!-- Page Header -->
@@ -37,46 +45,35 @@
 
     <!-- Stat Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-
       <div class="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 flex items-start justify-between">
         <div>
           <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Total Categories</p>
-          <p class="text-[28px] font-bold text-gray-900 leading-none">
-            {{ total_categories }} <span class="text-sm font-normal text-gray-400">Items</span>
-          </p>
+          <p class="text-[28px] font-bold text-gray-900 leading-none">{{ total_categories }} <span class="text-sm font-normal text-gray-400">Items</span></p>
         </div>
         <span class="w-2.5 h-2.5 rounded-full bg-blue-400 mt-1 flex-shrink-0"></span>
       </div>
-
       <div class="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 flex items-start justify-between">
         <div>
           <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Active</p>
-          <p class="text-[28px] font-bold text-gray-900 leading-none">
-            {{ active_categories }} <span class="text-sm font-normal text-gray-400">Items</span>
-          </p>
+          <p class="text-[28px] font-bold text-gray-900 leading-none">{{ active_categories }} <span class="text-sm font-normal text-gray-400">Items</span></p>
         </div>
         <span class="w-2.5 h-2.5 rounded-full bg-green-400 mt-1 flex-shrink-0"></span>
       </div>
-
       <div class="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 flex items-start justify-between">
         <div>
           <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Inactive</p>
-          <p class="text-[28px] font-bold text-gray-900 leading-none">
-            {{ inactive_categories }} <span class="text-sm font-normal text-gray-400">Items</span>
-          </p>
+          <p class="text-[28px] font-bold text-gray-900 leading-none">{{ inactive_categories }} <span class="text-sm font-normal text-gray-400">Items</span></p>
         </div>
         <span class="w-2.5 h-2.5 rounded-full bg-red-400 mt-1 flex-shrink-0"></span>
       </div>
-
     </div>
 
     <!-- Table Card -->
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
-      <!-- ── Toolbar: Search + Sort ── -->
+      <!-- Toolbar: Search + Sort -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 border-b border-gray-100 gap-3">
         <h2 class="text-base font-bold text-gray-800">All Categories</h2>
-
         <div class="flex items-center gap-2">
 
           <!-- Search form (backend) with clear button -->
@@ -91,7 +88,6 @@
               <input type="text" name="q" value="{{ request.GET.q }}"
                      placeholder="Search categories..."
                      class="pl-9 {% if request.GET.q %}pr-8{% else %}pr-4{% endif %} py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage-300 w-44 sm:w-56 transition-all"/>
-              <!-- Clear/cancel button — only visible when query exists -->
               {% if request.GET.q %}
               <a href="?sort={{ request.GET.sort|default:'desc' }}"
                  class="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center rounded-full bg-gray-400 hover:bg-gray-500 transition-colors">
@@ -107,10 +103,9 @@
             </button>
           </form>
 
-          <!-- Sort toggle: descending (newest first) / ascending -->
+          <!-- Sort toggle -->
           {% if request.GET.sort == 'asc' %}
             <a href="?q={{ request.GET.q }}&sort=desc"
-               title="Sorted A→Z — click for newest first"
                class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600 transition-colors flex-shrink-0">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" d="M3 4h13M3 8h9M3 12h5m10 4l-4-4m4 4l-4 4"/>
@@ -119,7 +114,6 @@
             </a>
           {% else %}
             <a href="?q={{ request.GET.q }}&sort=asc"
-               title="Sorted newest first — click for A→Z"
                class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium border border-sage-300 rounded-xl bg-sage-50 text-sage-700 transition-colors flex-shrink-0">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" d="M3 4h13M3 8h9M3 12h5m10 0l-4-4m4 4l-4 4"/>
@@ -131,7 +125,7 @@
         </div>
       </div>
 
-      <!-- ── Table — no Category ID column ── -->
+      <!-- Table -->
       <div class="overflow-x-auto">
         <table class="w-full min-w-[460px]">
           <thead>
@@ -187,7 +181,7 @@
                     </svg>
                   </a>
 
-                  <!-- Toggle active/inactive (soft) -->
+                  <!-- Toggle active/inactive -->
                   <form method="POST" action="{% url 'admin_toggle_category' category.id %}">
                     {% csrf_token %}
                     <button type="submit"
@@ -204,7 +198,7 @@
                     </button>
                   </form>
 
-                  <!-- Soft Delete — triggers modal -->
+                  <!-- Soft Delete -->
                   <button type="button" onclick="openDeleteModal('{{ category.id }}', '{{ category.name }}')"
                           class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
                     <svg class="w-[15px] h-[15px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -233,23 +227,19 @@
         </table>
       </div>
 
-      <!-- ── Pagination (preserves q and sort) ── -->
+      <!-- Pagination -->
       {% if categories.has_other_pages %}
       <div class="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-gray-100 gap-3">
         <p class="text-sm text-gray-400">
           Showing {{ categories.start_index }}–{{ categories.end_index }} of {{ categories.paginator.count }} categories
         </p>
         <div class="flex items-center gap-1">
-
           {% if categories.has_previous %}
           <a href="?q={{ request.GET.q }}&sort={{ request.GET.sort|default:'desc' }}&page={{ categories.previous_page_number }}"
              class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" d="M15 19l-7-7 7-7"/>
-            </svg>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>
           </a>
           {% endif %}
-
           {% for num in categories.paginator.page_range %}
             {% if categories.number == num %}
               <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-sage-800 text-white text-sm font-semibold">{{ num }}</span>
@@ -258,16 +248,12 @@
                  class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 text-sm font-medium transition-colors">{{ num }}</a>
             {% endif %}
           {% endfor %}
-
           {% if categories.has_next %}
           <a href="?q={{ request.GET.q }}&sort={{ request.GET.sort|default:'desc' }}&page={{ categories.next_page_number }}"
              class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" d="M9 5l7 7-7 7"/>
-            </svg>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M9 5l7 7-7 7"/></svg>
           </a>
           {% endif %}
-
         </div>
       </div>
       {% endif %}
@@ -276,12 +262,8 @@
   </main>
 </div>
 
-
-<!-- ══════════════════════════════════
-     SOFT DELETE CONFIRM MODAL
-══════════════════════════════════ -->
-<div id="deleteModal"
-     class="fixed inset-0 z-[60] flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200">
+<!-- Soft Delete Modal -->
+<div id="deleteModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200">
   <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeDeleteModal()"></div>
   <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
     <div class="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
@@ -294,27 +276,22 @@
     <p id="deleteModalName" class="text-sm font-semibold text-gray-700 mb-1"></p>
     <p class="text-xs text-gray-400 mb-6">This is a soft delete — the category will be hidden but not permanently removed.</p>
     <div class="flex gap-3">
-      <button onclick="closeDeleteModal()"
-              class="flex-1 px-4 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
-        Cancel
-      </button>
-      <!-- Hidden form — action gets set dynamically -->
+      <button onclick="closeDeleteModal()" class="flex-1 px-4 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">Cancel</button>
       <form id="deleteForm" method="POST" action="" class="flex-1">
         {% csrf_token %}
-        <button type="submit"
-                class="w-full px-4 py-2.5 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-xl transition-colors">
-          Delete
-        </button>
+        <button type="submit" class="w-full px-4 py-2.5 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-xl transition-colors">Delete</button>
       </form>
     </div>
   </div>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
 <script>
-  /* ── Soft Delete Modal ── */
   function openDeleteModal(id, name) {
     document.getElementById('deleteModalName').textContent = '"' + name + '"';
-    document.getElementById('deleteForm').action = '/admin/categories/' + id + '/delete/';
+    document.getElementById('deleteForm').action = "{% url 'admin_delete_category' 0 %}".replace('0', id);
     const m = document.getElementById('deleteModal');
     m.classList.remove('opacity-0', 'pointer-events-none');
     m.classList.add('opacity-100');
@@ -324,7 +301,6 @@
     m.classList.add('opacity-0', 'pointer-events-none');
     m.classList.remove('opacity-100');
   }
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closeDeleteModal();
-  });
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeDeleteModal(); });
 </script>
+{% endblock %}

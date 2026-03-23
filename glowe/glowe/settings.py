@@ -53,6 +53,8 @@ INSTALLED_APPS = [
     'core',
     'adminpanel',
     'user',
+    'category',
+    
 ]
 
 MIDDLEWARE = [

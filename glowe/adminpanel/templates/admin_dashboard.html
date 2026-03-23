@@ -1,287 +1,61 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Glowé Admin — Dashboard</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
-<script>
-tailwind.config = {
-  theme: {
-    extend: {
-      fontFamily: {
-        sans: ['DM Sans', 'sans-serif'],
-        serif: ['Playfair Display', 'serif'],
-      },
-      colors: {
-        sage: {
-          50: '#f2f7f2', 100: '#e2f0e2', 200: '#c3dfc3',
-          300: '#94c494', 400: '#64a864', 500: '#4a9050',
-          600: '#3a7a3e', 700: '#2f6232', 800: '#264f29', 900: '#1e3e20',
-        }
-      }
-    }
-  }
-}
-</script>
+{% extends 'admin_base.html' %}
+{% load static %}
+
+{% block title %}Glowé Admin — Dashboard{% endblock %}
+
+{% block extra_css %}
 <style>
-  * { font-family: 'DM Sans', sans-serif; box-sizing: border-box; }
-  body { background: #f4f6f3; margin: 0; }
-
-  /* Sidebar */
-  .sidebar { width: 185px; min-width: 185px; background: #fff; border-right: 1px solid #eaede8; height: 100vh; position: fixed; top:0; left:0; display:flex; flex-direction:column; z-index:50; }
-  .sidebar-nav a { display:flex; align-items:center; gap:10px; padding:9px 16px; border-radius:8px; color:#5a6b5a; font-size:.85rem; font-weight:500; text-decoration:none; margin:1px 8px; transition:background .15s,color .15s; cursor:pointer; }
-  .sidebar-nav a:hover { background:#f0f5f0; color:#2f6232; }
-  .sidebar-nav a.active { background:#e6f2e6; color:#2f6232; font-weight:600; }
-  .sidebar-nav a svg { flex-shrink:0; }
-
-  .main { margin-left: 185px; min-height: 100vh; }
-  .topbar { background:#fff; border-bottom:1px solid #eaede8; height:56px; display:flex; align-items:center; padding:0 24px; gap:16px; position:sticky; top:0; z-index:40; }
-
   .stat-card { background:#fff; border-radius:14px; padding:18px 20px 14px; border:1px solid #eaede8; }
   .spark-wrap { height:40px; margin-top:8px; }
-
   .period-btn { padding:6px 16px; border-radius:20px; font-size:.8rem; font-weight:500; cursor:pointer; border:none; background:transparent; color:#7a8c7a; transition:background .15s,color .15s; }
   .period-btn.active { background:#4a9050; color:#fff; }
-
   .card { background:#fff; border-radius:14px; border:1px solid #eaede8; }
-
   .badge { padding:3px 10px; border-radius:20px; font-size:.72rem; font-weight:600; }
   .badge-green { background:#e6f5e6; color:#2f8c2f; }
   .badge-yellow { background:#fef9e6; color:#b8860b; }
   .badge-red { background:#fde8e8; color:#c0392b; }
-
   .prog { height:6px; border-radius:10px; background:#e8ede8; overflow:hidden; margin-top:6px; }
   .prog-fill { height:100%; border-radius:10px; }
-
-  .inbox-avatar { width:38px; height:38px; border-radius:50%; object-fit:cover; background:#dde8dd; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:.85rem; font-weight:600; color:#4a9050; }
-
-  .mob-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:45; }
-
-  ::-webkit-scrollbar { width:5px; height:5px; }
-  ::-webkit-scrollbar-track { background:transparent; }
-  ::-webkit-scrollbar-thumb { background:#c5d5c5; border-radius:10px; }
-
-  /* ── TOAST ── */
-  #toast-container {
-    position:fixed; top:24px; left:50%; transform:translateX(-50%);
-    z-index:9999; display:flex; flex-direction:column; align-items:center;
-    gap:10px; pointer-events:none;
-  }
-  .toast {
-    display:flex; align-items:center; gap:10px; padding:13px 20px;
-    border-radius:14px; font-size:.875rem; font-weight:500;
-    min-width:280px; max-width:380px; pointer-events:all;
-    box-shadow:0 8px 32px rgba(0,0,0,0.14),0 2px 8px rgba(0,0,0,0.08);
-    backdrop-filter:blur(12px); position:relative; overflow:hidden;
-    animation:toastIn .35s cubic-bezier(.34,1.56,.64,1) forwards;
-  }
-  .toast.hide { animation:toastOut .3s ease forwards; }
-  .toast-success { background:rgba(240,250,240,0.97); border:1.5px solid #a0d0a0; color:#2f6232; }
-  .toast-error   { background:rgba(255,240,240,0.97); border:1.5px solid #fbbfbf; color:#c0392b; }
-  .toast-progress { position:absolute; bottom:0; left:0; height:3px; border-radius:0 0 14px 14px; animation:toastProgress 3.5s linear forwards; }
-  .toast-success .toast-progress { background:#4a9050; }
-  .toast-error   .toast-progress { background:#e05555; }
-  @keyframes toastIn       { from{opacity:0;transform:translateY(-16px) scale(0.95);} to{opacity:1;transform:translateY(0) scale(1);} }
-  @keyframes toastOut      { from{opacity:1;transform:translateY(0) scale(1);} to{opacity:0;transform:translateY(-10px) scale(0.95);} }
-  @keyframes toastProgress { from{width:100%;} to{width:0%;} }
-
-  /* ── SIGNOUT MODAL ── */
-  .signout-overlay {
-    position:fixed; inset:0; z-index:9998;
-    background:rgba(0,0,0,0.25);
-    backdrop-filter:blur(4px);
-    display:flex; align-items:center; justify-content:center;
-    opacity:0; pointer-events:none; transition:opacity 0.25s ease;
-  }
-  .signout-overlay.open { opacity:1; pointer-events:all; }
-  .signout-modal {
-    background:#fff; border-radius:20px; padding:36px 32px 28px;
-    width:360px; max-width:calc(100vw - 32px);
-    display:flex; flex-direction:column; align-items:center; text-align:center;
-    transform:scale(0.94) translateY(8px);
-    transition:transform 0.28s cubic-bezier(0.34,1.56,0.64,1);
-    box-shadow:0 20px 60px rgba(0,0,0,0.15),0 4px 16px rgba(0,0,0,0.08);
-  }
-  .signout-overlay.open .signout-modal { transform:scale(1) translateY(0); }
-
-  @media(max-width:1024px){
-    .sidebar { transform:translateX(-100%); transition:transform .25s; }
-    .sidebar.open { transform:translateX(0); }
-    .mob-overlay.open { display:block; }
-    .main { margin-left:0; }
-    .topbar { padding:0 14px; }
-  }
-  @media(max-width:640px){
-    .stats-grid { grid-template-columns:1fr 1fr !important; }
-    .bottom-grid { grid-template-columns:1fr !important; }
-  }
-  @media(max-width:400px){
-    .stats-grid { grid-template-columns:1fr !important; }
-  }
+  .inbox-avatar { width:38px; height:38px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:.85rem; font-weight:600; color:#4a9050; }
+  .admin-main-content { margin-left:0; transition:margin-left .3s ease-in-out; }
+  @media(min-width:1024px){ .admin-main-content { margin-left:240px; } }
+  @media(max-width:640px){ .stats-grid { grid-template-columns:1fr 1fr !important; } .bottom-grid { grid-template-columns:1fr !important; } }
+  @media(max-width:400px){ .stats-grid { grid-template-columns:1fr !important; } }
 </style>
-</head>
-<body>
+{% endblock %}
 
-<!-- ── TOAST CONTAINER ── -->
-<div id="toast-container"></div>
+{% block content %}
 
-<!-- ── SIGNOUT CONFIRMATION MODAL ── -->
-<div id="signoutOverlay" class="signout-overlay" role="dialog" aria-modal="true">
-  <div class="signout-modal">
-    <!-- Icon -->
-    <div style="width:60px;height:60px;border-radius:50%;background:#f0f5f0;display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
-      <svg style="width:28px;height:28px;color:#4a9050;" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 2C9 5.5 6 9 6 13a6 6 0 0012 0c0-4-3-7.5-6-11z"/>
-      </svg>
-    </div>
-    <h2 style="font-family:'DM Sans',sans-serif;font-size:20px;font-weight:700;color:#111827;margin:0 0 10px;line-height:1.3;">
-      Are you sure you want to<br>Sign Out?
-    </h2>
-    <p style="font-size:14px;color:#6b7280;margin:0 0 28px;line-height:1.6;max-width:260px;">
-      You will need to login again to access your admin dashboard.
-    </p>
-    <div style="display:flex;gap:12px;width:100%;">
-      <button onclick="closeSignoutModal()" style="flex:1;padding:13px;border:1.5px solid #e5e7eb;border-radius:12px;background:#fff;color:#374151;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s;"
-        onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='#fff'">
-        Cancel
-      </button>
-      <form method="POST" action="{% url 'admin_signout' %}" style="flex:1;">
-        {% csrf_token %}
-        <button type="submit" style="width:100%;padding:13px;border:none;border-radius:12px;background:#ef4444;color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s;box-shadow:0 2px 10px rgba(239,68,68,0.3);"
-          onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">
-          Sign Out
-        </button>
-      </form>
-    </div>
-  </div>
-</div>
+{% include 'admin_sidebar.html' %}
 
-<!-- Mobile overlay -->
-<div class="mob-overlay" id="overlay" onclick="toggleSidebar()"></div>
-
-<!-- ===== SIDEBAR ===== -->
-<aside class="sidebar" id="sidebar">
-  <!-- Logo -->
-  <div class="flex items-center gap-2.5 px-4 py-4 border-b border-gray-100">
-    <div style="background:#4a9050;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;">
-      <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 2C9 5.5 6 9 6 13a6 6 0 0012 0c0-4-3-7.5-6-11z"/>
-      </svg>
-    </div>
-    <div>
-      <div class="font-bold text-gray-900 text-[15px] leading-tight">Glowé</div>
-      <div class="text-[10px] text-gray-400 font-medium">Admin Console</div>
-    </div>
-  </div>
-
-  <!-- Nav -->
-  <nav class="sidebar-nav flex-1 py-3">
-    <a href="{% url 'admin_dashboard' %}" class="active">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-      Dashboard
-    </a>
-    <a href="">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-      Orders
-    </a>
-    <a href="">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path stroke-linecap="round" d="M8 21h8M12 17v4"/></svg>
-      Products
-    </a>
-    <a href="{% url 'user_management' %}">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path stroke-linecap="round" d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
-      User Management
-    </a>
-    <a href="">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      Analytics
-    </a>
-    <a href="">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path stroke-linecap="round" d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M20 12h2M2 12h2M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41"/></svg>
-      Settings
-    </a>
-  </nav>
-
-  <!-- Sign Out button — triggers modal -->
-  <div class="px-3 pb-3">
-    <button type="button" onclick="openSignoutModal()" style="
-      display:flex; align-items:center; gap:10px; width:100%;
-      padding:10px 14px; border-radius:10px; border:none;
-      background:#fff0f0; color:#e05555; font-size:.875rem; font-weight:600;
-      cursor:pointer; transition:background .15s, transform .12s;"
-      onmouseover="this.style.background='#fde0e0'"
-      onmouseout="this.style.background='#fff0f0'"
-      onmousedown="this.style.transform='scale(0.98)'"
-      onmouseup="this.style.transform='scale(1)'">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7"/>
-        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12V7a2 2 0 012-2h6a2 2 0 012 2v1M3 12v5a2 2 0 002 2h6a2 2 0 002-2v-1"/>
-      </svg>
-      Sign Out
-    </button>
-  </div>
-
-  <!-- User -->
-  <div class="flex items-center gap-2.5 px-4 py-3 border-t border-gray-100">
-    <div style="width:34px;height:34px;border-radius:50%;background:#c5d5c5;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
-      <svg class="w-5 h-5" style="color:#4a9050" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
-    </div>
-    <div>
-      <div class="text-[13px] font-semibold text-gray-800">Elena Rose</div>
-      
-    </div>
-  </div>
-</aside>
-
-<!-- ===== MAIN ===== -->
-<div class="main">
-
-  <!-- TOPBAR -->
-  <header class="topbar">
-    <button class="lg:hidden mr-1 p-1.5 rounded-lg hover:bg-gray-100" onclick="toggleSidebar()">
-      <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
-    </button>
-    <h1 class="font-bold text-gray-900 text-[17px] mr-4 whitespace-nowrap">Overview</h1>
-    <div class="flex-1 max-w-[380px] relative">
-      <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
-      <input type="text" placeholder="Search orders, customers, products..." class="w-full pl-9 pr-4 py-2 rounded-full bg-gray-50 border border-gray-200 text-sm text-gray-700 placeholder-gray-400 outline-none focus:border-sage-400 focus:ring-2 focus:ring-sage-100 transition"/>
-    </div>
-    <div class="flex-1"></div>
-    <button class="w-9 h-9 rounded-full flex items-center justify-center hover:bg-gray-100 relative">
-      <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" d="M15 17H20L18.595 15.595A1.2 1.2 0 0118 14.76V11a6 6 0 10-12 0v3.76c0 .314-.126.614-.35.844L4 17h5m6 0v1a3 3 0 01-6 0v-1m6 0H9"/></svg>
-      <span style="background:#ef4444;width:7px;height:7px;border-radius:50%;position:absolute;top:7px;right:7px;border:1.5px solid #fff;"></span>
-    </button>
-    <button class="w-9 h-9 rounded-full flex items-center justify-center hover:bg-gray-100">
-      <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.97-4.03 9-9 9a9.003 9.003 0 01-8.504-6M3 12c0-4.97 4.03-9 9-9 4.97 0 9 4.03 9 9"/></svg>
-    </button>
-    <button style="border:1.5px solid #dde8d8;border-radius:8px;padding:6px 14px;font-size:.82rem;font-weight:600;color:#2f6232;display:flex;align-items:center;gap:6px;cursor:pointer;background:#fff;white-space:nowrap;">
-      Export
-      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M7 16l-4-4m0 0l4-4m-4 4h18"/><path stroke-linecap="round" d="M17 8l4 4-4 4"/></svg>
-    </button>
-  </header>
-
-  <!-- CONTENT -->
-  <div class="p-5 sm:p-6 space-y-5">
+<div class="admin-main-content min-h-screen">
+  <main class="p-4 sm:p-6">
 
     <!-- Period selector row -->
-    <div class="flex items-center justify-between flex-wrap gap-3">
-      <div class="flex items-center gap-1 bg-white border border-gray-200 rounded-full p-1">
-        <button class="period-btn active" onclick="setPeriod(this)">Day</button>
-        <button class="period-btn" onclick="setPeriod(this)">Week</button>
-        <button class="period-btn" onclick="setPeriod(this)">Month</button>
-        <button class="period-btn" onclick="setPeriod(this)">Year</button>
+    <div class="flex items-center justify-between flex-wrap gap-3 mb-5">
+      <div>
+        <h1 class="font-bold text-gray-900 text-[20px]">Overview</h1>
+        <div class="mt-1 h-[2.5px] w-8 bg-gray-900 rounded-full"></div>
       </div>
-      <div class="flex items-center gap-2 text-sm text-gray-500 font-medium">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path stroke-linecap="round" d="M16 2v4M8 2v4M3 10h18"/></svg>
-        OCT 24, 2024
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="flex items-center gap-1 bg-white border border-gray-200 rounded-full p-1">
+          <button class="period-btn active" onclick="setPeriod(this)">Day</button>
+          <button class="period-btn" onclick="setPeriod(this)">Week</button>
+          <button class="period-btn" onclick="setPeriod(this)">Month</button>
+          <button class="period-btn" onclick="setPeriod(this)">Year</button>
+        </div>
+        <div class="flex items-center gap-2 text-sm text-gray-500 font-medium">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="18" rx="2"/>
+            <path stroke-linecap="round" d="M16 2v4M8 2v4M3 10h18"/>
+          </svg>
+          OCT 24, 2024
+        </div>
       </div>
     </div>
 
     <!-- STAT CARDS -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 stats-grid">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 stats-grid mb-5">
       <div class="stat-card">
         <div class="flex items-start justify-between mb-1">
           <span class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Total Revenue</span>
@@ -341,7 +115,7 @@ tailwind.config = {
     </div>
 
     <!-- REVENUE CHART + INBOX -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
       <div class="card p-5 lg:col-span-2">
         <div class="flex items-start justify-between mb-1 flex-wrap gap-3">
           <div>
@@ -361,34 +135,10 @@ tailwind.config = {
           <a href="#" class="text-[12px] font-semibold" style="color:#4a9050">View All</a>
         </div>
         <div class="space-y-4">
-          <div class="flex items-start gap-3">
-            <div class="inbox-avatar" style="background:#f0ddd0;">SC</div>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center justify-between gap-1"><span class="text-[13px] font-semibold text-gray-800 truncate">Sophia Chen</span><span class="text-[10px] text-gray-400 whitespace-nowrap flex-shrink-0">2m ago</span></div>
-              <div class="text-[11px] text-gray-500 mt-0.5 leading-tight">New order recommendation sent for #1245</div>
-            </div>
-          </div>
-          <div class="flex items-start gap-3">
-            <div class="inbox-avatar" style="background:#dde8f0;">MW</div>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center justify-between gap-1"><span class="text-[13px] font-semibold text-gray-800 truncate">Marcus Wright</span><span class="text-[10px] text-gray-400 whitespace-nowrap flex-shrink-0">45m ago</span></div>
-              <div class="text-[11px] text-gray-500 mt-0.5 leading-tight">Updated inventory for Glow Serum Pro</div>
-            </div>
-          </div>
-          <div class="flex items-start gap-3">
-            <div class="inbox-avatar" style="background:#f0e8dd;">AO</div>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center justify-between gap-1"><span class="text-[13px] font-semibold text-gray-800 truncate">Amara Okafor</span><span class="text-[10px] text-gray-400 whitespace-nowrap flex-shrink-0">1h ago</span></div>
-              <div class="text-[11px] text-gray-500 mt-0.5 leading-tight">Client consultation completed: Dry Skin</div>
-            </div>
-          </div>
-          <div class="flex items-start gap-3">
-            <div class="inbox-avatar" style="background:#eddde0;">DM</div>
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center justify-between gap-1"><span class="text-[13px] font-semibold text-gray-800 truncate">David Miller</span><span class="text-[10px] text-gray-400 whitespace-nowrap flex-shrink-0">3h ago</span></div>
-              <div class="text-[11px] text-gray-500 mt-0.5 leading-tight">Product feedback report submitted</div>
-            </div>
-          </div>
+          <div class="flex items-start gap-3"><div class="inbox-avatar" style="background:#f0ddd0;">SC</div><div class="flex-1 min-w-0"><div class="flex items-center justify-between gap-1"><span class="text-[13px] font-semibold text-gray-800 truncate">Sophia Chen</span><span class="text-[10px] text-gray-400 whitespace-nowrap flex-shrink-0">2m ago</span></div><div class="text-[11px] text-gray-500 mt-0.5 leading-tight">New order recommendation sent for #1245</div></div></div>
+          <div class="flex items-start gap-3"><div class="inbox-avatar" style="background:#dde8f0;">MW</div><div class="flex-1 min-w-0"><div class="flex items-center justify-between gap-1"><span class="text-[13px] font-semibold text-gray-800 truncate">Marcus Wright</span><span class="text-[10px] text-gray-400 whitespace-nowrap flex-shrink-0">45m ago</span></div><div class="text-[11px] text-gray-500 mt-0.5 leading-tight">Updated inventory for Glow Serum Pro</div></div></div>
+          <div class="flex items-start gap-3"><div class="inbox-avatar" style="background:#f0e8dd;">AO</div><div class="flex-1 min-w-0"><div class="flex items-center justify-between gap-1"><span class="text-[13px] font-semibold text-gray-800 truncate">Amara Okafor</span><span class="text-[10px] text-gray-400 whitespace-nowrap flex-shrink-0">1h ago</span></div><div class="text-[11px] text-gray-500 mt-0.5 leading-tight">Client consultation completed: Dry Skin</div></div></div>
+          <div class="flex items-start gap-3"><div class="inbox-avatar" style="background:#eddde0;">DM</div><div class="flex-1 min-w-0"><div class="flex items-center justify-between gap-1"><span class="text-[13px] font-semibold text-gray-800 truncate">David Miller</span><span class="text-[10px] text-gray-400 whitespace-nowrap flex-shrink-0">3h ago</span></div><div class="text-[11px] text-gray-500 mt-0.5 leading-tight">Product feedback report submitted</div></div></div>
         </div>
       </div>
     </div>
@@ -398,9 +148,7 @@ tailwind.config = {
       <div class="card p-5 lg:col-span-2">
         <div class="flex items-center justify-between mb-4">
           <div class="font-bold text-gray-900 text-[16px]">Trending Products</div>
-          <button style="border:1.5px solid #dde8d8;border-radius:7px;padding:5px 12px;font-size:.75rem;font-weight:600;color:#4a6a4a;display:flex;align-items:center;gap:5px;cursor:pointer;background:#fff;">
-            Filter <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M3 4h18M7 8h10M11 12h2M9 16h6"/></svg>
-          </button>
+          <button style="border:1.5px solid #dde8d8;border-radius:7px;padding:5px 12px;font-size:.75rem;font-weight:600;color:#4a6a4a;display:flex;align-items:center;gap:5px;cursor:pointer;background:#fff;">Filter<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M3 4h18M7 8h10M11 12h2M9 16h6"/></svg></button>
         </div>
         <div class="grid grid-cols-[1fr_auto_auto_auto_auto] gap-3 px-3 pb-2 border-b border-gray-100">
           <span class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Product Name</span>
@@ -410,27 +158,9 @@ tailwind.config = {
           <span class="text-[10px] font-semibold text-gray-400 uppercase tracking-wider text-right">Status</span>
         </div>
         <div class="divide-y divide-gray-50">
-          <div class="grid grid-cols-[1fr_auto_auto_auto_auto] gap-3 px-3 py-3.5 items-center hover:bg-gray-50 rounded-lg transition">
-            <div class="flex items-center gap-3 min-w-0"><div style="width:36px;height:36px;border-radius:10px;background:#f5ede6;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg class="w-5 h-5" style="color:#c8855a" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 3h6l1 9H8L9 3z"/><ellipse cx="12" cy="20" rx="4" ry="2"/></svg></div><span class="text-[13px] font-medium text-gray-800 truncate">Midnight Repair Cream</span></div>
-            <span class="text-[13px] font-semibold text-gray-700 text-right">1,204</span>
-            <span class="text-[13px] text-gray-500 text-right hidden sm:block">42 in stock</span>
-            <span class="text-[13px] font-medium text-gray-700 text-right hidden sm:block">$68.00</span>
-            <span class="badge badge-green">Bestseller</span>
-          </div>
-          <div class="grid grid-cols-[1fr_auto_auto_auto_auto] gap-3 px-3 py-3.5 items-center hover:bg-gray-50 rounded-lg transition">
-            <div class="flex items-center gap-3 min-w-0"><div style="width:36px;height:36px;border-radius:10px;background:#f5ede6;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg class="w-5 h-5" style="color:#c8855a" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 3h6l1 9H8L9 3z"/><ellipse cx="12" cy="20" rx="4" ry="2"/></svg></div><span class="text-[13px] font-medium text-gray-800 truncate">Gentle Cleansing Mild</span></div>
-            <span class="text-[13px] font-semibold text-gray-700 text-right">945</span>
-            <span class="text-[13px] text-gray-500 text-right hidden sm:block">128 in stock</span>
-            <span class="text-[13px] font-medium text-gray-700 text-right hidden sm:block">$34.00</span>
-            <span class="badge badge-yellow">Stable</span>
-          </div>
-          <div class="grid grid-cols-[1fr_auto_auto_auto_auto] gap-3 px-3 py-3.5 items-center hover:bg-gray-50 rounded-lg transition">
-            <div class="flex items-center gap-3 min-w-0"><div style="width:36px;height:36px;border-radius:10px;background:#f5ede6;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg class="w-5 h-5" style="color:#c8855a" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 3h6l1 9H8L9 3z"/><ellipse cx="12" cy="20" rx="4" ry="2"/></svg></div><span class="text-[13px] font-medium text-gray-800 truncate">Rose Petal Toner</span></div>
-            <span class="text-[13px] font-semibold text-gray-700 text-right">756</span>
-            <span class="text-[13px] text-gray-500 text-right hidden sm:block">Out of stock</span>
-            <span class="text-[13px] font-medium text-gray-700 text-right hidden sm:block">$42.00</span>
-            <span class="badge badge-red">Urgent</span>
-          </div>
+          <div class="grid grid-cols-[1fr_auto_auto_auto_auto] gap-3 px-3 py-3.5 items-center hover:bg-gray-50 rounded-lg transition"><div class="flex items-center gap-3 min-w-0"><div style="width:36px;height:36px;border-radius:10px;background:#f5ede6;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg class="w-5 h-5" style="color:#c8855a" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 3h6l1 9H8L9 3z"/><ellipse cx="12" cy="20" rx="4" ry="2"/></svg></div><span class="text-[13px] font-medium text-gray-800 truncate">Midnight Repair Cream</span></div><span class="text-[13px] font-semibold text-gray-700 text-right">1,204</span><span class="text-[13px] text-gray-500 text-right hidden sm:block">42 in stock</span><span class="text-[13px] font-medium text-gray-700 text-right hidden sm:block">$68.00</span><span class="badge badge-green">Bestseller</span></div>
+          <div class="grid grid-cols-[1fr_auto_auto_auto_auto] gap-3 px-3 py-3.5 items-center hover:bg-gray-50 rounded-lg transition"><div class="flex items-center gap-3 min-w-0"><div style="width:36px;height:36px;border-radius:10px;background:#f5ede6;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg class="w-5 h-5" style="color:#c8855a" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 3h6l1 9H8L9 3z"/><ellipse cx="12" cy="20" rx="4" ry="2"/></svg></div><span class="text-[13px] font-medium text-gray-800 truncate">Gentle Cleansing Mild</span></div><span class="text-[13px] font-semibold text-gray-700 text-right">945</span><span class="text-[13px] text-gray-500 text-right hidden sm:block">128 in stock</span><span class="text-[13px] font-medium text-gray-700 text-right hidden sm:block">$34.00</span><span class="badge badge-yellow">Stable</span></div>
+          <div class="grid grid-cols-[1fr_auto_auto_auto_auto] gap-3 px-3 py-3.5 items-center hover:bg-gray-50 rounded-lg transition"><div class="flex items-center gap-3 min-w-0"><div style="width:36px;height:36px;border-radius:10px;background:#f5ede6;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg class="w-5 h-5" style="color:#c8855a" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 3h6l1 9H8L9 3z"/><ellipse cx="12" cy="20" rx="4" ry="2"/></svg></div><span class="text-[13px] font-medium text-gray-800 truncate">Rose Petal Toner</span></div><span class="text-[13px] font-semibold text-gray-700 text-right">756</span><span class="text-[13px] text-gray-500 text-right hidden sm:block">Out of stock</span><span class="text-[13px] font-medium text-gray-700 text-right hidden sm:block">$42.00</span><span class="badge badge-red">Urgent</span></div>
         </div>
       </div>
       <div class="card p-5">
@@ -449,98 +179,46 @@ tailwind.config = {
       </div>
     </div>
 
-  </div>
+  </main>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-// ── TOAST ──
-function showToast(message, type) {
-  const container = document.getElementById('toast-container');
-  const icons = {
-    success: `<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
-    error:   `<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M12 8v4M12 16h.01"/></svg>`,
-  };
-  const toast = document.createElement('div');
-  toast.className = `toast toast-${type}`;
-  toast.innerHTML = `
-    ${icons[type] || icons.success}
-    <span style="flex:1">${message}</span>
-    <button onclick="dismissToast(this.parentElement)" style="background:none;border:none;cursor:pointer;padding:0;opacity:.6;line-height:1;">
-      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
-    </button>
-    <div class="toast-progress"></div>
-  `;
-  container.appendChild(toast);
-  toast._timer = setTimeout(() => dismissToast(toast), 3500);
-}
-function dismissToast(toast) {
-  if (!toast) return;
-  clearTimeout(toast._timer);
-  toast.classList.add('hide');
-  setTimeout(() => toast.remove(), 300);
-}
+  function setPeriod(btn) {
+    btn.closest('.flex').querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  function makeSpark(id, data, color) {
+    new Chart(document.getElementById(id).getContext('2d'), {
+      type:'line', data:{ labels:data.map((_,i)=>i), datasets:[{data, borderColor:color, borderWidth:2, fill:false, pointRadius:0, tension:0.4}] },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{enabled:false}}, scales:{x:{display:false},y:{display:false}}, animation:{duration:800} }
+    });
+  }
+  makeSpark('spark1',[30,25,35,28,40,35,45,38,50,42,55,48],'#4a9050');
+  makeSpark('spark2',[20,30,25,35,30,40,35,45,38,50,42,52],'#4a9050');
+  makeSpark('spark3',[55,50,58,52,48,54,50,46,52,48,44,48],'#d97706');
+  makeSpark('spark4',[35,40,38,45,42,48,44,50,46,52,50,56],'#4a9050');
 
-// ── SIGNOUT MODAL ──
-function openSignoutModal()  { document.getElementById('signoutOverlay').classList.add('open'); }
-function closeSignoutModal() { document.getElementById('signoutOverlay').classList.remove('open'); }
-document.getElementById('signoutOverlay').addEventListener('click', function(e) {
-  if (e.target === this) closeSignoutModal();
-});
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSignoutModal(); });
-
-// ── WELCOME TOAST from session ──
-window.addEventListener('load', () => {
-  {% if success %}
-    setTimeout(() => showToast("{{ success|escapejs }}", 'success'), 400);
-  {% endif %}
-});
-
-// ── Sidebar toggle ──
-function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('overlay').classList.toggle('open');
-}
-
-// ── Period buttons ──
-function setPeriod(btn) {
-  btn.closest('.flex').querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-}
-
-// ── Sparklines ──
-function makeSpark(id, data, color) {
-  const ctx = document.getElementById(id).getContext('2d');
-  new Chart(ctx, {
-    type:'line',
-    data:{ labels:data.map((_,i)=>i), datasets:[{data, borderColor:color, borderWidth:2, fill:false, pointRadius:0, tension:0.4}] },
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},tooltip:{enabled:false}}, scales:{x:{display:false},y:{display:false}}, animation:{duration:800} }
+  const monthlyData = { labels:['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG'], data:[18000,22000,19000,28000,35000,58000,42000,52000] };
+  const weeklyData  = { labels:['W1','W2','W3','W4','W5','W6','W7','W8'], data:[8000,12000,9500,14000,11000,16000,13000,18000] };
+  const revCtx = document.getElementById('revenueChart').getContext('2d');
+  const gradient = revCtx.createLinearGradient(0,0,0,220);
+  gradient.addColorStop(0,'rgba(74,144,80,0.18)');
+  gradient.addColorStop(1,'rgba(74,144,80,0.01)');
+  let revenueChart = new Chart(revCtx, {
+    type:'line', data:{ labels:monthlyData.labels, datasets:[{data:monthlyData.data, borderColor:'#1a2e1a', borderWidth:2.5, fill:true, backgroundColor:gradient, pointRadius:0, pointHoverRadius:5, pointHoverBackgroundColor:'#4a9050', tension:0.45}] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{backgroundColor:'#fff',borderColor:'#dde8d8',borderWidth:1,titleColor:'#4a6a4a',bodyColor:'#1a2e1a',bodyFont:{weight:'700',size:13},padding:10,callbacks:{label:ctx=>' $'+ctx.parsed.y.toLocaleString()}}}, scales:{x:{grid:{display:false},ticks:{font:{size:10,weight:'600'},color:'#a8bea8'},border:{display:false}},y:{display:false}}, animation:{duration:700} }
   });
-}
-makeSpark('spark1',[30,25,35,28,40,35,45,38,50,42,55,48],'#4a9050');
-makeSpark('spark2',[20,30,25,35,30,40,35,45,38,50,42,52],'#4a9050');
-makeSpark('spark3',[55,50,58,52,48,54,50,46,52,48,44,48],'#d97706');
-makeSpark('spark4',[35,40,38,45,42,48,44,50,46,52,50,56],'#4a9050');
-
-// ── Revenue Chart ──
-const monthlyData = { labels:['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG'], data:[18000,22000,19000,28000,35000,58000,42000,52000] };
-const weeklyData  = { labels:['W1','W2','W3','W4','W5','W6','W7','W8'], data:[8000,12000,9500,14000,11000,16000,13000,18000] };
-const revCtx = document.getElementById('revenueChart').getContext('2d');
-const gradient = revCtx.createLinearGradient(0,0,0,220);
-gradient.addColorStop(0,'rgba(74,144,80,0.18)');
-gradient.addColorStop(1,'rgba(74,144,80,0.01)');
-let revenueChart = new Chart(revCtx, {
-  type:'line',
-  data:{ labels:monthlyData.labels, datasets:[{data:monthlyData.data, borderColor:'#1a2e1a', borderWidth:2.5, fill:true, backgroundColor:gradient, pointRadius:0, pointHoverRadius:5, pointHoverBackgroundColor:'#4a9050', tension:0.45}] },
-  options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{backgroundColor:'#fff',borderColor:'#dde8d8',borderWidth:1,titleColor:'#4a6a4a',bodyColor:'#1a2e1a',bodyFont:{weight:'700',size:13},padding:10,callbacks:{label:ctx=>' $'+ctx.parsed.y.toLocaleString()}}}, scales:{x:{grid:{display:false},ticks:{font:{size:10,weight:'600'},color:'#a8bea8'},border:{display:false}},y:{display:false,grid:{display:false}}}, animation:{duration:700} }
-});
-function setChart(type, btn) {
-  btn.closest('.flex').querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  const d = type === 'monthly' ? monthlyData : weeklyData;
-  revenueChart.data.labels = d.labels;
-  revenueChart.data.datasets[0].data = d.data;
-  revenueChart.update();
-}
+  function setChart(type, btn) {
+    btn.closest('.flex').querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const d = type==='monthly' ? monthlyData : weeklyData;
+    revenueChart.data.labels = d.labels;
+    revenueChart.data.datasets[0].data = d.data;
+    revenueChart.update();
+  }
 </script>
-</body>
-</html>
+{% endblock %}
