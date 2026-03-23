@@ -17,6 +17,7 @@ import re
 
 
 
+
 def signup_page(request):
     
     if request.user.is_authenticated:
@@ -60,13 +61,58 @@ def signup_page(request):
             OTPVerification.objects.create(user= user,otp_code= otp_code,
                     expires_at =timezone.now() + timedelta(minutes=1),)
             
-            send_mail(         #used to sent mail otp                         #we  give it apattern sub,msg,from ,recipient
-                'Your Glowé Verification Code', #subject=
-                f'Your OTP is {otp_code}. It will expires in 3minutes. ',#message=
-                settings.EMAIL_HOST_USER,# from_email=
-                [user.email],#recipient_list for user
-                
-            )
+            send_mail(
+    'Your Glowé Verification Code',
+    f'''
+════════════════════════════════
+           🌿 Glowé
+     Your Natural Beauty Store
+════════════════════════════════
+
+Hey {user.full_name or user.email.split('@')[0].capitalize()},
+
+Welcome to Glowé! We received a request
+to verify your account. Use the code
+below to complete your verification.
+
+  ──────────────────────────
+  Your One-Time Password:
+
+       {' '.join(otp_code)}
+
+  ⏱  Valid for 1 minute only
+  ──────────────────────────
+
+🔒 SECURITY NOTICE:
+   Glowé will NEVER ask for your OTP.
+   Do not share this code with anyone,
+   including Glowé staff.
+
+   If you did not request this code,
+   please ignore this email immediately.
+
+────────────────────────────────
+💚 Why Glowé?
+   ✔ 100% Natural Ingredients
+   ✔ Dermatologist Tested
+   ✔ Premium Luxury Skincare
+   ✔ Cruelty Free
+────────────────────────────────
+
+Need help? Contact us:
+📧 glowe639@gmail.com
+
+════════════════════════════════
+Thank you for choosing Glowé —
+your natural beauty destination.
+
+© 2025 Glowé. All rights reserved.
+Kerala, India
+════════════════════════════════
+''',
+    settings.EMAIL_HOST_USER,
+    [user.email],
+)
             # in signup view — SAVE the email before redirecting
             request.session ['email']=user.email # it will store in broswer session
             request.session['otp_msg'] = 'OTP sent! Check your email.' 
@@ -110,7 +156,7 @@ def signup_otp_verify(request):
         # check if OTP  expired ayyo — current time 
         if timezone.now() > otp_record.expires_at:
             return render(request, 'signup_otp_verify.html', {
-                'error': 'OTP has expired. Please resend again.','seconds_left': 0})
+                'error': 'OTP has expired. Please resend again.','seconds_left': 0,'submitted_otp': entered_otp, })
         
         if otp_record.otp_code == entered_otp :
             
@@ -124,10 +170,11 @@ def signup_otp_verify(request):
             user.resend_blocked_until = None # reset block
             user.save()
             
+            request.session['success_msg'] = 'Account created Successfully  !'
             return redirect('signin')
         else:
             return render(request,'signup_otp_verify.html',
-                          {'error':"Invalid OTP",'seconds_left': seconds_left})
+                          {'error':"Invalid OTP",'seconds_left': seconds_left,'submitted_otp': entered_otp, })
         
     return render(request,'signup_otp_verify.html',{'seconds_left':seconds_left,'otp_msg': otp_msg,})
 
@@ -150,7 +197,7 @@ def signup_resend_otp(request):
         user.resend_blocked_until = None
         user.resend_count = 0
 
-    # count reached 3  block
+
     if user.resend_count >= 3:
         user.resend_blocked_until = timezone.now() + timedelta(minutes=10)
         user.resend_count = 0
@@ -159,7 +206,7 @@ def signup_resend_otp(request):
         return render(request, 'signup_otp_verify.html',{
         'error': 'Too many attempts. Try again after 10 minutes.','seconds_left': 0})
         
-      # delete old OTP records and create  new one
+   
     OTPVerification.objects.filter(user=user, is_verified=False).delete()
  
     otp_code = str(random.randint(1000, 9999))
@@ -170,12 +217,58 @@ def signup_resend_otp(request):
     user.resend_count += 1
     user.save()
     
-    send_mail(   #used to sent mail otp                 #we  give it apattern sub,msg,from ,recipient
-            'Your Glowé Verification Code', #subject=
-            f'Your OTP is {otp_code}. It will expires in 3minutes. ',#message=
-            settings.EMAIL_HOST_USER,# from_email=
-            [user.email],#recipient_list for user
-    )
+    send_mail(
+    'Your Glowé Verification Code',
+    f'''
+════════════════════════════════
+           🌿 Glowé
+     Your Natural Beauty Store
+════════════════════════════════
+
+Hey {user.full_name or user.email.split('@')[0].capitalize()},
+
+Welcome to Glowé! We received a request
+to verify your account. Use the code
+below to complete your verification.
+
+  ──────────────────────────
+  Your One-Time Password:
+
+       {' '.join(otp_code)}
+
+  ⏱  Valid for 1 minute only
+  ──────────────────────────
+
+🔒 SECURITY NOTICE:
+   Glowé will NEVER ask for your OTP.
+   Do not share this code with anyone,
+   including Glowé staff.
+
+   If you did not request this code,
+   please ignore this email immediately.
+
+────────────────────────────────
+💚 Why Glowé?
+   ✔ 100% Natural Ingredients
+   ✔ Dermatologist Tested
+   ✔ Premium Luxury Skincare
+   ✔ Cruelty Free
+────────────────────────────────
+
+Need help? Contact us:
+📧 glowe639@gmail.com
+
+════════════════════════════════
+Thank you for choosing Glowé —
+your natural beauty destination.
+
+© 2025 Glowé. All rights reserved.
+Kerala, India
+════════════════════════════════
+''',
+    settings.EMAIL_HOST_USER,
+    [user.email],
+) 
     request.session['otp_msg'] = 'New OTP sent to your email.'   
     return redirect('signup_otp_verify')
 
@@ -184,7 +277,8 @@ def signin_page(request):
     
     if request.user.is_authenticated:
         return redirect('home')
-    
+    success_msg = request.session.pop('success_msg', None)
+    update_password=request.session.pop('update_password',None)
     if request.method == 'POST':
         email = request.POST.get('email','').strip().lower()
         password=request.POST.get('password')
@@ -193,20 +287,20 @@ def signin_page(request):
             return render(request,'signin.html',{'error':'Please enter your email.'})
         
         if not password:
-            return render(request,'signin.html',{'error':'Please enter your password.'})
+            return render(request,'signin.html',{'error':'Please enter your password.','submitted_email': email,})
 
         
         try: # check ifexist or not
             user_obb=ProfileUser.objects.get(email=email)
         except ProfileUser.DoesNotExist:
-            return render(request,'signin.html',{'error':'No account found with this email.'})
+            return render(request,'signin.html',{'error':'No account found with this email.','submitted_email': email,})
         
         #email 
         if not user_obb.is_verified :
-            return render(request,'signin.html',{'error':'Your email is not verified. Please complete signup first.'})
+            return render(request,'signin.html',{'error':'Your email is not verified. Please complete signup first.','submitted_email': email,})
         
         if not user_obb.is_active:
-            return render(request, 'signin.html', {'error': 'Your account is disabled. Please contact support.'})
+            return render(request, 'signin.html', {'error': 'Your account is disabled. Please contact support.','submitted_email': email,})
     
         
         user = authenticate(request, username=email, password=password)
@@ -214,11 +308,12 @@ def signin_page(request):
         if user :
              #if  everything is correct   login
             login(request,user) # it create the seesion
+            request.session['welcome']='Welcome to Glowé.  !'
             return redirect('home')
         else :
-             return render(request,'signin.html',{'error':'incorrect password.'})
+             return render(request,'signin.html',{'error':'Invalid credentials.','submitted_email': email,})
       
-    return render(request,'signin.html')
+    return render(request,'signin.html',{'success_msg': success_msg,'update_password':update_password})
 
 def forget_password(request):
 
@@ -238,7 +333,7 @@ def forget_password(request):
                         # still blocked  do not send email
                     remaining_minutes = round((user.reset_block_until - timezone.now()).total_seconds() / 60)
                     return render(request, 'forget_password.html', {
-                        'error': f'Too many attempts. Please try again after {remaining_minutes} minute(s).'})
+                        'error': f'Too many attempts. Please try again after {remaining_minutes} minute(s).','submitted_email':email})
                     
                 #save user first before generating token
                 user.reset_attempts = 0  
@@ -258,10 +353,57 @@ def forget_password(request):
                     reverse('reset_password', kwargs={'uidb64': uid, 'token': token}))
                 
                 send_mail(
-                    "Password Reset",
-                    f"Click the link to reset your password:\n{reset_link}",
-                    settings.EMAIL_HOST_USER,
-                    [user.email],)
+    'Reset Your Glowé Password 🔐',
+    f'''
+════════════════════════════════
+           🌿 Glowé
+     Your Natural Beauty Store
+════════════════════════════════
+
+Hey {user.full_name or user.email.split('@')[0].capitalize()},
+
+We received a request to reset the
+password for your Glowé account.
+
+Click the link below to reset it:
+
+  ──────────────────────────
+  {reset_link}
+  ──────────────────────────
+
+⏱  This link expires in 15 minutes.
+
+🔒 SECURITY NOTICE:
+   If you did not request a password
+   reset, please ignore this email.
+   Your account is safe and no changes
+   have been made.
+
+   Never share this link with anyone,
+   including Glowé staff.
+
+────────────────────────────────
+💚 Why Glowé?
+   ✔ 100% Natural Ingredients
+   ✔ Dermatologist Tested
+   ✔ Premium Luxury Skincare
+   ✔ Cruelty Free
+────────────────────────────────
+
+Need help? Contact us:
+📧 glowe639@gmail.com
+
+════════════════════════════════
+Thank you for choosing Glowé —
+your natural beauty destination.
+
+© 2025 Glowé. All rights reserved.
+Kerala, India
+════════════════════════════════
+''',
+    settings.EMAIL_HOST_USER,
+    [user.email],
+)
                 
                 request.session['reset_email'] = user.email
                
@@ -269,11 +411,11 @@ def forget_password(request):
 
             else:
                 return render(request, 'forget_password.html', {
-                    'error': 'Please verify your email before resetting your password.'})
+                    'error': 'Please verify your email before resetting your password.','submitted_email':email})
 
         except ProfileUser.DoesNotExist:
             return render(request, 'forget_password.html', {
-                'error': 'No account found with this email.'})
+                'error': 'No account found with this email.','submitted_email':email})
 
     return render(request, 'forget_password.html')
 
@@ -341,7 +483,7 @@ def resend_reset_email(request):
         messages.warning(request, 'Too many attempts. Try again after 15 minutes.')
         return redirect('forget_password_link')
     
-    user.reset_attempts+=1  
+    user.reset_attempts +=1  
     user.save()
  
     #generate new token and save in database
@@ -357,18 +499,69 @@ def resend_reset_email(request):
         reverse('reset_password', kwargs={'uidb64': uid, 'token': token}))
  
     send_mail(
-        'Password Reset - Glowé',
-        f'Click the link to reset your password:\n\n{reset_link}\nThis link expires in 15 minutes.',
-        settings.EMAIL_HOST_USER,
-        [email],
-        )
+    'Reset Your Glowé Password 🔐',
+    f'''
+════════════════════════════════
+           🌿 Glowé
+     Your Natural Beauty Store
+════════════════════════════════
+
+Hey {user.full_name or user.email.split('@')[0].capitalize()},
+
+We received a request to reset the
+password for your Glowé account.
+
+Click the link below to reset it:
+
+  ──────────────────────────
+  {reset_link}
+  ──────────────────────────
+
+⏱  This link expires in 15 minutes.
+
+🔒 SECURITY NOTICE:
+   If you did not request a password
+   reset, please ignore this email.
+   Your account is safe and no changes
+   have been made.
+
+   Never share this link with anyone,
+   including Glowé staff.
+
+────────────────────────────────
+💚 Why Glowé?
+   ✔ 100% Natural Ingredients
+   ✔ Dermatologist Tested
+   ✔ Premium Luxury Skincare
+   ✔ Cruelty Free
+────────────────────────────────
+
+Need help? Contact us:
+📧 glowe639@gmail.com
+
+════════════════════════════════
+Thank you for choosing Glowé —
+your natural beauty destination.
+
+© 2025 Glowé. All rights reserved.
+Kerala, India
+════════════════════════════════
+''',
+    settings.EMAIL_HOST_USER,
+    [user.email],
+)
  
     messages.success(request, 'Reset link sent to your email.')
     return redirect('forget_password_link')
- 
+
 
 
 def reset_password(request,uidb64,token):
+    
+    if request.user.is_authenticated:
+        return redirect('home')
+    
+    
     try :
         uid= force_str(urlsafe_base64_decode(uidb64))
         user = ProfileUser.objects.get(pk=uid) 
@@ -405,7 +598,8 @@ def reset_password(request,uidb64,token):
             return render(request,'reset_password.html', {'error': 'Passwords do not match.',
                 'uidb64': uidb64, 'token': token,})
             
-        #save the new password 
+            
+    
         user.set_password(new_password)
         
         #clear reset token appo enii link chayan paatilla  allam clear chaayumm
@@ -415,6 +609,7 @@ def reset_password(request,uidb64,token):
         user.reset_block_until= None
         user.save()
         
+        request.session['update_password']='SuccessFully Updated The Password'
         messages.success(request, 'Password reset successful. Please sign in.')
         return redirect('signin')
 

@@ -30,176 +30,117 @@
   <style>
     body { font-family: 'DM Sans', sans-serif; }
 
-    .bg-page {
-      background: radial-gradient(ellipse at 20% 40%, #dce8d9 0%, #ecf3ea 40%, #f5f7f2 100%);
-    }
-    .dark .bg-page {
-      background: radial-gradient(ellipse at 20% 40%, #1a2e1a 0%, #1e2a1e 40%, #141a14 100%);
-    }
+    .bg-page { background: radial-gradient(ellipse at 20% 40%, #dce8d9 0%, #ecf3ea 40%, #f5f7f2 100%); }
+    .dark .bg-page { background: radial-gradient(ellipse at 20% 40%, #1a2e1a 0%, #1e2a1e 40%, #141a14 100%); }
 
     .login-card {
-      background: rgba(255,255,255,0.92);
-      backdrop-filter: blur(16px);
+      background: rgba(255,255,255,0.92); backdrop-filter: blur(16px);
       border: 1px solid rgba(255,255,255,0.8);
       box-shadow: 0 8px 40px rgba(60,90,60,0.10), 0 2px 8px rgba(60,90,60,0.06);
     }
     .dark .login-card {
-      background: rgba(30,42,30,0.92);
-      border: 1px solid rgba(80,120,80,0.18);
+      background: rgba(30,42,30,0.92); border: 1px solid rgba(80,120,80,0.18);
       box-shadow: 0 8px 40px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.3);
     }
 
-    .icon-bg { background: #ddecd9; }
-    .dark .icon-bg { background: #2a3e2a; }
+    .icon-bg { background: #ddecd9; } .dark .icon-bg { background: #2a3e2a; }
 
     .input-field {
-      background: #f7faf6;
-      border: 1.5px solid #dde8d8;
+      background: #f7faf6; border: 1.5px solid #dde8d8;
       transition: border-color 0.2s, box-shadow 0.2s;
     }
-    .input-field:focus {
-      border-color: #6fa36f;
-      box-shadow: 0 0 0 3px rgba(111,163,111,0.13);
-      outline: none;
-    }
+    .input-field:focus { border-color: #6fa36f; box-shadow: 0 0 0 3px rgba(111,163,111,0.13); outline: none; }
     .dark .input-field { background: #1a2a1a; border-color: #3a5a3a; color: #d4e8d4; }
     .dark .input-field:focus { border-color: #6fa36f; }
     .dark .input-field::placeholder { color: #4d6b4d; }
 
+    /* ── SIGN BUTTON ── */
     .sign-btn {
       background: #5c9a5c;
       transition: background 0.18s, transform 0.12s, box-shadow 0.18s;
       box-shadow: 0 2px 12px rgba(78,139,78,0.25);
-      cursor: pointer; width: 100%;
+      cursor: pointer; width: 100%; position: relative; overflow: hidden;
     }
-    .sign-btn:hover  { background: #4e8b4e; box-shadow: 0 4px 18px rgba(78,139,78,0.35); transform: translateY(-1px); }
-    .sign-btn:active { transform: translateY(0); }
+    .sign-btn:hover:not(:disabled)  { background: #4e8b4e; box-shadow: 0 4px 18px rgba(78,139,78,0.35); transform: translateY(-1px); }
+    .sign-btn:active:not(:disabled) { transform: translateY(0); }
+    .sign-btn:disabled { opacity: 0.80; cursor: not-allowed; transform: none; }
+
+    @keyframes shimmer { 0%{transform:translateX(-100%) skewX(-12deg);} 100%{transform:translateX(220%) skewX(-12deg);} }
+    .sign-btn.loading::after {
+      content:''; position:absolute; inset:0;
+      background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,0.18) 50%,transparent 70%);
+      animation:shimmer 1.3s ease-in-out infinite;
+    }
+
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .btn-spinner {
+      display:inline-block; width:16px; height:16px;
+      border:2px solid rgba(255,255,255,0.35); border-top-color:#fff;
+      border-radius:50%; animation:spin 0.7s linear infinite; flex-shrink:0;
+    }
 
     .dark-toggle { background: rgba(255,255,255,0.85); box-shadow: 0 2px 10px rgba(0,0,0,0.10); }
     .dark .dark-toggle { background: rgba(40,60,40,0.85); }
 
-    .title-color { color: #1c2e1c; }  .dark .title-color { color: #c8e0c8; }
-    .sub-color   { color: #6b8c6b; }  .dark .sub-color   { color: #5a7a5a; }
-    .label-color { color: #2e4a2e; }  .dark .label-color { color: #8ab88a; }
-    .forgot-link { color: #5c9a5c; }  .dark .forgot-link { color: #6fb46f; }
-    .input-icon  { color: #8aaa8a; }  .dark .input-icon  { color: #4a6a4a; }
-    .eye-btn     { color: #8aaa8a; transition: color 0.15s; background: none; border: none; padding: 0; cursor: pointer; }
-    .eye-btn:hover { color: #5c9a5c; }
-    .dark .eye-btn:hover { color: #6fb46f; }
-    .divider  { border-color: #e0eadc; }  .dark .divider { border-color: #2e442e; }
-    .footer-link { color: #8aaa8a; letter-spacing: 0.06em; font-size: 0.72rem; }
-    .dark .footer-link { color: #4a6a4a; }
-    .footer-dot { color: #aac5aa; }  .dark .footer-dot { color: #3a5a3a; }
+    .title-color { color:#1c2e1c; }  .dark .title-color { color:#c8e0c8; }
+    .sub-color   { color:#6b8c6b; }  .dark .sub-color   { color:#5a7a5a; }
+    .label-color { color:#2e4a2e; }  .dark .label-color { color:#8ab88a; }
+    .forgot-link { color:#5c9a5c; }  .dark .forgot-link { color:#6fb46f; }
+    .input-icon  { color:#8aaa8a; }  .dark .input-icon  { color:#4a6a4a; }
+    .eye-btn     { color:#8aaa8a; transition:color 0.15s; background:none; border:none; padding:0; cursor:pointer; }
+    .eye-btn:hover { color:#5c9a5c; }
+    .dark .eye-btn:hover { color:#6fb46f; }
+    .divider { border-color:#e0eadc; } .dark .divider { border-color:#2e442e; }
 
-    /* ═══════════════════════════════
-       TOAST
-    ═══════════════════════════════ */
+    /* ── TOAST ── */
     #toast-container {
-      position: fixed;
-      top: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      pointer-events: none;
+      position:fixed; top:24px; left:50%; transform:translateX(-50%);
+      z-index:9999; display:flex; flex-direction:column; align-items:center;
+      gap:10px; pointer-events:none;
     }
-
     .toast {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 13px 20px;
-      border-radius: 14px;
-      font-size: .875rem;
-      font-weight: 500;
-      min-width: 280px;
-      max-width: 380px;
-      pointer-events: all;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08);
-      backdrop-filter: blur(12px);
-      /* enter */
-      animation: toastIn .35s cubic-bezier(.34,1.56,.64,1) forwards;
+      display:flex; align-items:center; gap:10px; padding:13px 20px;
+      border-radius:14px; font-size:.875rem; font-weight:500;
+      min-width:280px; max-width:380px; pointer-events:all;
+      box-shadow:0 8px 32px rgba(0,0,0,0.14),0 2px 8px rgba(0,0,0,0.08);
+      backdrop-filter:blur(12px); position:relative; overflow:hidden;
+      animation:toastIn .35s cubic-bezier(.34,1.56,.64,1) forwards;
     }
-
-    .toast.hide {
-      animation: toastOut .3s ease forwards;
-    }
-
-    .toast-error {
-      background: rgba(255,240,240,0.97);
-      border: 1.5px solid #fbbfbf;
-      color: #c0392b;
-    }
-    .toast-success {
-      background: rgba(240,250,240,0.97);
-      border: 1.5px solid #a0d0a0;
-      color: #2f6232;
-    }
-    .toast-warning {
-      background: rgba(255,251,235,0.97);
-      border: 1.5px solid #fcd34d;
-      color: #92400e;
-    }
-
-    /* progress bar */
-    .toast-progress {
-      position: absolute;
-      bottom: 0; left: 0;
-      height: 3px;
-      border-radius: 0 0 14px 14px;
-      animation: toastProgress 3s linear forwards;
-    }
-    .toast-error   .toast-progress { background: #e05555; }
-    .toast-success .toast-progress { background: #4a9050; }
-    .toast-warning .toast-progress { background: #f59e0b; }
-
-    .toast { position: relative; overflow: hidden; }
-
-    @keyframes toastIn {
-      from { opacity: 0; transform: translateY(-16px) scale(0.95); }
-      to   { opacity: 1; transform: translateY(0)    scale(1);    }
-    }
-    @keyframes toastOut {
-      from { opacity: 1; transform: translateY(0) scale(1);    }
-      to   { opacity: 0; transform: translateY(-10px) scale(0.95); }
-    }
-    @keyframes toastProgress {
-      from { width: 100%; }
-      to   { width: 0%; }
-    }
+    .toast.hide { animation:toastOut .3s ease forwards; }
+    .toast-error   { background:rgba(255,240,240,0.97); border:1.5px solid #fbbfbf; color:#c0392b; }
+    .toast-success { background:rgba(240,250,240,0.97); border:1.5px solid #a0d0a0; color:#2f6232; }
+    .toast-warning { background:rgba(255,251,235,0.97); border:1.5px solid #fcd34d; color:#92400e; }
+    .toast-progress { position:absolute; bottom:0; left:0; height:3px; border-radius:0 0 14px 14px; animation:toastProgress 3s linear forwards; }
+    .toast-error   .toast-progress { background:#e05555; }
+    .toast-success .toast-progress { background:#4a9050; }
+    .toast-warning .toast-progress { background:#f59e0b; }
+    @keyframes toastIn       { from{opacity:0;transform:translateY(-16px) scale(0.95);} to{opacity:1;transform:translateY(0) scale(1);} }
+    @keyframes toastOut      { from{opacity:1;transform:translateY(0) scale(1);} to{opacity:0;transform:translateY(-10px) scale(0.95);} }
+    @keyframes toastProgress { from{width:100%;} to{width:0%;} }
   </style>
 </head>
 
 <body class="bg-page min-h-screen flex items-center justify-center relative transition-colors duration-300">
 
-  <!-- ═══════════════════════════════
-       TOAST CONTAINER
-  ═══════════════════════════════ -->
+  <!-- TOAST CONTAINER -->
   <div id="toast-container"></div>
 
-  <!-- ═══════════════════════════════
-       DJANGO MESSAGES → TOASTS
-       reads messages passed from views.py
-  ═══════════════════════════════ -->
+  <!-- Django messages → toasts -->
   {% if messages %}
-    <script>
-      document.addEventListener('DOMContentLoaded', function () {
-        {% for message in messages %}
-          showToast(
-            "{{ message|escapejs }}",
-            "{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% else %}warning{% endif %}"
-          );
-        {% endfor %}
-      });
-    </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      {% for message in messages %}
+        showToast(
+          "{{ message|escapejs }}",
+          "{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% else %}warning{% endif %}"
+        );
+      {% endfor %}
+    });
+  </script>
   {% endif %}
 
   <!-- Dark mode toggle -->
-  <button
-    onclick="document.documentElement.classList.toggle('dark')"
+  <button onclick="document.documentElement.classList.toggle('dark')"
     class="dark-toggle fixed top-4 right-4 z-50 w-10 h-10 rounded-full flex items-center justify-center cursor-pointer"
     type="button" aria-label="Toggle dark mode">
     <svg class="w-5 h-5 text-slate-600 dark:hidden" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
@@ -226,7 +167,7 @@
     <p class="sub-color text-sm mb-6 text-center">Enter your credentials to access the dashboard</p>
 
     <!-- FORM -->
-    <form method="POST" action="{% url 'admin_signin' %}" class="w-full">
+    <form method="POST" action="{% url 'admin_signin' %}" class="w-full" id="signinForm">
       {% csrf_token %}
 
       <!-- Email -->
@@ -239,10 +180,12 @@
               <path stroke-linecap="round" d="M2 8l10 7 10-7"/>
             </svg>
           </span>
+          <!-- ✅ FIXED: correct input tag, value keeps email on validation error -->
           <input
             type="email"
             id="email"
             name="email"
+            value="{{ submitted_email|default:'' }}"
             placeholder="admin@glowe.com"
             autocomplete="email"
             class="input-field w-full rounded-xl pl-10 pr-4 py-3 text-sm"
@@ -285,64 +228,69 @@
         </div>
       </div>
 
-      <!-- Submit -->
-      <button type="submit" class="sign-btn rounded-xl py-3 text-white font-medium text-sm tracking-wide">
-        Sign in
+      <!-- SUBMIT BUTTON WITH LOADER -->
+      <button type="submit" id="signInBtn" class="sign-btn rounded-xl py-3 text-white font-medium text-sm tracking-wide">
+        <span id="signInBtnContent" class="flex items-center justify-center gap-2">
+          Sign in
+        </span>
       </button>
 
     </form>
 
     <hr class="divider w-full mt-8 mb-5"/>
 
-   
+  </div>
 
   <script>
-    /* ═══════════════════════════════
-       TOAST FUNCTION
-    ═══════════════════════════════ */
+    // ── TOAST ──
     function showToast(message, type) {
       const container = document.getElementById('toast-container');
-
-      // Icon per type
       const icons = {
-        error: `<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path stroke-linecap="round" d="M12 8v4M12 16h.01"/>
-                </svg>`,
-        success:`<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>`,
-        warning:`<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                </svg>`,
+        error:  `<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M12 8v4M12 16h.01"/></svg>`,
+        success:`<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`,
+        warning:`<svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>`,
       };
-
       const toast = document.createElement('div');
       toast.className = `toast toast-${type}`;
       toast.innerHTML = `
         ${icons[type] || icons.error}
         <span style="flex:1">${message}</span>
         <button onclick="dismissToast(this.parentElement)" style="background:none;border:none;cursor:pointer;padding:0;opacity:.6;line-height:1;" aria-label="Close">
-          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
         <div class="toast-progress"></div>
       `;
-
       container.appendChild(toast);
-
-      // Auto dismiss after 3s
-      const timer = setTimeout(() => dismissToast(toast), 3000);
-      toast._timer = timer;
+      toast._timer = setTimeout(() => dismissToast(toast), 3000);
     }
-
     function dismissToast(toast) {
       if (!toast) return;
       clearTimeout(toast._timer);
       toast.classList.add('hide');
       setTimeout(() => toast.remove(), 300);
     }
+
+    // ── SIGN IN BUTTON LOADER ──
+    document.getElementById('signinForm').addEventListener('submit', function(e) {
+      const email    = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+
+      if (!email || !password) {
+        e.preventDefault();
+        if (!email)    showToast('Please enter your email address.', 'error');
+        else           showToast('Please enter your password.', 'error');
+        return;
+      }
+
+      const btn     = document.getElementById('signInBtn');
+      const content = document.getElementById('signInBtnContent');
+      btn.disabled  = true;
+      btn.classList.add('loading');
+      content.innerHTML = `
+        <span class="btn-spinner"></span>
+        <span style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;letter-spacing:0.05em;">Signing in...</span>
+      `;
+    });
   </script>
 
 </body>

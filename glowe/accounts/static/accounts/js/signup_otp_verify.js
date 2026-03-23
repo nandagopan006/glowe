@@ -114,8 +114,6 @@ function showToast(type, title, message) {
   `;
 
   container.appendChild(toast);
-
-  // ✅ 2 seconds only
   toast._timer = setTimeout(() => dismissToast(toast), 2000);
 }
 
@@ -133,6 +131,10 @@ inputs.forEach((input, index) => {
 
   input.addEventListener('input', () => {
     input.value = input.value.replace(/[^0-9]/g, '');
+
+    // clear error state on all boxes when user starts typing
+    inputs.forEach(i => i.classList.remove('error-box'));
+
     if (input.value) {
       input.classList.add('filled');
       if (index < inputs.length - 1) inputs[index + 1].focus();
@@ -164,12 +166,52 @@ inputs.forEach((input, index) => {
 
 });
 
+// ── VERIFY BUTTON LOADER ──
+const verifyBtn       = document.getElementById('verify-btn');
+const verifyBtnLabel  = document.getElementById('verify-btn-label');
+const verifyBtnArrow  = document.getElementById('verify-btn-arrow');
+const verifyBtnLoader = document.getElementById('verify-btn-loader');
+
+document.getElementById('otp-form').addEventListener('submit', () => {
+  const otp = hiddenInput.value;
+  if (otp.length === 4) {
+    // show loader, hide label + arrow
+    verifyBtnLabel.textContent  = 'Verifying';
+    verifyBtnArrow.classList.add('hidden');
+    verifyBtnLoader.classList.remove('hidden');
+    verifyBtn.disabled = true;
+    verifyBtn.style.opacity = '0.85';
+    verifyBtn.style.cursor  = 'not-allowed';
+  }
+});
+
+// ── RESEND LOADER ──
+const resendLabel  = document.getElementById('resend-label');
+const resendLoader = document.getElementById('resend-loader');
+
+resendBtn.addEventListener('click', (e) => {
+  if (resendBtn.classList.contains('pointer-events-none')) return;
+  // show loader on resend
+  resendLabel.textContent = 'Sending';
+  resendLoader.classList.remove('hidden');
+  resendBtn.style.pointerEvents = 'none';
+});
+
 // ── PAGE LOAD — show correct toast ──
 window.addEventListener('load', () => {
   const errorEl   = document.querySelector('.text-red-500');
   const successEl = document.getElementById('otp-success-msg');
 
   if (errorEl) {
+    // re-fill boxes from submitted OTP value on error
+    const submitted = hiddenInput.value || '';
+    [...submitted].forEach((char, i) => {
+      if (inputs[i]) {
+        inputs[i].value = char;
+        inputs[i].classList.add('filled');
+      }
+    });
+
     otpBoxes.classList.add('shake');
     inputs.forEach(i => i.classList.add('error-box'));
     setTimeout(() => otpBoxes.classList.remove('shake'), 500);
@@ -215,7 +257,7 @@ const timerInterval = setInterval(() => {
 
 }, 1000);
 
-// ── RESEND CLICK ──
+// ── RESEND CLICK — disable after click ──
 resendBtn.addEventListener('click', () => {
   resendBtn.classList.add('pointer-events-none', 'opacity-40');
 });

@@ -1,56 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Glowé – Skincare</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        fontFamily: {
-          cormorant: ['"Cormorant Garamond"', 'serif'],
-          montserrat: ['Montserrat', 'sans-serif'],
-        }
-      }
-    }
-  }
-</script>
-<style>
-*, *::before, *::after { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; overflow-x: hidden; }
+{% extends 'base.html' %}
 
-.btn-pill {
-  display:inline-flex; align-items:center; justify-content:center;
-  background:rgba(108,104,98,0.55); backdrop-filter:blur(14px);
-  border-radius:9999px; padding:17px 52px;
-  font-family:'Montserrat',sans-serif; font-size:10px; font-weight:700;
-  letter-spacing:0.22em; text-transform:uppercase; color:#fff;
-  border:none; cursor:pointer; text-decoration:none; transition:background .25s;
-}
-.btn-pill:hover { background:rgba(108,104,98,0.75); }
+{% block title %}Glowé – Skincare{% endblock %}
 
-.btn-dark {
-  display:inline-flex; align-items:center; justify-content:center;
-  background:#1a1208; color:#fff;
-  font-family:'Montserrat',sans-serif; font-size:10px; font-weight:700;
-  letter-spacing:0.22em; text-transform:uppercase;
-  padding:16px 48px; border:none; cursor:pointer; text-decoration:none;
-  transition:background .2s;
-}
-.btn-dark:hover { background:#2d1f0e; }
-
-.iz { overflow:hidden; display:block; }
-.iz img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .5s ease; }
-.iz:hover img { transform:scale(1.04); }
-
+{% block extra_css %}
+/* home-page only styles */
 @media (min-width:768px) {
   .seas-woman { margin-left:50vw; margin-top:-14vw; overflow:hidden; height:clamp(280px,54vw,680px); }
   .seas-woman img { width:100%; height:100%; object-fit:cover; object-position:center top; display:block; }
 }
-
 .s25-scene { position:relative; height:clamp(500px,60vw,860px); }
 .s25-a { position:absolute; left:2%;  bottom:40px; width:41%; height:88%; overflow:hidden; }
 .s25-b { position:absolute; left:40%; bottom:40px; width:24%; height:57%; overflow:hidden; }
@@ -60,280 +17,12 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
 .s25-ca { position:absolute; left:2%;  bottom:0; width:41%; text-align:center; }
 .s25-cb { position:absolute; left:40%; bottom:0; width:24%; text-align:center; }
 .s25-cc { position:absolute; left:66%; bottom:0; width:24%; text-align:center; }
-
 .glow-img { height:clamp(260px,41vw,560px); overflow:hidden; }
 .glow-img img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .5s; }
 .glow-img:hover img { transform:scale(1.03); }
+{% endblock %}
 
-/* ── Profile Dropdown ── */
-.profile-dropdown {
-  position: absolute;
-  top: calc(100% + 12px);
-  right: 0;
-  width: 260px;
-  background: #ffffff;
-  border-radius: 16px;
-  border: 1px solid rgba(26,18,8,0.08);
-  box-shadow: 0 8px 40px rgba(26,18,8,0.12), 0 2px 8px rgba(26,18,8,0.06);
-  opacity: 0;
-  transform: translateY(-8px) scale(0.97);
-  pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  z-index: 200;
-  overflow: hidden;
-}
-.profile-dropdown.open {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  pointer-events: all;
-}
-
-/* Mobile dropdown: full-width from top of screen */
-.profile-dropdown-mobile {
-  position: fixed;
-  top: 64px;
-  right: 12px;
-  left: 12px;
-  background: #ffffff;
-  border-radius: 16px;
-  border: 1px solid rgba(26,18,8,0.08);
-  box-shadow: 0 8px 40px rgba(26,18,8,0.14);
-  opacity: 0;
-  transform: translateY(-8px) scale(0.98);
-  pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-  z-index: 200;
-  overflow: hidden;
-}
-.profile-dropdown-mobile.open {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-  pointer-events: all;
-}
-
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 11px 18px;
-  font-family: 'Montserrat', sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-  color: #2a2018;
-  text-decoration: none;
-  cursor: pointer;
-  border: none;
-  background: none;
-  width: 100%;
-  text-align: left;
-  transition: background 0.15s;
-  letter-spacing: 0.02em;
-}
-.dropdown-item:hover { background: #f7f3ee; }
-.dropdown-item.danger { color: #c0392b; }
-.dropdown-item.danger:hover { background: #fdf3f1; }
-
-.dropdown-item svg { opacity: 0.5; flex-shrink: 0; }
-.dropdown-item:hover svg { opacity: 0.8; }
-.dropdown-item.danger svg { opacity: 0.7; }
-</style>
-</head>
-<body class="bg-[#f0ebe2] font-montserrat text-[#1a1208] overflow-x-hidden">
-
-
-<!-- ══════════════════════════════════
-  NAVBAR
-══════════════════════════════════ -->
-<header class="sticky top-0 z-50 bg-white border-b border-[#e6e0d8] h-16 flex items-center">
-  <div class="w-full px-5 md:px-8 flex items-center justify-between relative">
-
-    <!-- ── MOBILE nav ── -->
-    <div class="flex md:hidden w-full items-center justify-between">
-      <button class="flex flex-col gap-[5px] p-1" aria-label="Menu">
-        <span class="w-[22px] h-[1.5px] bg-[#1a1208] block"></span>
-        <span class="w-[22px] h-[1.5px] bg-[#1a1208] block"></span>
-        <span class="w-[22px] h-[1.5px] bg-[#1a1208] block"></span>
-      </button>
-
-      <a href="#" class="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 no-underline">
-        <svg width="20" height="20" viewBox="0 0 28 28" fill="none" stroke="#1a1208" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 24C14 24 4 18 4 10C4 6 8 3 12 4C13 4 14 5 14 5"/>
-          <path d="M14 24C14 24 24 18 24 10C24 6 20 3 16 4C15 4 14 5 14 5"/>
-          <line x1="14" y1="24" x2="14" y2="10"/>
-        </svg>
-        <span class="font-cormorant text-[20px] font-semibold tracking-[0.04em] text-[#1a1208]">Glowé</span>
-      </a>
-
-      <!-- Mobile avatar trigger -->
-      <div class="relative shrink-0">
-        {% if user.is_authenticated %}
-          <!-- Authenticated: avatar opens dropdown -->
-          <button id="avatar-btn-mobile" onclick="toggleDropdown('mobile')" aria-label="Profile menu" aria-haspopup="true" aria-expanded="false"
-            class="w-9 h-9 rounded-full overflow-hidden border-2 border-[#e6e0d8] hover:border-[#c8b89a] transition-colors focus:outline-none focus:ring-2 focus:ring-[#c8b89a] focus:ring-offset-1">
-            {% if user.profile_image %}
-  <img src="{{ user.profile_image.url }}" alt="{{ user.full_name }}" class="w-full h-full object-cover"/>
-            {% else %}
-              <div class="w-full h-full bg-[#e6e0d8] flex items-center justify-center font-montserrat font-semibold text-[12px] text-[#1a1208]">
-                {{ user.full_name|first|upper }}
-              </div>
-            {% endif %}
-          </button>
-          <!-- Mobile dropdown -->
-          <div id="dropdown-mobile" class="profile-dropdown-mobile" role="menu">
-            <!-- User info -->
-            <div class="flex items-center gap-3 px-4 py-4 border-b border-[#f0ebe2]">
-              <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-[#e6e0d8] bg-[#e6e0d8] flex items-center justify-center">
-                {% if user.profile_image %}
-  <img src="{{ user.profile_image.url }}" alt="{{ user.full_name }}" class="w-full h-full object-cover"/>
-                {% else %}
-                  <span class="font-montserrat font-semibold text-[12px] text-[#1a1208]">{{ user.full_name|first|upper }}</span>
-                {% endif %}
-              </div>
-              <div class="min-w-0">
-                <p class="font-montserrat font-semibold text-[13px] text-[#1a1208] leading-tight truncate">{{ user.get_full_name}}</p>
-                <p class="font-montserrat font-light text-[11px] text-[#8a7e72] leading-tight truncate">{{ user.email }}</p>
-              </div>
-            </div>
-            <!-- Menu items -->
-            <div class="py-2">
-              <a href="{% url "profile_overview"%}" class="dropdown-item" role="menuitem">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                My Profile
-              </a>
-              <a href="" class="dropdown-item" role="menuitem">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                Account Settings
-              </a>
-              <a href="" class="dropdown-item" role="menuitem">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                My Orders
-              </a>
-            </div>
-            <!-- Logout -->
-            <div class="border-t border-[#f0ebe2] py-2">
-              <form method="post" action="{% url 'signout' %}">
-                {% csrf_token %}
-                <button type="submit" class="dropdown-item danger" role="menuitem">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                  Sign Out
-                </button>
-              </form>
-            </div>
-          </div>
-        {% else %}
-          <!-- Not authenticated: icon links to signin -->
-          <a href="{% url 'signin' %}" aria-label="Sign in"
-            class="w-9 h-9 rounded-full border border-[#d8d2ca] flex items-center justify-center hover:border-[#c8b89a] transition-colors">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-            </svg>
-          </a>
-        {% endif %}
-      </div>
-    </div>
-
-    <!-- ── DESKTOP nav ── -->
-    <div class="hidden md:flex items-center justify-between w-full">
-      <a href="#" class="flex items-center gap-2.5 no-underline shrink-0">
-        <svg width="26" height="26" viewBox="0 0 28 28" fill="none" stroke="#1a1208" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 24C14 24 4 18 4 10C4 6 8 3 12 4C13 4 14 5 14 5"/>
-          <path d="M14 24C14 24 24 18 24 10C24 6 20 3 16 4C15 4 14 5 14 5"/>
-          <line x1="14" y1="24" x2="14" y2="10"/>
-        </svg>
-        <span class="font-cormorant text-[22px] font-semibold tracking-[0.04em] text-[#1a1208]">Glowé</span>
-      </a>
-
-      <nav class="flex items-center gap-10 absolute left-1/2 -translate-x-1/2">
-        <a href="#" class="font-montserrat text-[11px] font-medium tracking-[0.16em] uppercase text-[#2a2018] no-underline hover:text-black">Shop</a>
-        <a href="#" class="font-montserrat text-[11px] font-medium tracking-[0.16em] uppercase text-[#2a2018] no-underline hover:text-black">Collections</a>
-        <a href="#" class="font-montserrat text-[11px] font-medium tracking-[0.16em] uppercase text-[#2a2018] no-underline hover:text-black">About</a>
-        <a href="#" class="font-montserrat text-[11px] font-medium tracking-[0.16em] uppercase text-[#2a2018] no-underline hover:text-black">Contact</a>
-      </nav>
-
-      <div class="flex items-center gap-5 shrink-0">
-        <!-- Search -->
-        <svg class="w-5 h-5 cursor-pointer" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4.8-4.8"/></svg>
-        <!-- Wishlist -->
-        <svg class="w-5 h-5 cursor-pointer" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-        <!-- Cart -->
-        <div class="relative cursor-pointer">
-          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-          <span class="absolute -top-2 -right-2.5 bg-[#1a1208] text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center">2</span>
-        </div>
-
-        <!-- ── Profile avatar + dropdown ── -->
-        <div class="relative" id="profile-wrapper-desktop">
-          {% if user.is_authenticated %}
-            <!-- Authenticated: avatar opens dropdown -->
-            <button id="avatar-btn-desktop" onclick="toggleDropdown('desktop')" aria-label="Profile menu" aria-haspopup="true" aria-expanded="false"
-              class="w-9 h-9 rounded-full overflow-hidden border-2 border-[#e6e0d8] hover:border-[#c8b89a] transition-all focus:outline-none focus:ring-2 focus:ring-[#c8b89a] focus:ring-offset-1 cursor-pointer">
-              {% if user.profile_image %}
-  <img src="{{ user.profile_image.url }}" alt="{{ user.full_name }}" class="w-full h-full object-cover"/>
-              {% else %}
-                <div class="w-full h-full bg-[#e6e0d8] flex items-center justify-center font-montserrat font-semibold text-[12px] text-[#1a1208]">
-                {{ user.full_name|first|upper }}
-                </div>
-              {% endif %}
-            </button>
-            <!-- Desktop dropdown -->
-            <div id="dropdown-desktop" class="profile-dropdown" role="menu" aria-label="Profile menu">
-              <!-- User info header -->
-              <div class="flex items-center gap-3 px-4 py-4 bg-[#faf8f5] border-b border-[#f0ebe2]">
-                <div class="w-11 h-11 rounded-full overflow-hidden shrink-0 border border-[#e6e0d8] bg-[#e6e0d8] flex items-center justify-center">
-                 {% if user.profile_image %}
-  <img src="{{ user.profile_image.url }}" alt="{{ user.full_name }}" class="w-full h-full object-cover"/>
-                  {% else %}
-                    <span class="font-montserrat font-semibold text-[13px] text-[#1a1208]">{{ user.full_name|first|upper }}</span>
-                  {% endif %}
-                </div>
-                <div class="min-w-0">
-                  <p class="font-montserrat font-semibold text-[13px] text-[#1a1208] leading-tight">{{ user.get_full_name|default:user.full_name }}</p>
-                  <p class="font-montserrat font-light text-[11px] text-[#8a7e72] leading-tight mt-0.5">{{ user.email }}</p>
-                </div>
-              </div>
-              <!-- Menu items -->
-              <div class="py-2">
-                <a href="{% url "profile_overview"%}" class="dropdown-item" role="menuitem">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                  My Profile
-                </a>
-                <a href="" class="dropdown-item" role="menuitem">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                  Account Settings
-                </a>
-                <a href="" class="dropdown-item" role="menuitem">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                  My Orders
-                </a>
-              </div>
-              <!-- Divider + Logout -->
-              <div class="border-t border-[#f0ebe2] py-2">
-                <form method="post" action="{% url 'signout' %}">
-                  {% csrf_token %}
-                  <button type="submit" class="dropdown-item danger" role="menuitem">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                    Sign Out
-                  </button>
-                </form>
-              </div>
-            </div>
-          {% else %}
-            <!-- Not authenticated: icon links to signin -->
-            <a href="{% url 'signin' %}" aria-label="Sign in"
-              class="w-9 h-9 rounded-full border border-[#d8d2ca] flex items-center justify-center hover:border-[#c8b89a] transition-colors">
-              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-              </svg>
-            </a>
-          {% endif %}
-        </div>
-        <!-- ── End profile ── -->
-      </div>
-    </div>
-
-  </div>
-</header>
-
+{% block content %}
 
 <!-- ══════════════════════════════════
   HERO
@@ -370,7 +59,6 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
   </div>
 </section>
 
-
 <!-- ══════════════════════════════════
   OUR PHILOSOPHY
 ══════════════════════════════════ -->
@@ -378,26 +66,16 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
   <div class="text-center px-6 md:px-10 mb-10 md:mb-14">
     <h2 class="font-montserrat font-bold uppercase text-[#1a1208] mb-6 tracking-[0.22em]" style="font-size:clamp(18px,2.4vw,32px);">Our Philosophy</h2>
     <p class="font-montserrat font-light text-[#2a2018] text-[13px] md:text-[14px] text-center leading-[2.0] max-w-[600px] mx-auto">
-      Infused with potent botanicals and advanced actives,
-      our formulas restore balance and strengthen your skin barrier.
-      Revealing a luminous, healthy glow that feels effortlessly natural.
+      Infused with potent botanicals and advanced actives, our formulas restore balance and strengthen your skin barrier. Revealing a luminous, healthy glow that feels effortlessly natural.
     </p>
   </div>
   <div class="flex flex-col md:hidden">
-    <div class="iz w-full h-[280px]">
-      <img src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=1100&q=90&fit=crop&crop=faces,top" alt="Philosophy 1" style="object-position:center 25%;"/>
-    </div>
-    <div class="iz w-full h-[240px]">
-      <img src="https://images.unsplash.com/photo-1600428610114-e9d4f8faebe2?w=900&q=90&fit=crop" alt="Philosophy 2" style="object-position:center center;"/>
-    </div>
+    <div class="iz w-full h-[280px]"><img src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=1100&q=90&fit=crop&crop=faces,top" alt="Philosophy 1" style="object-position:center 25%;"/></div>
+    <div class="iz w-full h-[240px]"><img src="https://images.unsplash.com/photo-1600428610114-e9d4f8faebe2?w=900&q=90&fit=crop" alt="Philosophy 2" style="object-position:center center;"/></div>
   </div>
   <div class="hidden md:flex gap-[4px]">
-    <div class="iz shrink-0" style="width:54vw; height:clamp(340px,42vw,600px);">
-      <img src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=1100&q=90&fit=crop&crop=faces,top" alt="Philosophy 1" style="object-position:center 25%;"/>
-    </div>
-    <div class="iz shrink-0" style="width:29vw; height:clamp(340px,42vw,600px);">
-      <img src="https://images.unsplash.com/photo-1600428610114-e9d4f8faebe2?w=900&q=90&fit=crop" alt="Philosophy 2" style="object-position:center center;"/>
-    </div>
+    <div class="iz shrink-0" style="width:54vw; height:clamp(340px,42vw,600px);"><img src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=1100&q=90&fit=crop&crop=faces,top" alt="Philosophy 1" style="object-position:center 25%;"/></div>
+    <div class="iz shrink-0" style="width:29vw; height:clamp(340px,42vw,600px);"><img src="https://images.unsplash.com/photo-1600428610114-e9d4f8faebe2?w=900&q=90&fit=crop" alt="Philosophy 2" style="object-position:center center;"/></div>
   </div>
 </section>
 
@@ -405,73 +83,46 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
   <a href="#" class="flex md:inline-flex items-center justify-center bg-[#1a1208] text-white font-montserrat text-[10px] font-bold tracking-[0.22em] uppercase no-underline py-[18px] md:py-4 px-6 md:px-12 w-full md:w-auto transition-colors hover:bg-[#2d1f0e]">SHOP NOW</a>
 </div>
 
-
 <!-- ══════════════════════════════════
   SHOP ALL PRODUCTS
 ══════════════════════════════════ -->
 <section class="bg-[#f0ebe2] pb-14 md:pb-[72px]">
   <h2 class="font-montserrat font-bold uppercase text-[#1a1208] text-center mb-8 md:mb-12 px-6 tracking-[0.22em]" style="font-size:clamp(16px,2.2vw,30px);">Shop All Products</h2>
   <div class="grid grid-cols-2 md:grid-cols-4 w-full gap-[2px]">
-
     <div class="bg-[#f0ebe2]">
-      <div class="iz h-[220px] md:h-[clamp(280px,32vw,460px)]">
-        <img src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=700&q=90&fit=crop" alt="Serum"/>
-      </div>
+      <div class="iz h-[220px] md:h-[clamp(280px,32vw,460px)]"><img src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=700&q=90&fit=crop" alt="Serum"/></div>
       <div class="px-3 md:px-4 pt-4 pb-6">
         <p class="font-montserrat text-[9px] font-semibold tracking-[0.18em] uppercase text-[#6a5e52] mb-2">SERUM</p>
         <p class="font-cormorant text-[18px] md:text-[20px] text-[#1a1208] mb-2 leading-snug">Collagen and Retinol Serum</p>
-        <div class="flex items-baseline gap-2">
-          <span class="font-montserrat text-[12px] font-semibold text-[#1a1208]">$45.00</span>
-          <span class="font-montserrat text-[12px] font-light text-[#b0a494] line-through">$55.00</span>
-        </div>
+        <div class="flex items-baseline gap-2"><span class="font-montserrat text-[12px] font-semibold text-[#1a1208]">$45.00</span><span class="font-montserrat text-[12px] font-light text-[#b0a494] line-through">$55.00</span></div>
       </div>
     </div>
-
     <div class="bg-[#f0ebe2]">
-      <div class="iz h-[220px] md:h-[clamp(280px,32vw,460px)]">
-        <img src="https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=700&q=90&fit=crop" alt="Cleanser"/>
-      </div>
+      <div class="iz h-[220px] md:h-[clamp(280px,32vw,460px)]"><img src="https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=700&q=90&fit=crop" alt="Cleanser"/></div>
       <div class="px-3 md:px-4 pt-4 pb-6">
         <p class="font-montserrat text-[9px] font-semibold tracking-[0.18em] uppercase text-[#6a5e52] mb-2">CLEANSER</p>
         <p class="font-cormorant text-[18px] md:text-[20px] text-[#1a1208] mb-2 leading-snug">Balancing Toner</p>
-        <div class="flex items-baseline gap-2">
-          <span class="font-montserrat text-[12px] font-semibold text-[#1a1208]">$28.00</span>
-          <span class="font-montserrat text-[12px] font-light text-[#b0a494] line-through">$35.00</span>
-        </div>
+        <div class="flex items-baseline gap-2"><span class="font-montserrat text-[12px] font-semibold text-[#1a1208]">$28.00</span><span class="font-montserrat text-[12px] font-light text-[#b0a494] line-through">$35.00</span></div>
       </div>
     </div>
-
     <div class="bg-[#f0ebe2]">
-      <div class="iz h-[220px] md:h-[clamp(280px,32vw,460px)]">
-        <img src="https://images.unsplash.com/photo-1601049676869-702ea24cfd58?w=700&q=90&fit=crop" alt="Moisturizer"/>
-      </div>
+      <div class="iz h-[220px] md:h-[clamp(280px,32vw,460px)]"><img src="https://images.unsplash.com/photo-1601049676869-702ea24cfd58?w=700&q=90&fit=crop" alt="Moisturizer"/></div>
       <div class="px-3 md:px-4 pt-4 pb-6">
         <p class="font-montserrat text-[9px] font-semibold tracking-[0.18em] uppercase text-[#6a5e52] mb-2">MOISTURIZER</p>
         <p class="font-cormorant text-[18px] md:text-[20px] text-[#1a1208] mb-2 leading-snug">ReBalance Sensitive</p>
-        <div class="flex items-baseline gap-2">
-          <span class="font-montserrat text-[12px] font-semibold text-[#1a1208]">$37.00</span>
-          <span class="font-montserrat text-[12px] font-light text-[#b0a494] line-through">$45.00</span>
-        </div>
+        <div class="flex items-baseline gap-2"><span class="font-montserrat text-[12px] font-semibold text-[#1a1208]">$37.00</span><span class="font-montserrat text-[12px] font-light text-[#b0a494] line-through">$45.00</span></div>
       </div>
     </div>
-
     <div class="bg-[#f0ebe2]">
-      <div class="iz h-[220px] md:h-[clamp(280px,32vw,460px)]">
-        <img src="https://images.unsplash.com/photo-1614806687007-2215e7b3e3bb?w=700&q=90&fit=crop" alt="Suncream"/>
-      </div>
+      <div class="iz h-[220px] md:h-[clamp(280px,32vw,460px)]"><img src="https://images.unsplash.com/photo-1614806687007-2215e7b3e3bb?w=700&q=90&fit=crop" alt="Suncream"/></div>
       <div class="px-3 md:px-4 pt-4 pb-6">
         <p class="font-montserrat text-[9px] font-semibold tracking-[0.18em] uppercase text-[#6a5e52] mb-2">SUNCREAM</p>
         <p class="font-cormorant text-[18px] md:text-[20px] text-[#1a1208] mb-2 leading-snug">Belif Milky Niacinamide</p>
-        <div class="flex items-baseline gap-2">
-          <span class="font-montserrat text-[12px] font-semibold text-[#1a1208]">$68.00</span>
-          <span class="font-montserrat text-[12px] font-light text-[#b0a494] line-through">$85.00</span>
-        </div>
+        <div class="flex items-baseline gap-2"><span class="font-montserrat text-[12px] font-semibold text-[#1a1208]">$68.00</span><span class="font-montserrat text-[12px] font-light text-[#b0a494] line-through">$85.00</span></div>
       </div>
     </div>
-
   </div>
 </section>
-
 
 <!-- ══════════════════════════════════
   SEASONAL ESSENTIAL
@@ -486,23 +137,14 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
     <div class="flex flex-col items-center md:items-start text-center md:text-left px-6 md:px-0 pt-7 md:pt-1.5 md:flex-1 md:pr-[18%]">
       <p class="hidden md:block font-montserrat font-bold uppercase text-[#1a1208] text-[11px] tracking-[0.22em] mb-4">Seasonal Essential</p>
       <p class="md:hidden font-montserrat font-bold uppercase text-[#1a1208] text-[20px] tracking-[0.18em] mb-4">SUMMER HIT</p>
-      <p class="font-montserrat font-light text-[#3a3028] text-[12px] leading-[1.95] mb-8 max-w-full md:max-w-[265px]">
-        Lightweight hydration meets powerful protection.
-        Our summer formulas defend against sun exposure
-        while preserving your skin's natural luminosity.
-      </p>
+      <p class="font-montserrat font-light text-[#3a3028] text-[12px] leading-[1.95] mb-8 max-w-full md:max-w-[265px]">Lightweight hydration meets powerful protection. Our summer formulas defend against sun exposure while preserving your skin's natural luminosity.</p>
       <a href="#" class="flex md:hidden items-center justify-center w-full bg-[#1a1208] text-white font-montserrat text-[10px] font-bold tracking-[0.22em] uppercase no-underline py-[18px] hover:bg-[#2d1f0e]">DISCOVER RELEASE</a>
       <a href="#" class="hidden md:inline-flex btn-dark">DISCOVER RELEASE</a>
     </div>
   </div>
-  <div class="iz md:hidden w-full h-[300px] mt-10">
-    <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1600&q=90&fit=crop&crop=top" alt="Woman"/>
-  </div>
-  <div class="hidden md:block seas-woman">
-    <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1600&q=90&fit=crop&crop=top" alt="Woman"/>
-  </div>
+  <div class="iz md:hidden w-full h-[300px] mt-10"><img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1600&q=90&fit=crop&crop=top" alt="Woman"/></div>
+  <div class="hidden md:block seas-woman"><img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1600&q=90&fit=crop&crop=top" alt="Woman"/></div>
 </section>
-
 
 <!-- ══════════════════════════════════
   SUMMER 25 SEASON
@@ -521,19 +163,12 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
     <div class="text-center mt-14"><a href="#" class="btn-dark">SEE ALL CATEGORIES</a></div>
   </div>
   <div class="md:hidden">
-    <div class="text-center pt-9 pb-7 px-6">
-      <p class="font-montserrat font-bold uppercase text-[#1a1208] text-[17px] tracking-[0.22em]">SUMMER 25 SEASON</p>
-    </div>
-    <div class="iz mx-6 h-[320px]">
-      <img src="https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=700&q=90&fit=crop&crop=faces,top" alt="Season"/>
-    </div>
+    <div class="text-center pt-9 pb-7 px-6"><p class="font-montserrat font-bold uppercase text-[#1a1208] text-[17px] tracking-[0.22em]">SUMMER 25 SEASON</p></div>
+    <div class="iz mx-6 h-[320px]"><img src="https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=700&q=90&fit=crop&crop=faces,top" alt="Season"/></div>
     <p class="font-montserrat font-semibold uppercase text-[#1a1208] text-center text-[11px] tracking-[0.2em] py-5">SANDALS</p>
-    <div class="px-6 pb-12">
-      <a href="#" class="flex items-center justify-center w-full bg-[#1a1208] text-white font-montserrat text-[10px] font-bold tracking-[0.22em] uppercase no-underline py-[18px] hover:bg-[#2d1f0e]">SEE ALL CATEGORIES</a>
-    </div>
+    <div class="px-6 pb-12"><a href="#" class="flex items-center justify-center w-full bg-[#1a1208] text-white font-montserrat text-[10px] font-bold tracking-[0.22em] uppercase no-underline py-[18px] hover:bg-[#2d1f0e]">SEE ALL CATEGORIES</a></div>
   </div>
 </section>
-
 
 <!-- ══════════════════════════════════
   WHAT'S NEW
@@ -542,9 +177,7 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
   <h2 class="font-montserrat font-bold uppercase text-[#1a1208] text-center mb-8 md:mb-10 px-6 md:px-10 tracking-[0.24em]" style="font-size:clamp(15px,1.8vw,22px);">What's New?</h2>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-0 md:gap-2.5 max-w-[1440px] mx-auto px-0 md:px-10">
     <div>
-      <div class="iz h-[240px] md:h-[clamp(200px,14vw,215px)]">
-        <img src="https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=700&q=90&fit=crop&crop=faces" alt="Blog 1"/>
-      </div>
+      <div class="iz h-[240px] md:h-[clamp(200px,14vw,215px)]"><img src="https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=700&q=90&fit=crop&crop=faces" alt="Blog 1"/></div>
       <div class="text-center md:text-left px-6 md:px-0 pt-5 pb-8 md:pb-0">
         <p class="font-montserrat text-[9px] font-bold tracking-[0.16em] uppercase text-[#7a6e62] mb-1.5">BLOG POST 01</p>
         <p class="font-montserrat text-[13px] font-bold text-[#1a1208] leading-snug mb-2 tracking-[0.05em]">PARIS FASHION WEEK 2024</p>
@@ -552,9 +185,7 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
       </div>
     </div>
     <div>
-      <div class="iz h-[240px] md:h-[clamp(200px,14vw,215px)]">
-        <img src="https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=700&q=90&fit=crop" alt="Blog 2"/>
-      </div>
+      <div class="iz h-[240px] md:h-[clamp(200px,14vw,215px)]"><img src="https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=700&q=90&fit=crop" alt="Blog 2"/></div>
       <div class="text-center md:text-left px-6 md:px-0 pt-5 pb-8 md:pb-0">
         <p class="font-montserrat text-[9px] font-bold tracking-[0.16em] uppercase text-[#7a6e62] mb-1.5">BLOG POST 02</p>
         <p class="font-montserrat text-[13px] font-bold text-[#1a1208] leading-snug mb-2 tracking-[0.05em]">BRAZILIAN SUMMER VIBES</p>
@@ -562,9 +193,7 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
       </div>
     </div>
     <div>
-      <div class="iz h-[240px] md:h-[clamp(200px,14vw,215px)]">
-        <img src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=700&q=90&fit=crop&crop=faces,top" alt="Blog 3"/>
-      </div>
+      <div class="iz h-[240px] md:h-[clamp(200px,14vw,215px)]"><img src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=700&q=90&fit=crop&crop=faces,top" alt="Blog 3"/></div>
       <div class="text-center md:text-left px-6 md:px-0 pt-5 pb-8 md:pb-0">
         <p class="font-montserrat text-[9px] font-bold tracking-[0.16em] uppercase text-[#7a6e62] mb-1.5">BLOG POST 03</p>
         <p class="font-montserrat text-[13px] font-bold text-[#1a1208] leading-snug mb-2 tracking-[0.05em]">WHITE IS THE NEW BLACK</p>
@@ -574,7 +203,6 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
   </div>
 </section>
 
-
 <!-- ══════════════════════════════════
   MOSTLY VIEWED
 ══════════════════════════════════ -->
@@ -582,48 +210,27 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
   <h2 class="font-montserrat font-bold uppercase text-[#1a1208] text-center mb-8 md:mb-10 tracking-[0.24em]" style="font-size:clamp(15px,1.8vw,22px);">Mostly Viewed</h2>
   <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-2.5 max-w-[1440px] mx-auto">
     <div>
-      <div class="iz h-[170px] md:h-[clamp(140px,16vw,260px)]">
-        <img src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=700&q=90&fit=crop" alt="Hydra Glow Serum"/>
-      </div>
+      <div class="iz h-[170px] md:h-[clamp(140px,16vw,260px)]"><img src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=700&q=90&fit=crop" alt="Hydra Glow Serum"/></div>
       <p class="font-cormorant text-[15px] md:text-[16px] text-[#1a1208] mt-3 mb-1 text-left md:text-center">Hydra Glow Serum</p>
-      <div class="flex items-baseline gap-2 pb-4 justify-start md:justify-center">
-        <span class="font-montserrat text-[11px] md:text-[12px] font-semibold text-[#1a1208]">$30.00</span>
-        <span class="font-montserrat text-[11px] md:text-[12px] font-light text-[#b0a494] line-through">$43.00</span>
-      </div>
+      <div class="flex items-baseline gap-2 pb-4 justify-start md:justify-center"><span class="font-montserrat text-[11px] md:text-[12px] font-semibold text-[#1a1208]">$30.00</span><span class="font-montserrat text-[11px] md:text-[12px] font-light text-[#b0a494] line-through">$43.00</span></div>
     </div>
     <div>
-      <div class="iz h-[170px] md:h-[clamp(140px,16vw,260px)]">
-        <img src="https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=700&q=90&fit=crop" alt="Vitamin C Cleanser"/>
-      </div>
+      <div class="iz h-[170px] md:h-[clamp(140px,16vw,260px)]"><img src="https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=700&q=90&fit=crop" alt="Vitamin C Cleanser"/></div>
       <p class="font-cormorant text-[15px] md:text-[16px] text-[#1a1208] mt-3 mb-1 text-left md:text-center">Vitamin C Cleanser</p>
-      <div class="flex items-baseline gap-2 pb-4 justify-start md:justify-center">
-        <span class="font-montserrat text-[11px] md:text-[12px] font-semibold text-[#1a1208]">$24.00</span>
-        <span class="font-montserrat text-[11px] md:text-[12px] font-light text-[#b0a494] line-through">$43.00</span>
-      </div>
+      <div class="flex items-baseline gap-2 pb-4 justify-start md:justify-center"><span class="font-montserrat text-[11px] md:text-[12px] font-semibold text-[#1a1208]">$24.00</span><span class="font-montserrat text-[11px] md:text-[12px] font-light text-[#b0a494] line-through">$43.00</span></div>
     </div>
     <div>
-      <div class="iz h-[170px] md:h-[clamp(140px,16vw,260px)]">
-        <img src="https://images.unsplash.com/photo-1631730486784-74757a9ea37f?w=700&q=90&fit=crop&crop=faces" alt="Barrier Repair Cream"/>
-      </div>
+      <div class="iz h-[170px] md:h-[clamp(140px,16vw,260px)]"><img src="https://images.unsplash.com/photo-1631730486784-74757a9ea37f?w=700&q=90&fit=crop&crop=faces" alt="Barrier Repair Cream"/></div>
       <p class="font-cormorant text-[15px] md:text-[16px] text-[#1a1208] mt-3 mb-1 text-left md:text-center">Barrier Repair Cream</p>
-      <div class="flex items-baseline gap-2 pb-4 justify-start md:justify-center">
-        <span class="font-montserrat text-[11px] md:text-[12px] font-semibold text-[#1a1208]">$35.00</span>
-        <span class="font-montserrat text-[11px] md:text-[12px] font-light text-[#b0a494] line-through">$43.00</span>
-      </div>
+      <div class="flex items-baseline gap-2 pb-4 justify-start md:justify-center"><span class="font-montserrat text-[11px] md:text-[12px] font-semibold text-[#1a1208]">$35.00</span><span class="font-montserrat text-[11px] md:text-[12px] font-light text-[#b0a494] line-through">$43.00</span></div>
     </div>
     <div>
-      <div class="iz h-[170px] md:h-[clamp(140px,16vw,260px)]">
-        <img src="https://images.unsplash.com/photo-1556229010-6c3f2c9ca5f8?w=700&q=90&fit=crop" alt="Daily Shield SPF 55+"/>
-      </div>
+      <div class="iz h-[170px] md:h-[clamp(140px,16vw,260px)]"><img src="https://images.unsplash.com/photo-1556229010-6c3f2c9ca5f8?w=700&q=90&fit=crop" alt="Daily Shield SPF 55+"/></div>
       <p class="font-cormorant text-[15px] md:text-[16px] text-[#1a1208] mt-3 mb-1 text-left md:text-center">Daily Shield SPF 55+</p>
-      <div class="flex items-baseline gap-2 pb-4 justify-start md:justify-center">
-        <span class="font-montserrat text-[11px] md:text-[12px] font-semibold text-[#1a1208]">$35.00</span>
-        <span class="font-montserrat text-[11px] md:text-[12px] font-light text-[#b0a494] line-through">$43.00</span>
-      </div>
+      <div class="flex items-baseline gap-2 pb-4 justify-start md:justify-center"><span class="font-montserrat text-[11px] md:text-[12px] font-semibold text-[#1a1208]">$35.00</span><span class="font-montserrat text-[11px] md:text-[12px] font-light text-[#b0a494] line-through">$43.00</span></div>
     </div>
   </div>
 </section>
-
 
 <!-- ══════════════════════════════════
   GLOW BEYOND / GET READY
@@ -647,19 +254,12 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
 <section class="md:hidden bg-[#f0ebe2] pt-14">
   <div class="px-6 text-center mb-0">
     <h2 class="font-montserrat font-bold uppercase text-[#1a1208] text-[24px] tracking-[0.1em] leading-[1.2] mb-4">GET READY FOR<br>SUMMER</h2>
-    <p class="font-montserrat font-light text-[#3a3028] text-[12px] leading-[1.85] mb-6">
-      Dive into a world of vibrant colors, breezy silhouettes, and timeless elegance tailored for the sun-soaked days and balmy nights ahead.
-    </p>
+    <p class="font-montserrat font-light text-[#3a3028] text-[12px] leading-[1.85] mb-6">Dive into a world of vibrant colors, breezy silhouettes, and timeless elegance tailored for the sun-soaked days and balmy nights ahead.</p>
     <a href="#" class="flex items-center justify-center w-full bg-[#1a1208] text-white font-montserrat text-[10px] font-bold tracking-[0.22em] uppercase no-underline py-[18px] mb-7 hover:bg-[#2d1f0e]">SHOP NOW</a>
   </div>
-  <div class="iz w-full h-[300px]">
-    <img src="https://i.pinimg.com/1200x/96/fb/25/96fb2565dce46ddf8455524b2ae3d0b1.jpg" alt="Collection 1"/>
-  </div>
-  <div class="iz w-full h-[300px]">
-    <img src="https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=900&q=90&fit=crop&crop=top" alt="Collection 2"/>
-  </div>
+  <div class="iz w-full h-[300px]"><img src="https://i.pinimg.com/1200x/96/fb/25/96fb2565dce46ddf8455524b2ae3d0b1.jpg" alt="Collection 1"/></div>
+  <div class="iz w-full h-[300px]"><img src="https://images.unsplash.com/photo-1523381294911-8d3cead13475?w=900&q=90&fit=crop&crop=top" alt="Collection 2"/></div>
 </section>
-
 
 <!-- ══════════════════════════════════
   GET IN TOUCH
@@ -673,162 +273,4 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
   </div>
 </section>
 
-
-<!-- ══════════════════════════════════
-  FOOTER
-══════════════════════════════════ -->
-<footer class="bg-[#3b2414]">
-  <div class="max-w-[1440px] mx-auto px-6 md:px-12 pt-10 md:pt-16 pb-6 md:pb-8">
-    <div class="hidden md:grid gap-10 mb-14" style="grid-template-columns:280px 1fr 1fr 1fr;">
-      <div>
-        <div class="flex items-center gap-2 mb-4">
-          <svg width="18" height="18" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 24C14 24 4 18 4 10C4 6 8 3 12 4C13 4 14 5 14 5"/>
-            <path d="M14 24C14 24 24 18 24 10C24 6 20 3 16 4C15 4 14 5 14 5"/>
-            <line x1="14" y1="24" x2="14" y2="10"/>
-          </svg>
-          <span class="font-cormorant text-white text-[20px] font-semibold tracking-[0.03em]">Glowé</span>
-        </div>
-        <p class="font-montserrat text-[12px] font-light leading-[1.8] text-white/50 mb-5 max-w-[240px]">Redefining natural skincare with premium ingredients that honor your skin and the planet.</p>
-        <div class="flex gap-4">
-          <a href="#" class="font-montserrat text-[11px] text-white/40 no-underline hover:text-white/70">FB</a>
-          <a href="#" class="font-montserrat text-[11px] text-white/40 no-underline hover:text-white/70">IG</a>
-          <a href="#" class="font-montserrat text-[11px] text-white/40 no-underline hover:text-white/70">TW</a>
-          <a href="#" class="font-montserrat text-[11px] text-white/40 no-underline hover:text-white/70">PI</a>
-        </div>
-      </div>
-      <div>
-        <p class="font-montserrat text-[10px] font-semibold tracking-[0.18em] uppercase text-white/90 mb-5">Pages</p>
-        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Home</a>
-        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Shop</a>
-        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Collections</a>
-        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">About</a>
-        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline hover:text-white/90">Contact</a>
-      </div>
-      <div>
-        <p class="font-montserrat text-[10px] font-semibold tracking-[0.18em] uppercase text-white/90 mb-5">Categories</p>
-        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Cleansers</a>
-        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Toners</a>
-        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Serums</a>
-        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Moisturizers</a>
-        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline hover:text-white/90">Bundles</a>
-      </div>
-      <div>
-        <p class="font-montserrat text-[10px] font-semibold tracking-[0.18em] uppercase text-white/90 mb-5">Support</p>
-        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">FAQ</a>
-        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Shipping &amp; Returns</a>
-        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Privacy Policy</a>
-        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline hover:text-white/90">Terms &amp; Conditions</a>
-      </div>
-    </div>
-    <div class="md:hidden pb-2">
-      <div class="mb-7">
-        <div class="flex items-center gap-2 mb-3">
-          <svg width="15" height="15" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 24C14 24 4 18 4 10C4 6 8 3 12 4C13 4 14 5 14 5"/>
-            <path d="M14 24C14 24 24 18 24 10C24 6 20 3 16 4C15 4 14 5 14 5"/>
-            <line x1="14" y1="24" x2="14" y2="10"/>
-          </svg>
-          <span class="font-cormorant text-white text-[16px] font-semibold tracking-[0.04em]">Glowé</span>
-        </div>
-        <p class="font-montserrat text-[10px] font-light leading-[1.7] text-white/45 mb-3 max-w-[220px]">Redefining natural skincare with premium ingredients that honor your skin and the planet.</p>
-        <div class="flex gap-3.5">
-          <a href="#" class="font-montserrat text-[9px] text-white/40 no-underline">FB</a>
-          <a href="#" class="font-montserrat text-[9px] text-white/40 no-underline">IG</a>
-          <a href="#" class="font-montserrat text-[9px] text-white/40 no-underline">TW</a>
-          <a href="#" class="font-montserrat text-[9px] text-white/40 no-underline">PI</a>
-        </div>
-      </div>
-      <div class="grid grid-cols-2 gap-3 mb-6">
-        <div>
-          <p class="font-montserrat text-[8px] font-medium tracking-[0.18em] uppercase text-white/30 mb-3">Pages</p>
-          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Home</a>
-          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Shop</a>
-          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Collections</a>
-          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">About</a>
-          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline">Contact</a>
-        </div>
-        <div>
-          <p class="font-montserrat text-[8px] font-medium tracking-[0.18em] uppercase text-white/30 mb-3">Categories</p>
-          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Cleansers</a>
-          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Toners</a>
-          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Serums</a>
-          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Moisturizers</a>
-          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline">Bundles</a>
-        </div>
-      </div>
-      <div class="mb-7">
-        <p class="font-montserrat text-[8px] font-medium tracking-[0.18em] uppercase text-white/30 mb-3">Support</p>
-        <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">FAQ</a>
-        <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Shipping &amp; Returns</a>
-        <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Privacy Policy</a>
-        <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline">Terms &amp; Conditions</a>
-      </div>
-    </div>
-    <div class="pt-5 border-t border-white/[0.08]">
-      <div class="md:hidden flex flex-col gap-2">
-        <p class="font-montserrat text-[9px] font-light text-white/25">© 2023 Glowé Skincare. All rights reserved.</p>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-        <div class="flex gap-4">
-          <a href="#" class="font-montserrat text-[9px] font-light text-white/32 no-underline">Privacy Policy</a>
-          <a href="#" class="font-montserrat text-[9px] font-light text-white/32 no-underline">Terms of Service</a>
-        </div>
-      </div>
-      <div class="hidden md:flex items-center justify-between">
-        <span class="font-montserrat text-[11px] font-light text-white/35">© 2023 Glowé Skincare. All rights reserved.</span>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-        <div class="flex gap-5">
-          <a href="#" class="font-montserrat text-[11px] font-light text-white/42 no-underline hover:text-white/70">Privacy Policy</a>
-          <a href="#" class="font-montserrat text-[11px] font-light text-white/42 no-underline hover:text-white/70">Terms of Service</a>
-        </div>
-      </div>
-    </div>
-  </div>
-</footer>
-
-
-
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-  let activeDropdown = null;
-
-  function toggleDropdown(type) {
-    const id = type === 'desktop' ? 'dropdown-desktop' : 'dropdown-mobile';
-    const btn = type === 'desktop' ? 'avatar-btn-desktop' : 'avatar-btn-mobile';
-    const el = document.getElementById(id);
-    const btnEl = document.getElementById(btn);
-    const isOpen = el.classList.contains('open');
-
-    closeAll();
-
-    if (!isOpen) {
-      el.classList.add('open');
-      if (btnEl) btnEl.setAttribute('aria-expanded', 'true');
-      activeDropdown = id;
-    }
-  }
-
-  function closeAll() {
-    ['dropdown-desktop', 'dropdown-mobile'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.classList.remove('open');
-    });
-    ['avatar-btn-desktop', 'avatar-btn-mobile'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.setAttribute('aria-expanded', 'false');
-    });
-    activeDropdown = null;
-  }
-
-  document.addEventListener('click', function(e) {
-    const clickedAvatar = e.target.closest('[id^="avatar-btn"]');
-    const clickedDropdown = e.target.closest('[id^="dropdown-"]');
-    if (!clickedAvatar && !clickedDropdown) closeAll();
-  });
-
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closeAll();
-  });
-</script>
-
-</body>
-</html>
+{% endblock %}

@@ -1,84 +1,28 @@
+{% extends 'base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Glowé – Edit Profile</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        fontFamily: {
-          cormorant: ['"Cormorant Garamond"', 'serif'],
-          montserrat: ['Montserrat', 'sans-serif'],
-        }
-      }
-    }
-  }
-</script>
-<link rel="stylesheet" href="{% static 'user/css/edit_profile.css' %}">
-</head>
-<body class="bg-[#F5F1EC]">
+
+{% block title %}Glowé – Edit Profile{% endblock %}
+
+{% block extra_css %}
+body { background:#F5F1EC !important; }
+{% endblock %}
+
+{% block content %}
 
 <!-- ── TOAST CONTAINER ── -->
 <div id="toastContainer" class="fixed top-5 z-[9998] flex flex-col gap-2 pointer-events-none" style="left:50%;transform:translateX(-50%);align-items:center;width:max-content;"></div>
 
-<!-- ══════════════════════════════
-  PHOTO VIEW MODAL
-══════════════════════════════ -->
+<!-- PHOTO VIEW MODAL -->
 <div id="photoModal" class="photo-modal-bg" onclick="closeModalOutside(event)">
   <div class="photo-modal-inner relative w-full" style="max-width:340px;" onclick="event.stopPropagation()">
-    <button onclick="closePhotoModal()"
-      class="absolute -top-4 -right-4 w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-lg hover:bg-[#F5F1EC] transition-colors z-10">
-      <svg class="w-3.5 h-3.5 text-[#1a1208]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="18" y1="6" x2="6" y2="18"/>
-        <line x1="6" y1="6" x2="18" y2="18"/>
-      </svg>
+    <button onclick="closePhotoModal()" class="absolute -top-4 -right-4 w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-lg hover:bg-[#F5F1EC] transition-colors z-10">
+      <svg class="w-3.5 h-3.5 text-[#1a1208]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
-    <img id="modalPhoto" src="" alt="Profile Photo"
-      class="w-full rounded-2xl object-cover"
-      style="max-height:380px;box-shadow:0 24px 64px rgba(0,0,0,0.35);"
-    />
+    <img id="modalPhoto" src="" alt="Profile Photo" class="w-full rounded-2xl object-cover" style="max-height:380px;box-shadow:0 24px 64px rgba(0,0,0,0.35);"/>
   </div>
 </div>
 
-<!-- ══════════════════════════════
-  NAVBAR
-══════════════════════════════ -->
-<header class="sticky top-0 z-50 bg-[#F5F1EC] border-b border-[#E8DED6]" style="height:60px;">
-  <div class="w-full max-w-[960px] mx-auto px-4 sm:px-6 h-full flex items-center justify-between relative">
-    <a href="{% url 'home' %}" class="flex items-center gap-1.5 no-underline shrink-0">
-      <svg width="22" height="22" viewBox="0 0 28 28" fill="none" stroke="#1a1208" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M14 24C14 24 4 18 4 10C4 6 8 3 12 4C13 4 14 5 14 5"/>
-        <path d="M14 24C14 24 24 18 24 10C24 6 20 3 16 4C15 4 14 5 14 5"/>
-        <line x1="14" y1="24" x2="14" y2="10"/>
-      </svg>
-      <span class="font-cormorant text-[22px] font-semibold tracking-[0.03em] text-[#1a1208]">Glowé</span>
-    </a>
-    <nav class="hidden md:flex items-center gap-8 lg:gap-10 absolute left-1/2 -translate-x-1/2">
-      <a href="#" class="font-montserrat text-[11px] font-semibold tracking-[0.18em] uppercase text-[#1a1208] no-underline hover:opacity-50 transition-opacity">Shop</a>
-      <a href="#" class="font-montserrat text-[11px] font-semibold tracking-[0.18em] uppercase text-[#1a1208] no-underline hover:opacity-50 transition-opacity">Collections</a>
-      <a href="#" class="font-montserrat text-[11px] font-semibold tracking-[0.18em] uppercase text-[#1a1208] no-underline hover:opacity-50 transition-opacity">About</a>
-      <a href="#" class="font-montserrat text-[11px] font-semibold tracking-[0.18em] uppercase text-[#1a1208] no-underline hover:opacity-50 transition-opacity">Contact</a>
-    </nav>
-    <div class="flex items-center gap-3 sm:gap-4 shrink-0">
-      <svg class="w-[17px] h-[17px] cursor-pointer opacity-60 hover:opacity-100 transition-opacity hidden sm:block" viewBox="0 0 24 24" fill="none" stroke="#1a1208" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4.8-4.8"/></svg>
-      <svg class="w-[17px] h-[17px] cursor-pointer opacity-60 hover:opacity-100 transition-opacity hidden sm:block" viewBox="0 0 24 24" fill="none" stroke="#1a1208" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-      <svg class="w-[17px] h-[17px] cursor-pointer opacity-60 hover:opacity-100 transition-opacity" viewBox="0 0 24 24" fill="none" stroke="#1a1208" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      <div class="relative cursor-pointer">
-        <svg class="w-[17px] h-[17px] opacity-60 hover:opacity-100 transition-opacity" viewBox="0 0 24 24" fill="none" stroke="#1a1208" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-        <span class="absolute -top-1.5 -right-2 bg-[#1a1208] text-white text-[7px] font-bold w-3.5 h-3.5 rounded-full flex items-center justify-center">2</span>
-      </div>
-    </div>
-  </div>
-</header>
-
-<!-- ══════════════════════════════
-  PAGE HEADER
-══════════════════════════════ -->
+<!-- PAGE HEADER -->
 <div class="fade-1 text-center pt-8 sm:pt-12 pb-6 sm:pb-8 px-4">
   <p class="font-montserrat text-[10px] text-[#8C7F77] mb-3 flex items-center justify-center gap-1.5 flex-wrap">
     <a href="{% url 'home' %}" class="no-underline hover:text-[#1a1208] transition-colors text-[#8C7F77]">Home</a>
@@ -89,70 +33,43 @@
   </p>
   <p class="font-montserrat text-[10px] font-semibold tracking-[0.28em] uppercase text-[#8C7F77] mb-3">Account Settings</p>
   <h1 class="font-cormorant text-[36px] sm:text-[46px] font-normal text-[#1a1208] leading-tight mb-3">Edit Your Profile</h1>
-  <p class="font-montserrat text-[12px] font-light text-[#8C7F77] leading-[1.8] max-w-[340px] mx-auto">
-    Update your personal details and contact information to keep your Glowé experience tailored just for you.
-  </p>
+  <p class="font-montserrat text-[12px] font-light text-[#8C7F77] leading-[1.8] max-w-[340px] mx-auto">Update your personal details and contact information to keep your Glowé experience tailored just for you.</p>
 </div>
 
-<!-- ══════════════════════════════
-  MAIN CARD
-══════════════════════════════ -->
+<!-- MAIN CARD -->
 <main class="fade-2 max-w-[740px] mx-auto px-3 sm:px-4 pb-16 sm:pb-20">
   <div class="bg-white rounded-2xl border border-[#e8e0d8]" style="box-shadow:0 2px 16px rgba(26,18,8,0.07);">
 
-    <!-- ── AVATAR SECTION ── -->
+    <!-- AVATAR SECTION -->
     <div class="px-5 sm:px-10 pt-8 sm:pt-10 pb-7 sm:pb-8">
       <div class="flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-6">
         <div class="relative shrink-0">
           <div class="avatar-ring" onclick="openPhotoModal()">
             <img id="avatarPreview"
-  src="{% if user.profile_image and user.profile_image.name != 'profile/default.png' %}{{ user.profile_image.url }}{% elif social_account %}{{ social_account.extra_data.picture }}{% else %}/media/profile/default.png{% endif %}"
-  alt="{{ user.full_name }}"
-  class="w-full h-full object-cover"
-/>
+              src="{% if user.profile_image and user.profile_image.name != 'profile/default.png' %}{{ user.profile_image.url }}{% elif social_account %}{{ social_account.extra_data.picture }}{% else %}/media/profile/default.png{% endif %}"
+              alt="{{ user.full_name }}" class="w-full h-full object-cover"/>
             <div class="avatar-overlay">
-              <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                <circle cx="12" cy="12" r="3"/>
-              </svg>
+              <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             </div>
           </div>
           <form method="POST" action="{% url 'add_profile_image' %}" enctype="multipart/form-data" id="imageForm">
             {% csrf_token %}
-            <label for="avatar-upload"
-              class="absolute bottom-0.5 right-0.5 w-[28px] h-[28px] bg-[#1a1208] rounded-full flex items-center justify-center cursor-pointer hover:bg-[#4A2E24] transition-colors"
-              style="box-shadow:0 2px 6px rgba(0,0,0,0.22);">
-              <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                <circle cx="12" cy="13" r="4"/>
-              </svg>
+            <label for="avatar-upload" class="absolute bottom-0.5 right-0.5 w-[28px] h-[28px] bg-[#1a1208] rounded-full flex items-center justify-center cursor-pointer hover:bg-[#4A2E24] transition-colors" style="box-shadow:0 2px 6px rgba(0,0,0,0.22);">
+              <svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
             </label>
-            <input id="avatar-upload" type="file" name="profile_image" accept="image/*" class="hidden"
-              onchange="handleAvatarChange(this)"/>
+            <input id="avatar-upload" type="file" name="profile_image" accept="image/*" class="hidden" onchange="handleAvatarChange(this)"/>
           </form>
         </div>
 
         <div class="flex-1 text-center sm:text-left pt-0 sm:pt-1 w-full">
           <p class="font-cormorant text-[20px] sm:text-[22px] font-semibold text-[#1a1208] leading-tight mb-1">
-  {% if user.full_name %}
-    {{ user.full_name }}
-  {% elif social_account %}
-    {{ social_account.extra_data.name }}
-  {% else %}
-    User
-  {% endif %}
-</p>
+            {% if user.full_name %}{{ user.full_name }}{% elif social_account %}{{ social_account.extra_data.name }}{% else %}User{% endif %}
+          </p>
           <div class="flex items-center gap-3 flex-wrap justify-center sm:justify-start mt-3">
-            <label for="avatar-upload"
-              class="font-montserrat text-[10px] font-semibold tracking-[0.1em] uppercase text-white bg-[#1a1208] hover:bg-[#4A2E24] px-4 py-2 rounded-lg cursor-pointer transition-colors">
-              Change Photo
-            </label>
+            <label for="avatar-upload" class="font-montserrat text-[10px] font-semibold tracking-[0.1em] uppercase text-white bg-[#1a1208] hover:bg-[#4A2E24] px-4 py-2 rounded-lg cursor-pointer transition-colors">Change Photo</label>
             <form method="POST" action="{% url 'remove_profile_image' %}">
               {% csrf_token %}
-              <button type="submit"
-                class="font-montserrat text-[10px] font-medium text-[#8C7F77] hover:text-[#c0392b] border border-[#e8e0d8] hover:border-[#f5c6c6] bg-white px-4 py-2 rounded-lg transition-colors">
-                Remove
-              </button>
+              <button type="submit" class="font-montserrat text-[10px] font-medium text-[#8C7F77] hover:text-[#c0392b] border border-[#e8e0d8] hover:border-[#f5c6c6] bg-white px-4 py-2 rounded-lg transition-colors">Remove</button>
             </form>
           </div>
           <p class="font-montserrat text-[10px] font-light text-[#b0a49a] mt-2 flex items-center gap-1.5 justify-center sm:justify-start">
@@ -170,13 +87,11 @@
       <div class="flex-1 h-px bg-[#e8e0d8]"></div>
     </div>
 
-    <!-- ── FORM ── -->
-    <form method="POST" action="{% url 'edit_profile' %}" id="editForm" enctype="multipart/form-data"
-      class="px-5 sm:px-10 pt-7 sm:pt-8 pb-8 sm:pb-10">
+    <!-- FORM -->
+    <form method="POST" action="{% url 'edit_profile' %}" id="editForm" enctype="multipart/form-data" class="px-5 sm:px-10 pt-7 sm:pt-8 pb-8 sm:pb-10">
       {% csrf_token %}
       <input type="hidden" name="phone_number" id="full-phone-hidden"/>
-      <input type="hidden" name="is_google_user" id="isGoogleUser"
-  value="{% if social_account %}true{% else %}false{% endif %}"/>
+      <input type="hidden" name="is_google_user" id="isGoogleUser" value="{% if social_account %}true{% else %}false{% endif %}"/>
       <input type="hidden" name="original_email" id="originalEmail" value="{{ user.email }}"/>
 
       <div class="space-y-5 sm:space-y-6">
@@ -189,11 +104,8 @@
           </div>
           <div class="field-wrap">
             <input type="text" name="full_name" id="nameInput"
-  value="{% if user.full_name %}{{ user.full_name }}{% elif social_account %}{{ social_account.extra_data.name }}{% endif %}"
-  placeholder="Your full name"
-  maxlength="50"
-  class="input-field"
-/>
+              value="{% if user.full_name %}{{ user.full_name }}{% elif social_account %}{{ social_account.extra_data.name }}{% endif %}"
+              placeholder="Your full name" maxlength="50" class="input-field"/>
             <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           </div>
         </div>
@@ -202,30 +114,19 @@
         <div class="fade-4">
           <label class="block font-montserrat text-[10px] font-semibold tracking-[0.2em] uppercase text-[#4A2E24] mb-2">Email Address</label>
           <div class="field-wrap {% if social_account %}opacity-60{% endif %}">
-           <input 
-  type="email" 
-  name="email" 
-  id="emailInput"
-  value="{% if user.email %}{{ user.email }}{% elif social_account %}{{ social_account.extra_data.email }}{% endif %}"
-  placeholder="your@email.com"
-  class="input-field"
-  {% if social_account %}readonly{% endif %}
-/>
+            <input type="email" name="email" id="emailInput"
+              value="{% if user.email %}{{ user.email }}{% elif social_account %}{{ social_account.extra_data.email }}{% endif %}"
+              placeholder="your@email.com" class="input-field"
+              {% if social_account %}readonly{% endif %}/>
             <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
           </div>
-
-         <!-- ✅ GOOGLE USER MESSAGE FIX -->
-{% if social_account %}
-<div class="mt-2 flex items-start gap-2 bg-[#FEF3E2] border border-[#F9E4C0] rounded-lg px-3 py-2.5">
-  <p class="text-[10.5px] text-[#92621F]">
-    Google Sign-In users cannot change their email address.
-  </p>
-</div>
-{% else %}
-<p class="font-montserrat text-[10.5px] font-light text-[#8C7F77] mt-1.5 flex items-start gap-1.5 leading-[1.6]">
-  Used for account notifications and order confirmations.
-</p>
-{% endif %}
+          {% if social_account %}
+          <div class="mt-2 flex items-start gap-2 bg-[#FEF3E2] border border-[#F9E4C0] rounded-lg px-3 py-2.5">
+            <p class="text-[10.5px] text-[#92621F]">Google Sign-In users cannot change their email address.</p>
+          </div>
+          {% else %}
+          <p class="font-montserrat text-[10.5px] font-light text-[#8C7F77] mt-1.5 flex items-start gap-1.5 leading-[1.6]">Used for account notifications and order confirmations.</p>
+          {% endif %}
         </div>
 
         <!-- Phone Number -->
@@ -238,12 +139,9 @@
             </div>
             <input type="tel" id="phoneNumberInput" placeholder="10-digit mobile number"
               class="phone-number-input"
-            value="{% if user.phone_number %}{{ user.phone_number|slice:'3:' }}{% endif %}"
-              maxlength="10"
-              inputmode="numeric"
-              pattern="[0-9]{10}"
-              oninput="this.value=this.value.replace(/\D/g,'')"
-            />
+              value="{% if user.phone_number %}{{ user.phone_number|slice:'3:' }}{% endif %}"
+              maxlength="10" inputmode="numeric" pattern="[0-9]{10}"
+              oninput="this.value=this.value.replace(/\D/g,'')"/>
           </div>
           <p class="font-montserrat text-[10.5px] font-light text-[#8C7F77] mt-1.5">Optional · used for order updates and delivery notifications.</p>
         </div>
@@ -258,10 +156,7 @@
 
       <!-- Actions -->
       <div class="border-t border-[#e8e0d8] mt-7 sm:mt-8 pt-6 sm:pt-7 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
-        <a href="{% url 'profile_overview' %}"
-          class="font-montserrat text-[11px] font-medium text-[#8C7F77] hover:text-[#1a1208] transition-colors no-underline text-center sm:text-left py-3 sm:py-0">
-          Cancel
-        </a>
+        <a href="{% url 'profile_overview' %}" class="font-montserrat text-[11px] font-medium text-[#8C7F77] hover:text-[#1a1208] transition-colors no-underline text-center sm:text-left py-3 sm:py-0">Cancel</a>
         <button type="submit" id="saveBtn" onclick="handleSubmit(event)"
           class="flex items-center justify-center gap-2 bg-[#1a1208] hover:bg-[#3a2414] text-white font-montserrat text-[11px] font-semibold px-6 sm:px-8 py-3.5 rounded-xl transition-colors w-full sm:w-auto"
           style="letter-spacing:0.08em;">
@@ -276,113 +171,22 @@
   </div>
 </main>
 
-<!-- ══════════════════════════════
-  FOOTER
-══════════════════════════════ -->
-<footer class="bg-[#3A2219]">
-  <div class="max-w-[960px] mx-auto px-4 sm:px-6 pt-12 sm:pt-14 pb-8">
-    <div class="hidden md:grid gap-10 mb-12" style="grid-template-columns:220px 1fr 1fr 1fr;">
-      <div>
-        <div class="flex items-center gap-1.5 mb-4">
-          <svg width="20" height="20" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 24C14 24 4 18 4 10C4 6 8 3 12 4C13 4 14 5 14 5"/>
-            <path d="M14 24C14 24 24 18 24 10C24 6 20 3 16 4C15 4 14 5 14 5"/>
-            <line x1="14" y1="24" x2="14" y2="10"/>
-          </svg>
-          <span class="font-cormorant text-white text-[20px] font-semibold">Glowé</span>
-        </div>
-        <p class="font-montserrat text-[12px] font-light leading-[1.8] text-white/50 mb-5 max-w-[200px]">Redefining natural skincare with premium ingredients that honor your skin and the planet.</p>
-        <div class="flex gap-4">
-          <a href="#" class="font-montserrat text-[11px] text-white/40 no-underline hover:text-white/75 transition-colors">FB</a>
-          <a href="#" class="font-montserrat text-[11px] text-white/40 no-underline hover:text-white/75 transition-colors">IG</a>
-          <a href="#" class="font-montserrat text-[11px] text-white/40 no-underline hover:text-white/75 transition-colors">TW</a>
-          <a href="#" class="font-montserrat text-[11px] text-white/40 no-underline hover:text-white/75 transition-colors">PI</a>
-        </div>
-      </div>
-      <div>
-        <p class="font-montserrat text-[10px] font-bold tracking-[0.24em] uppercase text-white/85 mb-5">Pages</p>
-        <a href="{% url 'home' %}" class="block font-montserrat text-[13px] font-light text-white/55 no-underline mb-3.5 hover:text-white/85 transition-colors">Home</a>
-        <a href="#" class="block font-montserrat text-[13px] font-light text-white/55 no-underline mb-3.5 hover:text-white/85 transition-colors">Shop</a>
-        <a href="#" class="block font-montserrat text-[13px] font-light text-white/55 no-underline mb-3.5 hover:text-white/85 transition-colors">Collections</a>
-        <a href="#" class="block font-montserrat text-[13px] font-light text-white/55 no-underline mb-3.5 hover:text-white/85 transition-colors">About</a>
-        <a href="#" class="block font-montserrat text-[13px] font-light text-white/55 no-underline hover:text-white/85 transition-colors">Contact</a>
-      </div>
-      <div>
-        <p class="font-montserrat text-[10px] font-bold tracking-[0.24em] uppercase text-white/85 mb-5">Categories</p>
-        <a href="#" class="block font-montserrat text-[13px] font-light text-white/55 no-underline mb-3.5 hover:text-white/85 transition-colors">Cleansers</a>
-        <a href="#" class="block font-montserrat text-[13px] font-light text-white/55 no-underline mb-3.5 hover:text-white/85 transition-colors">Toners</a>
-        <a href="#" class="block font-montserrat text-[13px] font-light text-white/55 no-underline mb-3.5 hover:text-white/85 transition-colors">Serums</a>
-        <a href="#" class="block font-montserrat text-[13px] font-light text-white/55 no-underline mb-3.5 hover:text-white/85 transition-colors">Moisturizers</a>
-        <a href="#" class="block font-montserrat text-[13px] font-light text-white/55 no-underline hover:text-white/85 transition-colors">Bundles</a>
-      </div>
-      <div>
-        <p class="font-montserrat text-[10px] font-bold tracking-[0.24em] uppercase text-white/85 mb-5">Support</p>
-        <a href="#" class="block font-montserrat text-[13px] font-light text-white/55 no-underline mb-3.5 hover:text-white/85 transition-colors">FAQ</a>
-        <a href="#" class="block font-montserrat text-[13px] font-light text-white/55 no-underline mb-3.5 hover:text-white/85 transition-colors">Shipping &amp; Returns</a>
-        <a href="#" class="block font-montserrat text-[13px] font-light text-white/55 no-underline mb-3.5 hover:text-white/85 transition-colors">Privacy Policy</a>
-        <a href="#" class="block font-montserrat text-[13px] font-light text-white/55 no-underline hover:text-white/85 transition-colors">Terms &amp; Conditions</a>
-      </div>
-    </div>
-    <div class="md:hidden pb-4">
-      <div class="mb-6">
-        <div class="flex items-center gap-1.5 mb-3">
-          <svg width="16" height="16" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14 24C14 24 4 18 4 10C4 6 8 3 12 4C13 4 14 5 14 5"/>
-            <path d="M14 24C14 24 24 18 24 10C24 6 20 3 16 4C15 4 14 5 14 5"/>
-            <line x1="14" y1="24" x2="14" y2="10"/>
-          </svg>
-          <span class="font-cormorant text-white text-[17px] font-semibold">Glowé</span>
-        </div>
-        <p class="font-montserrat text-[10px] font-light text-white/40 mb-3 leading-relaxed max-w-[220px]">Redefining natural skincare with premium ingredients.</p>
-        <div class="flex gap-4">
-          <a href="#" class="font-montserrat text-[9px] text-white/35 no-underline">FB</a>
-          <a href="#" class="font-montserrat text-[9px] text-white/35 no-underline">IG</a>
-          <a href="#" class="font-montserrat text-[9px] text-white/35 no-underline">TW</a>
-          <a href="#" class="font-montserrat text-[9px] text-white/35 no-underline">PI</a>
-        </div>
-      </div>
-      <div class="grid grid-cols-2 gap-5 mb-6">
-        <div>
-          <p class="font-montserrat text-[8px] font-semibold tracking-[0.2em] uppercase text-white/30 mb-3">Pages</p>
-          <a href="{% url 'home' %}" class="block font-montserrat text-[11px] font-light text-white/50 no-underline mb-2.5">Home</a>
-          <a href="#" class="block font-montserrat text-[11px] font-light text-white/50 no-underline mb-2.5">Shop</a>
-          <a href="#" class="block font-montserrat text-[11px] font-light text-white/50 no-underline mb-2.5">Collections</a>
-          <a href="#" class="block font-montserrat text-[11px] font-light text-white/50 no-underline">About</a>
-        </div>
-        <div>
-          <p class="font-montserrat text-[8px] font-semibold tracking-[0.2em] uppercase text-white/30 mb-3">Support</p>
-          <a href="#" class="block font-montserrat text-[11px] font-light text-white/50 no-underline mb-2.5">FAQ</a>
-          <a href="#" class="block font-montserrat text-[11px] font-light text-white/50 no-underline mb-2.5">Shipping</a>
-          <a href="#" class="block font-montserrat text-[11px] font-light text-white/50 no-underline mb-2.5">Privacy</a>
-          <a href="#" class="block font-montserrat text-[11px] font-light text-white/50 no-underline">Terms</a>
-        </div>
-      </div>
-    </div>
-    <div class="pt-5 border-t border-white/[0.07] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-      <span class="font-montserrat text-[11px] font-light text-white/28">© 2023 Glowé Skincare. All rights reserved.</span>
-      <div class="flex gap-5">
-        <a href="#" class="font-montserrat text-[11px] font-light text-white/38 no-underline hover:text-white/65 transition-colors">Privacy Policy</a>
-        <a href="#" class="font-montserrat text-[11px] font-light text-white/38 no-underline hover:text-white/65 transition-colors">Terms of Service</a>
-      </div>
-    </div>
-  </div>
-</footer>
+{% endblock %}
 
-<script>
-  window.addEventListener('load', () => {
-    {% if messages %}
-      {% for message in messages %}
-        {% if 'show_on_overview' not in message.tags %}
-          {% if 'success' in message.tags %}showToast('success', 'Done!', '{{ message }}');{% endif %}
-          {% if 'error' in message.tags %}showToast('error', 'Error', '{{ message }}');{% endif %}
-          {% if 'warning' in message.tags %}showToast('warning', 'Notice', '{{ message }}');{% endif %}
-        {% endif %}
-      {% endfor %}
-    {% endif %}
-  });
-</script>
-
+{% block extra_js %}
+<link rel="stylesheet" href="{% static 'user/css/edit_profile.css' %}">
 <script src="{% static 'user/js/edit_profile.js' %}"></script>
-
-</body>
-</html>
+<script>
+window.addEventListener('load', () => {
+  {% if messages %}
+    {% for message in messages %}
+      {% if 'show_on_overview' not in message.tags %}
+        {% if 'success' in message.tags %}showToast('success', 'Done!', '{{ message }}');{% endif %}
+        {% if 'error' in message.tags %}showToast('error', 'Error', '{{ message }}');{% endif %}
+        {% if 'warning' in message.tags %}showToast('warning', 'Notice', '{{ message }}');{% endif %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+});
+</script>
+{% endblock %}

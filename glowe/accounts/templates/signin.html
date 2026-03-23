@@ -1,5 +1,4 @@
 {% load static %}
-
 {% load socialaccount %}
 <!DOCTYPE html>
 <html lang="en">
@@ -39,24 +38,20 @@
     }
   </script>
   <link rel="stylesheet" href="{% static 'accounts/css/signin.css' %}">
-
 </head>
+
 <body class="flex h-screen overflow-hidden font-montserrat">
-{% if error %}
-<div class="toast" id="toast">
-  <div class="toast-left">
-    <div class="toast-dot"></div>
-  </div>
-  <p class="toast-msg">{{ error }}</p>
-  <button class="toast-close" onclick="closeToast()" aria-label="Close">
-    <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-      <line x1="1" y1="1" x2="11" y2="11"/>
-      <line x1="11" y1="1" x2="1" y2="11"/>
-    </svg>
-  </button>
-  <div class="toast-progress"></div>
-</div>
-{% endif %}
+
+  <!-- hidden spans — JS reads these to trigger modern toasts -->
+  {% if error %}
+    <span id="django-error" class="hidden">{{ error }}</span>
+  {% endif %}
+  {% if success_msg %}
+    <span id="django-success" class="hidden">{{ success_msg }}</span>
+  {% endif %}
+  {% if update_password %}
+    <span id="django-update-password" class="hidden">{{ update_password }}</span>
+  {% endif %}
 
   <!-- ── LEFT PANEL ── -->
   <div class="left-panel relative hidden md:block w-1/2 h-screen flex-shrink-0 overflow-hidden">
@@ -98,10 +93,10 @@
       <div class="w-full">
 
         <!-- ── FORM ── -->
-        <form action="{% url "signin" %}" method="POST">
+        <form action="{% url 'signin' %}" method="POST" id="signin-form">
           {% csrf_token %}
 
-          <!-- Email -->
+          <!-- Email — keep value on error -->
           <div class="anim-3 w-full mb-3 lg:mb-4">
             <label for="email" class="block text-[9.5px] font-semibold tracking-[0.14em] text-brand-label uppercase mb-1.5">
               Email Address
@@ -114,6 +109,7 @@
                 name="email"
                 placeholder="Enter your email"
                 autocomplete="email"
+                value="{{ submitted_email|default:'' }}"
                 required
               />
             </div>
@@ -150,19 +146,24 @@
 
           <!-- Forgot Password -->
           <div class="anim-5 w-full flex justify-end mt-1 mb-1">
-            <a href="{% url 'forget_password'  %}" class="text-[11px] text-brand-muted font-normal tracking-[0.02em] no-underline hover:text-brand-dark transition-colors duration-200 cursor-pointer">
+            <a href="{% url 'forget_password' %}" class="text-[11px] text-brand-muted font-normal tracking-[0.02em] no-underline hover:text-brand-dark transition-colors duration-200 cursor-pointer">
               Forgot Password?
             </a>
           </div>
 
-          <!-- Sign In Button -->
-          <button type="submit"
+          <!-- Sign In Button with loader -->
+          <button type="submit" id="signin-btn"
             class="anim-5 w-full mt-3 lg:mt-4 py-[11px] lg:py-[13px] px-5 bg-brand-dark hover:bg-brand-darker text-[#f5f2ed] font-montserrat text-[10.5px] font-semibold tracking-[0.18em] uppercase border-none cursor-pointer flex items-center justify-center gap-2.5 transition-colors duration-200">
-            Sign In
-            <svg class="w-[12px] h-[12px]" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="1" y1="7" x2="13" y2="7"/>
-              <polyline points="7 1 13 7 7 13"/>
-            </svg>
+            <span id="signin-btn-label">Sign In</span>
+            <span id="signin-btn-arrow">
+              <svg class="w-[12px] h-[12px]" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="1" y1="7" x2="13" y2="7"/>
+                <polyline points="7 1 13 7 7 13"/>
+              </svg>
+            </span>
+            <div id="signin-btn-loader" class="btn-loader hidden">
+              <span></span><span></span><span></span>
+            </div>
           </button>
 
         </form>
@@ -174,21 +175,21 @@
           <hr class="flex-1 border-none" style="border-top: 1px solid #d6cdc5;" />
         </div>
 
+        <!-- ── GOOGLE BUTTON ── -->
+        <a href="{% provider_login_url 'google' %}"
+          class="anim-8 w-full py-[12px] px-5 bg-white hover:bg-[#f9f6f2] border border-[#e2dbd4] cursor-pointer flex items-center justify-center gap-[10px] transition-colors duration-200"
+          style="border-radius:4px;">
+          <svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0;">
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.16 7.09-10.29 7.09-17.65z"/>
+            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+            <path fill="#FBBC05" d="M10.53 28.59c-.5-1.45-.78-2.99-.78-4.59s.27-3.14.78-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          </svg>
+          <span class="font-montserrat text-[10px] font-semibold tracking-[0.14em] uppercase text-brand-dark">
+            Continue with Google
+          </span>
+        </a>
 
-<!-- ── GOOGLE BUTTON ── -->
-<a href="{% provider_login_url 'google' %}"
-  class="anim-8 w-full py-[12px] px-5 bg-white hover:bg-[#f9f6f2] border border-[#e2dbd4] cursor-pointer flex items-center justify-center gap-[10px] transition-colors duration-200"
-  style="border-radius:4px;">
-  <svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0;">
-    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.16 7.09-10.29 7.09-17.65z"/>
-    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-    <path fill="#FBBC05" d="M10.53 28.59c-.5-1.45-.78-2.99-.78-4.59s.27-3.14.78-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-  </svg>
-  <span class="font-montserrat text-[10px] font-semibold tracking-[0.14em] uppercase text-brand-dark">
-    Continue with Google
-  </span>
-</a>
         <!-- SIGN UP Link -->
         <p class="anim-7 text-center mt-4 lg:mt-5 text-[11px] text-brand-muted font-light">
           Don't have an account?
@@ -199,6 +200,6 @@
     </div>
   </div>
 
-<script src="{% static 'accounts/js/signin.js' %}"></script>
+  <script src="{% static 'accounts/js/signin.js' %}"></script>
 </body>
 </html>

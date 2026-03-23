@@ -31,37 +31,38 @@ def admin_signin(request):
         
         if not email :
             messages.error(request,"Email is required")
-            return redirect('admin_signin')
+            return render(request, 'auth/admin_signin.html', {'submitted_email': email}) 
         if not password :
             messages.error(request,"password is required")
-            return redirect('admin_signin')
+            return render(request, 'auth/admin_signin.html', {'submitted_email': email}) 
         
         
         user = authenticate(request, username=email, password=password)
 
         if user is None:
             messages.error(request,"Invalid email or password")
-            return redirect('admin_signin')
+            return render(request, 'auth/admin_signin.html', {'submitted_email': email})
 
         #admin acces not normal usr
         if not user.is_superuser:
             messages.error(request,"Access denied.Admin only.")
-            return redirect('admin_signin')
-
+            return render(request, 'auth/admin_signin.html', {'submitted_email': email}) 
         
         login(request, user)
-        messages.success(request,"Welcome Admin!")
-
+        
+        request.session['success']='Welcome to the Dashboard'
         return redirect('admin_dashboard')
 
-    return render(request, 'admin_signin.html')
+    return render(request, 'auth/admin_signin.html', {'submitted_email': ''})
+
 @never_cache
 @login_required(login_url='/admin-signin/')
 def admin_dashboard(request):
+    success=request.session.pop('success',None)
     if not request.user.is_superuser:
         return redirect('admin_signin')
 
-    return render(request, 'admin_dashboard.html')
+    return render(request, 'admin_dashboard.html',{"success":success})
 
 def admin_signout(request):
     logout(request)
@@ -79,7 +80,7 @@ def admin_forget_password(request):
 
         if not email:
             messages.error(request,"Email required")
-            return redirect('admin_forgot_password')
+            return render(request, 'auth/admin_forget_password.html', {'submitted_email': email})
 
         try:
             user = ProfileUser.objects.get(email=email)
@@ -87,11 +88,10 @@ def admin_forget_password(request):
             
             if not user.is_superuser:
                 messages.error(request,"Not authorized")
-                return redirect('admin_forgot_password')
-
+                return render(request, 'auth/admin_forget_password.html', {'submitted_email': email})
         except ProfileUser.DoesNotExist:
             messages.error(request,"Email not found")
-            return redirect('admin_forgot_password')
+            return render(request, 'auth/admin_forget_password.html', {'submitted_email': email})
 
         # if old otp have it will dlt
         OTPVerification.objects.filter(user=user).delete()
@@ -102,17 +102,61 @@ def admin_forget_password(request):
 
         
         send_mail(
-            "Admin OTP",
-            f"Your OTP is {otp}",
-            settings.EMAIL_HOST_USER,
-            [email],
-        )
+    'Glowé Admin — OTP Verification 🔐',
+    f'''
+════════════════════════════════
+           🌿 Glowé
+        Admin Control Panel
+════════════════════════════════
+
+Hello Admin,
+
+A login attempt was made to the
+Glowé Admin Control Panel.
+
+Use the code below to verify
+your identity and proceed.
+
+  ──────────────────────────
+  Your Admin OTP:
+
+       {' '.join(str(otp))}
+
+  ⏱  Valid for 5 minute only
+  ──────────────────────────
+
+🔒 SECURITY NOTICE:
+   This OTP is for admin access only.
+   Never share this code with anyone.
+
+   If you did not attempt to login,
+   please secure your account
+   immediately and contact support.
+
+────────────────────────────────
+⚠️  ADMIN ACCESS WARNING:
+   This panel contains sensitive data.
+   Unauthorized access is strictly
+   prohibited and will be logged.
+────────────────────────────────
+
+Need help? Contact us:
+📧 glowe639@gmail.com
+
+════════════════════════════════
+© 2025 Glowé. All rights reserved.
+Kerala, India — Admin Panel
+════════════════════════════════
+''',
+    settings.EMAIL_HOST_USER,
+    [email],
+)
 
         request.session['reset_user']=user.id
         return redirect('admin_otp_verification')
 
 
-    return render(request,'admin_forget_password.html')
+    return render(request, 'auth/admin_forget_password.html', {'submitted_email': ''})
 
 def admin_otp_verification(request):
     
@@ -153,7 +197,7 @@ def admin_otp_verification(request):
         request.session['otp_verified']=True # delt otp aftr user cn still procced resset pass
         return redirect('admin_reset_password')
 
-    return render(request,'admin_otp_verification.html')
+    return render(request,'auth/admin_otp_verification.html')
 
 
 def admin_resend_otp(request):
@@ -176,11 +220,56 @@ def admin_resend_otp(request):
         expires_at=timezone.now() +timedelta(minutes=2))
 
     send_mail(
-        "Resend OTP",
-        f"Your new OTP is {otp}",
-        settings.EMAIL_HOST_USER,
-        [user.email],
-    )
+    'Glowé Admin — New OTP Requested 🔄',
+    f'''
+════════════════════════════════
+           🌿 Glowé
+        Admin Control Panel
+════════════════════════════════
+
+Hello Admin,
+
+You requested a new OTP for the
+Glowé Admin Control Panel.
+
+Your previous OTP has been cancelled.
+Use the new code below to verify
+your identity and proceed.
+
+  ──────────────────────────
+  Your New Admin OTP:
+
+       {' '.join(str(otp))}
+
+  ⏱  Valid for 5 minute only
+  ──────────────────────────
+
+🔒 SECURITY NOTICE:
+   This OTP is for admin access only.
+   Never share this code with anyone.
+
+   If you did not request a new OTP,
+   please secure your account
+   immediately and contact support.
+
+────────────────────────────────
+⚠️  ADMIN ACCESS WARNING:
+   This panel contains sensitive data.
+   Unauthorized access is strictly
+   prohibited and will be logged.
+────────────────────────────────
+
+Need help? Contact us:
+📧 glowe639@gmail.com
+
+════════════════════════════════
+© 2025 Glowé. All rights reserved.
+Kerala, India — Admin Panel
+════════════════════════════════
+''',
+    settings.EMAIL_HOST_USER,
+    [user.email],
+)
 
     messages.success(request,"New OTP sent")
     return redirect('admin_otp_verification')
@@ -231,43 +320,76 @@ def admin_reset_password(request):
         messages.success(request,"Password reset successful")
         return redirect('admin_signin')
 
-    return render(request, 'admin_reset_password.html')
+    return render(request, 'auth/admin_reset_password.html')
 
 def user_management(request):
     q = request.GET.get('q', '')
     status = request.GET.get('status', '')
+    
 
-    users = ProfileUser.objects.filter(is_superuser=False)
+    users = ProfileUser.objects.filter(is_superuser=False).order_by('-date_joined')
 
     if q:
         users = users.filter(
-            Q(first_name__icontains=q) |
-            Q(last_name__icontains=q)  |
+            Q(full_name__icontains=q) |
             Q(email__icontains=q)
         )
-    if status == 'active':
-        users = users.filter(is_active=True)
-    elif status == 'blocked':
-        users = users.filter(is_active=False)
+    if status=='active':
+        users=users.filter(is_active=True)
+    elif status =='blocked':
+        users =users.filter(is_active=False)
 
-    paginator = Paginator(users, 10)
-    page_obj = paginator.get_page(request.GET.get('page'))
+    paginator =Paginator(users, 5)
+    page = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page)
 
-    return render(request, 'user_management.html', {
-        'users': page_obj,
-        'page_obj': page_obj,
-    })
+    context={
+        'users':page_obj,
+        'page_obj': page_obj, 
+        'q':q,
+        'status':status,
+    }
+    
+
+    return render(request, 'user_management.html',context)
 
 def admin_toggle_block(request, id):
+    if request.method !='POST':
+        return redirect('user_management')
     user = get_object_or_404(ProfileUser, id=id)
 
     # Toggle is_activ
+    
     user.is_active = not user.is_active
-    user.save()
-
-    if user.is_active:
-        messages.success(request, "User unblocked successfully")
-    else:
-        messages.success(request, "User blocked successfully")
+    user.save(update_fields=['is_active'])
+    
+    name=user.get_full_name() or user.email
+    action='unblocked' if user.is_active else'blocked'
+    messages.success(request,f"{name} has been {action} successfully.")
 
     return redirect('user_management')
+def user_detail(request, id):
+    user = get_object_or_404(ProfileUser, id=id, is_superuser=False)
+ 
+    # Uncomment when Order model is ready:
+    # from orders.models import Order
+    # from django.db.models import Sum
+    # all_orders   = Order.objects.filter(user=user).order_by('-created_at')
+    # total_orders = all_orders.count()
+    # total_spent  = all_orders.aggregate(s=Sum('total_amount'))['s'] or 0
+    # avg_order    = round(total_spent / total_orders, 2) if total_orders else 0
+    # orders_page  = Paginator(all_orders, 5).get_page(request.GET.get('order_page', 1))
+ 
+    total_orders=0
+    total_spent='0.00'
+    avg_order='0.00'
+    orders_page=    Paginator([], 5).get_page(1)
+ 
+    return render(request,'user_detail.html',{
+        'user':user,
+        'total_orders':total_orders,
+        'total_spent':total_spent,
+        'avg_order':avg_order,
+        'orders':orders_page,
+    })
+ 

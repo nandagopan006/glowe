@@ -91,8 +91,9 @@
             Full Name
           </label>
           <div class="relative">
-            <input class="input-field" type="text" id="full_name" name="full_name"
-              placeholder="Enter your full name" autocomplete="name" required />
+           <input class="input-field" type="text" id="full_name" name="full_name"
+  placeholder="Enter your full name" autocomplete="name" required
+  value="{{ form.full_name.value|default:'' }}" />
           </div>
           {% if form.full_name.errors %}
             <p class="text-red-500 text-[10px] mt-1">{{ form.full_name.errors.0 }}</p>
@@ -105,8 +106,9 @@
             Email Address
           </label>
           <div class="relative">
-            <input class="input-field" type="email" id="email" name="email"
-              placeholder="yourname@example.com" autocomplete="email" required />
+           <input class="input-field" type="email" id="email" name="email"
+  placeholder="yourname@example.com" autocomplete="email" required
+  value="{{ form.email.value|default:'' }}" />
           </div>
           {% if form.email.errors %}
             <p class="text-red-500 text-[10px] mt-1">{{ form.email.errors.0 }}</p>

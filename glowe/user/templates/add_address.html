@@ -1,810 +1,442 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Add Address - Glowé</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        colors: {
-          'brand-brown': '#3E2723',
-          'brand-beige': '#F6F1EC',
-          'brand-dark':  '#2C2C2C',
-        },
-        fontFamily: { inter: ['Inter', 'sans-serif'] }
-      }
-    }
-  }
-</script>
-<style>
-  * { font-family: 'Inter', sans-serif; }
-  body { background-color: #F6F1EC; }
+{% extends 'base.html' %}
+{% load static %}
 
-  .sidebar-active { position: relative; background-color: rgba(62,39,35,0.05); font-weight: 600; }
-  .sidebar-active::before {
-    content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
-    height: 24px; width: 3px; background: #3E2723; border-radius: 0 4px 4px 0;
-  }
+{% block title %}Glowé – Add New Address{% endblock %}
 
-  .label-btn { transition: all 0.2s ease; }
-  .label-btn.selected { background-color: #3E2723; color: #fff; border-color: #3E2723; }
+{% block extra_css %}
+body { background:#F5F1EC !important; }
 
-  .form-input {
-    width: 100%; border: 1.5px solid #D1D5DB; border-radius: 0.75rem;
-    padding: 0.75rem 1rem; font-size: 0.875rem;
-    transition: border-color 0.2s, box-shadow 0.2s; background: #fff;
-  }
-  .form-input:focus { outline: none; border-color: #3E2723; box-shadow: 0 0 0 3px rgba(62,39,35,0.1); }
-  .form-input.error   { border-color: #F87171; }
-  .form-input.success { border-color: #34D399; }
+@keyframes toastIn  { to { transform:translateY(0); opacity:1; } }
+@keyframes toastOut { to { transform:translateY(-80px); opacity:0; } }
+@keyframes toastProg { from{width:100%;} to{width:0%;} }
+.g-toast { pointer-events:all; display:flex; align-items:center; width:300px; border-radius:14px; overflow:hidden; position:relative; box-shadow:0 10px 32px rgba(42,31,20,0.2),0 2px 8px rgba(42,31,20,0.10); animation:toastIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards; transform:translateY(-80px); opacity:0; }
+.g-toast.hide { animation:toastOut 0.35s cubic-bezier(0.4,0,1,1) forwards; }
 
-  .autofill-hint { display: none; align-items: center; gap: 4px; font-size: 0.68rem; color: #6B7280; margin-top: 4px; }
-  .autofill-hint.visible { display: flex; }
+.pw-input { width:100%; background:#faf8f5; border:1.5px solid #e8e0d8; border-radius:10px; padding:13px 16px; font-family:'Montserrat',sans-serif; font-size:13px; color:#1a1208; outline:none; transition:border-color 0.2s, box-shadow 0.2s; }
+.pw-input:hover  { background:#fff; border-color:#d4c8be; }
+.pw-input:focus  { background:#fff; border-color:#4A2E24; box-shadow:0 0 0 3px rgba(74,46,36,0.07); }
+.pw-input::placeholder { color:#bdb0a6; font-weight:300; }
+.pw-input.error   { border-color:#f87171 !important; }
+.pw-input.success { border-color:#34d399 !important; }
+.pw-input.disabled { background:#f5f2ed; color:#8C7F77; cursor:not-allowed; }
 
-  .pincode-wrapper { position: relative; }
-  .pincode-status { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 0.8rem; pointer-events: none; }
-  #pincodeSpinner { display: none; }
-  #pincodeCheck   { display: none; color: #10B981; }
-  #pincodeX       { display: none; color: #F87171; }
+.phone-wrapper { display:flex; border:1.5px solid #e8e0d8; border-radius:10px; overflow:hidden; background:#faf8f5; transition:border-color 0.2s, box-shadow 0.2s; }
+.phone-wrapper:focus-within { background:#fff; border-color:#4A2E24; box-shadow:0 0 0 3px rgba(74,46,36,0.07); }
+.phone-wrapper.error { border-color:#f87171; }
+.phone-prefix { display:flex; align-items:center; gap:6px; padding:0 14px; background:#f0ebe2; border-right:1.5px solid #e8e0d8; font-family:'Montserrat',sans-serif; font-size:12px; font-weight:600; color:#1a1208; white-space:nowrap; user-select:none; flex-shrink:0; }
+.phone-input { flex:1; border:none; outline:none; padding:13px 14px; font-family:'Montserrat',sans-serif; font-size:13px; background:transparent; min-width:0; color:#1a1208; }
+.phone-input::placeholder { color:#bdb0a6; font-weight:300; }
 
-  .phone-wrapper { display: flex; border: 1.5px solid #D1D5DB; border-radius: 0.75rem; overflow: hidden; background: #fff; transition: border-color 0.2s, box-shadow 0.2s; }
-  .phone-wrapper:focus-within { border-color: #3E2723; box-shadow: 0 0 0 3px rgba(62,39,35,0.1); }
-  .phone-wrapper.error { border-color: #F87171; }
-  .phone-prefix { display: flex; align-items: center; gap: 6px; padding: 0 12px; background: #F6F1EC; border-right: 1.5px solid #D1D5DB; font-size: 0.875rem; font-weight: 600; color: #2C2C2C; white-space: nowrap; user-select: none; }
-  .phone-input { flex: 1; border: none; outline: none; padding: 0.75rem 0.875rem; font-size: 0.875rem; background: transparent; min-width: 0; }
-  .phone-input::placeholder { color: #9CA3AF; }
+.label-btn { border:1.5px solid #e8e0d8; border-radius:10px; padding:11px 8px; font-family:'Montserrat',sans-serif; font-size:11px; font-weight:600; color:#8C7F77; background:#faf8f5; cursor:pointer; transition:all 0.2s; letter-spacing:0.05em; }
+.label-btn:hover  { border-color:#4A2E24; color:#4A2E24; background:#fff; }
+.label-btn.selected { background:#1a1208; color:#fff; border-color:#1a1208; }
 
-  .error-msg { color: #EF4444; font-size: 0.75rem; margin-top: 4px; display: none; }
-  .error-msg.visible { display: block; }
-  .django-error { color: #EF4444; font-size: 0.75rem; margin-top: 4px; display: block; }
+.err-msg  { font-family:'Montserrat',sans-serif; font-size:10.5px; color:#e05050; margin-top:4px; display:none; }
+.err-msg.show { display:block; }
+.hint-row { display:none; align-items:center; gap:5px; font-family:'Montserrat',sans-serif; font-size:10px; color:#8C7F77; margin-top:4px; }
+.hint-row.show { display:flex; }
 
-  .suggest-dropdown {
-    display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
-    background: #fff; border: 1.5px solid #D1D5DB; border-radius: 0.75rem;
-    z-index: 200; max-height: 200px; overflow-y: auto;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-  }
-  .suggest-dropdown.open { display: block; }
-  .suggest-option { padding: 10px 16px; font-size: 0.875rem; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: background 0.12s; }
-  .suggest-option:hover, .suggest-option.active { background: #F6F1EC; color: #3E2723; }
-  .suggest-option.active { font-weight: 600; }
-  .suggest-flag { font-size: 1rem; flex-shrink: 0; }
-  .match-hl     { color: #3E2723; font-weight: 700; background: rgba(62,39,35,0.09); border-radius: 2px; padding: 0 1px; }
-  .suggest-empty { padding: 14px 16px; font-size: 0.85rem; color: #9CA3AF; text-align: center; }
+.pincode-wrapper { position:relative; }
+.pincode-status  { position:absolute; right:14px; top:50%; transform:translateY(-50%); font-size:13px; pointer-events:none; }
 
-  .input-wrapper { position: relative; }
-  .input-clear { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #9CA3AF; font-size: 0.75rem; padding: 4px; display: none; transition: color 0.15s; line-height: 1; z-index: 1; }
-  .input-clear:hover   { color: #3E2723; }
-  .input-clear.visible { display: block; }
-</style>
-</head>
-<body class="text-brand-dark">
+.suggest-dropdown { display:none; position:absolute; top:calc(100% + 4px); left:0; right:0; background:#fff; border:1.5px solid #e8e0d8; border-radius:12px; z-index:200; max-height:200px; overflow-y:auto; box-shadow:0 8px 24px rgba(26,18,8,0.12); }
+.suggest-dropdown.open { display:block; }
+.suggest-option { padding:10px 16px; font-family:'Montserrat',sans-serif; font-size:12px; cursor:pointer; display:flex; align-items:center; gap:10px; transition:background 0.12s; }
+.suggest-option:hover, .suggest-option.active { background:#F5F1EC; }
+.match-hl { color:#4A2E24; font-weight:700; background:rgba(74,46,36,0.09); border-radius:2px; padding:0 1px; }
+.suggest-empty { padding:14px 16px; font-family:'Montserrat',sans-serif; font-size:12px; color:#8C7F77; text-align:center; }
 
-<!-- NAVBAR -->
-<nav class="bg-brand-beige border-b border-gray-200 sticky top-0 z-40">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center justify-between h-16 sm:h-20">
-      <div class="flex items-center space-x-2">
-        <svg class="w-7 h-7 sm:w-8 sm:h-8" viewBox="0 0 24 24" fill="none">
-          <path d="M12 2C12 2 7 4 7 8C7 10 8 11 9 12C7 13 6 15 8 17C10 19 12 18 12 18C12 18 14 19 16 17C18 15 17 13 15 12C16 11 17 10 17 8C17 4 12 2 12 2Z" fill="#3E2723"/>
-        </svg>
-        <span class="text-xl sm:text-2xl font-bold text-brand-brown">Glowé</span>
-      </div>
-      <div class="hidden md:flex space-x-8 lg:space-x-10">
-        <a href="#" class="text-sm font-medium hover:text-brand-brown transition-colors">SHOP</a>
-        <a href="#" class="text-sm font-medium hover:text-brand-brown transition-colors">COLLECTIONS</a>
-        <a href="#" class="text-sm font-medium hover:text-brand-brown transition-colors">ABOUT</a>
-        <a href="#" class="text-sm font-medium hover:text-brand-brown transition-colors">CONTACT</a>
-      </div>
-      <div class="flex items-center space-x-3 sm:space-x-5">
-        <button class="hidden sm:block text-brand-dark hover:text-brand-brown"><i class="fas fa-search text-base sm:text-lg"></i></button>
-        <button class="hidden sm:block text-brand-dark hover:text-brand-brown"><i class="far fa-heart text-base sm:text-lg"></i></button>
-        <button class="text-brand-dark hover:text-brand-brown"><i class="far fa-user text-base sm:text-lg"></i></button>
-        <button class="text-brand-dark hover:text-brand-brown relative">
-          <i class="fas fa-shopping-bag text-base sm:text-lg"></i>
-          <span class="absolute -top-2 -right-2 bg-brand-brown text-white text-xs w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center font-semibold">2</span>
-        </button>
-        <button class="md:hidden text-brand-dark hover:text-brand-brown p-1" onclick="toggleMobileMenu()">
-          <i class="fas fa-bars text-lg" id="hamburgerIcon"></i>
-        </button>
-      </div>
+.input-wrapper { position:relative; }
+.input-clear { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:#bdb0a6; font-size:11px; padding:4px; display:none; z-index:1; }
+.input-clear:hover { color:#4A2E24; }
+.input-clear.show  { display:block; }
+
+@keyframes spin    { to { transform:rotate(360deg); } }
+@keyframes shimmer { 0%{transform:translateX(-100%) skewX(-12deg);} 100%{transform:translateX(200%) skewX(-12deg);} }
+.btn-loading { position:relative; overflow:hidden; pointer-events:none; opacity:0.88; }
+.btn-loading::after { content:''; position:absolute; inset:0; background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,0.14) 50%,transparent 70%); animation:shimmer 1.3s ease-in-out infinite; }
+.btn-spinner { display:inline-block; width:14px; height:14px; border:1.8px solid rgba(245,242,237,0.3); border-top-color:#f5f2ed; border-radius:50%; animation:spin 0.7s linear infinite; flex-shrink:0; }
+
+@media (max-width:1023px) { .desktop-sidebar { display:none !important; } }
+@media (min-width:1024px) { .mobile-nav-fab { display:none !important; } .mobile-nav-sheet { display:none !important; } .mobile-nav-overlay{ display:none !important; } }
+.mobile-nav-overlay { position:fixed; inset:0; z-index:998; background:rgba(26,18,8,0.35); opacity:0; pointer-events:none; transition:opacity 0.25s ease; }
+.mobile-nav-overlay.open { opacity:1; pointer-events:all; }
+.mobile-nav-sheet { position:fixed; bottom:0; left:0; right:0; z-index:999; background:#ffffff; border-radius:24px 24px 0 0; border-top:1px solid #E7DDD6; padding:0 0 28px; transform:translateY(100%); transition:transform 0.38s cubic-bezier(0.34,1.2,0.64,1); }
+.mobile-nav-sheet.open { transform:translateY(0); }
+.sheet-handle { width:36px; height:4px; background:#E7DDD6; border-radius:2px; margin:10px auto 16px; }
+.sheet-nav-item { display:flex; align-items:center; gap:14px; padding:13px 20px; cursor:pointer; transition:background 0.15s; text-decoration:none; border:none; background:none; width:100%; text-align:left; }
+.sheet-nav-item:hover { background:#F5F1EC; }
+.sheet-nav-item.s-active { background:#F5F1EC; }
+.sheet-nav-icon { width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.sheet-nav-label { font-family:'Montserrat',sans-serif; font-size:13px; font-weight:600; color:#1a1208; }
+.sheet-nav-sub   { font-family:'Montserrat',sans-serif; font-size:10px; font-weight:400; color:#8C7F77; margin-top:1px; }
+.mobile-nav-fab { position:fixed; bottom:24px; right:20px; z-index:997; width:50px; height:50px; border-radius:50%; background:#1a1208; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 20px rgba(26,18,8,0.3); transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1), background 0.2s; }
+.mobile-nav-fab:hover { background:#3a2414; }
+.mobile-nav-fab.open  { transform:rotate(45deg); background:#3a2414; }
+{% endblock %}
+
+{% block content %}
+
+<div id="gToastContainer" class="fixed top-5 z-[9999] flex flex-col gap-2 pointer-events-none" style="left:50%;transform:translateX(-50%);align-items:center;width:max-content;"></div>
+
+<div id="mobileNavOverlay" class="mobile-nav-overlay" onclick="closeMobileNav()"></div>
+<div id="mobileNavSheet" class="mobile-nav-sheet">
+  <div class="sheet-handle"></div>
+  <div style="display:flex;align-items:center;gap:12px;padding:0 20px 14px;border-bottom:1px solid #F0EBE2;margin-bottom:4px;">
+    <div style="width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid #E7DDD6;">
+      <img src="{% if user.profile_image and user.profile_image.name != 'profile/default.png' %}{{ user.profile_image.url }}{% else %}/media/profile/default.png{% endif %}" alt="{{ user.full_name }}" style="width:100%;height:100%;object-fit:cover;"/>
     </div>
-    <div id="mobileMenu" class="hidden md:hidden border-t border-gray-200 py-3">
-      <div class="flex flex-col space-y-1">
-        <a href="#" class="px-2 py-2.5 text-sm font-medium hover:text-brand-brown hover:bg-white rounded-lg">SHOP</a>
-        <a href="#" class="px-2 py-2.5 text-sm font-medium hover:text-brand-brown hover:bg-white rounded-lg">COLLECTIONS</a>
-        <a href="#" class="px-2 py-2.5 text-sm font-medium hover:text-brand-brown hover:bg-white rounded-lg">ABOUT</a>
-        <a href="#" class="px-2 py-2.5 text-sm font-medium hover:text-brand-brown hover:bg-white rounded-lg">CONTACT</a>
-        <div class="flex items-center space-x-4 px-2 pt-2 border-t border-gray-100 mt-1">
-          <button class="text-brand-dark hover:text-brand-brown"><i class="fas fa-search"></i></button>
-          <button class="text-brand-dark hover:text-brand-brown"><i class="far fa-heart"></i></button>
-        </div>
-      </div>
+    <div>
+      <p style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:#1a1208;margin:0;line-height:1.2;">{{ user.full_name }}</p>
+      <p style="font-family:'Montserrat',sans-serif;font-size:10px;color:#8C7F77;margin:2px 0 0;">{{ user.email }}</p>
     </div>
   </div>
-</nav>
-
-<!-- BREADCRUMB -->
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-2">
-  <div class="flex items-center flex-wrap gap-y-1 gap-x-2 text-xs sm:text-sm text-gray-500">
-    <a href="{% url 'home' %}" class="hover:text-brand-brown transition-colors">Home</a>
-    <i class="fas fa-chevron-right text-xs"></i>
-    <a href="{% url 'profile_overview' %}" class="hover:text-brand-brown transition-colors">Profile</a>
-    <i class="fas fa-chevron-right text-xs"></i>
-    <a href="{% url 'address' %}" class="hover:text-brand-brown transition-colors">Addresses</a>
-    <i class="fas fa-chevron-right text-xs"></i>
-    <span class="text-brand-dark font-medium">Add New</span>
-  </div>
+  <a href="{% url 'profile_overview' %}" class="sheet-nav-item">
+    <div class="sheet-nav-icon" style="background:#F5F1EC;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1a1208" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
+    <div><div class="sheet-nav-label">Overview</div><div class="sheet-nav-sub">Account summary</div></div>
+  </a>
+  <a href="" class="sheet-nav-item">
+    <div class="sheet-nav-icon" style="background:#f0f8f4;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>
+    <div><div class="sheet-nav-label">My Orders</div><div class="sheet-nav-sub">Track &amp; manage</div></div>
+  </a>
+  <a href="#" class="sheet-nav-item">
+    <div class="sheet-nav-icon" style="background:#fdf0f4;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#993556" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+    <div><div class="sheet-nav-label">Wishlist</div><div class="sheet-nav-sub">Saved items</div></div>
+  </a>
+  <a href="{% url 'address' %}" class="sheet-nav-item s-active">
+    <div class="sheet-nav-icon" style="background:#eef4ff;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#185FA5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+    <div><div class="sheet-nav-label">Addresses</div><div class="sheet-nav-sub">Delivery locations</div></div>
+    <div style="width:7px;height:7px;border-radius:50%;background:#1a1208;margin-left:auto;flex-shrink:0;"></div>
+  </a>
 </div>
 
-<!-- MAIN -->
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8">
-  <div class="flex flex-col lg:grid lg:grid-cols-12 gap-5 sm:gap-8">
+<button id="mobileNavFab" class="mobile-nav-fab" onclick="toggleMobileNav()" aria-label="Open menu">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+  </svg>
+</button>
 
-    <!-- SIDEBAR -->
-    <aside class="lg:col-span-3">
-      <div class="lg:hidden bg-white rounded-2xl shadow-sm p-3">
-        <div class="flex overflow-x-auto gap-2">
-          <a href="#" class="flex items-center gap-2 px-4 py-2.5 text-gray-500 rounded-xl hover:bg-gray-50 whitespace-nowrap text-sm flex-shrink-0">
-            <i class="far fa-box text-sm"></i><span>Orders</span>
-          </a>
-          <a href="{% url 'address' %}" class="flex items-center gap-2 px-4 py-2.5 bg-brand-brown bg-opacity-5 text-brand-brown font-semibold rounded-xl whitespace-nowrap text-sm flex-shrink-0 border border-brand-brown border-opacity-20">
-            <i class="fas fa-location-dot text-sm"></i><span>Addresses</span>
-          </a>
-          <a href="#" class="flex items-center gap-2 px-4 py-2.5 text-gray-500 rounded-xl hover:bg-gray-50 whitespace-nowrap text-sm flex-shrink-0">
-            <i class="far fa-credit-card text-sm"></i><span>Payment</span>
-          </a>
+<!-- BREADCRUMB -->
+<div class="max-w-[1440px] mx-auto px-6 md:px-10 pt-8 pb-6">
+  <p class="font-montserrat text-[11px] font-medium tracking-[0.14em] text-[#8C7F77] uppercase">
+    <a href="{% url 'home' %}" class="hover:text-[#1a1208] transition-colors no-underline text-[#8C7F77]">Home</a>
+    <span class="mx-2">/</span>
+    <a href="{% url 'profile_overview' %}" class="hover:text-[#1a1208] transition-colors no-underline text-[#8C7F77]">My Account</a>
+    <span class="mx-2">/</span>
+    <a href="{% url 'address' %}" class="hover:text-[#1a1208] transition-colors no-underline text-[#8C7F77]">Addresses</a>
+    <span class="mx-2">/</span>
+    <span class="text-[#1a1208]">Add New</span>
+  </p>
+</div>
+
+<!-- MAIN LAYOUT -->
+<main class="max-w-[1440px] mx-auto px-6 md:px-10 pb-20">
+  <div class="flex flex-col lg:flex-row gap-6">
+
+    <!-- DESKTOP SIDEBAR -->
+    <aside class="desktop-sidebar w-full lg:w-[300px] lg:shrink-0 flex flex-col gap-4">
+      <div class="bg-white rounded-2xl border border-[#E7DDD6] shadow-sm p-6">
+        <div class="flex items-center gap-4 mb-6">
+          <div class="w-14 h-14 rounded-full overflow-hidden shrink-0 border-2 border-[#E7DDD6]">
+            <img src="{% if user.profile_image and user.profile_image.name != 'profile/default.png' %}{{ user.profile_image.url }}{% else %}/media/profile/default.png{% endif %}" alt="{{ user.full_name }}" class="w-full h-full object-cover"/>
+          </div>
+          <div>
+            <p class="font-cormorant text-[18px] font-semibold text-[#1a1208] leading-tight">{{ user.full_name }}</p>
+            <p class="font-montserrat text-[11px] font-light text-[#8C7F77] mt-0.5">{{ user.email }}</p>
+          </div>
         </div>
+        <a href="{% url 'address' %}" class="block w-full text-center font-montserrat text-[11px] font-semibold tracking-[0.1em] text-[#1a1208] border border-[#E7DDD6] rounded-lg py-2.5 hover:bg-[#F5F1EC] hover:border-[#c8b89a] transition-all no-underline">← Back to Addresses</a>
       </div>
-      <div class="hidden lg:block bg-white rounded-2xl shadow-sm p-6 sticky top-24">
-        <h2 class="text-lg font-semibold text-brand-dark mb-6">My Account</h2>
-        <nav class="space-y-1">
-          <a href="#" class="flex items-center px-4 py-3 text-gray-600 rounded-lg hover:bg-gray-50 transition-all">
-            <i class="far fa-box w-5 text-base mr-3"></i><span class="text-sm">Orders</span>
+      <div class="bg-white rounded-2xl border border-[#E7DDD6] shadow-sm overflow-hidden">
+        <nav>
+          <a href="{% url 'profile_overview' %}" class="flex items-center gap-3 px-5 py-4 border-l-2 border-transparent hover:bg-[#F5F1EC] hover:border-[#E7DDD6] transition-all no-underline">
+            <svg class="w-4 h-4 text-[#8C7F77]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            <span class="font-montserrat text-[12px] font-medium text-[#8C7F77]">Overview</span>
           </a>
-          <a href="{% url 'address' %}" class="sidebar-active flex items-center px-4 py-3 rounded-lg">
-            <i class="fas fa-location-dot w-5 text-base mr-3"></i><span class="text-sm">Addresses</span>
+          <a href="" class="flex items-center gap-3 px-5 py-4 border-l-2 border-transparent hover:bg-[#F5F1EC] hover:border-[#E7DDD6] transition-all no-underline">
+            <svg class="w-4 h-4 text-[#8C7F77]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <span class="font-montserrat text-[12px] font-medium text-[#8C7F77]">Orders</span>
           </a>
-          <a href="#" class="flex items-center px-4 py-3 text-gray-600 rounded-lg hover:bg-gray-50 transition-all">
-            <i class="far fa-credit-card w-5 text-base mr-3"></i><span class="text-sm">Payment Methods</span>
+          <a href="#" class="flex items-center gap-3 px-5 py-4 border-l-2 border-transparent hover:bg-[#F5F1EC] hover:border-[#E7DDD6] transition-all no-underline">
+            <svg class="w-4 h-4 text-[#8C7F77]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <span class="font-montserrat text-[12px] font-medium text-[#8C7F77]">Wishlist</span>
+          </a>
+          <a href="{% url 'address' %}" class="flex items-center gap-3 px-5 py-4 bg-[#F5F1EC] border-l-2 border-[#1a1208] no-underline">
+            <svg class="w-4 h-4 text-[#1a1208]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span class="font-montserrat text-[12px] font-semibold text-[#1a1208]">Addresses</span>
           </a>
         </nav>
       </div>
     </aside>
 
-    <!-- FORM -->
-    <main class="lg:col-span-9">
-      <div class="flex items-center gap-3 sm:gap-4 mb-5 sm:mb-8">
-        <a href="{% url 'address' %}" class="w-9 h-9 sm:w-10 sm:h-10 bg-white rounded-xl shadow-sm flex items-center justify-center hover:shadow-md transition-all text-gray-500 hover:text-brand-brown flex-shrink-0">
-          <i class="fas fa-arrow-left text-sm"></i>
-        </a>
-        <div>
-          <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-dark leading-tight">Add New Address</h1>
-          <p class="text-gray-500 text-xs sm:text-sm mt-0.5 sm:mt-1">Fill in the details below to save a new location.</p>
-        </div>
+    <!-- FORM CONTENT -->
+    <div class="flex-1">
+      <div class="mb-6">
+        <p class="font-montserrat text-[10px] font-semibold tracking-[0.28em] uppercase text-[#8C7F77] mb-1">Account / Addresses</p>
+        <h1 class="font-cormorant text-[32px] sm:text-[40px] font-normal text-[#1a1208] leading-tight">Add New Address</h1>
+        <p class="font-montserrat text-[12px] font-light text-[#8C7F77] mt-1">Fill in the details to save a new delivery location.</p>
       </div>
 
-      {% if messages %}
-        {% for message in messages %}
-          <div class="mb-5 px-5 py-4 rounded-xl text-sm flex items-center gap-2
-            {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200
-            {% else %}bg-green-50 text-green-800 border border-green-200{% endif %}">
-            <i class="fas {% if message.tags == 'error' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %} flex-shrink-0"></i>
-            {{ message }}
-          </div>
-        {% endfor %}
+      {% if form.errors %}
+      <div class="mb-5 flex items-start gap-3 bg-[#fdf3f1] border border-[#f5c6c6] rounded-xl px-5 py-4">
+        <svg class="w-4 h-4 text-[#e05050] shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div>
+          <p class="font-montserrat text-[12px] font-semibold text-[#e05050]">Please fix the errors below.</p>
+          {% for error in form.non_field_errors %}<p class="font-montserrat text-[11px] text-[#e05050] mt-1">• {{ error }}</p>{% endfor %}
+        </div>
+      </div>
       {% endif %}
 
-      <div class="bg-white rounded-2xl shadow-sm p-4 sm:p-6 lg:p-8">
-
-        {% if form.errors %}
-        <div class="mb-6 px-5 py-4 rounded-xl bg-red-50 text-red-800 border border-red-200 text-sm">
-          <div class="flex items-start gap-2">
-            <i class="fas fa-exclamation-circle mt-0.5 flex-shrink-0"></i>
-            <div>
-              <p class="font-semibold">Please fix the errors below and try again.</p>
-              {% for error in form.non_field_errors %}
-                <p class="mt-1 text-xs">• {{ error }}</p>
-              {% endfor %}
-            </div>
-          </div>
-        </div>
-        {% endif %}
-
-        <form method="POST" action="{% url 'add_address' %}" id="addressForm" class="space-y-5 sm:space-y-6" novalidate>
+      <div class="bg-white rounded-2xl border border-[#E7DDD6] shadow-sm p-6 sm:p-8 lg:p-10">
+        <form method="POST" action="{% url 'add_address' %}" id="addressForm" class="space-y-6" novalidate>
           {% csrf_token %}
 
-          <!-- Address Label -->
+          <!-- Label -->
           <div>
-            <label class="block text-sm font-semibold text-brand-dark mb-2">Address Label <span class="text-red-500">*</span></label>
-            <div class="grid grid-cols-3 gap-2 sm:gap-3">
-              <button type="button" onclick="selectLabel(this,'HOME')" data-value="HOME"
-                class="label-btn border-2 border-gray-300 rounded-xl py-2.5 sm:py-3 text-xs sm:text-sm font-semibold hover:border-brand-brown transition-all {% if form.label.value == 'HOME' %}selected{% endif %}">
-                🏠 HOME
-              </button>
-              <button type="button" onclick="selectLabel(this,'OFFICE')" data-value="OFFICE"
-                class="label-btn border-2 border-gray-300 rounded-xl py-2.5 sm:py-3 text-xs sm:text-sm font-semibold hover:border-brand-brown transition-all {% if form.label.value == 'OFFICE' %}selected{% endif %}">
-                💼 OFFICE
-              </button>
-              <button type="button" onclick="selectLabel(this,'OTHER')" data-value="OTHER"
-                class="label-btn border-2 border-gray-300 rounded-xl py-2.5 sm:py-3 text-xs sm:text-sm font-semibold hover:border-brand-brown transition-all {% if form.label.value == 'OTHER' %}selected{% endif %}">
-                📍 OTHER
-              </button>
+            <label class="block font-montserrat text-[10px] font-semibold tracking-[0.2em] uppercase text-[#4A2E24] mb-3">Address Label <span class="text-[#e05050]">*</span></label>
+            <div class="grid grid-cols-3 gap-3">
+              <button type="button" onclick="selectLabel(this,'HOME')" class="label-btn {% if form.label.value == 'HOME' %}selected{% endif %}">🏠 Home</button>
+              <button type="button" onclick="selectLabel(this,'OFFICE')" class="label-btn {% if form.label.value == 'OFFICE' %}selected{% endif %}">💼 Office</button>
+              <button type="button" onclick="selectLabel(this,'OTHER')" class="label-btn {% if form.label.value == 'OTHER' %}selected{% endif %}">📍 Other</button>
             </div>
             <input type="hidden" name="label" id="labelInput" value="{{ form.label.value|default:'' }}">
-            <p id="labelError" class="error-msg">Please select an address label.</p>
-            {% for error in form.label.errors %}<p class="django-error">{{ error }}</p>{% endfor %}
+            <p id="labelError" class="err-msg">Please select an address label.</p>
+            {% for error in form.label.errors %}<p class="err-msg show">{{ error }}</p>{% endfor %}
           </div>
+
+          <div class="h-px bg-[#f0ebe2]"></div>
 
           <!-- Full Name -->
           <div>
-            <label for="id_full_name" class="block text-sm font-semibold text-brand-dark mb-2">Full Name <span class="text-red-500">*</span></label>
-            <input type="text" name="full_name" id="id_full_name"
-              value="{{ form.full_name.value|default:'' }}" placeholder="e.g. Rahul Sharma"
-              class="form-input {% if form.full_name.errors %}error{% endif %}">
-            <p id="fullNameError" class="error-msg">Please enter your full name.</p>
-            {% for error in form.full_name.errors %}<p class="django-error">{{ error }}</p>{% endfor %}
+            <label class="block font-montserrat text-[10px] font-semibold tracking-[0.2em] uppercase text-[#4A2E24] mb-2">Full Name <span class="text-[#e05050]">*</span></label>
+            <input type="text" name="full_name" id="id_full_name" value="{{ form.full_name.value|default:'' }}" placeholder="e.g. Rahul Sharma" class="pw-input {% if form.full_name.errors %}error{% endif %}"/>
+            <p id="fullNameError" class="err-msg">Please enter your full name.</p>
+            {% for error in form.full_name.errors %}<p class="err-msg show">{{ error }}</p>{% endfor %}
           </div>
 
           <!-- Street Address -->
           <div>
-            <label for="id_street_address" class="block text-sm font-semibold text-brand-dark mb-2">Street Address <span class="text-red-500">*</span></label>
-            <input type="text" name="street_address" id="id_street_address"
-              value="{{ form.street_address.value|default:'' }}"
-              placeholder="House/Flat No., Building, Street, Area"
-              class="form-input {% if form.street_address.errors %}error{% endif %}">
-            <p id="streetError" class="error-msg">Please enter your street address.</p>
-            {% for error in form.street_address.errors %}<p class="django-error">{{ error }}</p>{% endfor %}
+            <label class="block font-montserrat text-[10px] font-semibold tracking-[0.2em] uppercase text-[#4A2E24] mb-2">Street Address <span class="text-[#e05050]">*</span></label>
+            <input type="text" name="street_address" id="id_street_address" value="{{ form.street_address.value|default:'' }}" placeholder="House/Flat No., Building, Street, Area" class="pw-input {% if form.street_address.errors %}error{% endif %}"/>
+            <p id="streetError" class="err-msg">Please enter your street address.</p>
+            {% for error in form.street_address.errors %}<p class="err-msg show">{{ error }}</p>{% endfor %}
           </div>
 
-          <!-- ROW 1: Pincode + City -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-            <!-- Pincode -->
+          <!-- Pincode + City -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div>
-              <label for="id_pincode" class="block text-sm font-semibold text-brand-dark mb-2">Pincode <span class="text-red-500">*</span></label>
+              <label class="block font-montserrat text-[10px] font-semibold tracking-[0.2em] uppercase text-[#4A2E24] mb-2">Pincode <span class="text-[#e05050]">*</span></label>
               <div class="pincode-wrapper">
-                <input type="text" name="pincode" id="id_pincode"
-                  value="{{ form.pincode.value|default:'' }}"
-                  placeholder="e.g. 673001" maxlength="6" inputmode="numeric" autocomplete="off"
-                  class="form-input {% if form.pincode.errors %}error{% endif %}" style="padding-right:2.5rem;">
+                <input type="text" name="pincode" id="id_pincode" value="{{ form.pincode.value|default:'' }}" placeholder="e.g. 673001" maxlength="6" inputmode="numeric" autocomplete="off" class="pw-input {% if form.pincode.errors %}error{% endif %}" style="padding-right:2.5rem;"/>
                 <div class="pincode-status">
-                  <i id="pincodeSpinner" class="fas fa-spinner fa-spin text-gray-400"></i>
-                  <i id="pincodeCheck" class="fas fa-check-circle"></i>
-                  <i id="pincodeX" class="fas fa-times-circle"></i>
+                  <svg id="pincodeSpinner" style="display:none;" class="w-4 h-4 text-[#8C7F77] animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="31.4" stroke-dashoffset="10"/></svg>
+                  <svg id="pincodeCheck" style="display:none;" class="w-4 h-4 text-[#0F6E56]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <svg id="pincodeX" style="display:none;" class="w-4 h-4 text-[#e05050]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </div>
               </div>
-              <p id="pincodeError" class="error-msg"></p>
-              {% for error in form.pincode.errors %}<p class="django-error">{{ error }}</p>{% endfor %}
+              <p id="pincodeError" class="err-msg"></p>
+              {% for error in form.pincode.errors %}<p class="err-msg show">{{ error }}</p>{% endfor %}
             </div>
-
-            <!-- City -->
             <div>
-              <label for="id_city" class="block text-sm font-semibold text-brand-dark mb-2">City / Locality <span class="text-red-500">*</span></label>
+              <label class="block font-montserrat text-[10px] font-semibold tracking-[0.2em] uppercase text-[#4A2E24] mb-2">City / Locality <span class="text-[#e05050]">*</span></label>
               <div class="relative">
-                <input type="text" name="city" id="id_city"
-                  value="{{ form.city.value|default:'' }}"
-                  placeholder="Enter city or locality" autocomplete="off"
-                  class="form-input {% if form.city.errors %}error{% endif %}">
+                <input type="text" name="city" id="id_city" value="{{ form.city.value|default:'' }}" placeholder="Enter city or locality" autocomplete="off" class="pw-input {% if form.city.errors %}error{% endif %}"/>
                 <div id="cityDropdown" class="suggest-dropdown"></div>
               </div>
-              <div id="cityAutoHint" class="autofill-hint">
-                <i class="fas fa-magic text-xs text-amber-500"></i>
-                <span>Auto-suggested · you can edit</span>
-              </div>
-              <p id="cityError" class="error-msg">Please enter your city.</p>
-              {% for error in form.city.errors %}<p class="django-error">{{ error }}</p>{% endfor %}
+              <div id="cityAutoHint" class="hint-row"><svg class="w-3 h-3 text-[#f59e0b] shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span>Auto-suggested · you can edit</span></div>
+              <p id="cityError" class="err-msg">Please enter your city.</p>
+              {% for error in form.city.errors %}<p class="err-msg show">{{ error }}</p>{% endfor %}
             </div>
           </div>
 
-          <!-- ROW 2: District + State + Country -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-
-            <!-- District -->
+          <!-- District + State + Country -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             <div>
-              <label for="id_district_input" class="block text-sm font-semibold text-brand-dark mb-2">District <span class="text-red-500">*</span></label>
+              <label class="block font-montserrat text-[10px] font-semibold tracking-[0.2em] uppercase text-[#4A2E24] mb-2">District <span class="text-[#e05050]">*</span></label>
               <div class="input-wrapper">
-                <input type="text" id="id_district_input"
-                  value="{{ form.district.value|default:'' }}"
-                  placeholder="Type district name…"
-                  autocomplete="off" style="padding-right:2rem;"
-                  class="form-input {% if form.district.errors %}error{% endif %}"
-                  oninput="onDistrictInput(this.value)"
-                  onfocus="onDistrictFocus()"
-                  onkeydown="onDistrictKeydown(event)">
-                <button type="button" id="districtClearBtn"
-                  class="input-clear {% if form.district.value %}visible{% endif %}"
-                  onclick="clearDistrictInput()">
-                  <i class="fas fa-times"></i>
-                </button>
+                <input type="text" id="id_district_input" value="{{ form.district.value|default:'' }}" placeholder="Type district name…" autocomplete="off" style="padding-right:2rem;" class="pw-input {% if form.district.errors %}error{% endif %}" oninput="onDistrictInput(this.value)" onfocus="onDistrictFocus()" onkeydown="onDistrictKeydown(event)"/>
+                <button type="button" id="districtClearBtn" class="input-clear {% if form.district.value %}show{% endif %}" onclick="clearDistrictInput()">✕</button>
                 <div id="districtDropdown" class="suggest-dropdown"></div>
               </div>
               <input type="hidden" name="district" id="id_district_hidden" value="{{ form.district.value|default:'' }}">
-              <div id="districtAutoHint" class="autofill-hint">
-                <i class="fas fa-magic text-xs text-amber-500"></i>
-                <span>Auto-suggested · you can edit</span>
-              </div>
-              <p id="districtError" class="error-msg">Please enter your district.</p>
-              {% for error in form.district.errors %}<p class="django-error">{{ error }}</p>{% endfor %}
+              <div id="districtAutoHint" class="hint-row"><svg class="w-3 h-3 text-[#f59e0b] shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span>Auto-suggested · you can edit</span></div>
+              <p id="districtError" class="err-msg">Please enter your district.</p>
+              {% for error in form.district.errors %}<p class="err-msg show">{{ error }}</p>{% endfor %}
             </div>
-
-            <!-- State -->
             <div>
-              <label for="id_state_input" class="block text-sm font-semibold text-brand-dark mb-2">State <span class="text-red-500">*</span></label>
+              <label class="block font-montserrat text-[10px] font-semibold tracking-[0.2em] uppercase text-[#4A2E24] mb-2">State <span class="text-[#e05050]">*</span></label>
               <div class="input-wrapper">
-                <input type="text" id="id_state_input"
-                  value="{{ form.state.value|default:'' }}"
-                  placeholder="Type to search state…"
-                  autocomplete="off" style="padding-right:2rem;"
-                  class="form-input {% if form.state.errors %}error{% endif %}"
-                  oninput="onStateInput(this.value)"
-                  onfocus="onStateFocus()"
-                  onkeydown="onStateKeydown(event)">
-                <button type="button" id="stateClearBtn"
-                  class="input-clear {% if form.state.value %}visible{% endif %}"
-                  onclick="clearStateInput()">
-                  <i class="fas fa-times"></i>
-                </button>
+                <input type="text" id="id_state_input" value="{{ form.state.value|default:'' }}" placeholder="Type to search state…" autocomplete="off" style="padding-right:2rem;" class="pw-input {% if form.state.errors %}error{% endif %}" oninput="onStateInput(this.value)" onfocus="onStateFocus()" onkeydown="onStateKeydown(event)"/>
+                <button type="button" id="stateClearBtn" class="input-clear {% if form.state.value %}show{% endif %}" onclick="clearStateInput()">✕</button>
                 <div id="stateDropdown" class="suggest-dropdown"></div>
               </div>
               <input type="hidden" name="state" id="id_state_hidden" value="{{ form.state.value|default:'' }}">
-              <div id="stateAutoHint" class="autofill-hint">
-                <i class="fas fa-magic text-xs text-amber-500"></i>
-                <span>Auto-suggested · you can change</span>
-              </div>
-              <p id="stateError" class="error-msg">Please select a valid state.</p>
-              {% for error in form.state.errors %}<p class="django-error">{{ error }}</p>{% endfor %}
+              <div id="stateAutoHint" class="hint-row"><svg class="w-3 h-3 text-[#f59e0b] shrink-0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span>Auto-suggested · you can change</span></div>
+              <p id="stateError" class="err-msg">Please select a valid state.</p>
+              {% for error in form.state.errors %}<p class="err-msg show">{{ error }}</p>{% endfor %}
             </div>
-
-            <!-- Country -->
             <div>
-              <label class="block text-sm font-semibold text-brand-dark mb-2">Country</label>
-              <div class="form-input bg-gray-50 text-gray-400 flex items-center gap-2 cursor-not-allowed select-none">
-                <span>🇮🇳</span><span>India</span>
-              </div>
+              <label class="block font-montserrat text-[10px] font-semibold tracking-[0.2em] uppercase text-[#4A2E24] mb-2">Country</label>
+              <div class="pw-input disabled flex items-center gap-2">🇮🇳 India</div>
               <input type="hidden" name="country" value="India">
             </div>
           </div>
 
           <!-- Phone -->
           <div>
-            <label for="id_phone_number" class="block text-sm font-semibold text-brand-dark mb-2">Phone Number <span class="text-red-500">*</span></label>
+            <label class="block font-montserrat text-[10px] font-semibold tracking-[0.2em] uppercase text-[#4A2E24] mb-2">Phone Number <span class="text-[#e05050]">*</span></label>
             <div class="phone-wrapper {% if form.phone_number.errors %}error{% endif %}" id="phoneWrapper">
               <div class="phone-prefix"><span>🇮🇳</span><span>+91</span></div>
-              <input type="tel" name="phone_number" id="id_phone_number"
-                value="{{ form.phone_number.value|default:'' }}"
-                placeholder="98765 43210" maxlength="10" inputmode="numeric" class="phone-input">
+              <input type="tel" name="phone_number" id="id_phone_number" value="{{ form.phone_number.value|default:'' }}" placeholder="98765 43210" maxlength="10" inputmode="numeric" class="phone-input"/>
             </div>
-            <p id="phoneError" class="error-msg">Enter a valid 10-digit mobile number.</p>
-            {% for error in form.phone_number.errors %}<p class="django-error">{{ error }}</p>{% endfor %}
+            <p id="phoneError" class="err-msg">Enter a valid 10-digit mobile number.</p>
+            {% for error in form.phone_number.errors %}<p class="err-msg show">{{ error }}</p>{% endfor %}
           </div>
 
           <!-- Default -->
-          <div class="flex items-center gap-3 py-1">
-            <input type="checkbox" name="is_default" id="id_is_default"
-              {% if form.is_default.value %}checked{% endif %}
-              class="w-5 h-5 rounded cursor-pointer accent-brand-brown flex-shrink-0">
-            <label for="id_is_default" class="text-sm text-brand-dark cursor-pointer select-none">Set as default address</label>
+          <div class="flex items-center gap-3">
+            <input type="checkbox" name="is_default" id="id_is_default" {% if form.is_default.value %}checked{% endif %} class="w-4 h-4 cursor-pointer rounded" style="accent-color:#1a1208;flex-shrink:0;"/>
+            <label for="id_is_default" class="font-montserrat text-[12px] font-medium text-[#1a1208] cursor-pointer select-none">Set as default address</label>
           </div>
 
           <!-- Actions -->
-          <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-gray-100">
-            <a href="{% url 'address' %}" class="w-full sm:w-auto px-6 py-3 border border-gray-300 rounded-xl text-brand-dark font-medium hover:bg-gray-50 transition-all text-center text-sm">Cancel</a>
-            <button type="submit" class="w-full sm:w-auto px-6 sm:px-8 py-3 bg-brand-brown text-white rounded-xl font-medium hover:bg-opacity-90 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-sm">
-              <i class="fas fa-save"></i> Save Address
+          <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-6 border-t border-[#f0ebe2]">
+            <a href="{% url 'address' %}" class="font-montserrat text-[11px] font-medium text-[#8C7F77] hover:text-[#1a1208] transition-colors no-underline text-center sm:text-left py-3 sm:py-0">Cancel</a>
+            <button type="submit" id="saveBtn" class="flex items-center justify-center gap-2 bg-[#1a1208] hover:bg-[#3a2414] text-white font-montserrat text-[11px] font-semibold px-8 py-3.5 rounded-xl transition-colors w-full sm:w-auto" style="letter-spacing:0.08em;">
+              <span id="saveBtnContent" class="flex items-center gap-2">
+                Save Address
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
             </button>
           </div>
-
         </form>
       </div>
-    </main>
-  </div>
-</div>
-
-<!-- FOOTER -->
-<footer class="bg-brand-brown text-white mt-12 sm:mt-20">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 lg:py-16">
-    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-10 lg:gap-12">
-      <div class="col-span-2 sm:col-span-2 lg:col-span-1">
-        <div class="flex items-center space-x-2 mb-4">
-          <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none"><path d="M12 2C12 2 7 4 7 8C7 10 8 11 9 12C7 13 6 15 8 17C10 19 12 18 12 18C12 18 14 19 16 17C18 15 17 13 15 12C16 11 17 10 17 8C17 4 12 2 12 2Z" fill="white"/></svg>
-          <span class="text-xl font-bold">Glowé</span>
-        </div>
-        <p class="text-sm text-gray-300 leading-relaxed mb-5">Redefining natural skincare with premium ingredients that honor your skin and the planet.</p>
-        <div class="flex space-x-2.5">
-          <button class="w-9 h-9 bg-white bg-opacity-10 rounded-full flex items-center justify-center hover:bg-opacity-20 text-xs font-semibold">FB</button>
-          <button class="w-9 h-9 bg-white bg-opacity-10 rounded-full flex items-center justify-center hover:bg-opacity-20 text-xs font-semibold">IG</button>
-          <button class="w-9 h-9 bg-white bg-opacity-10 rounded-full flex items-center justify-center hover:bg-opacity-20 text-xs font-semibold">TW</button>
-          <button class="w-9 h-9 bg-white bg-opacity-10 rounded-full flex items-center justify-center hover:bg-opacity-20 text-xs font-semibold">PI</button>
-        </div>
-      </div>
-      <div>
-        <h3 class="font-semibold mb-4 text-xs uppercase tracking-wider text-gray-200">Pages</h3>
-        <ul class="space-y-2 text-sm text-gray-300">
-          <li><a href="#" class="hover:text-white">Home</a></li>
-          <li><a href="#" class="hover:text-white">Shop</a></li>
-          <li><a href="#" class="hover:text-white">Collections</a></li>
-          <li><a href="#" class="hover:text-white">About</a></li>
-          <li><a href="#" class="hover:text-white">Contact</a></li>
-        </ul>
-      </div>
-      <div>
-        <h3 class="font-semibold mb-4 text-xs uppercase tracking-wider text-gray-200">Categories</h3>
-        <ul class="space-y-2 text-sm text-gray-300">
-          <li><a href="#" class="hover:text-white">Cleansers</a></li>
-          <li><a href="#" class="hover:text-white">Toners</a></li>
-          <li><a href="#" class="hover:text-white">Serums</a></li>
-          <li><a href="#" class="hover:text-white">Moisturizers</a></li>
-          <li><a href="#" class="hover:text-white">Bundles</a></li>
-        </ul>
-      </div>
-      <div>
-        <h3 class="font-semibold mb-4 text-xs uppercase tracking-wider text-gray-200">Support</h3>
-        <ul class="space-y-2 text-sm text-gray-300">
-          <li><a href="#" class="hover:text-white">FAQ</a></li>
-          <li><a href="#" class="hover:text-white">Shipping &amp; Returns</a></li>
-          <li><a href="#" class="hover:text-white">Privacy Policy</a></li>
-          <li><a href="#" class="hover:text-white">Terms &amp; Conditions</a></li>
-        </ul>
-      </div>
-    </div>
-    <div class="border-t border-white border-opacity-20 mt-10 pt-6 flex flex-col sm:flex-row justify-between items-center gap-3">
-      <p class="text-xs sm:text-sm text-gray-400 text-center sm:text-left">© 2023 Glowé Skincare. All rights reserved.</p>
-      <div class="flex space-x-4 sm:space-x-6 text-xs sm:text-sm text-gray-400">
-        <a href="#" class="hover:text-white">Privacy Policy</a>
-        <a href="#" class="hover:text-white">Terms of Service</a>
-      </div>
     </div>
   </div>
-</footer>
+</main>
 
+{% endblock %}
+
+{% block extra_js %}
 <script>
-const $ = id => document.getElementById(id);
+const $id = id => document.getElementById(id);
 
-const ALL_STATES = [
-  { name: 'Andhra Pradesh',              flag: '🏛️' },
-  { name: 'Arunachal Pradesh',           flag: '🏔️' },
-  { name: 'Assam',                       flag: '🌿' },
-  { name: 'Bihar',                       flag: '🏺' },
-  { name: 'Chhattisgarh',               flag: '🌾' },
-  { name: 'Goa',                         flag: '🏖️' },
-  { name: 'Gujarat',                     flag: '🦁' },
-  { name: 'Haryana',                     flag: '🌾' },
-  { name: 'Himachal Pradesh',            flag: '🏔️' },
-  { name: 'Jharkhand',                   flag: '🌲' },
-  { name: 'Karnataka',                   flag: '🏯' },
-  { name: 'Kerala',                      flag: '🌴' },
-  { name: 'Madhya Pradesh',              flag: '🐯' },
-  { name: 'Maharashtra',                 flag: '🏙️' },
-  { name: 'Manipur',                     flag: '🌸' },
-  { name: 'Meghalaya',                   flag: '☁️' },
-  { name: 'Mizoram',                     flag: '🏞️' },
-  { name: 'Nagaland',                    flag: '🦅' },
-  { name: 'Odisha',                      flag: '🛕' },
-  { name: 'Punjab',                      flag: '🌾' },
-  { name: 'Rajasthan',                   flag: '🏜️' },
-  { name: 'Sikkim',                      flag: '🏔️' },
-  { name: 'Tamil Nadu',                  flag: '🛕' },
-  { name: 'Telangana',                   flag: '🏛️' },
-  { name: 'Tripura',                     flag: '🌿' },
-  { name: 'Uttar Pradesh',              flag: '🕌' },
-  { name: 'Uttarakhand',                flag: '⛰️' },
-  { name: 'West Bengal',                flag: '🎨' },
-  { name: 'Andaman and Nicobar Islands', flag: '🏝️' },
-  { name: 'Chandigarh',                  flag: '🌹' },
-  { name: 'Delhi',                       flag: '🏛️' },
-  { name: 'Jammu and Kashmir',           flag: '🏔️' },
-  { name: 'Ladakh',                      flag: '🏔️' },
-  { name: 'Lakshadweep',                flag: '🏝️' },
-  { name: 'Puducherry',                  flag: '🌊' },
+const G_CFG = {
+  success: { bg:'#1e3d2f', blobBg:'#172f24', iconBg:'radial-gradient(circle,#3aaa72,#1a6644)', icon:'✓', label:'#6ee7a8', titleC:'#f0fdf4', msgC:'#bbf7d0', prog:'#4ade80', typeLabel:'success', blobs:['#3aaa72','#1a6644','#0d4a30'] },
+  error:   { bg:'#3d1e1e', blobBg:'#2f1717', iconBg:'radial-gradient(circle,#e05050,#a82020)', icon:'✕', label:'#fca5a5', titleC:'#fff1f2', msgC:'#fecaca', prog:'#f87171', typeLabel:'error',   blobs:['#e05050','#a82020','#7a1010'] },
+  warning: { bg:'#3d2000', blobBg:'#2e1800', iconBg:'radial-gradient(circle,#f59e0b,#b45309)', icon:'!', label:'#fcd34d', titleC:'#fff8e1', msgC:'#fde68a', prog:'#f59e0b', typeLabel:'warning', blobs:['#f59e0b','#b45309','#7c2d00'] },
+};
+function _bsvg(b){return `<svg viewBox="0 0 50 70" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;width:100%;height:100%;"><ellipse cx="12" cy="12" rx="20" ry="16" fill="${b[0]}" opacity="0.45"/><ellipse cx="40" cy="52" rx="16" ry="14" fill="${b[1]}" opacity="0.35"/><ellipse cx="24" cy="34" rx="11" ry="9" fill="${b[2]}" opacity="0.3"/><ellipse cx="6" cy="56" rx="10" ry="8" fill="${b[0]}" opacity="0.22"/></svg>`;}
+function showToast(type,title,message){
+  const c=G_CFG[type]||G_CFG.error; const container=$id('gToastContainer'); const toast=document.createElement('div');
+  toast.className='g-toast'; toast.style.background=c.bg;
+  toast.innerHTML=`<div style="width:54px;min-width:54px;align-self:stretch;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:${c.blobBg};">${_bsvg(c.blobs)}<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;z-index:2;position:relative;background:${c.iconBg};flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.2);">${c.icon}</div></div><div style="flex:1;padding:10px 6px 10px 10px;"><p style="font-family:'Montserrat',sans-serif;font-size:7px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 2px;color:${c.label};opacity:0.85;">${c.typeLabel}</p><p style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;line-height:1.2;margin:0 0 2px;color:${c.titleC};">${title}</p><p style="font-family:'Montserrat',sans-serif;font-size:9px;font-weight:400;line-height:1.5;margin:0;color:${c.msgC};opacity:0.85;">${message}</p></div><button onclick="_gDismiss(this.parentElement)" style="background:none;border:none;cursor:pointer;font-size:10px;padding:6px 10px 0 0;align-self:flex-start;color:#fff;opacity:0.4;">✕</button><div style="position:absolute;bottom:0;left:0;height:2px;border-radius:0 2px 0 0;background:${c.prog};animation:toastProg 5s linear forwards;"></div>`;
+  container.appendChild(toast); toast._t=setTimeout(()=>_gDismiss(toast),5000);
+}
+function _gDismiss(t){if(!t||t._d)return;t._d=true;clearTimeout(t._t);t.classList.add('hide');setTimeout(()=>t.remove(),350);}
+
+function toggleMobileNav(){ const sheet=$id('mobileNavSheet'),overlay=$id('mobileNavOverlay'),fab=$id('mobileNavFab'); const isOpen=sheet.classList.contains('open'); sheet.classList.toggle('open',!isOpen);overlay.classList.toggle('open',!isOpen);fab.classList.toggle('open',!isOpen); document.body.style.overflow=isOpen?'':'hidden'; }
+function closeMobileNav(){ $id('mobileNavSheet').classList.remove('open');$id('mobileNavOverlay').classList.remove('open');$id('mobileNavFab').classList.remove('open'); document.body.style.overflow=''; }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape')closeMobileNav(); });
+
+function setErr(id,msg){ const e=$id(id); e.textContent=msg; e.classList.add('show'); }
+function clrErr(id){ $id(id).classList.remove('show'); }
+function showSpinner(v){ $id('pincodeSpinner').style.display=v?'inline':'none'; }
+function showCheck(v)  { $id('pincodeCheck').style.display=v?'inline':'none'; }
+function showX(v)      { $id('pincodeX').style.display=v?'inline':'none'; }
+
+const ALL_STATES=[
+  {name:'Andhra Pradesh',flag:'🏛️'},{name:'Arunachal Pradesh',flag:'🏔️'},{name:'Assam',flag:'🌿'},{name:'Bihar',flag:'🏺'},{name:'Chhattisgarh',flag:'🌾'},{name:'Goa',flag:'🏖️'},{name:'Gujarat',flag:'🦁'},{name:'Haryana',flag:'🌾'},{name:'Himachal Pradesh',flag:'🏔️'},{name:'Jharkhand',flag:'🌲'},{name:'Karnataka',flag:'🏯'},{name:'Kerala',flag:'🌴'},{name:'Madhya Pradesh',flag:'🐯'},{name:'Maharashtra',flag:'🏙️'},{name:'Manipur',flag:'🌸'},{name:'Meghalaya',flag:'☁️'},{name:'Mizoram',flag:'🏞️'},{name:'Nagaland',flag:'🦅'},{name:'Odisha',flag:'🛕'},{name:'Punjab',flag:'🌾'},{name:'Rajasthan',flag:'🏜️'},{name:'Sikkim',flag:'🏔️'},{name:'Tamil Nadu',flag:'🛕'},{name:'Telangana',flag:'🏛️'},{name:'Tripura',flag:'🌿'},{name:'Uttar Pradesh',flag:'🕌'},{name:'Uttarakhand',flag:'⛰️'},{name:'West Bengal',flag:'🎨'},{name:'Andaman and Nicobar Islands',flag:'🏝️'},{name:'Chandigarh',flag:'🌹'},{name:'Delhi',flag:'🏛️'},{name:'Jammu and Kashmir',flag:'🏔️'},{name:'Ladakh',flag:'🏔️'},{name:'Lakshadweep',flag:'🏝️'},{name:'Puducherry',flag:'🌊'},
 ];
 
-let selectedStateName    = '{{ form.state.value|default:"" }}';
-let stateActiveIdx       = -1;
-let stateFiltered        = [];
+let selectedState='{{ form.state.value|default:"" }}',stateIdx=-1,stateFiltered=[];
+let selectedDistrict='{{ form.district.value|default:"" }}',districtIdx=-1,districtFiltered=[],allDistricts=[];
+let resolvedCities=[],apiDebounce=null;
 
-let selectedDistrictName = '{{ form.district.value|default:"" }}';
-let districtActiveIdx    = -1;
-let districtFiltered     = [];
-let allDistricts         = [];
-let resolvedCities       = [];
-let apiDebounce          = null;
+function buildHighlight(name,q){ if(!q)return name; const i=name.toLowerCase().indexOf(q.toLowerCase()); if(i===-1)return name; return name.slice(0,i)+`<span class="match-hl">${name.slice(i,i+q.length)}</span>`+name.slice(i+q.length); }
+function renderDD(ddId,items,q,pickFn,iconFn){ const dd=$id(ddId); if(!items.length){dd.innerHTML='<div class="suggest-empty">No results found</div>';dd.classList.add('open');return;} dd.innerHTML=items.map((item,i)=>`<div class="suggest-option" data-idx="${i}" onmousedown="${pickFn}('${item.name.replace(/'/g,"\\'")}')"><span>${iconFn?iconFn(item):'📍'}</span><span>${buildHighlight(item.name,q)}</span></div>`).join(''); dd.classList.add('open'); }
+function closeDD(id){ $id(id).classList.remove('open'); }
+function updateActive(ddId,idx){ const items=$id(ddId).querySelectorAll('.suggest-option'); items.forEach((el,i)=>el.classList.toggle('active',i===idx)); if(idx>=0)items[idx]?.scrollIntoView({block:'nearest'}); }
 
-/* ── Helpers ── */
-function setError(id, msg)  { const e = $(id); e.textContent = msg; e.classList.add('visible'); }
-function clearError(id)     { $(id).classList.remove('visible'); }
-function showPincodeSpinner(v) { $('pincodeSpinner').style.display = v ? 'inline-block' : 'none'; }
-function showPincodeCheck(v)   { $('pincodeCheck').style.display   = v ? 'inline-block' : 'none'; }
-function showPincodeX(v)       { $('pincodeX').style.display       = v ? 'inline-block' : 'none'; }
+function onStateInput(val){ selectedState='';$id('id_state_hidden').value='';$id('id_state_input').classList.remove('success');$id('stateAutoHint').classList.remove('show');clrErr('stateError'); const q=val.trim(); if(!q){closeDD('stateDropdown');$id('stateClearBtn').classList.remove('show');return;} $id('stateClearBtn').classList.add('show'); stateFiltered=ALL_STATES.filter(s=>s.name.toLowerCase().includes(q.toLowerCase()));stateIdx=-1; renderDD('stateDropdown',stateFiltered,q,'pickState',s=>s.flag); }
+function onStateFocus(){ const v=$id('id_state_input').value.trim(); if(v&&!selectedState){stateFiltered=ALL_STATES.filter(s=>s.name.toLowerCase().includes(v.toLowerCase()));stateIdx=-1;renderDD('stateDropdown',stateFiltered,v,'pickState',s=>s.flag);} }
+function onStateKeydown(e){ if(!$id('stateDropdown').classList.contains('open'))return; if(e.key==='ArrowDown'){e.preventDefault();stateIdx=Math.min(stateIdx+1,stateFiltered.length-1);updateActive('stateDropdown',stateIdx);}else if(e.key==='ArrowUp'){e.preventDefault();stateIdx=Math.max(stateIdx-1,0);updateActive('stateDropdown',stateIdx);}else if(e.key==='Enter'){e.preventDefault();if(stateIdx>=0&&stateFiltered[stateIdx])pickState(stateFiltered[stateIdx].name);}else if(e.key==='Escape')closeDD('stateDropdown'); }
+function pickState(name){ selectedState=name;$id('id_state_input').value=$id('id_state_hidden').value=name;$id('id_state_input').classList.remove('error');$id('id_state_input').classList.add('success');$id('stateClearBtn').classList.add('show');$id('stateAutoHint').classList.remove('show');clrErr('stateError');closeDD('stateDropdown'); }
+function clearStateInput(){ selectedState='';$id('id_state_input').value=$id('id_state_hidden').value='';$id('id_state_input').classList.remove('success','error');$id('stateClearBtn').classList.remove('show');$id('stateAutoHint').classList.remove('show');closeDD('stateDropdown');$id('id_state_input').focus(); }
+function autoSuggestState(n){ const m=ALL_STATES.find(s=>s.name.toLowerCase()===n.toLowerCase()); pickState(m?m.name:n);$id('stateAutoHint').classList.add('show'); }
 
-function buildHighlight(name, query) {
-  if (!query) return name;
-  const idx = name.toLowerCase().indexOf(query.toLowerCase());
-  if (idx === -1) return name;
-  return name.slice(0, idx) + `<span class="match-hl">${name.slice(idx, idx + query.length)}</span>` + name.slice(idx + query.length);
-}
+function onDistrictInput(val){ selectedDistrict='';$id('id_district_hidden').value='';$id('id_district_input').classList.remove('success');$id('districtAutoHint').classList.remove('show');clrErr('districtError'); const q=val.trim(); if(!q){closeDD('districtDropdown');$id('districtClearBtn').classList.remove('show');return;} $id('districtClearBtn').classList.add('show'); if(allDistricts.length){districtFiltered=allDistricts.filter(d=>d.name.toLowerCase().includes(q.toLowerCase()));districtIdx=-1;renderDD('districtDropdown',districtFiltered,q,'pickDistrict',null);}else closeDD('districtDropdown'); }
+function onDistrictFocus(){ const v=$id('id_district_input').value.trim(); if(v&&!selectedDistrict&&allDistricts.length){districtFiltered=allDistricts.filter(d=>d.name.toLowerCase().includes(v.toLowerCase()));districtIdx=-1;renderDD('districtDropdown',districtFiltered,v,'pickDistrict',null);} }
+function onDistrictKeydown(e){ if(!$id('districtDropdown').classList.contains('open'))return; if(e.key==='ArrowDown'){e.preventDefault();districtIdx=Math.min(districtIdx+1,districtFiltered.length-1);updateActive('districtDropdown',districtIdx);}else if(e.key==='ArrowUp'){e.preventDefault();districtIdx=Math.max(districtIdx-1,0);updateActive('districtDropdown',districtIdx);}else if(e.key==='Enter'){e.preventDefault();if(districtIdx>=0&&districtFiltered[districtIdx])pickDistrict(districtFiltered[districtIdx].name);}else if(e.key==='Escape')closeDD('districtDropdown'); }
+function pickDistrict(name){ selectedDistrict=name;$id('id_district_input').value=$id('id_district_hidden').value=name;$id('id_district_input').classList.remove('error');$id('id_district_input').classList.add('success');$id('districtClearBtn').classList.add('show');$id('districtAutoHint').classList.remove('show');clrErr('districtError');closeDD('districtDropdown'); }
+function clearDistrictInput(){ selectedDistrict='';$id('id_district_input').value=$id('id_district_hidden').value='';$id('id_district_input').classList.remove('success','error');$id('districtClearBtn').classList.remove('show');$id('districtAutoHint').classList.remove('show');closeDD('districtDropdown');$id('id_district_input').focus(); }
+function autoSuggestDistrict(primary,allRaw){ allDistricts=[...new Set([primary,...allRaw])].filter(Boolean).map(d=>({name:d})); pickDistrict(primary);$id('districtAutoHint').classList.add('show'); }
 
-function renderDropdown(ddId, items, query, onPickFn, iconFn) {
-  const dd = $(ddId);
-  if (!items.length) { dd.innerHTML = '<div class="suggest-empty">No results found</div>'; dd.classList.add('open'); return; }
-  dd.innerHTML = items.map((item, i) =>
-    `<div class="suggest-option" data-idx="${i}" onmousedown="${onPickFn}('${item.name.replace(/'/g, "\\'")}')">
-      <span class="suggest-flag">${iconFn ? iconFn(item) : '📍'}</span>
-      <span>${buildHighlight(item.name, query)}</span>
-    </div>`
-  ).join('');
-  dd.classList.add('open');
-}
+function buildCityDD(cities){ const dd=$id('cityDropdown'); dd.innerHTML=''; cities.forEach(c=>{const div=document.createElement('div');div.className='suggest-option';div.innerHTML=`<span>📍</span><span>${c}</span>`;div.addEventListener('mousedown',()=>{$id('id_city').value=c;dd.classList.remove('open');clrErr('cityError');});dd.appendChild(div);}); }
+$id('id_city').addEventListener('focus',()=>{ if(resolvedCities.length>1&&$id('cityDropdown').children.length>0)$id('cityDropdown').classList.add('open'); });
+$id('id_city').addEventListener('input',function(){ clrErr('cityError'); const v=this.value.toLowerCase(); if(resolvedCities.length>1){const f=resolvedCities.filter(c=>c.toLowerCase().includes(v));buildCityDD(f.length?f:resolvedCities);$id('cityDropdown').classList.add('open');} });
 
-function closeDropdown(ddId) { $(ddId).classList.remove('open'); }
-function updateActiveItem(ddId, idx) {
-  const items = $(ddId).querySelectorAll('.suggest-option');
-  items.forEach((el, i) => el.classList.toggle('active', i === idx));
-  if (idx >= 0) items[idx]?.scrollIntoView({ block: 'nearest' });
-}
+$id('id_pincode').addEventListener('input',function(){ this.value=this.value.replace(/\D/g,'').slice(0,6); showSpinner(false);showCheck(false);showX(false); this.classList.remove('error','success'); clrErr('pincodeError'); $id('cityAutoHint').classList.remove('show');$id('stateAutoHint').classList.remove('show');$id('districtAutoHint').classList.remove('show'); clearTimeout(apiDebounce); if(this.value.length<6)return; showSpinner(true); apiDebounce=setTimeout(()=>lookupPincode(this.value),400); });
 
-/* ── State typeahead ── */
-function onStateInput(val) {
-  selectedStateName = ''; $('id_state_hidden').value = '';
-  $('id_state_input').classList.remove('success'); $('stateAutoHint').classList.remove('visible'); clearError('stateError');
-  const q = val.trim();
-  if (!q) { closeDropdown('stateDropdown'); $('stateClearBtn').classList.remove('visible'); return; }
-  $('stateClearBtn').classList.add('visible');
-  stateFiltered = ALL_STATES.filter(s => s.name.toLowerCase().includes(q.toLowerCase()));
-  stateActiveIdx = -1;
-  renderDropdown('stateDropdown', stateFiltered, q, 'pickState', s => s.flag);
-}
-function onStateFocus() {
-  const val = $('id_state_input').value.trim();
-  if (val && !selectedStateName) {
-    stateFiltered = ALL_STATES.filter(s => s.name.toLowerCase().includes(val.toLowerCase()));
-    stateActiveIdx = -1;
-    renderDropdown('stateDropdown', stateFiltered, val, 'pickState', s => s.flag);
-  }
-}
-function onStateKeydown(e) {
-  if (!$('stateDropdown').classList.contains('open')) return;
-  if (e.key === 'ArrowDown')  { e.preventDefault(); stateActiveIdx = Math.min(stateActiveIdx+1, stateFiltered.length-1); updateActiveItem('stateDropdown', stateActiveIdx); }
-  else if (e.key === 'ArrowUp')   { e.preventDefault(); stateActiveIdx = Math.max(stateActiveIdx-1, 0); updateActiveItem('stateDropdown', stateActiveIdx); }
-  else if (e.key === 'Enter') { e.preventDefault(); if (stateActiveIdx >= 0 && stateFiltered[stateActiveIdx]) pickState(stateFiltered[stateActiveIdx].name); }
-  else if (e.key === 'Escape') closeDropdown('stateDropdown');
-}
-function pickState(name) {
-  selectedStateName = name;
-  $('id_state_input').value = $('id_state_hidden').value = name;
-  $('id_state_input').classList.remove('error'); $('id_state_input').classList.add('success');
-  $('stateClearBtn').classList.add('visible'); $('stateAutoHint').classList.remove('visible');
-  clearError('stateError'); closeDropdown('stateDropdown');
-}
-function clearStateInput() {
-  selectedStateName = ''; $('id_state_input').value = $('id_state_hidden').value = '';
-  $('id_state_input').classList.remove('success','error'); $('stateClearBtn').classList.remove('visible');
-  $('stateAutoHint').classList.remove('visible'); closeDropdown('stateDropdown'); $('id_state_input').focus();
-}
-function autoSuggestState(stateName) {
-  const match = ALL_STATES.find(s => s.name.toLowerCase() === stateName.toLowerCase());
-  pickState(match ? match.name : stateName);
-  $('stateAutoHint').classList.add('visible');
-}
-
-/* ── District typeahead ── */
-function onDistrictInput(val) {
-  selectedDistrictName = ''; $('id_district_hidden').value = '';
-  $('id_district_input').classList.remove('success'); $('districtAutoHint').classList.remove('visible'); clearError('districtError');
-  const q = val.trim();
-  if (!q) { closeDropdown('districtDropdown'); $('districtClearBtn').classList.remove('visible'); return; }
-  $('districtClearBtn').classList.add('visible');
-  if (allDistricts.length) {
-    districtFiltered = allDistricts.filter(d => d.name.toLowerCase().includes(q.toLowerCase()));
-    districtActiveIdx = -1;
-    renderDropdown('districtDropdown', districtFiltered, q, 'pickDistrict', null);
-  } else { closeDropdown('districtDropdown'); }
-}
-function onDistrictFocus() {
-  const val = $('id_district_input').value.trim();
-  if (val && !selectedDistrictName && allDistricts.length) {
-    districtFiltered = allDistricts.filter(d => d.name.toLowerCase().includes(val.toLowerCase()));
-    districtActiveIdx = -1;
-    renderDropdown('districtDropdown', districtFiltered, val, 'pickDistrict', null);
-  }
-}
-function onDistrictKeydown(e) {
-  if (!$('districtDropdown').classList.contains('open')) return;
-  if (e.key === 'ArrowDown')  { e.preventDefault(); districtActiveIdx = Math.min(districtActiveIdx+1, districtFiltered.length-1); updateActiveItem('districtDropdown', districtActiveIdx); }
-  else if (e.key === 'ArrowUp')   { e.preventDefault(); districtActiveIdx = Math.max(districtActiveIdx-1, 0); updateActiveItem('districtDropdown', districtActiveIdx); }
-  else if (e.key === 'Enter') { e.preventDefault(); if (districtActiveIdx >= 0 && districtFiltered[districtActiveIdx]) pickDistrict(districtFiltered[districtActiveIdx].name); }
-  else if (e.key === 'Escape') closeDropdown('districtDropdown');
-}
-function pickDistrict(name) {
-  selectedDistrictName = name;
-  $('id_district_input').value = $('id_district_hidden').value = name;
-  $('id_district_input').classList.remove('error'); $('id_district_input').classList.add('success');
-  $('districtClearBtn').classList.add('visible'); $('districtAutoHint').classList.remove('visible');
-  clearError('districtError'); closeDropdown('districtDropdown');
-}
-function clearDistrictInput() {
-  selectedDistrictName = ''; $('id_district_input').value = $('id_district_hidden').value = '';
-  $('id_district_input').classList.remove('success','error'); $('districtClearBtn').classList.remove('visible');
-  $('districtAutoHint').classList.remove('visible'); closeDropdown('districtDropdown'); $('id_district_input').focus();
-}
-
-/*
- * autoSuggestDistrict
- *
- * THE KEY FIX: The India Post API has two district-related fields:
- *   po.District  → the real administrative district  e.g. "Wayanad"
- *   po.Division  → the postal division               e.g. "Kozhikode"
- *
- * Old code used:  po.Division || po.District   ← wrong, shows "Kozhikode"
- * Fixed code uses: po.District || po.Division  ← correct, shows "Wayanad"
- *
- * This is called from lookupPincode() after a successful API response.
- */
-function autoSuggestDistrict(primary, allRaw) {
-  // Deduplicate and store all district options found for this pincode
-  allDistricts = [...new Set([primary, ...allRaw])]
-    .filter(Boolean)
-    .map(d => ({ name: d }));
-  pickDistrict(primary);
-  $('districtAutoHint').classList.add('visible');
-}
-
-/* ── City dropdown ── */
-function buildCityDropdown(cities) {
-  const dd = $('cityDropdown'); dd.innerHTML = '';
-  cities.forEach(c => {
-    const div = document.createElement('div');
-    div.className = 'suggest-option';
-    div.innerHTML = `<span class="suggest-flag">📍</span><span>${c}</span>`;
-    div.addEventListener('mousedown', () => { $('id_city').value = c; dd.classList.remove('open'); clearError('cityError'); });
-    dd.appendChild(div);
-  });
-}
-$('id_city').addEventListener('focus', () => {
-  if (resolvedCities.length > 1 && $('cityDropdown').children.length > 0) $('cityDropdown').classList.add('open');
-});
-$('id_city').addEventListener('input', function () {
-  clearError('cityError');
-  const v = this.value.toLowerCase();
-  if (resolvedCities.length > 1) {
-    const f = resolvedCities.filter(c => c.toLowerCase().includes(v));
-    buildCityDropdown(f.length ? f : resolvedCities);
-    $('cityDropdown').classList.add('open');
-  }
-});
-
-/* ── Pincode lookup ── */
-$('id_pincode').addEventListener('input', function () {
-  this.value = this.value.replace(/\D/g,'').slice(0,6);
-  showPincodeSpinner(false); showPincodeCheck(false); showPincodeX(false);
-  this.classList.remove('error','success'); clearError('pincodeError');
-  $('cityAutoHint').classList.remove('visible');
-  $('stateAutoHint').classList.remove('visible');
-  $('districtAutoHint').classList.remove('visible');
-  clearTimeout(apiDebounce);
-  if (this.value.length < 6) return;
-  showPincodeSpinner(true);
-  apiDebounce = setTimeout(() => lookupPincode(this.value), 400);
-});
-
-async function lookupPincode(pin) {
-  try {
-    const res  = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
-    const data = await res.json();
-    showPincodeSpinner(false);
-
-    if (data[0].Status === 'Success' && data[0].PostOffice?.length) {
-      const offices = data[0].PostOffice;
-      $('id_pincode').classList.add('success');
-      showPincodeCheck(true);
-      clearError('pincodeError');
-
-      // ── State ──────────────────────────────────────────────────
+async function lookupPincode(pin){
+  try{
+    const res=await fetch(`https://api.postalpincode.in/pincode/${pin}`); const data=await res.json(); showSpinner(false);
+    if(data[0].Status==='Success'&&data[0].PostOffice?.length){
+      const offices=data[0].PostOffice;
+      $id('id_pincode').classList.add('success'); showCheck(true); clrErr('pincodeError');
       autoSuggestState(offices[0].State);
-
-      // ── District ───────────────────────────────────────────────
-      // FIXED: read po.District first (real admin district = Wayanad)
-      //        fall back to po.Division only if District is absent
-      //        Old wrong order was: Division || District → showed Kozhikode
-      const primary = offices[0].District || offices[0].Division || '';
-      const allRaw  = [
-        ...new Set(
-          offices
-            .map(o => o.District || o.Division || '')
-            .filter(Boolean)
-        )
-      ];
-      if (primary) autoSuggestDistrict(primary, allRaw);
-
-      // ── City / locality ────────────────────────────────────────
-      resolvedCities = [...new Set(offices.map(o => o.Name))].sort();
-      if (resolvedCities.length === 1) {
-        $('id_city').value = resolvedCities[0];
-        $('cityDropdown').classList.remove('open');
-        $('cityDropdown').innerHTML = '';
-      } else {
-        buildCityDropdown(resolvedCities);
-        $('cityDropdown').classList.add('open');
-        $('id_city').placeholder = 'Pick or type a locality';
-      }
-      $('cityAutoHint').classList.add('visible');
-      clearError('cityError');
-
-    } else { 
-      $('id_pincode').classList.add('error');
-      showPincodeX(true);
-      setError('pincodeError', 'Invalid pincode. Please check and try again.');
-    }
-  } catch (err) {
-    showPincodeSpinner(false);
-    showPincodeX(true);
-    $('id_pincode').classList.add('error');
-    setError('pincodeError', 'Could not verify pincode. Check your connection.');
-  }
+      const primary=offices[0].District||offices[0].Division||'';
+      const allRaw=[...new Set(offices.map(o=>o.District||o.Division||'').filter(Boolean))];
+      if(primary)autoSuggestDistrict(primary,allRaw);
+      resolvedCities=[...new Set(offices.map(o=>o.Name))].sort();
+      if(resolvedCities.length===1){$id('id_city').value=resolvedCities[0];$id('cityDropdown').classList.remove('open');$id('cityDropdown').innerHTML='';}
+      else{buildCityDD(resolvedCities);$id('cityDropdown').classList.add('open');$id('id_city').placeholder='Pick or type a locality';}
+      $id('cityAutoHint').classList.add('show'); clrErr('cityError');
+    }else{ $id('id_pincode').classList.add('error'); showX(true); setErr('pincodeError','Invalid pincode. Please check and try again.'); }
+  }catch(err){ showSpinner(false); showX(true); $id('id_pincode').classList.add('error'); setErr('pincodeError','Could not verify pincode. Check your connection.'); }
 }
 
-/* ── Phone ── */
-$('id_phone_number').addEventListener('input', function () {
-  this.value = this.value.replace(/\D/g,'').slice(0,10);
-  clearError('phoneError'); $('phoneWrapper').classList.remove('error');
+$id('id_phone_number').addEventListener('input',function(){ this.value=this.value.replace(/\D/g,'').slice(0,10); clrErr('phoneError');$id('phoneWrapper').classList.remove('error'); });
+
+function selectLabel(btn,value){ document.querySelectorAll('.label-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected');$id('labelInput').value=value;clrErr('labelError'); }
+
+$id('addressForm').addEventListener('submit',function(e){
+  let valid=true;
+  if(!$id('labelInput').value){setErr('labelError','Please select an address label.');valid=false;}
+  if(!$id('id_full_name').value.trim()){setErr('fullNameError','Please enter your full name.');$id('id_full_name').classList.add('error');valid=false;}else $id('id_full_name').classList.remove('error');
+  if(!$id('id_street_address').value.trim()){setErr('streetError','Please enter your street address.');$id('id_street_address').classList.add('error');valid=false;}else $id('id_street_address').classList.remove('error');
+  if(!/^\d{6}$/.test($id('id_pincode').value)){setErr('pincodeError','Please enter a valid 6-digit pincode.');$id('id_pincode').classList.add('error');valid=false;}else{clrErr('pincodeError');$id('id_pincode').classList.remove('error');}
+  if(!$id('id_city').value.trim()){setErr('cityError','Please enter your city.');valid=false;}else clrErr('cityError');
+  const dv=$id('id_district_input').value.trim();
+  if(!dv){setErr('districtError','Please enter your district.');$id('id_district_input').classList.add('error');valid=false;}else{$id('id_district_hidden').value=dv;clrErr('districtError');$id('id_district_input').classList.remove('error');}
+  if(!$id('id_state_hidden').value){setErr('stateError','Please select a valid state.');$id('id_state_input').classList.add('error');valid=false;}else{clrErr('stateError');$id('id_state_input').classList.remove('error');}
+  if(!/^[6-9]\d{9}$/.test($id('id_phone_number').value)){setErr('phoneError','Enter a valid 10-digit Indian mobile number.');$id('phoneWrapper').classList.add('error');valid=false;}else{clrErr('phoneError');$id('phoneWrapper').classList.remove('error');}
+  if(!valid){e.preventDefault();return;}
+  const btn=$id('saveBtn'); btn.classList.add('btn-loading');
+  $id('saveBtnContent').innerHTML=`<span class="btn-spinner"></span><span style="font-family:'Montserrat',sans-serif;font-size:10px;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;">Saving...</span>`;
+  btn.disabled=true;
 });
 
-/* ── Label ── */
-function selectLabel(btn, value) {
-  document.querySelectorAll('.label-btn').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected'); $('labelInput').value = value; clearError('labelError');
-}
-
-/* ── Form submit validation ── */
-$('addressForm').addEventListener('submit', function (e) {
-  let valid = true;
-  if (!$('labelInput').value) { setError('labelError','Please select an address label.'); valid = false; }
-  if (!$('id_full_name').value.trim()) { setError('fullNameError','Please enter your full name.'); $('id_full_name').classList.add('error'); valid = false; } else { $('id_full_name').classList.remove('error'); }
-  if (!$('id_street_address').value.trim()) { setError('streetError','Please enter your street address.'); $('id_street_address').classList.add('error'); valid = false; } else { $('id_street_address').classList.remove('error'); }
-  if (!/^\d{6}$/.test($('id_pincode').value)) { setError('pincodeError','Please enter a valid 6-digit pincode.'); $('id_pincode').classList.add('error'); valid = false; } else { clearError('pincodeError'); $('id_pincode').classList.remove('error'); }
-  if (!$('id_city').value.trim()) { setError('cityError','Please enter your city.'); valid = false; } else { clearError('cityError'); }
-  const dv = $('id_district_input').value.trim();
-  if (!dv) { setError('districtError','Please enter your district.'); $('id_district_input').classList.add('error'); valid = false; } else { $('id_district_hidden').value = dv; clearError('districtError'); $('id_district_input').classList.remove('error'); }
-  if (!$('id_state_hidden').value) { setError('stateError','Please select a valid state.'); $('id_state_input').classList.add('error'); valid = false; } else { clearError('stateError'); $('id_state_input').classList.remove('error'); }
-  if (!/^[6-9]\d{9}$/.test($('id_phone_number').value)) { setError('phoneError','Enter a valid 10-digit Indian mobile number.'); $('phoneWrapper').classList.add('error'); valid = false; } else { clearError('phoneError'); $('phoneWrapper').classList.remove('error'); }
-  if (!valid) e.preventDefault();
+document.addEventListener('click',e=>{
+  if(!$id('id_state_input').closest('.input-wrapper')?.contains(e.target))closeDD('stateDropdown');
+  if(!$id('id_district_input').closest('.input-wrapper')?.contains(e.target))closeDD('districtDropdown');
+  if(!$id('id_city').parentElement?.contains(e.target))$id('cityDropdown').classList.remove('open');
 });
 
-/* ── Outside click ── */
-document.addEventListener('click', e => {
-  if (!$('id_state_input').closest('.input-wrapper').contains(e.target))    closeDropdown('stateDropdown');
-  if (!$('id_district_input').closest('.input-wrapper').contains(e.target)) closeDropdown('districtDropdown');
-  if ($('cityDropdown') && !$('id_city').parentElement.contains(e.target))  $('cityDropdown').classList.remove('open');
+document.addEventListener('DOMContentLoaded',()=>{
+  {% if messages %}
+    {% for message in messages %}
+      {% if 'success' in message.tags %}showToast('success','Done!','{{ message|escapejs }}');
+      {% elif 'error' in message.tags %}showToast('error','Error','{{ message|escapejs }}');
+      {% elif 'warning' in message.tags %}showToast('warning','Notice','{{ message|escapejs }}');
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+  const pin=$id('id_pincode').value;
+  if(pin.length===6){showSpinner(true);lookupPincode(pin);}
+  if($id('id_state_input').value){$id('stateClearBtn').classList.add('show');$id('id_state_input').classList.add('success');selectedState=$id('id_state_input').value;}
+  if($id('id_district_input').value){$id('districtClearBtn').classList.add('show');$id('id_district_input').classList.add('success');$id('id_district_hidden').value=$id('id_district_input').value;selectedDistrict=$id('id_district_input').value;}
 });
-
-/* ── Mobile menu ── */
-function toggleMobileMenu() {
-  const menu = $('mobileMenu'), icon = $('hamburgerIcon');
-  menu.classList.toggle('hidden');
-  icon.className = menu.classList.contains('hidden') ? 'fas fa-bars text-lg' : 'fas fa-times text-lg';
-}
-
-/* ── On load: restore fields after POST error ── */
-(function init() {
-  const pin = $('id_pincode').value;
-  if (pin.length === 6) { showPincodeSpinner(true); lookupPincode(pin); }
-  if ($('id_state_input').value) {
-    $('stateClearBtn').classList.add('visible');
-    $('id_state_input').classList.add('success');
-    selectedStateName = $('id_state_input').value;
-  }
-  if ($('id_district_input').value) {
-    $('districtClearBtn').classList.add('visible');
-    $('id_district_input').classList.add('success');
-    $('id_district_hidden').value = $('id_district_input').value;
-    selectedDistrictName = $('id_district_input').value;
-  }
-})();
 </script>
-</body>
-</html>
+{% endblock %}

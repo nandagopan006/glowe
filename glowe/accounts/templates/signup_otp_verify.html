@@ -38,7 +38,6 @@
     }
   </script>
   <link rel="stylesheet" href="{% static 'accounts/css/signup_otp_verify.css' %}">
-
 </head>
 
 <body class="flex h-screen overflow-hidden font-montserrat">
@@ -94,15 +93,15 @@
       <form action="{% url 'signup_otp_verify' %}" method="POST" id="otp-form" class="w-full">
         {% csrf_token %}
 
-        <!-- hidden input -->
-        <input type="hidden" name="otp" id="otp-hidden" />
+        <!-- hidden input — keeps submitted value on error -->
+        <input type="hidden" name="otp" id="otp-hidden" value="{{ submitted_otp|default:'' }}" />
 
         <!-- django error message -->
         {% if error %}
-          <p class="text-red-500 text-[10px] mb-4 hidden">{{ error }}</p>
+          <p class="text-red-500 text-[10px] mb-4">{{ error }}</p>
         {% endif %}
 
-        <!-- 4 otp boxes — centered -->
+        <!-- 4 otp boxes -->
         <div class="fade-3 flex justify-center gap-4 mb-6 lg:mb-8" id="otp-boxes">
           <input class="otp-input" type="text" maxlength="1" inputmode="numeric" autocomplete="off" />
           <input class="otp-input" type="text" maxlength="1" inputmode="numeric" autocomplete="off" />
@@ -112,13 +111,19 @@
 
         <!-- verify button -->
         <div class="fade-4 w-full">
-          <button type="submit"
+          <button type="submit" id="verify-btn"
             class="w-full py-[13px] lg:py-[15px] px-5 bg-brand-dark hover:bg-brand-darker text-[#f5f2ed] font-montserrat text-[10.5px] font-semibold tracking-[0.18em] uppercase border-none cursor-pointer flex items-center justify-center gap-2.5 transition-colors duration-200 rounded-sm">
-            Verify Code
-            <svg class="w-3 h-3" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="1" y1="7" x2="13" y2="7"/>
-              <polyline points="7 1 13 7 7 13"/>
-            </svg>
+            <span id="verify-btn-label">Verify Code</span>
+            <span id="verify-btn-arrow">
+              <svg class="w-3 h-3" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="1" y1="7" x2="13" y2="7"/>
+                <polyline points="7 1 13 7 7 13"/>
+              </svg>
+            </span>
+            <!-- loader dots — hidden by default -->
+            <div id="verify-btn-loader" class="btn-loader hidden">
+              <span></span><span></span><span></span>
+            </div>
           </button>
         </div>
 
@@ -136,8 +141,11 @@
           Didn't receive the code?
           <a href="{% url 'signup_resend_otp' %}"
             id="resend-btn"
-            class="text-brand-dark font-semibold underline underline-offset-2 pointer-events-none opacity-40 transition-opacity duration-300">
-            Resend Code
+            class="text-brand-dark font-semibold underline underline-offset-2 pointer-events-none opacity-40 transition-opacity duration-300 inline-flex items-center gap-1.5">
+            <span id="resend-label">Resend Code</span>
+            <span id="resend-loader" class="btn-loader hidden">
+              <span></span><span></span><span></span>
+            </span>
           </a>
         </p>
 
@@ -167,6 +175,5 @@
     const SECONDS_LEFT = {{ seconds_left|default:60 }};
   </script>
   <script src="{% static 'accounts/js/signup_otp_verify.js' %}"></script>
-
 </body>
 </html>

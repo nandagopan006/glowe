@@ -56,25 +56,19 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closePhotoModal();
 });
 
-// ── AVATAR CHANGE — validate + preview + submit ──
+// ── AVATAR CHANGE ──
 function handleAvatarChange(input) {
   if (!input.files || !input.files[0]) return;
-
   const file = input.files[0];
-
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
   if (!allowedTypes.includes(file.type)) {
     showToast('error', 'Invalid File', 'Please upload JPG, PNG or WEBP only.');
     input.value = '';
     return;
   }
-
   const reader = new FileReader();
-  reader.onload = e => {
-    document.getElementById('avatarPreview').src = e.target.result;
-  };
+  reader.onload = e => { document.getElementById('avatarPreview').src = e.target.result; };
   reader.readAsDataURL(file);
-
   document.getElementById('imageForm').submit();
 }
 
@@ -100,7 +94,7 @@ function updateCounter(inputId, counterId, max) {
   el.classList.toggle('warn', len >= max - 5);
 }
 
-// ── FORM SUBMIT WITH VALIDATION ──
+// ── FORM SUBMIT WITH VALIDATION + LOADER ──
 function handleSubmit(e) {
   e.preventDefault();
 
@@ -145,14 +139,13 @@ function handleSubmit(e) {
     return;
   }
 
-  // ✅ FIXED PHONE LOGIC
   const num = document.getElementById('phoneNumberInput').value.trim();
-
   if (num) {
-    const cleanNum = num.replace(/\D/g, ''); // remove everything except digits
+    const cleanNum = num.replace(/\D/g, '');
     document.getElementById('full-phone-hidden').value = '+91' + cleanNum;
   }
 
+  // ✅ MODERN LOADER
   const btn = document.getElementById('saveBtn');
   btn.classList.add('btn-loading');
   document.getElementById('saveBtnContent').innerHTML = `
@@ -166,8 +159,6 @@ function handleSubmit(e) {
 // ── INIT ON PAGE LOAD ──
 window.addEventListener('load', () => {
   updateCounter('nameInput', 'nameCounter', 50);
-
-  // ❌ REMOVED +91 STRIP LOGIC (CAUSE OF BUG)
-
   isInitialLoad = false;
+  // ✅ Messages are handled by the inline <script> in edit_profile.html
 });

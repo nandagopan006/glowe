@@ -79,7 +79,21 @@ html, body { height: 100vh; overflow: hidden; }
   0%, 100% { opacity: 1;   transform: scale(1);    }
   50%       { opacity: 0.5; transform: scale(0.75); }
 }
-
+.toast-success {
+  background: #0f2a1a;
+  border-color: rgba(255,255,255,0.07);
+}
+ 
+.toast-dot-success {
+  background: #3aaa72;
+  box-shadow: 0 0 6px rgba(58, 170, 114, 0.6);
+  animation: pulseDot 1.8s ease-in-out infinite;
+}
+ 
+.toast-progress-success {
+  background: linear-gradient(90deg, #3aaa72, #1a6644);
+}
+ 
 .toast {
   position: fixed;
   top: 0;

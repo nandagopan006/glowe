@@ -12,6 +12,7 @@ urlpatterns = [
      path('admin-reset-password/',views.admin_reset_password,name='admin_reset_password'),
      path('admin-resent-otp/',views.admin_resend_otp,name='admin_resend_otp'),
       path('user-management/',views.user_management,name='user_management'),
-      path("admin-toggle-block/<int:id>/", views.admin_toggle_block , name='admin_toggle_block')
+      path("admin-toggle-block/<int:id>/", views.admin_toggle_block , name='admin_toggle_block'),
+      path('user-detail/<int:id>/',views.user_detail,name='user_detail'),
      
 ]

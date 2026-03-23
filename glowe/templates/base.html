@@ -1,0 +1,643 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>{% block title %}Glowé – Skincare{% endblock %}</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Montserrat:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          cormorant: ['"Cormorant Garamond"', 'serif'],
+          montserrat: ['Montserrat', 'sans-serif'],
+        }
+      }
+    }
+  }
+</script>
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; overflow-x: hidden; }
+
+.btn-pill {
+  display:inline-flex; align-items:center; justify-content:center;
+  background:rgba(108,104,98,0.55); backdrop-filter:blur(14px);
+  border-radius:9999px; padding:17px 52px;
+  font-family:'Montserrat',sans-serif; font-size:10px; font-weight:700;
+  letter-spacing:0.22em; text-transform:uppercase; color:#fff;
+  border:none; cursor:pointer; text-decoration:none; transition:background .25s;
+}
+.btn-pill:hover { background:rgba(108,104,98,0.75); }
+
+.btn-dark {
+  display:inline-flex; align-items:center; justify-content:center;
+  background:#1a1208; color:#fff;
+  font-family:'Montserrat',sans-serif; font-size:10px; font-weight:700;
+  letter-spacing:0.22em; text-transform:uppercase;
+  padding:16px 48px; border:none; cursor:pointer; text-decoration:none;
+  transition:background .2s;
+}
+.btn-dark:hover { background:#2d1f0e; }
+
+.iz { overflow:hidden; display:block; }
+.iz img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .5s ease; }
+.iz:hover img { transform:scale(1.04); }
+
+/* ── Profile Dropdown ── */
+.profile-dropdown {
+  position: absolute; top: calc(100% + 12px); right: 0; width: 260px;
+  background: #ffffff; border-radius: 16px;
+  border: 1px solid rgba(26,18,8,0.08);
+  box-shadow: 0 8px 40px rgba(26,18,8,0.12), 0 2px 8px rgba(26,18,8,0.06);
+  opacity: 0; transform: translateY(-8px) scale(0.97);
+  pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 200; overflow: hidden;
+}
+.profile-dropdown.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: all; }
+
+.profile-dropdown-mobile {
+  position: fixed; top: 64px; right: 12px; left: 12px;
+  background: #ffffff; border-radius: 16px;
+  border: 1px solid rgba(26,18,8,0.08);
+  box-shadow: 0 8px 40px rgba(26,18,8,0.14);
+  opacity: 0; transform: translateY(-8px) scale(0.98);
+  pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 300; overflow: hidden;
+}
+.profile-dropdown-mobile.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: all; }
+
+.dropdown-item {
+  display: flex; align-items: center; gap: 12px; padding: 11px 18px;
+  font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 500;
+  color: #2a2018; text-decoration: none; cursor: pointer;
+  border: none; background: none; width: 100%; text-align: left;
+  transition: background 0.15s; letter-spacing: 0.02em;
+}
+.dropdown-item:hover { background: #f7f3ee; }
+.dropdown-item.danger { color: #c0392b; }
+.dropdown-item.danger:hover { background: #fdf3f1; }
+.dropdown-item svg { opacity: 0.5; flex-shrink: 0; }
+.dropdown-item:hover svg { opacity: 0.8; }
+.dropdown-item.danger svg { opacity: 0.7; }
+
+/* ── MOBILE SIDEBAR ── */
+.mob-sidebar-overlay {
+  position: fixed; inset: 0; z-index: 400;
+  background: rgba(26,18,8,0.45);
+  backdrop-filter: blur(3px);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.mob-sidebar-overlay.open { opacity: 1; pointer-events: all; }
+
+.mob-sidebar {
+  position: fixed; top: 0; left: 0; bottom: 0;
+  width: 280px; background: #faf8f5; z-index: 500;
+  display: flex; flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 4px 0 32px rgba(26,18,8,0.12);
+}
+.mob-sidebar.open { transform: translateX(0); }
+
+.mob-sidebar-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid #ede8e0;
+}
+
+.mob-sidebar-nav a {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: #1a1208; text-decoration: none;
+  border-bottom: 1px solid #f0ebe2;
+  transition: background 0.15s, color 0.15s;
+}
+.mob-sidebar-nav a:hover { background: #f0ebe2; color: #000; }
+.mob-sidebar-nav a svg { opacity: 0.3; }
+
+.mob-sidebar-footer {
+  margin-top: auto;
+  padding: 20px;
+  border-top: 1px solid #ede8e0;
+}
+
+/* ── SIGNOUT MODAL ── */
+.signout-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(240,235,226,0.72);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.signout-overlay.open { opacity: 1; pointer-events: all; }
+
+.signout-modal {
+  background: #faf8f5; border-radius: 24px; padding: 36px 32px 28px;
+  width: 340px; max-width: calc(100vw - 32px);
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  transform: scale(0.94) translateY(8px);
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 20px 60px rgba(26,18,8,0.13), 0 4px 16px rgba(26,18,8,0.07);
+}
+.signout-overlay.open .signout-modal { transform: scale(1) translateY(0); }
+
+.signout-icon-wrap {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: #f0ebe2;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 20px;
+}
+
+{% block extra_css %}{% endblock %}
+</style>
+</head>
+<body class="bg-[#f0ebe2] font-montserrat text-[#1a1208] overflow-x-hidden">
+
+<!-- ── WELCOME TOAST ── -->
+{% if welcome %}
+  <span id="django-welcome" class="hidden">{{ welcome }}</span>
+{% endif %}
+
+<!-- ══════════════════════════════════
+  MOBILE SIDEBAR
+══════════════════════════════════ -->
+<div id="mob-sidebar-overlay" class="mob-sidebar-overlay" onclick="closeSidebar()"></div>
+<aside id="mob-sidebar" class="mob-sidebar">
+  <!-- Sidebar header -->
+  <div class="mob-sidebar-head">
+    <a href="{% url 'home' %}" class="flex items-center gap-2 no-underline">
+      <svg width="18" height="18" viewBox="0 0 28 28" fill="none" stroke="#1a1208" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 24C14 24 4 18 4 10C4 6 8 3 12 4C13 4 14 5 14 5"/>
+        <path d="M14 24C14 24 24 18 24 10C24 6 20 3 16 4C15 4 14 5 14 5"/>
+        <line x1="14" y1="24" x2="14" y2="10"/>
+      </svg>
+      <span class="font-cormorant text-[19px] font-semibold tracking-[0.04em] text-[#1a1208]">Glowé</span>
+    </a>
+    <button onclick="closeSidebar()" aria-label="Close menu"
+      class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#f0ebe2] transition-colors">
+      <svg width="16" height="16" fill="none" stroke="#1a1208" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24">
+        <path d="M18 6L6 18M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Sidebar nav links -->
+  <nav class="mob-sidebar-nav flex-1">
+    <a href="#">
+      Shop
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+    </a>
+    <a href="#">
+      Collections
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+    </a>
+    <a href="#">
+      About
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+    </a>
+    <a href="#">
+      Contact
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+    </a>
+  </nav>
+
+  <!-- Sidebar footer -->
+  <div class="mob-sidebar-footer">
+    {% if user.is_authenticated %}
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-9 h-9 rounded-full overflow-hidden border border-[#e6e0d8] bg-[#e6e0d8] flex items-center justify-center shrink-0">
+          {% if user.profile_image %}
+            <img src="{{ user.profile_image.url }}" alt="{{ user.full_name }}" class="w-full h-full object-cover"/>
+          {% else %}
+            <span class="font-montserrat font-semibold text-[11px] text-[#1a1208]">{{ user.full_name|first|upper }}</span>
+          {% endif %}
+        </div>
+        <div class="min-w-0">
+          <p class="font-montserrat font-semibold text-[12px] text-[#1a1208] truncate">{{ user.get_full_name|default:user.full_name }}</p>
+          <p class="font-montserrat font-light text-[10px] text-[#8a7e72] truncate">{{ user.email }}</p>
+        </div>
+      </div>
+    {% else %}
+      <a href="{% url 'signin' %}"
+        class="flex items-center justify-center w-full py-3 bg-[#1a1208] text-white font-montserrat text-[10px] font-bold tracking-[0.2em] uppercase no-underline rounded-[8px] hover:bg-[#2d1f0e] transition-colors">
+        SIGN IN
+      </a>
+    {% endif %}
+  </div>
+</aside>
+
+<!-- ══════════════════════════════════
+  SIGNOUT MODAL
+══════════════════════════════════ -->
+<div id="signout-overlay" class="signout-overlay" role="dialog" aria-modal="true" aria-labelledby="signout-title">
+  <div class="signout-modal">
+    <div class="signout-icon-wrap">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+    </div>
+    <h2 id="signout-title" class="font-cormorant text-[#1a1208] leading-snug mb-3" style="font-size:26px; font-weight:400;">
+      Are you sure you want to<br>Sign out?
+    </h2>
+    <p class="font-montserrat font-light text-[#7a6e62] text-[12px] leading-[1.75] mb-7 max-w-[240px]">
+      You will need to sign back in to access your orders and curated favorites.
+    </p>
+    <form method="post" action="{% url 'signout' %}" class="w-full mb-3">
+      {% csrf_token %}
+      <button type="submit" class="w-full py-[15px] bg-[#1a1208] hover:bg-[#2d1f0e] text-white font-montserrat text-[10px] font-bold tracking-[0.22em] uppercase border-none cursor-pointer rounded-[10px] transition-colors duration-200">
+        YES, SIGN OUT
+      </button>
+    </form>
+    <button onclick="closeSignoutModal()" class="w-full py-[14px] bg-transparent border border-[#ddd6cc] hover:bg-[#f0ebe2] text-[#1a1208] font-montserrat text-[10px] font-bold tracking-[0.22em] uppercase cursor-pointer rounded-[10px] transition-colors duration-200">
+      STAY LOGGED IN
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+  NAVBAR
+══════════════════════════════════ -->
+<header class="sticky top-0 z-50 bg-white border-b border-[#e6e0d8] h-16 flex items-center">
+  <div class="w-full px-5 md:px-8 flex items-center justify-between relative">
+
+    <!-- ── MOBILE nav ── -->
+    <div class="flex md:hidden w-full items-center justify-between">
+
+      <!-- Left: Hamburger -->
+      <button onclick="openSidebar()" aria-label="Open menu"
+        class="flex flex-col gap-[5px] p-1 shrink-0">
+        <span class="w-[22px] h-[1.5px] bg-[#1a1208] block"></span>
+        <span class="w-[22px] h-[1.5px] bg-[#1a1208] block"></span>
+        <span class="w-[22px] h-[1.5px] bg-[#1a1208] block"></span>
+      </button>
+
+      <!-- Center: Logo -->
+      <a href="{% url 'home' %}" class="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 no-underline">
+        <svg width="20" height="20" viewBox="0 0 28 28" fill="none" stroke="#1a1208" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 24C14 24 4 18 4 10C4 6 8 3 12 4C13 4 14 5 14 5"/>
+          <path d="M14 24C14 24 24 18 24 10C24 6 20 3 16 4C15 4 14 5 14 5"/>
+          <line x1="14" y1="24" x2="14" y2="10"/>
+        </svg>
+        <span class="font-cormorant text-[20px] font-semibold tracking-[0.04em] text-[#1a1208]">Glowé</span>
+      </a>
+
+      <!-- Right: Profile -->
+      <div class="relative shrink-0">
+        {% if user.is_authenticated %}
+          <button id="avatar-btn-mobile" onclick="toggleDropdown('mobile')" aria-label="Profile menu" aria-haspopup="true" aria-expanded="false"
+            class="w-9 h-9 rounded-full overflow-hidden border-2 border-[#e6e0d8] hover:border-[#c8b89a] transition-colors focus:outline-none focus:ring-2 focus:ring-[#c8b89a] focus:ring-offset-1">
+            {% if user.profile_image %}
+              <img src="{{ user.profile_image.url }}" alt="{{ user.full_name }}" class="w-full h-full object-cover"/>
+            {% else %}
+              <div class="w-full h-full bg-[#e6e0d8] flex items-center justify-center font-montserrat font-semibold text-[12px] text-[#1a1208]">
+                {{ user.full_name|first|upper }}
+              </div>
+            {% endif %}
+          </button>
+          <div id="dropdown-mobile" class="profile-dropdown-mobile" role="menu">
+            <div class="flex items-center gap-3 px-4 py-4 border-b border-[#f0ebe2]">
+              <div class="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-[#e6e0d8] bg-[#e6e0d8] flex items-center justify-center">
+                {% if user.profile_image %}
+                  <img src="{{ user.profile_image.url }}" alt="{{ user.full_name }}" class="w-full h-full object-cover"/>
+                {% else %}
+                  <span class="font-montserrat font-semibold text-[12px] text-[#1a1208]">{{ user.full_name|first|upper }}</span>
+                {% endif %}
+              </div>
+              <div class="min-w-0">
+                <p class="font-montserrat font-semibold text-[13px] text-[#1a1208] leading-tight truncate">{{ user.get_full_name }}</p>
+                <p class="font-montserrat font-light text-[11px] text-[#8a7e72] leading-tight truncate">{{ user.email }}</p>
+              </div>
+            </div>
+            <div class="py-2">
+              <a href="{% url 'profile_overview' %}" class="dropdown-item" role="menuitem">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                My Profile
+              </a>
+              <a href="" class="dropdown-item" role="menuitem">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Account Settings
+              </a>
+              <a href="" class="dropdown-item" role="menuitem">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                My Orders
+              </a>
+            </div>
+            <div class="border-t border-[#f0ebe2] py-2">
+              <button type="button" onclick="openSignoutModal()" class="dropdown-item danger" role="menuitem">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Sign Out
+              </button>
+            </div>
+          </div>
+        {% else %}
+          <a href="{% url 'signin' %}" aria-label="Sign in"
+            class="w-9 h-9 rounded-full border border-[#d8d2ca] flex items-center justify-center hover:border-[#c8b89a] transition-colors">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+            </svg>
+          </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── DESKTOP nav ── -->
+    <div class="hidden md:flex items-center justify-between w-full">
+      <a href="{% url 'home' %}" class="flex items-center gap-2.5 no-underline shrink-0">
+        <svg width="26" height="26" viewBox="0 0 28 28" fill="none" stroke="#1a1208" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 24C14 24 4 18 4 10C4 6 8 3 12 4C13 4 14 5 14 5"/>
+          <path d="M14 24C14 24 24 18 24 10C24 6 20 3 16 4C15 4 14 5 14 5"/>
+          <line x1="14" y1="24" x2="14" y2="10"/>
+        </svg>
+        <span class="font-cormorant text-[22px] font-semibold tracking-[0.04em] text-[#1a1208]">Glowé</span>
+      </a>
+      <nav class="flex items-center gap-10 absolute left-1/2 -translate-x-1/2">
+        <a href="#" class="font-montserrat text-[11px] font-medium tracking-[0.16em] uppercase text-[#2a2018] no-underline hover:text-black">Shop</a>
+        <a href="#" class="font-montserrat text-[11px] font-medium tracking-[0.16em] uppercase text-[#2a2018] no-underline hover:text-black">Collections</a>
+        <a href="#" class="font-montserrat text-[11px] font-medium tracking-[0.16em] uppercase text-[#2a2018] no-underline hover:text-black">About</a>
+        <a href="#" class="font-montserrat text-[11px] font-medium tracking-[0.16em] uppercase text-[#2a2018] no-underline hover:text-black">Contact</a>
+      </nav>
+      <div class="flex items-center gap-5 shrink-0">
+        <svg class="w-5 h-5 cursor-pointer" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4.8-4.8"/></svg>
+        <svg class="w-5 h-5 cursor-pointer" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <div class="relative cursor-pointer">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          <span class="absolute -top-2 -right-2.5 bg-[#1a1208] text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center">2</span>
+        </div>
+        <div class="relative" id="profile-wrapper-desktop">
+          {% if user.is_authenticated %}
+            <button id="avatar-btn-desktop" onclick="toggleDropdown('desktop')" aria-label="Profile menu" aria-haspopup="true" aria-expanded="false"
+              class="w-9 h-9 rounded-full overflow-hidden border-2 border-[#e6e0d8] hover:border-[#c8b89a] transition-all focus:outline-none focus:ring-2 focus:ring-[#c8b89a] focus:ring-offset-1 cursor-pointer">
+              {% if user.profile_image %}
+                <img src="{{ user.profile_image.url }}" alt="{{ user.full_name }}" class="w-full h-full object-cover"/>
+              {% else %}
+                <div class="w-full h-full bg-[#e6e0d8] flex items-center justify-center font-montserrat font-semibold text-[12px] text-[#1a1208]">
+                {{ user.full_name|first|upper }}
+                </div>
+              {% endif %}
+            </button>
+            <div id="dropdown-desktop" class="profile-dropdown" role="menu" aria-label="Profile menu">
+              <div class="flex items-center gap-3 px-4 py-4 bg-[#faf8f5] border-b border-[#f0ebe2]">
+                <div class="w-11 h-11 rounded-full overflow-hidden shrink-0 border border-[#e6e0d8] bg-[#e6e0d8] flex items-center justify-center">
+                  {% if user.profile_image %}
+                    <img src="{{ user.profile_image.url }}" alt="{{ user.full_name }}" class="w-full h-full object-cover"/>
+                  {% else %}
+                    <span class="font-montserrat font-semibold text-[13px] text-[#1a1208]">{{ user.full_name|first|upper }}</span>
+                  {% endif %}
+                </div>
+                <div class="min-w-0">
+                  <p class="font-montserrat font-semibold text-[13px] text-[#1a1208] leading-tight">{{ user.get_full_name|default:user.full_name }}</p>
+                  <p class="font-montserrat font-light text-[11px] text-[#8a7e72] leading-tight mt-0.5">{{ user.email }}</p>
+                </div>
+              </div>
+              <div class="py-2">
+                <a href="{% url 'profile_overview' %}" class="dropdown-item" role="menuitem">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  My Profile
+                </a>
+                <a href="" class="dropdown-item" role="menuitem">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                  Account Settings
+                </a>
+                <a href="" class="dropdown-item" role="menuitem">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                  My Orders
+                </a>
+              </div>
+              <div class="border-t border-[#f0ebe2] py-2">
+                <button type="button" onclick="openSignoutModal()" class="dropdown-item danger" role="menuitem">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                  Sign Out
+                </button>
+              </div>
+            </div>
+          {% else %}
+            <a href="{% url 'signin' %}" aria-label="Sign in"
+              class="w-9 h-9 rounded-full border border-[#d8d2ca] flex items-center justify-center hover:border-[#c8b89a] transition-colors">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</header>
+
+<!-- ══════════════════════════════════
+  PAGE CONTENT
+══════════════════════════════════ -->
+{% block content %}{% endblock %}
+
+<!-- ══════════════════════════════════
+  FOOTER
+══════════════════════════════════ -->
+<footer class="bg-[#3b2414]">
+  <div class="max-w-[1440px] mx-auto px-6 md:px-12 pt-10 md:pt-16 pb-6 md:pb-8">
+    <div class="hidden md:grid gap-10 mb-14" style="grid-template-columns:280px 1fr 1fr 1fr;">
+      <div>
+        <div class="flex items-center gap-2 mb-4">
+          <svg width="18" height="18" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 24C14 24 4 18 4 10C4 6 8 3 12 4C13 4 14 5 14 5"/><path d="M14 24C14 24 24 18 24 10C24 6 20 3 16 4C15 4 14 5 14 5"/><line x1="14" y1="24" x2="14" y2="10"/></svg>
+          <span class="font-cormorant text-white text-[20px] font-semibold tracking-[0.03em]">Glowé</span>
+        </div>
+        <p class="font-montserrat text-[12px] font-light leading-[1.8] text-white/50 mb-5 max-w-[240px]">Redefining natural skincare with premium ingredients that honor your skin and the planet.</p>
+        <div class="flex gap-4">
+          <a href="#" class="font-montserrat text-[11px] text-white/40 no-underline hover:text-white/70">FB</a>
+          <a href="#" class="font-montserrat text-[11px] text-white/40 no-underline hover:text-white/70">IG</a>
+          <a href="#" class="font-montserrat text-[11px] text-white/40 no-underline hover:text-white/70">TW</a>
+          <a href="#" class="font-montserrat text-[11px] text-white/40 no-underline hover:text-white/70">PI</a>
+        </div>
+      </div>
+      <div>
+        <p class="font-montserrat text-[10px] font-semibold tracking-[0.18em] uppercase text-white/90 mb-5">Pages</p>
+        <a href="{% url 'home' %}" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Home</a>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Shop</a>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Collections</a>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">About</a>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline hover:text-white/90">Contact</a>
+      </div>
+      <div>
+        <p class="font-montserrat text-[10px] font-semibold tracking-[0.18em] uppercase text-white/90 mb-5">Categories</p>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Cleansers</a>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Toners</a>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Serums</a>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Moisturizers</a>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline hover:text-white/90">Bundles</a>
+      </div>
+      <div>
+        <p class="font-montserrat text-[10px] font-semibold tracking-[0.18em] uppercase text-white/90 mb-5">Support</p>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">FAQ</a>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Shipping &amp; Returns</a>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline mb-3.5 hover:text-white/90">Privacy Policy</a>
+        <a href="#" class="block font-montserrat text-[12px] font-light text-white/60 no-underline hover:text-white/90">Terms &amp; Conditions</a>
+      </div>
+    </div>
+    <div class="md:hidden pb-2">
+      <div class="mb-7">
+        <div class="flex items-center gap-2 mb-3">
+          <svg width="15" height="15" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 24C14 24 4 18 4 10C4 6 8 3 12 4C13 4 14 5 14 5"/><path d="M14 24C14 24 24 18 24 10C24 6 20 3 16 4C15 4 14 5 14 5"/><line x1="14" y1="24" x2="14" y2="10"/></svg>
+          <span class="font-cormorant text-white text-[16px] font-semibold tracking-[0.04em]">Glowé</span>
+        </div>
+        <p class="font-montserrat text-[10px] font-light leading-[1.7] text-white/45 mb-3 max-w-[220px]">Redefining natural skincare with premium ingredients that honor your skin and the planet.</p>
+        <div class="flex gap-3.5">
+          <a href="#" class="font-montserrat text-[9px] text-white/40 no-underline">FB</a>
+          <a href="#" class="font-montserrat text-[9px] text-white/40 no-underline">IG</a>
+          <a href="#" class="font-montserrat text-[9px] text-white/40 no-underline">TW</a>
+          <a href="#" class="font-montserrat text-[9px] text-white/40 no-underline">PI</a>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-6">
+        <div>
+          <p class="font-montserrat text-[8px] font-medium tracking-[0.18em] uppercase text-white/30 mb-3">Pages</p>
+          <a href="{% url 'home' %}" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Home</a>
+          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Shop</a>
+          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Collections</a>
+          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">About</a>
+          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline">Contact</a>
+        </div>
+        <div>
+          <p class="font-montserrat text-[8px] font-medium tracking-[0.18em] uppercase text-white/30 mb-3">Categories</p>
+          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Cleansers</a>
+          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Toners</a>
+          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Serums</a>
+          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Moisturizers</a>
+          <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline">Bundles</a>
+        </div>
+      </div>
+      <div class="mb-7">
+        <p class="font-montserrat text-[8px] font-medium tracking-[0.18em] uppercase text-white/30 mb-3">Support</p>
+        <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">FAQ</a>
+        <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Shipping &amp; Returns</a>
+        <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline mb-2">Privacy Policy</a>
+        <a href="#" class="block font-montserrat text-[10px] font-light text-white/58 no-underline">Terms &amp; Conditions</a>
+      </div>
+    </div>
+    <div class="pt-5 border-t border-white/[0.08]">
+      <div class="md:hidden flex flex-col gap-2">
+        <p class="font-montserrat text-[9px] font-light text-white/25">© 2023 Glowé Skincare. All rights reserved.</p>
+        <div class="flex gap-4">
+          <a href="#" class="font-montserrat text-[9px] font-light text-white/32 no-underline">Privacy Policy</a>
+          <a href="#" class="font-montserrat text-[9px] font-light text-white/32 no-underline">Terms of Service</a>
+        </div>
+      </div>
+      <div class="hidden md:flex items-center justify-between">
+        <span class="font-montserrat text-[11px] font-light text-white/35">© 2023 Glowé Skincare. All rights reserved.</span>
+        <div class="flex gap-5">
+          <a href="#" class="font-montserrat text-[11px] font-light text-white/42 no-underline hover:text-white/70">Privacy Policy</a>
+          <a href="#" class="font-montserrat text-[11px] font-light text-white/42 no-underline hover:text-white/70">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  /* ── TOAST ── */
+  const _ts = document.createElement('style');
+  _ts.textContent = `
+    @keyframes toastIn  { to { transform:translateY(0); opacity:1; } }
+    @keyframes toastOut { to { transform:translateY(-80px); opacity:0; } }
+    @keyframes toastProg { from{width:100%} to{width:0%} }
+  `;
+  document.head.appendChild(_ts);
+  const _tc = document.createElement('div');
+  _tc.style.cssText = `position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;`;
+  document.body.appendChild(_tc);
+  const _TCFG = {
+    success:{icon:'✓',blobs:['#3aaa72','#1a6644','#0d4a30'],bg:'#1e3d2f',blobBg:'#172f24',iconBg:'radial-gradient(circle,#3aaa72,#1a6644)',label:'#6ee7a8',title:'#f0fdf4',msg:'#bbf7d0',progress:'#4ade80'},
+    error:{icon:'✕',blobs:['#e05050','#a82020','#7a1010'],bg:'#3d1e1e',blobBg:'#2f1717',iconBg:'radial-gradient(circle,#e05050,#a82020)',label:'#fca5a5',title:'#fff1f2',msg:'#fecaca',progress:'#f87171'},
+    warning:{icon:'!',blobs:['#f59e0b','#b45309','#7c2d00'],bg:'#3d2000',blobBg:'#2e1800',iconBg:'radial-gradient(circle,#f59e0b,#b45309)',label:'#fcd34d',title:'#fff8e1',msg:'#fde68a',progress:'#f59e0b'},
+    info:{icon:'↺',blobs:['#2dd4bf','#0f766e','#0a4a45'],bg:'#0f2d2a',blobBg:'#0a2220',iconBg:'radial-gradient(circle,#2dd4bf,#0f766e)',label:'#5eead4',title:'#f0fdfa',msg:'#99f6e4',progress:'#2dd4bf'},
+  };
+  function _bsvg(c){return `<svg viewBox="0 0 50 70" xmlns="http://www.w3.org/2000/svg"><ellipse cx="12" cy="12" rx="20" ry="16" fill="${c[0]}" opacity="0.45"/><ellipse cx="40" cy="52" rx="16" ry="14" fill="${c[1]}" opacity="0.35"/><ellipse cx="24" cy="34" rx="11" ry="9" fill="${c[2]}" opacity="0.3"/><ellipse cx="6" cy="56" rx="10" ry="8" fill="${c[0]}" opacity="0.22"/></svg>`;}
+  function _dismissT(t){if(!t||t._d)return;t._d=true;clearTimeout(t._tm);t.style.animation='toastOut 0.35s cubic-bezier(0.4,0,1,1) forwards';setTimeout(()=>t.remove(),350);}
+  function showToast(type,title,message){
+    const c=_TCFG[type]||_TCFG.info;
+    const t=document.createElement('div');
+    t.style.cssText=`pointer-events:all;display:flex;align-items:center;width:300px;border-radius:14px;overflow:hidden;position:relative;background:${c.bg};box-shadow:0 10px 32px rgba(42,31,20,0.2),0 2px 8px rgba(42,31,20,0.10);animation:toastIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards;transform:translateY(-80px);opacity:0;`;
+    t.innerHTML=`<div style="width:54px;min-width:54px;align-self:stretch;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:${c.blobBg};">${_bsvg(c.blobs)}<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;z-index:2;position:relative;background:${c.iconBg};flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.2);">${c.icon}</div></div><div style="flex:1;padding:10px 6px 10px 10px;"><p style="font-family:'Montserrat',sans-serif;font-size:7px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 2px;color:${c.label};opacity:0.85;">${type}</p><p style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;line-height:1.2;margin:0 0 2px;color:${c.title};">${title}</p><p style="font-family:'Montserrat',sans-serif;font-size:9px;font-weight:400;line-height:1.5;margin:0;color:${c.msg};opacity:0.85;">${message}</p></div><button onclick="_dismissT(this.parentElement)" style="background:none;border:none;cursor:pointer;font-size:10px;padding:6px 10px 0 0;align-self:flex-start;color:#fff;opacity:0.4;">✕</button><div style="position:absolute;bottom:0;left:0;height:2px;border-radius:0 2px 0 0;background:${c.progress};animation:toastProg 3s linear forwards;"></div>`;
+    _tc.appendChild(t);
+    t._tm=setTimeout(()=>_dismissT(t),3000);
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    const el = document.getElementById('django-welcome');
+    if (el) showToast('success', 'Welcome Back!', el.textContent.trim());
+  });
+
+  /* ── MOBILE SIDEBAR ── */
+  function openSidebar() {
+    document.getElementById('mob-sidebar').classList.add('open');
+    document.getElementById('mob-sidebar-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeSidebar() {
+    document.getElementById('mob-sidebar').classList.remove('open');
+    document.getElementById('mob-sidebar-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') { closeSidebar(); closeSignoutModal(); }
+  });
+
+  /* ── SIGNOUT MODAL ── */
+  function openSignoutModal() {
+    closeAll();
+    document.getElementById('signout-overlay').classList.add('open');
+  }
+  function closeSignoutModal() {
+    document.getElementById('signout-overlay').classList.remove('open');
+  }
+  document.getElementById('signout-overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeSignoutModal();
+  });
+
+  /* ── PROFILE DROPDOWN ── */
+  let activeDropdown = null;
+  function toggleDropdown(type) {
+    const id  = type === 'desktop' ? 'dropdown-desktop' : 'dropdown-mobile';
+    const btn = type === 'desktop' ? 'avatar-btn-desktop' : 'avatar-btn-mobile';
+    const el  = document.getElementById(id);
+    const btnEl = document.getElementById(btn);
+    const isOpen = el.classList.contains('open');
+    closeAll();
+    if (!isOpen) {
+      el.classList.add('open');
+      if (btnEl) btnEl.setAttribute('aria-expanded', 'true');
+      activeDropdown = id;
+    }
+  }
+  function closeAll() {
+    ['dropdown-desktop', 'dropdown-mobile'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('open');
+    });
+    ['avatar-btn-desktop', 'avatar-btn-mobile'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.setAttribute('aria-expanded', 'false');
+    });
+    activeDropdown = null;
+  }
+  document.addEventListener('click', function(e) {
+    const clickedAvatar   = e.target.closest('[id^="avatar-btn"]');
+    const clickedDropdown = e.target.closest('[id^="dropdown-"]');
+    const clickedModal    = e.target.closest('.signout-modal');
+    const clickedSidebar  = e.target.closest('#mob-sidebar');
+    if (!clickedAvatar && !clickedDropdown && !clickedModal && !clickedSidebar) closeAll();
+  });
+</script>
+
+{% block extra_js %}{% endblock %}
+
+</body>
+</html>

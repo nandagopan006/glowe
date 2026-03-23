@@ -71,7 +71,7 @@ ROOT_URLCONF = "glowe.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": ["templates"],
+        "DIRS": [BASE_DIR /"templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -171,7 +171,7 @@ SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'SCOPE': [
             'profile',
-            'email',   # ✅ THIS IS MISSING
+            'email',   
         ],
         'AUTH_PARAMS': {
             'access_type': 'online',

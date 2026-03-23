@@ -20,12 +20,14 @@ import os
 def profile_overview(request):
     user=request.user
     social_account=SocialAccount.objects.filter(user=user).first()
+    success=request.session.pop('success',None)
 
     context={
         "user":user,
         "social_account":social_account,
+        "success": success,
     }
-    return render(request,'profile_overview.html', context)
+    return render(request,'profile_overview.html', context,)
 
 @login_required
 def edit_profile(request):
@@ -140,12 +142,11 @@ def edit_profile(request):
             )
 
             messages.success(request, f'OTP sent to {email}')
-            return redirect('verify_email_change')
+            return redirect('verify_email_change', extra_tags='show_on_overview')
 
         if changed:
             user.save()
-            messages.success(request,'Profile updated successfully')
-
+            request.session["success"]='Profile updated successfully'
         return redirect('profile_overview')
 
     return render(request,'edit_profile.html', {
@@ -314,13 +315,61 @@ def change_password(request):
         #keep wih pass in logged
         update_session_auth_hash(request, user)
         
-        send_mail( #sending email-
-            'Your password was changed',
-            'Your password has been successfully updated. If this was not you, please contact support immediately.',
-            settings.EMAIL_HOST_USER,
-            [user.email],
-        )
-        messages.success(request,"Password updated successfully")
+        send_mail(
+    'Your Glowé Password Was Changed 🔐',
+    f'''
+════════════════════════════════
+           🌿 Glowé
+     Your Natural Beauty Store
+════════════════════════════════
+
+Hey {user.full_name or user.email.split('@')[0].capitalize()},
+
+Your Glowé account password has been
+successfully updated. ✅
+
+  ──────────────────────────
+  Account: {user.email}
+  Changed: {timezone.now().strftime("%d %b %Y, %I:%M %p")} UTC
+  ──────────────────────────
+
+🔒 SECURITY NOTICE:
+   If you made this change, you can
+   safely ignore this email.
+
+   If you did NOT make this change,
+   your account may be compromised!
+   Please contact us immediately at:
+   📧 glowe639@gmail.com
+
+   We recommend you:
+   ✔ Change your password immediately
+   ✔ Enable two-factor authentication
+   ✔ Check your recent account activity
+
+────────────────────────────────
+💚 Why Glowé?
+   ✔ 100% Natural Ingredients
+   ✔ Dermatologist Tested
+   ✔ Premium Luxury Skincare
+   ✔ Cruelty Free
+────────────────────────────────
+
+Need help? Contact us:
+📧 glowe639@gmail.com
+
+════════════════════════════════
+Thank you for choosing Glowé —
+your natural beauty destination.
+
+© 2025 Glowé. All rights reserved.
+Kerala, India
+════════════════════════════════
+''',
+    settings.EMAIL_HOST_USER,
+    [user.email],
+)
+        messages.success(request,"Password updated successfully", extra_tags='show_on_overview')
         return redirect("profile_overview")
         
     
