@@ -6,6 +6,43 @@
 {% block extra_css %}
 <style>
   .active\:scale-98:active { transform: scale(0.98); }
+
+  /* Add Category Modal */
+  #addCategoryModal {
+    position:fixed; inset:0; z-index:60;
+    display:flex; align-items:center; justify-content:center; padding:16px;
+    opacity:0; pointer-events:none; transition:opacity 0.2s ease;
+  }
+  #addCategoryModal.open { opacity:1; pointer-events:all; }
+  #addCategoryModal .modal-backdrop {
+    position:absolute; inset:0; background:rgba(0,0,0,0.35); backdrop-filter:blur(4px);
+  }
+  #addCategoryModal .modal-box {
+    position:relative; background:#fff; border-radius:20px;
+    width:100%; max-width:400px;
+    box-shadow:0 24px 60px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.08);
+    transform:translateY(16px) scale(0.96);
+    transition:transform 0.22s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  #addCategoryModal.open .modal-box { transform:translateY(0) scale(1); }
+
+
+
+  /* Toggle switch */
+  .toggle-track {
+    width:42px; height:24px; border-radius:12px; flex-shrink:0;
+    background:#d1d5db; position:relative; cursor:pointer;
+    transition:background 0.2s;
+  }
+  .toggle-track.on { background:#4a9050; }
+  .toggle-thumb {
+    position:absolute; top:3px; left:3px;
+    width:18px; height:18px; background:#fff;
+    border-radius:50%; box-shadow:0 1px 4px rgba(0,0,0,0.15);
+    transition:transform 0.2s;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .toggle-track.on .toggle-thumb { transform:translateX(18px); }
 </style>
 {% endblock %}
 
@@ -34,13 +71,13 @@
         <h1 class="text-[22px] font-bold text-gray-900 leading-tight">Categories</h1>
         <div class="mt-1 h-[2.5px] w-8 bg-gray-900 rounded-full"></div>
       </div>
-      <a href="{% url 'admin_add_category' %}"
+      <button onclick="openAddModal()"
          class="flex items-center gap-2 px-5 py-2.5 bg-sage-800 hover:bg-sage-900 text-white text-sm font-semibold rounded-full shadow-sm transition-all duration-150 active:scale-98">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
           <path stroke-linecap="round" d="M12 5v14M5 12h14"/>
         </svg>
         Add Category
-      </a>
+      </button>
     </div>
 
     <!-- Stat Cards -->
@@ -71,58 +108,33 @@
     <!-- Table Card -->
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
-      <!-- Toolbar: Search + Sort -->
+      <!-- Toolbar -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 border-b border-gray-100 gap-3">
         <h2 class="text-base font-bold text-gray-800">All Categories</h2>
-        <div class="flex items-center gap-2">
-
-          <!-- Search form (backend) with clear button -->
-          <form method="GET" action="" class="flex items-center gap-2">
-            <input type="hidden" name="sort" value="{{ request.GET.sort|default:'desc' }}"/>
-            <div class="relative">
-              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
-                   fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <circle cx="11" cy="11" r="8"/>
-                <path stroke-linecap="round" d="M21 21l-4.35-4.35"/>
+        <form method="GET" action="" class="flex items-center gap-2">
+          <div class="relative">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                 fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8"/>
+              <path stroke-linecap="round" d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input type="text" name="q" value="{{ request.GET.q }}"
+                   placeholder="Search categories..."
+                   class="pl-9 {% if request.GET.q %}pr-8{% else %}pr-4{% endif %} py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage-300 w-44 sm:w-56 transition-all"/>
+            {% if request.GET.q %}
+            <a href="?"
+               class="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center rounded-full bg-gray-400 hover:bg-gray-500 transition-colors">
+              <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                <path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/>
               </svg>
-              <input type="text" name="q" value="{{ request.GET.q }}"
-                     placeholder="Search categories..."
-                     class="pl-9 {% if request.GET.q %}pr-8{% else %}pr-4{% endif %} py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage-300 w-44 sm:w-56 transition-all"/>
-              {% if request.GET.q %}
-              <a href="?sort={{ request.GET.sort|default:'desc' }}"
-                 class="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center rounded-full bg-gray-400 hover:bg-gray-500 transition-colors">
-                <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-              </a>
-              {% endif %}
-            </div>
-            <button type="submit"
-                    class="px-3.5 py-2 text-sm font-semibold bg-sage-800 hover:bg-sage-900 text-white rounded-xl transition-colors flex-shrink-0">
-              Search
-            </button>
-          </form>
-
-          <!-- Sort toggle -->
-          {% if request.GET.sort == 'asc' %}
-            <a href="?q={{ request.GET.q }}&sort=desc"
-               class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-600 transition-colors flex-shrink-0">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" d="M3 4h13M3 8h9M3 12h5m10 4l-4-4m4 4l-4 4"/>
-              </svg>
-              A → Z
             </a>
-          {% else %}
-            <a href="?q={{ request.GET.q }}&sort=asc"
-               class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium border border-sage-300 rounded-xl bg-sage-50 text-sage-700 transition-colors flex-shrink-0">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" d="M3 4h13M3 8h9M3 12h5m10 0l-4-4m4 4l-4 4"/>
-              </svg>
-              Newest First
-            </a>
-          {% endif %}
-
-        </div>
+            {% endif %}
+          </div>
+          <button type="submit"
+                  class="px-3.5 py-2 text-sm font-semibold bg-sage-800 hover:bg-sage-900 text-white rounded-xl transition-colors flex-shrink-0">
+            Search
+          </button>
+        </form>
       </div>
 
       <!-- Table -->
@@ -138,17 +150,13 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-50">
-
             {% for category in categories %}
             <tr class="hover:bg-gray-50/60 transition-colors duration-100">
-
               <td class="px-6 py-4 text-sm text-gray-400">{{ forloop.counter }}</td>
-
               <td class="px-4 py-4">
                 <div class="flex items-center gap-3">
                   {% if category.image %}
-                    <img src="{{ category.image.url }}" alt="{{ category.name }}"
-                         class="w-10 h-10 rounded-xl object-cover flex-shrink-0"/>
+                    <img src="{{ category.image.url }}" alt="{{ category.name }}" class="w-10 h-10 rounded-xl object-cover flex-shrink-0"/>
                   {% else %}
                     <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sage-100 to-sage-200 flex items-center justify-center flex-shrink-0">
                       <svg class="w-5 h-5 text-sage-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
@@ -159,9 +167,7 @@
                   <span class="text-sm font-medium text-gray-800">{{ category.name }}</span>
                 </div>
               </td>
-
               <td class="px-4 py-4 text-sm text-gray-600">{{ category.product_count }}</td>
-
               <td class="px-4 py-4">
                 {% if category.is_active %}
                   <span class="inline-flex text-xs font-semibold px-3 py-1 rounded-full bg-green-50 text-green-700">Active</span>
@@ -169,60 +175,43 @@
                   <span class="inline-flex text-xs font-semibold px-3 py-1 rounded-full bg-red-50 text-red-700">Inactive</span>
                 {% endif %}
               </td>
-
               <td class="px-6 py-4">
                 <div class="flex items-center justify-end gap-2">
-
-                  <!-- Edit -->
-                  <a href="{% url 'admin_edit_category' category.id %}"
-                     class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
+                  <a href="" class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
                     <svg class="w-[15px] h-[15px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                       <path stroke-linecap="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                     </svg>
                   </a>
-
-                  <!-- Toggle active/inactive -->
-                  <form method="POST" action="{% url 'admin_toggle_category' category.id %}">
+                  <form method="POST" action="">
                     {% csrf_token %}
                     <button type="submit"
-                            class="relative w-10 h-[22px] rounded-full transition-colors duration-200 flex-shrink-0
-                                   {% if category.is_active %}bg-sage-600{% else %}bg-gray-300{% endif %}">
-                      <span class="absolute top-0.5 w-[18px] h-[18px] bg-white rounded-full shadow transition-all duration-200
-                                   {% if category.is_active %}right-0.5 flex items-center justify-center{% else %}left-0.5{% endif %}">
+                            class="relative w-10 h-[22px] rounded-full transition-colors duration-200 flex-shrink-0 {% if category.is_active %}bg-sage-600{% else %}bg-gray-300{% endif %}">
+                      <span class="absolute top-0.5 w-[18px] h-[18px] bg-white rounded-full shadow transition-all duration-200 {% if category.is_active %}right-0.5 flex items-center justify-center{% else %}left-0.5{% endif %}">
                         {% if category.is_active %}
-                          <svg class="w-2.5 h-2.5 text-sage-700" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" d="M5 13l4 4L19 7"/>
-                          </svg>
+                          <svg class="w-2.5 h-2.5 text-sage-700" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
                         {% endif %}
                       </span>
                     </button>
                   </form>
-
-                  <!-- Soft Delete -->
                   <button type="button" onclick="openDeleteModal('{{ category.id }}', '{{ category.name }}')"
                           class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
                     <svg class="w-[15px] h-[15px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                       <path stroke-linecap="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                     </svg>
                   </button>
-
                 </div>
               </td>
-
             </tr>
             {% empty %}
             <tr>
               <td colspan="5" class="px-6 py-12 text-center text-sm text-gray-400">
                 {% if request.GET.q %}
                   No categories found for "<strong>{{ request.GET.q }}</strong>".
-                  <a href="?sort={{ request.GET.sort|default:'desc' }}" class="text-sage-700 underline ml-1">Clear search</a>
-                {% else %}
-                  No categories found.
-                {% endif %}
+                  <a href="?" class="text-sage-700 underline ml-1">Clear search</a>
+                {% else %}No categories found.{% endif %}
               </td>
             </tr>
             {% endfor %}
-
           </tbody>
         </table>
       </div>
@@ -230,12 +219,10 @@
       <!-- Pagination -->
       {% if categories.has_other_pages %}
       <div class="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-gray-100 gap-3">
-        <p class="text-sm text-gray-400">
-          Showing {{ categories.start_index }}–{{ categories.end_index }} of {{ categories.paginator.count }} categories
-        </p>
+        <p class="text-sm text-gray-400">Showing {{ categories.start_index }}–{{ categories.end_index }} of {{ categories.paginator.count }} categories</p>
         <div class="flex items-center gap-1">
           {% if categories.has_previous %}
-          <a href="?q={{ request.GET.q }}&sort={{ request.GET.sort|default:'desc' }}&page={{ categories.previous_page_number }}"
+          <a href="?q={{ request.GET.q }}&page={{ categories.previous_page_number }}"
              class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 transition-colors">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>
           </a>
@@ -244,12 +231,12 @@
             {% if categories.number == num %}
               <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-sage-800 text-white text-sm font-semibold">{{ num }}</span>
             {% elif num > categories.number|add:'-3' and num < categories.number|add:'3' %}
-              <a href="?q={{ request.GET.q }}&sort={{ request.GET.sort|default:'desc' }}&page={{ num }}"
+              <a href="?q={{ request.GET.q }}&page={{ num }}"
                  class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 text-sm font-medium transition-colors">{{ num }}</a>
             {% endif %}
           {% endfor %}
           {% if categories.has_next %}
-          <a href="?q={{ request.GET.q }}&sort={{ request.GET.sort|default:'desc' }}&page={{ categories.next_page_number }}"
+          <a href="?q={{ request.GET.q }}&page={{ categories.next_page_number }}"
              class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 transition-colors">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M9 5l7 7-7 7"/></svg>
           </a>
@@ -262,7 +249,80 @@
   </main>
 </div>
 
-<!-- Soft Delete Modal -->
+<!-- ══ ADD CATEGORY MODAL ══ -->
+<div id="addCategoryModal">
+  <div class="modal-backdrop" onclick="closeAddModal()"></div>
+  <div class="modal-box">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100">
+      <div>
+        <h2 class="text-[15px] font-bold text-gray-900">Add Category</h2>
+        <p class="text-xs text-gray-400 mt-0.5">Fill in the details to create a new category</p>
+      </div>
+      <button onclick="closeAddModal()"
+              class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Form -->
+    <form method="POST" action="" enctype="multipart/form-data" class="px-6 py-5 space-y-4">
+      {% csrf_token %}
+
+      <!-- Category Name -->
+      <div>
+        <label class="block text-[11px] font-semibold text-gray-500 uppercase tracking-widest mb-1.5">
+          Category Name <span class="text-red-400">*</span>
+        </label>
+        <input type="text" name="name" placeholder="e.g. Anti-Aging Serums" required
+               class="w-full px-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage-300 focus:border-sage-400 transition-all placeholder:text-gray-300"/>
+      </div>
+
+
+
+      <!-- Visibility Status -->
+      <div class="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-xl px-4 py-3">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm font-semibold text-gray-700">Visibility Status</p>
+            <p class="text-[11px] text-gray-400">Make visible on store</p>
+          </div>
+        </div>
+        <div id="visToggle" class="toggle-track on" onclick="toggleVisibility()">
+          <div class="toggle-thumb">
+            <svg id="visCheck" class="w-2.5 h-2.5 text-sage-600" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+              <path stroke-linecap="round" d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+        </div>
+        <input type="hidden" name="is_active" id="isActiveInput" value="true"/>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center gap-3 pt-1">
+        <button type="button" onclick="closeAddModal()"
+                class="flex-1 px-4 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
+          Cancel
+        </button>
+        <button type="submit"
+                class="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-sage-700 hover:bg-sage-800 rounded-xl transition-colors shadow-sm">
+          Save Category
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ══ SOFT DELETE MODAL ══ -->
 <div id="deleteModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200">
   <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeDeleteModal()"></div>
   <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
@@ -289,18 +349,47 @@
 
 {% block extra_js %}
 <script>
+  /* Add modal */
+  function openAddModal() {
+    document.getElementById('addCategoryModal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeAddModal() {
+    document.getElementById('addCategoryModal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+
+
+  /* Visibility toggle */
+  function toggleVisibility() {
+    const track = document.getElementById('visToggle');
+    const check = document.getElementById('visCheck');
+    const input = document.getElementById('isActiveInput');
+    const isOn  = track.classList.contains('on');
+    track.classList.toggle('on', !isOn);
+    check.style.display = isOn ? 'none' : 'block';
+    input.value = isOn ? 'false' : 'true';
+  }
+
+  /* Delete modal */
   function openDeleteModal(id, name) {
     document.getElementById('deleteModalName').textContent = '"' + name + '"';
-    document.getElementById('deleteForm').action = "{% url 'admin_delete_category' 0 %}".replace('0', id);
+    document.getElementById('deleteForm').action = "".replace('0', id);
     const m = document.getElementById('deleteModal');
     m.classList.remove('opacity-0', 'pointer-events-none');
     m.classList.add('opacity-100');
+    document.body.style.overflow = 'hidden';
   }
   function closeDeleteModal() {
     const m = document.getElementById('deleteModal');
     m.classList.add('opacity-0', 'pointer-events-none');
     m.classList.remove('opacity-100');
+    document.body.style.overflow = '';
   }
-  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeDeleteModal(); });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') { closeAddModal(); closeDeleteModal(); }
+  });
 </script>
 {% endblock %}
