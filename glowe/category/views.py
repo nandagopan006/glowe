@@ -48,7 +48,7 @@ def category_management(request):
 
 def add_category(request):
     
-    if request.method == 'POST' :
+    if request.method =='POST' :
         form = CategoryForm(request.POST)
         
         if form.is_valid():
