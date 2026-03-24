@@ -7,7 +7,6 @@
 <style>
   .active\:scale-98:active { transform: scale(0.98); }
 
-  /* ── SHARED MODAL BASE ── */
   .adm-modal-wrap {
     position:fixed; inset:0; z-index:60;
     display:flex; align-items:center; justify-content:center; padding:16px;
@@ -26,19 +25,24 @@
   }
   .adm-modal-wrap.open .modal-box { transform:translateY(0) scale(1); }
 
-  /* ── TOGGLE SWITCH ── */
-  .toggle-track {
-    width:42px; height:24px; border-radius:12px; flex-shrink:0;
-    background:#d1d5db; position:relative; cursor:pointer; transition:background 0.2s;
+  .tgl {
+    display:inline-flex; align-items:center; cursor:pointer;
+    width:48px; height:26px; border-radius:999px; flex-shrink:0;
+    background:#e2e8e2; position:relative;
+    transition:background 0.25s ease, box-shadow 0.25s ease;
+    border:none; padding:0;
   }
-  .toggle-track.on { background:#4a9050; }
-  .toggle-thumb {
-    position:absolute; top:3px; left:3px;
-    width:18px; height:18px; background:#fff;
-    border-radius:50%; box-shadow:0 1px 4px rgba(0,0,0,0.15);
-    transition:transform 0.2s; display:flex; align-items:center; justify-content:center;
+  .tgl.tgl-on { background:#4a9050; box-shadow:0 0 0 3px rgba(74,144,80,0.18); }
+  .tgl-thumb {
+    position:absolute; left:3px;
+    width:20px; height:20px; border-radius:50%; background:#fff;
+    box-shadow:0 1px 4px rgba(0,0,0,0.18), 0 0 0 0.5px rgba(0,0,0,0.06);
+    transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    display:flex; align-items:center; justify-content:center;
   }
-  .toggle-track.on .toggle-thumb { transform:translateX(18px); }
+  .tgl.tgl-on .tgl-thumb { transform:translateX(22px); }
+  .tgl-dot { width:6px; height:6px; border-radius:50%; background:#d1d5db; transition:background 0.2s; }
+  .tgl.tgl-on .tgl-dot { background:#4a9050; }
 </style>
 {% endblock %}
 
@@ -46,15 +50,7 @@
 
 {% include 'admin_sidebar.html' %}
 
-<div class="lg:ml-[240px] min-h-screen flex flex-col bg-gray-50">
-
-  <!-- Mobile Topbar -->
-  <div class="lg:hidden sticky top-0 z-30 flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-200">
-    <button onclick="toggleAdminSidebar()" class="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
-      <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
-    </button>
-    <span class="font-bold text-gray-900">Categories</span>
-  </div>
+<div class="lg:ml-[240px] pt-[64px] min-h-screen flex flex-col bg-gray-50">
 
   <main class="flex-1 p-5 sm:p-8">
 
@@ -99,7 +95,7 @@
     <!-- Table Card -->
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
-      <!-- Toolbar: Search with clear -->
+      <!-- Toolbar -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 border-b border-gray-100 gap-3">
         <h2 class="text-base font-bold text-gray-800">All Categories</h2>
         <form method="GET" action="" class="flex items-center gap-2">
@@ -112,19 +108,14 @@
                    placeholder="Search categories..."
                    oninput="toggleClearBtn(this.value)"
                    class="pl-9 pr-8 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage-300 w-44 sm:w-56 transition-all"/>
-            <!-- Clear button: shows if there's a query -->
-            <button type="button" id="clearSearchBtn"
-                    onclick="clearSearch()"
+            <button type="button" id="clearSearchBtn" onclick="clearSearch()"
                     class="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 flex items-center justify-center rounded-full bg-gray-400 hover:bg-gray-500 transition-colors {% if not request.GET.q %}hidden{% endif %}">
               <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
                 <path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/>
               </svg>
             </button>
           </div>
-          <button type="submit"
-                  class="px-3.5 py-2 text-sm font-semibold bg-sage-800 hover:bg-sage-900 text-white rounded-xl transition-colors flex-shrink-0">
-            Search
-          </button>
+          <button type="submit" class="px-3.5 py-2 text-sm font-semibold bg-sage-800 hover:bg-sage-900 text-white rounded-xl transition-colors flex-shrink-0">Search</button>
         </form>
       </div>
 
@@ -169,31 +160,26 @@
               <td class="px-6 py-4">
                 <div class="flex items-center justify-end gap-2">
 
-                  <!-- Edit button → opens edit modal -->
                   <button type="button"
-                          onclick="openEditModal('{{ category.id }}', '{{ category.name|escapejs }}', {{ category.is_active|lower }})"
+                          data-edit-url="{% url 'edit_category' category.id %}"
+                          onclick="openEditModal(this.dataset.editUrl, '{{ category.name|escapejs }}', {{ category.is_active|lower }})"
                           class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors">
                     <svg class="w-[15px] h-[15px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                       <path stroke-linecap="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                     </svg>
                   </button>
 
-                  <!-- Toggle active/inactive -->
-                  <form method="POST" action="{% url 'toggle_category' category.id %}">
+                  <form method="POST" action="{% url 'toggle_category' category.id %}" onsubmit="disableSubmitBtn(this)">
                     {% csrf_token %}
-                    <button type="submit"
-                            class="relative w-10 h-[22px] rounded-full transition-colors duration-200 flex-shrink-0 {% if category.is_active %}bg-sage-600{% else %}bg-gray-300{% endif %}">
-                      <span class="absolute top-0.5 w-[18px] h-[18px] bg-white rounded-full shadow transition-all duration-200 {% if category.is_active %}right-0.5 flex items-center justify-center{% else %}left-0.5{% endif %}">
-                        {% if category.is_active %}
-                          <svg class="w-2.5 h-2.5 text-sage-700" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
-                        {% endif %}
-                      </span>
+                    <button type="submit" title="{% if category.is_active %}Deactivate{% else %}Activate{% endif %}"
+                            class="tgl {% if category.is_active %}tgl-on{% endif %}">
+                      <span class="tgl-thumb"><span class="tgl-dot"></span></span>
                     </button>
                   </form>
 
-                  <!-- Delete button → opens delete modal -->
                   <button type="button"
-                          onclick="openDeleteModal('{{ category.id }}', '{{ category.name|escapejs }}')"
+                          data-delete-url="{% url 'delete_category' category.id %}"
+                          onclick="openDeleteModal(this.dataset.deleteUrl, '{{ category.name|escapejs }}')"
                           class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
                     <svg class="w-[15px] h-[15px]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                       <path stroke-linecap="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -250,9 +236,7 @@
   </main>
 </div>
 
-<!-- ════════════════════════
-     ADD CATEGORY MODAL
-════════════════════════ -->
+<!-- ADD MODAL -->
 <div id="addCategoryModal" class="adm-modal-wrap">
   <div class="modal-backdrop" onclick="closeAddModal()"></div>
   <div class="modal-box">
@@ -265,16 +249,13 @@
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
-    <form method="POST" action="{% url 'add_category' %}" class="px-6 py-5 space-y-4">
+    <form method="POST" action="{% url 'add_category' %}" class="px-6 py-5 space-y-4" onsubmit="disableSubmitBtn(this)">
       {% csrf_token %}
       <div>
-        <label class="block text-[11px] font-semibold text-gray-500 uppercase tracking-widest mb-1.5">
-          Category Name <span class="text-red-400">*</span>
-        </label>
+        <label class="block text-[11px] font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Category Name <span class="text-red-400">*</span></label>
         <input type="text" name="name" placeholder="e.g. Anti-Aging Serums" required
                class="w-full px-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage-300 focus:border-sage-400 transition-all placeholder:text-gray-300"/>
       </div>
-      <!-- Visibility Status -->
       <div class="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-xl px-4 py-3">
         <div class="flex items-center gap-3">
           <div class="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center flex-shrink-0">
@@ -288,11 +269,9 @@
             <p class="text-[11px] text-gray-400">Make visible on store</p>
           </div>
         </div>
-        <div id="addVisToggle" class="toggle-track on" onclick="toggleAddVisibility()">
-          <div class="toggle-thumb">
-            <svg id="addVisCheck" class="w-2.5 h-2.5 text-sage-600" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
-          </div>
-        </div>
+        <button type="button" id="addVisToggle" class="tgl tgl-on" onclick="toggleAddVisibility()" aria-label="Toggle visibility">
+          <span class="tgl-thumb"><span class="tgl-dot"></span></span>
+        </button>
         <input type="hidden" name="is_active" id="addIsActiveInput" value="true"/>
       </div>
       <div class="flex items-center gap-3 pt-1">
@@ -303,9 +282,7 @@
   </div>
 </div>
 
-<!-- ════════════════════════
-     EDIT CATEGORY MODAL
-════════════════════════ -->
+<!-- EDIT MODAL -->
 <div id="editCategoryModal" class="adm-modal-wrap">
   <div class="modal-backdrop" onclick="closeEditModal()"></div>
   <div class="modal-box">
@@ -318,16 +295,13 @@
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
-    <form id="editForm" method="POST" action="" class="px-6 py-5 space-y-4">
+    <form id="editForm" method="POST" action="" class="px-6 py-5 space-y-4" onsubmit="disableSubmitBtn(this)">
       {% csrf_token %}
       <div>
-        <label class="block text-[11px] font-semibold text-gray-500 uppercase tracking-widest mb-1.5">
-          Category Name <span class="text-red-400">*</span>
-        </label>
+        <label class="block text-[11px] font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Category Name <span class="text-red-400">*</span></label>
         <input type="text" name="name" id="editNameInput" placeholder="e.g. Anti-Aging Serums" required
                class="w-full px-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-sage-300 focus:border-sage-400 transition-all placeholder:text-gray-300"/>
       </div>
-      <!-- Visibility Status -->
       <div class="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-xl px-4 py-3">
         <div class="flex items-center gap-3">
           <div class="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center flex-shrink-0">
@@ -341,11 +315,9 @@
             <p class="text-[11px] text-gray-400">Make visible on store</p>
           </div>
         </div>
-        <div id="editVisToggle" class="toggle-track" onclick="toggleEditVisibility()">
-          <div class="toggle-thumb">
-            <svg id="editVisCheck" class="w-2.5 h-2.5 text-sage-600" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
-          </div>
-        </div>
+        <button type="button" id="editVisToggle" class="tgl" onclick="toggleEditVisibility()" aria-label="Toggle visibility">
+          <span class="tgl-thumb"><span class="tgl-dot"></span></span>
+        </button>
         <input type="hidden" name="is_active" id="editIsActiveInput" value="true"/>
       </div>
       <div class="flex items-center gap-3 pt-1">
@@ -356,9 +328,7 @@
   </div>
 </div>
 
-<!-- ════════════════════════
-     DELETE CONFIRMATION MODAL
-════════════════════════ -->
+<!-- DELETE MODAL -->
 <div id="deleteModal" class="adm-modal-wrap">
   <div class="modal-backdrop" onclick="closeDeleteModal()"></div>
   <div class="modal-box" style="max-width:360px;">
@@ -374,7 +344,7 @@
       <p class="text-xs text-gray-400 mb-6">This is a soft delete — the category will be hidden but not permanently removed.</p>
       <div class="flex gap-3">
         <button onclick="closeDeleteModal()" class="flex-1 px-4 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">Cancel</button>
-        <form id="deleteForm" method="POST" action="" class="flex-1">
+        <form id="deleteForm" method="POST" action="" class="flex-1" onsubmit="disableSubmitBtn(this)">
           {% csrf_token %}
           <button type="submit" class="w-full px-4 py-2.5 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-xl transition-colors">Delete</button>
         </form>
@@ -387,123 +357,60 @@
 
 {% block extra_js %}
 <script>
-/* ── TOAST ── */
-(function(){
-  const s=document.createElement('style');
-  s.textContent='@keyframes toastIn{to{transform:translateY(0);opacity:1}}@keyframes toastOut{to{transform:translateY(-80px);opacity:0}}@keyframes toastProg{from{width:100%}to{width:0%}}';
-  document.head.appendChild(s);
-  const tc=document.createElement('div');
-  tc.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;';
-  document.body.appendChild(tc);
-  const CFG={
-    success:{icon:'✓',blobs:['#3aaa72','#1a6644','#0d4a30'],bg:'#1e3d2f',blobBg:'#172f24',iconBg:'radial-gradient(circle,#3aaa72,#1a6644)',label:'#6ee7a8',title:'#f0fdf4',msg:'#bbf7d0',progress:'#4ade80'},
-    error:  {icon:'✕',blobs:['#e05050','#a82020','#7a1010'],bg:'#3d1e1e',blobBg:'#2f1717',iconBg:'radial-gradient(circle,#e05050,#a82020)',label:'#fca5a5',title:'#fff1f2',msg:'#fecaca',progress:'#f87171'},
-    warning:{icon:'!',blobs:['#f59e0b','#b45309','#7c2d00'],bg:'#3d2000',blobBg:'#2e1800',iconBg:'radial-gradient(circle,#f59e0b,#b45309)',label:'#fcd34d',title:'#fff8e1',msg:'#fde68a',progress:'#f59e0b'},
-  };
-  function bsvg(c){return `<svg viewBox="0 0 50 70" xmlns="http://www.w3.org/2000/svg"><ellipse cx="12" cy="12" rx="20" ry="16" fill="${c[0]}" opacity="0.45"/><ellipse cx="40" cy="52" rx="16" ry="14" fill="${c[1]}" opacity="0.35"/><ellipse cx="24" cy="34" rx="11" ry="9" fill="${c[2]}" opacity="0.3"/><ellipse cx="6" cy="56" rx="10" ry="8" fill="${c[0]}" opacity="0.22"/></svg>`;}
-  function dismiss(t){if(!t||t._d)return;t._d=true;clearTimeout(t._tm);t.style.animation='toastOut .35s cubic-bezier(.4,0,1,1) forwards';setTimeout(()=>t.remove(),350);}
-  window.showToast=function(type,title,msg){
-    const c=CFG[type]||CFG.success;
-    const t=document.createElement('div');
-    t.style.cssText=`pointer-events:all;display:flex;align-items:center;width:300px;border-radius:14px;overflow:hidden;position:relative;background:${c.bg};box-shadow:0 10px 32px rgba(42,31,20,.2);animation:toastIn .5s cubic-bezier(.34,1.56,.64,1) forwards;transform:translateY(-80px);opacity:0;`;
-    t.innerHTML=`<div style="width:54px;min-width:54px;align-self:stretch;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:${c.blobBg};">${bsvg(c.blobs)}<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;z-index:2;position:relative;background:${c.iconBg};flex-shrink:0;">${c.icon}</div></div><div style="flex:1;padding:10px 6px 10px 10px;"><p style="font-family:'DM Sans',sans-serif;font-size:7px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;margin:0 0 2px;color:${c.label};opacity:.85;">${type}</p><p style="font-family:'Playfair Display',serif;font-size:16px;font-weight:700;line-height:1.2;margin:0 0 2px;color:${c.title};">${title}</p><p style="font-family:'DM Sans',sans-serif;font-size:9px;line-height:1.5;margin:0;color:${c.msg};opacity:.85;">${msg}</p></div><button onclick="(function(el){if(!el||el._d)return;el._d=true;clearTimeout(el._tm);el.style.animation='toastOut .35s cubic-bezier(.4,0,1,1) forwards';setTimeout(()=>el.remove(),350);})(this.parentElement)" style="background:none;border:none;cursor:pointer;font-size:10px;padding:6px 10px 0 0;align-self:flex-start;color:#fff;opacity:.4;">✕</button><div style="position:absolute;bottom:0;left:0;height:2px;background:${c.progress};animation:toastProg 3s linear forwards;"></div>`;
-    tc.appendChild(t);
-    t._tm=setTimeout(()=>dismiss(t),3000);
-  };
-})();
+  /* ── No Django messages handling here — admin_base.html handles it ── */
 
-/* ── Django messages → toast ── */
-document.addEventListener('DOMContentLoaded', function() {
-  {% if messages %}
-    {% for message in messages %}
-      {% if 'success' in message.tags %}showToast('success','Done!','{{ message|escapejs }}');
-      {% elif 'error' in message.tags %}showToast('error','Error','{{ message|escapejs }}');
-      {% elif 'warning' in message.tags %}showToast('warning','Notice','{{ message|escapejs }}');
-      {% endif %}
-    {% endfor %}
-  {% endif %}
-});
-
-/* ── SEARCH clear button ── */
-function toggleClearBtn(val) {
-  const btn = document.getElementById('clearSearchBtn');
-  btn.classList.toggle('hidden', !val.trim());
-}
-function clearSearch() {
-  document.getElementById('searchInput').value = '';
-  window.location.href = '?';
-}
-
-/* ── ADD MODAL ── */
-function openAddModal() {
-  document.getElementById('addCategoryModal').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeAddModal() {
-  document.getElementById('addCategoryModal').classList.remove('open');
-  document.body.style.overflow = '';
-}
-function toggleAddVisibility() {
-  const track = document.getElementById('addVisToggle');
-  const check = document.getElementById('addVisCheck');
-  const input = document.getElementById('addIsActiveInput');
-  const isOn  = track.classList.contains('on');
-  track.classList.toggle('on', !isOn);
-  check.style.display = isOn ? 'none' : 'block';
-  input.value = isOn ? 'false' : 'true';
-}
-
-/* ── EDIT MODAL ── */
-function openEditModal(id, name, isActive) {
-  // Set form action
-  document.getElementById('editForm').action = '/admin/categories/' + id + '/edit/';
-  // Pre-fill name
-  document.getElementById('editNameInput').value = name;
-  // Set toggle state
-  const track = document.getElementById('editVisToggle');
-  const check = document.getElementById('editVisCheck');
-  const input = document.getElementById('editIsActiveInput');
-  if (isActive) {
-    track.classList.add('on');
-    check.style.display = 'block';
-    input.value = 'true';
-  } else {
-    track.classList.remove('on');
-    check.style.display = 'none';
-    input.value = 'false';
+  function disableSubmitBtn(form) {
+    const btn = form.querySelector('button[type="submit"]');
+    if (btn && !btn.disabled) {
+      btn.disabled = true; btn.style.opacity = '0.6'; btn.style.cursor = 'not-allowed';
+      setTimeout(() => { btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; }, 2000);
+    }
+    return true;
   }
-  document.getElementById('editCategoryModal').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeEditModal() {
-  document.getElementById('editCategoryModal').classList.remove('open');
-  document.body.style.overflow = '';
-}
-function toggleEditVisibility() {
-  const track = document.getElementById('editVisToggle');
-  const check = document.getElementById('editVisCheck');
-  const input = document.getElementById('editIsActiveInput');
-  const isOn  = track.classList.contains('on');
-  track.classList.toggle('on', !isOn);
-  check.style.display = isOn ? 'none' : 'block';
-  input.value = isOn ? 'false' : 'true';
-}
 
-/* ── DELETE MODAL ── */
-function openDeleteModal(id, name) {
-  document.getElementById('deleteModalName').textContent = '"' + name + '"';
-  document.getElementById('deleteForm').action = '/admin/categories/' + id + '/delete/';
-  document.getElementById('deleteModal').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeDeleteModal() {
-  document.getElementById('deleteModal').classList.remove('open');
-  document.body.style.overflow = '';
-}
+  function toggleClearBtn(val) {
+    const btn = document.getElementById('clearSearchBtn');
+    if (btn) btn.classList.toggle('hidden', !val.trim());
+  }
+  function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    window.location.href = '?';
+  }
 
-/* ── ESC key ── */
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') { closeAddModal(); closeEditModal(); closeDeleteModal(); }
-});
+  /* ADD MODAL */
+  function openAddModal()  { document.getElementById('addCategoryModal').classList.add('open'); document.body.style.overflow='hidden'; }
+  function closeAddModal() { document.getElementById('addCategoryModal').classList.remove('open'); document.body.style.overflow=''; }
+  function toggleAddVisibility() {
+    const t = document.getElementById('addVisToggle'), i = document.getElementById('addIsActiveInput');
+    const on = t.classList.contains('tgl-on');
+    t.classList.toggle('tgl-on', !on); i.value = on ? 'false' : 'true';
+  }
+
+  /* EDIT MODAL */
+  function openEditModal(url, name, isActive) {
+    document.getElementById('editForm').action = url;
+    document.getElementById('editNameInput').value = name;
+    const t = document.getElementById('editVisToggle'), i = document.getElementById('editIsActiveInput');
+    t.classList.toggle('tgl-on', isActive); i.value = isActive ? 'true' : 'false';
+    document.getElementById('editCategoryModal').classList.add('open'); document.body.style.overflow='hidden';
+  }
+  function closeEditModal() { document.getElementById('editCategoryModal').classList.remove('open'); document.body.style.overflow=''; }
+  function toggleEditVisibility() {
+    const t = document.getElementById('editVisToggle'), i = document.getElementById('editIsActiveInput');
+    const on = t.classList.contains('tgl-on');
+    t.classList.toggle('tgl-on', !on); i.value = on ? 'false' : 'true';
+  }
+
+  /* DELETE MODAL */
+  function openDeleteModal(url, name) {
+    document.getElementById('deleteModalName').textContent = '"' + name + '"';
+    document.getElementById('deleteForm').action = url;
+    document.getElementById('deleteModal').classList.add('open'); document.body.style.overflow='hidden';
+  }
+  function closeDeleteModal() { document.getElementById('deleteModal').classList.remove('open'); document.body.style.overflow=''; }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') { closeAddModal(); closeEditModal(); closeDeleteModal(); }
+  });
 </script>
 {% endblock %}

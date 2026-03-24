@@ -24,10 +24,10 @@ def category_management(request):
     categories=paginator.get_page(page_number)
     
     
-    total = Category.objects.filter(is_deleted=False).count()
-    active = Category.objects.filter(is_active=True, is_deleted=False).count()
-    inactive = Category.objects.filter(is_active=False, is_deleted=False).count()
-    context = {
+    total=Category.objects.filter(is_deleted=False).count()
+    active=Category.objects.filter(is_active=True, is_deleted=False).count()
+    inactive=Category.objects.filter(is_active=False, is_deleted=False).count()
+    context={
         'categories':categories,
         'total_categories':total,
         'active_categories':active,
@@ -44,12 +44,14 @@ def add_category(request):
         
         if form.is_valid():
             form.save()
-            messages.success(request,'category is created successfully') 
+            messages.success(request,'category is created successfully')
+            return redirect('category_management') 
             
         else:
-            form = CategoryForm()
             
-    
+            # If form invalid, show errors
+            for error in form.errors.values():
+                messages.error(request, error)
     
     return redirect('category_management')
 
@@ -64,7 +66,8 @@ def edit_category(request,id):
             form.save()
             messages.success(request,'category successfully updated....')
         else :
-            form =CategoryForm(instance=category)
+            for error in form.errors.values():
+                messages.error(request, error[0])
     
     return redirect('category_management')
 
@@ -75,7 +78,7 @@ def toggle_category(request, id):
         category.is_active=not category.is_active
         category.save()
         status='activated' if category.is_active else 'deactivated'
-        messages.success(request,f'  {category.name}   has been {status}.')
+        messages.success(request,f'{category.name}   has been {status}.')
     return redirect('category_management')
 
 def delete_category(request,id):
@@ -84,7 +87,7 @@ def delete_category(request,id):
         category.is_deleted=True
         category.save()
         
-        messages.success(request,f' {category.name}  has been deleted.')
+        messages.success(request,f'{category.name}  has been deleted.')
     return redirect('category_management')
 
 # Create your views here.
