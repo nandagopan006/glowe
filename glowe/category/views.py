@@ -11,15 +11,22 @@ from django.core.paginator import Paginator
 def category_management(request):   
     
     q = request.GET.get('q','').strip()
+    status=request.GET.get('status','')
     
     qs= Category.objects.filter(is_deleted=False) #.annotate(poduct_count=Count('products'))
     
     if q:
         qs=qs.filter(name__icontains=q)
         
+    if status =="active":
+        qs =qs.filter(is_active=True)
+    elif status =='inactive':
+        qs=qs.filter(is_active=False)      
+        
+          
     qs=qs.order_by('-created_at')
     
-    paginator=Paginator(qs,6)
+    paginator=Paginator(qs,5)
     page_number=request.GET.get('page')
     categories=paginator.get_page(page_number)
     
@@ -28,7 +35,9 @@ def category_management(request):
     active=Category.objects.filter(is_active=True, is_deleted=False).count()
     inactive=Category.objects.filter(is_active=False, is_deleted=False).count()
     context={
+        'query': q,
         'categories':categories,
+        'status': status,
         'total_categories':total,
         'active_categories':active,
         'inactive_categories':inactive,
@@ -50,8 +59,9 @@ def add_category(request):
         else:
             
             # If form invalid, show errors
-            for error in form.errors.values():
-                messages.error(request, error)
+            for errors in form.errors.values():
+                for e in errors:
+                    messages.error(request, e)
     
     return redirect('category_management')
 
@@ -66,19 +76,22 @@ def edit_category(request,id):
             form.save()
             messages.success(request,'category successfully updated....')
         else :
-            for error in form.errors.values():
-                messages.error(request, error[0])
+            for errors in form.errors.values():
+                for e in errors:
+                    messages.error(request, e)
     
     return redirect('category_management')
 
 def toggle_category(request, id):
 
-    if request.method=='POST':
-        category=get_object_or_404(Category, id=id, is_deleted=False)
-        category.is_active=not category.is_active
-        category.save()
-        status='activated' if category.is_active else 'deactivated'
-        messages.success(request,f'{category.name}   has been {status}.')
+    if request.method!='POST':
+        return redirect('category_management')
+    
+    category=get_object_or_404(Category, id=id, is_deleted=False)
+    category.is_active=not category.is_active
+    category.save()
+    status='activated' if category.is_active else 'deactivated'
+    messages.success(request,f'{category.name}   has been {status}.')
     return redirect('category_management')
 
 def delete_category(request,id):

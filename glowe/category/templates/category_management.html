@@ -43,6 +43,88 @@
   .tgl.tgl-on .tgl-thumb { transform:translateX(22px); }
   .tgl-dot { width:6px; height:6px; border-radius:50%; background:#d1d5db; transition:background 0.2s; }
   .tgl.tgl-on .tgl-dot { background:#4a9050; }
+
+  /* ── Delete Modal ── */
+  @keyframes deleteShake {
+    0%,100% { transform: translateX(0); }
+    20%      { transform: translateX(-4px); }
+    40%      { transform: translateX(4px); }
+    60%      { transform: translateX(-3px); }
+    80%      { transform: translateX(3px); }
+  }
+  @keyframes iconPop {
+    0%   { transform: scale(0.5); opacity:0; }
+    70%  { transform: scale(1.15); opacity:1; }
+    100% { transform: scale(1); }
+  }
+  @keyframes ringPulse {
+    0%   { transform: scale(1);   opacity: 0.6; }
+    100% { transform: scale(1.9); opacity: 0; }
+  }
+  .del-icon-wrap { position:relative; display:inline-flex; align-items:center; justify-content:center; }
+  .del-ring {
+    position:absolute; inset:-6px; border-radius:50%;
+    border: 2px solid #fca5a5;
+    animation: ringPulse 1.6s ease-out infinite;
+  }
+  .del-ring2 {
+    position:absolute; inset:-14px; border-radius:50%;
+    border: 1.5px solid #fecaca;
+    animation: ringPulse 1.6s ease-out 0.5s infinite;
+  }
+  .adm-modal-wrap.open .del-icon-inner { animation: iconPop 0.45s cubic-bezier(0.34,1.56,0.64,1) 0.1s both; }
+  .del-modal-box {
+    position:relative; width:100%; max-width:380px;
+    background: #fff;
+    border-radius: 24px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.16), 0 4px 20px rgba(0,0,0,0.06);
+    transform: translateY(20px) scale(0.95);
+    transition: transform 0.28s cubic-bezier(0.34,1.56,0.64,1);
+    overflow: hidden;
+  }
+  .adm-modal-wrap.open .del-modal-box { transform: translateY(0) scale(1); }
+  .del-top-bar {
+    height: 4px;
+    background: linear-gradient(90deg, #f87171, #ef4444, #dc2626);
+  }
+  .del-confirm-input {
+    width:100%; padding: 10px 14px;
+    background: #fef2f2; border: 1.5px solid #fecaca;
+    border-radius: 10px; font-size: 13px; color: #991b1b;
+    outline: none; text-align: center; letter-spacing: 0.5px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .del-confirm-input:focus { border-color: #f87171; box-shadow: 0 0 0 3px rgba(248,113,113,0.15); }
+  .del-confirm-input::placeholder { color: #fca5a5; }
+  .del-btn-cancel {
+    flex: 1; padding: 11px 16px;
+    background: #f3f4f6; border: none; border-radius: 12px;
+    font-size: 13.5px; font-weight: 600; color: #374151;
+    cursor: pointer; transition: background 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .del-btn-cancel:hover { background: #e5e7eb; }
+  .del-btn-delete {
+    flex: 1; padding: 11px 16px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border: none; border-radius: 12px;
+    font-size: 13.5px; font-weight: 700; color: #fff;
+    cursor: pointer; transition: all 0.15s;
+    box-shadow: 0 4px 14px rgba(220,38,38,0.35);
+    font-family: 'DM Sans', sans-serif;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .del-btn-delete:hover { background: linear-gradient(135deg, #dc2626, #b91c1c); box-shadow: 0 6px 18px rgba(185,28,28,0.4); transform: translateY(-1px); }
+  .del-btn-delete:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(220,38,38,0.3); }
+  .del-btn-delete:disabled { opacity:0.55; cursor:not-allowed; transform:none; }
+  .del-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #fef2f2; border: 1px solid #fecaca;
+    border-radius: 8px; padding: 6px 12px;
+    font-size: 13px; font-weight: 600; color: #b91c1c;
+    max-width: 100%; word-break: break-all;
+  }
 </style>
 {% endblock %}
 
@@ -97,8 +179,26 @@
 
       <!-- Toolbar -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4 border-b border-gray-100 gap-3">
-        <h2 class="text-base font-bold text-gray-800">All Categories</h2>
+
+        <!-- Status Filter Pills -->
+        <div class="flex items-center gap-1 bg-gray-100 p-1 rounded-xl">
+          <a href="?q={{ request.GET.q }}&status="
+             class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-150 {% if not request.GET.status %}bg-white text-gray-800 shadow-sm{% else %}text-gray-500 hover:text-gray-700{% endif %}">
+            All
+          </a>
+          <a href="?q={{ request.GET.q }}&status=active"
+             class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-150 flex items-center gap-1.5 {% if request.GET.status == 'active' %}bg-white text-green-700 shadow-sm{% else %}text-gray-500 hover:text-gray-700{% endif %}">
+            <span class="w-1.5 h-1.5 rounded-full bg-green-400 flex-shrink-0"></span>Active
+          </a>
+          <a href="?q={{ request.GET.q }}&status=inactive"
+             class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-all duration-150 flex items-center gap-1.5 {% if request.GET.status == 'inactive' %}bg-white text-red-600 shadow-sm{% else %}text-gray-500 hover:text-gray-700{% endif %}">
+            <span class="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0"></span>Inactive
+          </a>
+        </div>
+
+        <!-- Search -->
         <form method="GET" action="" class="flex items-center gap-2">
+          <input type="hidden" name="status" value="{{ request.GET.status }}"/>
           <div class="relative">
             <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
                  fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -117,8 +217,8 @@
           </div>
           <button type="submit" class="px-3.5 py-2 text-sm font-semibold bg-sage-800 hover:bg-sage-900 text-white rounded-xl transition-colors flex-shrink-0">Search</button>
         </form>
-      </div>
 
+      </div>
       <!-- Table -->
       <div class="overflow-x-auto">
         <table class="w-full min-w-[460px]">
@@ -203,34 +303,49 @@
         </table>
       </div>
 
-      <!-- Pagination -->
-      {% if categories.has_other_pages %}
+      <!-- Pagination — Pill style (Option A) -->
       <div class="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-t border-gray-100 gap-3">
-        <p class="text-sm text-gray-400">Showing {{ categories.start_index }}–{{ categories.end_index }} of {{ categories.paginator.count }} categories</p>
+
+        <p class="text-sm text-gray-400">
+          Showing <span class="font-medium text-gray-600">{{ categories.start_index }}–{{ categories.end_index }}</span>
+          of <span class="font-medium text-gray-600">{{ categories.paginator.count }}</span> categories
+        </p>
+
         <div class="flex items-center gap-1">
+
           {% if categories.has_previous %}
           <a href="?q={{ request.GET.q }}&page={{ categories.previous_page_number }}"
-             class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 transition-colors">
+             class="h-8 w-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-all duration-150">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>
           </a>
+          {% else %}
+          <span class="h-8 w-8 flex items-center justify-center rounded-full text-gray-200 cursor-not-allowed">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>
+          </span>
           {% endif %}
+
           {% for num in categories.paginator.page_range %}
             {% if categories.number == num %}
-              <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-sage-800 text-white text-sm font-semibold">{{ num }}</span>
+              <span class="h-8 min-w-[32px] px-2.5 flex items-center justify-center rounded-full bg-sage-800 text-white text-sm font-bold shadow-sm">{{ num }}</span>
             {% elif num > categories.number|add:'-3' and num < categories.number|add:'3' %}
               <a href="?q={{ request.GET.q }}&page={{ num }}"
-                 class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 text-sm font-medium transition-colors">{{ num }}</a>
+                 class="h-8 min-w-[32px] px-2.5 flex items-center justify-center rounded-full text-gray-500 hover:bg-gray-100 hover:text-gray-800 text-sm font-medium transition-all duration-150">{{ num }}</a>
             {% endif %}
           {% endfor %}
+
           {% if categories.has_next %}
           <a href="?q={{ request.GET.q }}&page={{ categories.next_page_number }}"
-             class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 transition-colors">
+             class="h-8 w-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-all duration-150">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M9 5l7 7-7 7"/></svg>
           </a>
+          {% else %}
+          <span class="h-8 w-8 flex items-center justify-center rounded-full text-gray-200 cursor-not-allowed">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M9 5l7 7-7 7"/></svg>
+          </span>
           {% endif %}
+
         </div>
       </div>
-      {% endif %}
 
     </div>
   </main>
@@ -331,24 +446,57 @@
 <!-- DELETE MODAL -->
 <div id="deleteModal" class="adm-modal-wrap">
   <div class="modal-backdrop" onclick="closeDeleteModal()"></div>
-  <div class="modal-box" style="max-width:360px;">
-    <div class="p-6 text-center">
-      <div class="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
-        <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-        </svg>
+
+  <div class="del-modal-box">
+    <!-- Red accent bar -->
+    <div class="del-top-bar"></div>
+
+    <div class="px-7 pt-7 pb-6 flex flex-col items-center text-center">
+
+      <!-- Animated icon -->
+      <div class="del-icon-wrap mb-5">
+        <div class="del-ring"></div>
+        <div class="del-ring2"></div>
+        <div class="del-icon-inner w-16 h-16 rounded-full bg-red-50 flex items-center justify-center" style="border: 2px solid #fecaca;">
+          <svg class="w-7 h-7 text-red-500" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+        </div>
       </div>
-      <h3 class="text-base font-bold text-gray-900 mb-1">Delete Category?</h3>
-      <p class="text-sm text-gray-400 mb-0.5">You are about to delete</p>
-      <p id="deleteModalName" class="text-sm font-semibold text-gray-800 mb-1"></p>
-      <p class="text-xs text-gray-400 mb-6">This is a soft delete — the category will be hidden but not permanently removed.</p>
-      <div class="flex gap-3">
-        <button onclick="closeDeleteModal()" class="flex-1 px-4 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">Cancel</button>
+
+      <!-- Title -->
+      <h3 class="text-[17px] font-bold text-gray-900 mb-1 tracking-tight">Delete Category?</h3>
+      <p class="text-sm text-gray-400 mb-4 leading-relaxed max-w-[260px]">
+        This action will soft-delete the category — it will be hidden from your store but can be restored.
+      </p>
+
+      <!-- Category name badge -->
+      <div class="del-badge mb-5">
+        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+        </svg>
+        <span id="deleteModalName"></span>
+      </div>
+
+      <!-- Divider -->
+      <div class="w-full h-px bg-gray-100 mb-5"></div>
+
+      <!-- Action buttons -->
+      <div class="flex gap-3 w-full">
+        <button onclick="closeDeleteModal()" class="del-btn-cancel">
+          Cancel
+        </button>
         <form id="deleteForm" method="POST" action="" class="flex-1" onsubmit="disableSubmitBtn(this)">
           {% csrf_token %}
-          <button type="submit" class="w-full px-4 py-2.5 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-xl transition-colors">Delete</button>
+          <button type="submit" class="del-btn-delete w-full">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+            Yes, Delete
+          </button>
         </form>
       </div>
+
     </div>
   </div>
 </div>
@@ -374,7 +522,8 @@
   }
   function clearSearch() {
     document.getElementById('searchInput').value = '';
-    window.location.href = '?';
+    const status = new URLSearchParams(window.location.search).get('status') || '';
+    window.location.href = status ? '?status=' + status : '?';
   }
 
   /* ADD MODAL */
