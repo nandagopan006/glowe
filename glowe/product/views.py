@@ -107,4 +107,20 @@ def delete_product_image(request,id):
     messages.success(request, "Image deleted successfully")
     return redirect('edit_product', id=product.id)
 
+def set_primary_image(request,id):
+    image=get_object_or_404(ProductImage,id=id)
+    product=image.product
+    
+    if image.is_primary:
+        messages.info(request,"Already primary image")
+        return redirect('edit_product',id=product.id)
+    
+    Product.images.update(is_primary=False)
+    
+    image.is_primary=True
+    image.save()
+    
+    messages.info(request, "Already primary image")
+    return redirect('edit_product', id=product.id)
+    
 
