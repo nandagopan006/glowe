@@ -103,4 +103,6 @@ def delete_category(request,id):
         messages.success(request,f'{category.name}  has been deleted.')
     return redirect('category_management')
 
+# def restore_category()
+
 # Create your views here.

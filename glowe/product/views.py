@@ -83,53 +83,80 @@ def edit_product(request,id):
         return render(request,'admin/edit_product.html',{'form':form,'product':product})
     
 def delete_product_image(request,id):
-    image=get_object_or_404(ProductImage,id=id)
-    product=image.product
+    if request.method == "POST":
     
-    if product.images.count() <= 1:
-        messages.error(request,"Product must have at least one image")
-        return redirect('edit_product',id=product.id)
-    
-    #Check if deleting primary image
-    is_primary =image.is_primary
-    
-    image.delete()
-    
-    #if dlt primary set another one to primary
-    if is_primary and product.images.exists():
+        image=get_object_or_404(ProductImage,id=id)
+        product=image.product
         
-        new_primary=product.images.order_by('id').first()
+        if product.images.count() <= 1:
+            messages.error(request,"Product must have at least one image")
+            return redirect('edit_product',id=product.id)
         
-        if new_primary :
-            new_primary.is_primary = True
-            new_primary.save()
+        #Check if deleting primary image
+        is_primary =image.is_primary
+        
+        image.delete()
+        
+        #if dlt primary set another one to primary
+        if is_primary and product.images.exists():
             
-    messages.success(request, "Image deleted successfully")
-    return redirect('edit_product', id=product.id)
+            new_primary=product.images.order_by('id').first()
+            
+            if new_primary :
+                new_primary.is_primary = True
+                new_primary.save()
+            
+        messages.success(request, "Image deleted successfully")
+        return redirect('edit_product', id=product.id)
+    
+    messages.error(request, "Invalid request")
+    return redirect('product_management')
 
 def set_primary_image(request,id):
-    image=get_object_or_404(ProductImage,id=id)
-    product=image.product
+    if request.method == "POST":
+        
+        image=get_object_or_404(ProductImage,id=id)
+        product=image.product
+        
+        if image.is_primary:
+            messages.info(request,"Already primary image")
+            return redirect('edit_product',id=product.id)
+        
+        Product.images.update(is_primary=False)
+        
+        image.is_primary=True
+        image.save()
+        
+        messages.info(request, "Already primary image")
+        return redirect('edit_product', id=product.id)
     
-    if image.is_primary:
-        messages.info(request,"Already primary image")
-        return redirect('edit_product',id=product.id)
-    
-    Product.images.update(is_primary=False)
-    
-    image.is_primary=True
-    image.save()
-    
-    messages.info(request, "Already primary image")
-    return redirect('edit_product', id=product.id)
+    messages.error(request, "Invalid request")
+    return redirect('product_management')
 
 def delete_product(request,id):
-    product=get_object_or_404(Product,id=id)
-    product.is_deleted=True
-    product.save()
+    if request.method == "POST": 
     
-    messages.success(request,"Product deleted successfully")
+        product=get_object_or_404(Product,id=id,is_deleted=False)
+        product.is_deleted=True
+        product.save()
+        
+        messages.success(request,"Product deleted successfully")
+        return redirect('product_management')
+    
+    messages.error(request, "Invalid request")
     return redirect('product_management')
+
+def restore_product(request,id):
+    if request.method == "POST":
+        
+        product=get_object_or_404(Product,id=id,is_deleted=True)
+        product.is_deleted=False
+        product.save()
+        
+        messages.success(request,"Product restored")
+        return redirect('product_management')
     
+    messages.error(request, "Invalid request")
+    return redirect('product_management')
     
 
