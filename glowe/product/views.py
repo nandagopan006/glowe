@@ -210,6 +210,35 @@ def add_variant(request,product_id):
         
     return redirect('variant_management',product_id=product.id)
 
+def edit_variant(request,id):
+    variant=get_object_or_404(Variant,id=id)
+    product=variant.product
+    
+    if request.method == "POST":
+        form =VariantForm(request.POST,instance=variant)
+        
+        if form.is_valid():
+            updated_variant = form.save(commit=False)
+           #  if user select default remove other defaults
+            if updated_variant.is_default :
+                product.variants.exclude(id=variant.id).filter(is_default=True).update(is_default=False)
+                          
+             #if no default exists so that make this default
+            if not product.variants.exclude(id=variant.id).filter(is_default=True).exists():
+                updated_variant.is_default = True
+
+            updated_variant.save()
+            
+            messages.success(request, "Variant updated successfully")
+            return redirect('variant_management', product_id=product.id)
+
+        variants = product.variants.all().order_by('id')
+        return render(request, 'admin/variant_management.html',{
+            'product':product,'variants': variants,
+            'form':form,'edit_variant':variant})
+    
+    return redirect('edit_variant',product_id=product.id)
+
 
  
 
