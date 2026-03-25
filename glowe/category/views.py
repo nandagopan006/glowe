@@ -101,8 +101,20 @@ def delete_category(request,id):
         category.save()
         
         messages.success(request,f'{category.name}  has been deleted.')
+        return redirect('category_management')
     return redirect('category_management')
 
-# def restore_category()
+def restore_category(request,id):
+    if request.method == "POST":
+        category=get_object_or_404(Category,id=id,is_deleted=True)
+        category.is_deleted = False 
+        category.save()
+        messages.success(request,f'{category.name}  has  succussfully restored')
+        return redirect('category_management')
+    
+    return redirect("category_management")
+        
+        
+        
 
 # Create your views here.
