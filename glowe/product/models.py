@@ -31,7 +31,6 @@ class ProductImage(models.Model):
 
     image=models.ImageField(upload_to='products/')
     is_primary=models.BooleanField(default=False)
-
     created_at=models.DateTimeField(auto_now_add=True)
     
     class Meta :
@@ -42,13 +41,11 @@ class Variant(models.Model):
 
     size=models.CharField(max_length=20)  # 30ml,100g
     sku=models.CharField(max_length=100, unique=True)
-
     price=models.DecimalField(max_digits=10, decimal_places=2)
     stock=models.PositiveIntegerField()
 
     is_default=models.BooleanField(default=False)
     is_active=models.BooleanField(default=True)
-
     created_at =models.DateTimeField(auto_now_add=True)
     
     def save(self,*args,**kwargs):

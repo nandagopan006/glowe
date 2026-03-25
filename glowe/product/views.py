@@ -122,5 +122,14 @@ def set_primary_image(request,id):
     
     messages.info(request, "Already primary image")
     return redirect('edit_product', id=product.id)
+
+def delete_product(request,id):
+    product=get_object_or_404(Product,id=id)
+    product.is_deleted=True
+    product.save()
+    
+    messages.success(request,"Product deleted successfully")
+    return redirect('product_management')
+    
     
 
