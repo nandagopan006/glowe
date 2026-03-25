@@ -1,7 +1,9 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from .forms import ProductForm
-from .models import ProductImage
+from .models import ProductImage,Product,Variant
+from django.shortcuts import get_object_or_404
+
 
 def add_product(request):
     form = ProductForm() # empty form for Get request
@@ -39,5 +41,44 @@ def add_product(request):
     
     return render(request,'admin/add_product.html',{'form': form})
         
-
-# Create your views here.
+def edit_product(request,id):
+    product=get_object_or_404(Product,id=id)
+    
+    form=ProductForm(instance=product)
+    
+    if request.method =="POST" :
+        form=ProductForm(request.POST,instance=product)
+        images=request.FILES.getlist('images')
+        
+        if form.is_valid():
+            
+            if not product.images.exists() and not images:
+                messages.error(request,"Product must have at least one image")
+                return render(request,'admin/edit_product.html',{'form':form,'product':product})
+            
+            if images :
+            
+                valid_type=['image/jpg','image/webp','image/png','image/jpeg']
+                
+                for img in images:
+                    
+                    if img.content_type not in valid_type:
+                        messages.error(request,f"{img.name} is not valid")
+                        return render(request,'admin/edit_product.html',{'form':form,'product': product})
+                    
+                    if img.size > 2* 1024 *1024 :
+                        messages.error(request, f"{img.name} must be under 2MB")
+                        return render(request, 'admin/edit_product.html', {'form': form, 'product': product})
+                
+                for img in images:
+                    
+                    ProductImage.objects.create(product=product,
+                        image=img,is_primary=False
+                    )
+            form.save()
+            
+            messages.success(request,"Product updated successfully")
+            return redirect('product_management')
+        
+        return render(request,'admin/edit_product.html',{'form':form,'product':product})
+    
