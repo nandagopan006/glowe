@@ -82,3 +82,29 @@ def edit_product(request,id):
         
         return render(request,'admin/edit_product.html',{'form':form,'product':product})
     
+def delete_product_image(request,id):
+    image=get_object_or_404(ProductImage,id=id)
+    product=image.product
+    
+    if product.images.count() <= 1:
+        messages.error(request,"Product must have at least one image")
+        return redirect('edit_product',id=product.id)
+    
+    #Check if deleting primary image
+    is_primary =image.is_primary
+    
+    image.delete()
+    
+    #if dlt primary set another one to primary
+    if is_primary and product.images.exists():
+        
+        new_primary=product.images.order_by('id').first()
+        
+        if new_primary :
+            new_primary.is_primary = True
+            new_primary.save()
+            
+    messages.success(request, "Image deleted successfully")
+    return redirect('edit_product', id=product.id)
+
+
