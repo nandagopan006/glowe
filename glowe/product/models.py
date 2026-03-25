@@ -34,6 +34,9 @@ class ProductImage(models.Model):
 
     created_at=models.DateTimeField(auto_now_add=True)
     
+    class Meta :
+        ordering=['id']
+    
 class Variant(models.Model):
     product=models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
 
