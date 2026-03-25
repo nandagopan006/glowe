@@ -122,7 +122,7 @@ def set_primary_image(request,id):
             messages.info(request,"Already primary image")
             return redirect('edit_product',id=product.id)
         
-        Product.images.update(is_primary=False)
+        product.images.update(is_primary=False)
         
         image.is_primary=True
         image.save()
@@ -133,11 +133,11 @@ def set_primary_image(request,id):
     messages.error(request, "Invalid request")
     return redirect('product_management')
 
-def delete_product(request,id):
+def soft_delete_product(request,id):
     if request.method == "POST": 
     
         product=get_object_or_404(Product,id=id,is_deleted=False)
-        product.is_deleted=True
+        product.is_deleted=True # soft delete 
         product.save()
         
         messages.success(request,"Product deleted successfully")
@@ -158,5 +158,28 @@ def restore_product(request,id):
     
     messages.error(request, "Invalid request")
     return redirect('product_management')
+
+def permanent_delete_product(request, id):
+    if request.method =="POST":
+        product =get_object_or_404(Product, id=id)
+        
+        if not product.is_deleted == True:
+            messages.error(request,"Please soft delete the product first then only allow")
+            return redirect('product_management')
+
+        product.delete() # permanent deleete
+
+        messages.success(request,"Product permanently deleted")
+        return redirect('product_management')
+    
+    return redirect('product_management')
+
+    
+    
+
+def product_management(request): 
+    
+    return render(request,'product_management.html')
+
     
 
