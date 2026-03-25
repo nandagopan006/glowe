@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.text import slugify
 from category.models import Category 
+from .utils import resize_image
 
 
 class Product(models.Model):
@@ -35,6 +36,12 @@ class ProductImage(models.Model):
     
     class Meta :
         ordering=['id']
+        
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if self.image:
+            resize_image(self.image.path)
     
 class Variant(models.Model):
     product=models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
