@@ -3,6 +3,8 @@ from django.contrib import messages
 from .forms import ProductForm,VariantForm
 from .models import ProductImage,Product,Variant
 from django.shortcuts import get_object_or_404
+from django.core.paginator import Paginator  
+from django.db.models import Q,Sum
 
 
 def add_product(request):
@@ -189,11 +191,19 @@ def add_variant(request,product_id):
         if form.is_valid():
             variant=form.save(commit=False)
             variant.product = product
+            
+            #if stock zero is inactive ok the vrint
+            if variant.stock == 0:
+                variant.is_active= False
+            else :
+                variant.is_active=True
+            
             #if select as default true  and change pervies default false 
             if variant.is_default:
                 product.variants.filter(is_default=True).update(is_default=False)
+                
             #If no default exists make this automtly default
-            if not product.variant.filter(is_default=True).exist():
+            if not product.variants.filter(is_default=True).exists():
                 variant.is_default =True 
                  
             variant.save()
@@ -219,6 +229,12 @@ def edit_variant(request,id):
         
         if form.is_valid():
             updated_variant = form.save(commit=False)
+            
+            if variant.stock == 0:
+                variant.is_active= False
+            else :
+                variant.is_active=True
+            
            #  if user select default remove other defaults
             if updated_variant.is_default :
                 product.variants.exclude(id=variant.id).filter(is_default=True).update(is_default=False)
@@ -232,9 +248,9 @@ def edit_variant(request,id):
             messages.success(request, "Variant updated successfully")
             return redirect('variant_management', product_id=product.id)
 
-        variants = product.variants.all().order_by('id')
-        return render(request, 'admin/variant_management.html',{
-            'product':product,'variants': variants,
+        variants =product.variants.all().order_by('id')
+        return render(request,'admin/variant_management.html',{
+            'product':product,'variants':variants,
             'form':form,'edit_variant':variant})
     
     return redirect('variant_management',product_id=product.id)
@@ -246,8 +262,8 @@ def delete_variant(request,id):
 
         #  Prevent dlt last variant
         if product.variants.count() <= 1:
-            messages.error(request, "At least one variant is required")
-            return redirect('variant_management', product_id=product.id)
+            messages.error(request,"At least one variant is required")
+            return redirect('variant_management',product_id=product.id)
 
          # Check if this default
         if variant.is_default:
@@ -266,6 +282,46 @@ def delete_variant(request,id):
 
     return redirect('product_management')
 
+def variant_management(request,product_id):
+    product=get_object_or_404(Product,id=product_id,is_deleted=False)
+    status=request.GET.get('status','')
+    #searchh
+    q =request.GET.get('q','').strip()
+    variants=product.variants.all()
+    
+    if q :
+        variants =variants.filter(
+            Q(size__icontains=q) | Q(sku__icontains=q)
+        )
+    if status =="active":
+        variants =variants.filter(is_active=True)
+    elif status =='inactive':
+        variants=variants.filter(is_active=False) 
+    
+    variants=variants.order_by('id')
+    paginator =Paginator(variants,5)
+    page_number=request.GET.get('page')
+    variants=paginator.get_page(page_number)       
+    
+    #Product summary
+    all_variants=product.variants.all()
+
+    default_variant=product.variants.filter(is_deleted=False).first()
+    total_stock=product.variants.aggregate(total=Sum('stock'))['total'] or 0
+    total_value = sum(i.price * i.stock for i in all_variants)
+    
+    #form for modal emppty
+    form = VariantForm()               
+    
+    return render(request, 'admin/variant_management.html',{
+        'product':product,
+        'variants':variants,
+        'form':form,
+        'default_variant':default_variant,
+        'total_stock':total_stock,
+        'total_value':total_value,
+        'query':q
+    })
  
 
             
