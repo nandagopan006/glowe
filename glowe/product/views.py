@@ -1,10 +1,10 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from .forms import ProductForm,VariantForm
-from .models import ProductImage,Product,Variant
+from .models import ProductImage,Product,Variant,Category
 from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator  
-from django.db.models import Q,Sum
+from django.db.models import Q,Sum,Min
 
 
 def add_product(request):
@@ -179,8 +179,48 @@ def permanent_delete_product(request, id):
     
 def product_management(request): 
     
-    return render(request,'product_management.html')
-
+    q=request.GET.get('q','').strip()
+    category=request.GET.get('category','')
+    status=request.GET.get('status','live')
+    products=Product.objects.all()
+    
+    if status =="archived":
+        products=products.filter(is_deleted=True)
+    else :
+        products=products.filter(is_deleted=False)
+        
+    if q :
+        products=products.filter(
+            Q(name__icontains=q)
+        )
+    
+    if category :
+        products=products.filter(category__id=category)
+    
+    products= products.prefetch_related('images','variants')
+    
+    paginator =Paginator(products.order_by('-id'), 5)
+    page=request.GET.get('page')
+    products =paginator.get_page(page)
+    
+    for p in products :
+        default_variant=p.variants.filter(is_default=True).first()
+        p.display_price=default_variant.price if default_variant else 0
+        
+        p.total_stock= p.variants.aggregate(total=Sum('stock'))['total'] or 0
+        
+        primary_image=p.images.filter(is_primary=True).first()
+        p.display_image =primary_image.image.url if primary_image and primary_image.image else None #primary_image is object and primary_image.image is file
+        
+    categories=Category.objects.all()
+    
+    return render(request,'admin/product_management.html',{
+        'products':products,
+        'categories':categories,
+        'query':q,
+        'selected_category':category,
+        'status':status
+    })
     
 def add_variant(request,product_id):
     product = get_object_or_404(Product,id=product_id,is_deleted=False)
