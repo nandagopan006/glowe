@@ -124,15 +124,16 @@ def set_primary_image(request,id):
             messages.info(request,"Already primary image")
             return redirect('edit_product',id=product.id)
         
+        # Remove old primary
         product.images.update(is_primary=False)
-        
+        # and set new
         image.is_primary=True
         image.save()
         
-        messages.info(request, "Already primary image")
+        messages.success(request, "Primary image updated")
         return redirect('edit_product', id=product.id)
     
-    messages.error(request, "Invalid request")
+    
     return redirect('product_management')
 
 def soft_delete_product(request,id):
@@ -176,19 +177,37 @@ def permanent_delete_product(request, id):
     
     return redirect('product_management')
 
+def toggle_product_status(request,id):
+    if request.method == "POST":
+        product=get_object_or_404(Product, id=id)
+
+        product.is_active =not product.is_active
+        product.save()
+
+        messages.success(request,"Product status updated")
+        return redirect('product_management')
+
+    return redirect('product_management')
+
     
 def product_management(request): 
     
     q=request.GET.get('q','').strip()
     category=request.GET.get('category','')
     status=request.GET.get('status','live')
+    active_status = request.GET.get('active_status','')
     products=Product.objects.all()
     
     if status =="archived":
         products=products.filter(is_deleted=True)
     else :
         products=products.filter(is_deleted=False)
-        
+    
+    if active_status == "active":
+        products = products.filter(is_active=True)
+    elif active_status =="inactive":
+             products = products.filter(is_active=True)
+                
     if q :
         products=products.filter(
             Q(name__icontains=q)
@@ -219,7 +238,8 @@ def product_management(request):
         'categories':categories,
         'query':q,
         'selected_category':category,
-        'status':status
+        'status':status,
+        'active_status': active_status,
     })
     
 def add_variant(request,product_id):
@@ -270,10 +290,10 @@ def edit_variant(request,id):
         if form.is_valid():
             updated_variant = form.save(commit=False)
             
-            if variant.stock == 0:
-                variant.is_active= False
+            if updated_variant.stock == 0:
+                updated_variant.is_active= False
             else :
-                variant.is_active=True
+                updated_variant.is_active=True
             
            #  if user select default remove other defaults
             if updated_variant.is_default :
@@ -310,8 +330,9 @@ def delete_variant(request,id):
             variant.delete()
             # Make another variant deflt
             new_variant=product.variants.first()
-            new_variant.is_default=True
-            new_variant.save()
+            if new_variant:
+                new_variant.is_default=True
+                new_variant.save()
 
         else:
             #Normal delete
@@ -345,8 +366,7 @@ def variant_management(request,product_id):
     
     #Product summary
     all_variants=product.variants.all()
-
-    default_variant=product.variants.filter(is_deleted=False).first()
+    default_variant=product.variants.filter(is_default=True).first()
     total_stock=product.variants.aggregate(total=Sum('stock'))['total'] or 0
     total_value = sum(i.price * i.stock for i in all_variants)
     

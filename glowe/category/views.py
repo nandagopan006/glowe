@@ -90,7 +90,7 @@ def toggle_category(request, id):
     category=get_object_or_404(Category, id=id, is_deleted=False)
     category.is_active=not category.is_active
     category.save()
-    status='activated' if category.is_active else 'deactivated'
+    
     messages.success(request,f'{category.name}   has been {status}.')
     return redirect('category_management')
 
