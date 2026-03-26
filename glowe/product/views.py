@@ -143,7 +143,7 @@ def soft_delete_product(request,id):
         product.is_deleted=True # soft delete 
         product.save()
         
-        messages.success(request,"Product deleted successfully")
+        messages.success(request,"Product moved to archive")
         return redirect('product_management')
     
     messages.error(request,"Invalid request")
@@ -188,7 +188,6 @@ def toggle_product_status(request,id):
         return redirect('product_management')
 
     return redirect('product_management')
-
     
 def product_management(request): 
     
@@ -206,7 +205,7 @@ def product_management(request):
     if active_status == "active":
         products = products.filter(is_active=True)
     elif active_status =="inactive":
-             products = products.filter(is_active=True)
+             products = products.filter(is_active=False)
                 
     if q :
         products=products.filter(
