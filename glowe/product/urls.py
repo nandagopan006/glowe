@@ -5,6 +5,7 @@ urlpatterns = [
 
 
     path('adminpanel/products/',views.product_management,name='product_management'),
+     path('adminpanel/product-detail/<int:id>/',views.product_detail,name='product_detail'),
     path('adminpanel/products/add/', views.add_product,name='add_product'),
     path('adminpanel/products/edit/<int:id>/',views.edit_product,name='edit_product'),
 
@@ -22,4 +23,5 @@ urlpatterns = [
     path('adminpanel/variants/add/<int:product_id>/',views.add_variant,name='add_variant'),
     path('adminpanel/variants/edit/<int:id>/',views.edit_variant,name='edit_variant'),
     path('adminpanel/variants/delete/<int:id>/',views.delete_variant,name='delete_variant'),
+    
 ]

@@ -69,7 +69,7 @@ def edit_product(request, id):
         primary_image_id = request.POST.get('primary_image_id', '').strip()
 
         if form.is_valid():
-            # --- 1. Count existing images + new ones ---
+            # Count existing images + new ones 
             existing_count = product.images.count()
             new_count = len(images)
             total_images = existing_count + new_count
@@ -80,7 +80,7 @@ def edit_product(request, id):
                     'form': form, 'product': product, 'categories': categories
                 })
 
-            # --- 2. Validate each new image ---
+           
             valid_types = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg']
             for img in images:
                 if img.content_type not in valid_types:
@@ -94,21 +94,21 @@ def edit_product(request, id):
                         'form': form, 'product': product, 'categories': categories
                     })
 
-            # --- 3. Save product fields ---
+
             product = form.save(commit=False)
             product.is_active = is_active
             product.save()
 
-            # --- 4. Add new images ---
+        
             for img in images:
                 ProductImage.objects.create(product=product, image=img, is_primary=False)
 
-            # --- 5. Set primary image if one was chosen ---
+            #Set primary image if one was chosen
             if primary_image_id:
                 product.images.update(is_primary=False)
                 ProductImage.objects.filter(id=primary_image_id, product=product).update(is_primary=True)
 
-            # --- 6. Ensure at least one image is primary (fallback) ---
+            # Ensure at least one image is primary 
             if not product.images.filter(is_primary=True).exists():
                 first = product.images.order_by('id').first()
                 if first:
@@ -298,6 +298,35 @@ def product_management(request):
         'status':status,
         'active_status': active_status,
     })
+    
+def product_detail(request,id):
+    product= get_object_or_404(Product,id=id,is_deleted=False)
+    images=product.images.all()
+    primary_image=images.filter(is_primary=True).first()
+    
+    variants=product.variants.filter(is_active=True)
+    default_variant=variants.filter(is_default=True).first()
+    
+    base_price=default_variant.price if default_variant else 0
+     
+    total_stock= variants.aggregate(total=Sum('stock'))['total']or 0
+    sku = default_variant.sku if default_variant else "N/A"
+    stock_status='In Stock' if total_stock > 0 else "Out of Stock"
+    variant_count=variants.filter(is_active=True).count() 
+    low_stock=total_stock <10    
+        
+    return render(request,'admin/product_detail.html',{
+        'product':product,
+        'images':images,
+        'primary_image':primary_image,
+        "variants":variants,
+        "default_variant":default_variant,
+        'base_price':base_price,
+        'total_stock':total_stock,
+        'sku':sku,
+        'stock_status':stock_status,
+        'variant_count':variant_count,
+        'low_stock':low_stock})
     
 def add_variant(request,product_id):
     product = get_object_or_404(Product,id=product_id,is_deleted=False)
