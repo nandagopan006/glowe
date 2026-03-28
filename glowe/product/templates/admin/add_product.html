@@ -55,10 +55,6 @@ tailwind.config = {
   .crop-box { background:#fff; border-radius:20px; width:100%; max-width:480px; overflow:hidden; transform:scale(.94) translateY(12px); transition:transform .25s cubic-bezier(.34,1.56,.64,1); box-shadow:0 32px 80px rgba(0,0,0,.22); }
   .crop-modal.open .crop-box { transform:scale(1) translateY(0); }
 
-  .tb-btn { width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:7px; border:none; background:transparent; cursor:pointer; color:#6b7280; font-size:13px; transition:all .15s; }
-  .tb-btn:hover { background:#f3f4f6; color:#111827; }
-  .tb-btn.active { background:#e2f0e2; color:#264f29; }
-
   .section-card { background:#fff; border-radius:18px; border:1px solid #eaede8; padding:24px; transition:box-shadow .2s; }
   .section-card:hover { box-shadow:0 4px 20px rgba(0,0,0,.06); }
 
@@ -79,10 +75,6 @@ tailwind.config = {
   .so-box { background:#fff; border-radius:20px; padding:36px 32px 28px; width:360px; max-width:calc(100vw - 32px); display:flex; flex-direction:column; align-items:center; text-align:center; transform:scale(.94) translateY(8px); transition:transform .28s cubic-bezier(.34,1.56,.64,1); box-shadow:0 20px 60px rgba(0,0,0,.15); }
   .so-overlay.open .so-box { transform:scale(1) translateY(0); }
 
-  #adminSidebar nav::-webkit-scrollbar { width:4px; }
-  #adminSidebar nav::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:10px; }
-
-  /* ── Bottom sticky bar ── */
   .bottom-bar {
     position:fixed; bottom:0; left:0; right:0;
     z-index:30;
@@ -96,9 +88,24 @@ tailwind.config = {
     justify-content:flex-end;
     gap:10px;
   }
-  @media(min-width:1024px){
-    .bottom-bar { left:240px; }
-  }
+  @media(min-width:1024px){ .bottom-bar { left:240px; } }
+
+  /* ── How To Use Steps ── */
+  .htu-step-row { display:flex; align-items:flex-start; gap:12px; }
+  .htu-num { flex-shrink:0; width:32px; height:32px; border-radius:50%; background:#f3f4f6; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#6b7280; margin-top:2px; }
+  .htu-fields { flex:1; display:flex; flex-direction:column; gap:6px; }
+  .htu-title-inp { width:100%; padding:8px 12px; border:1.5px solid #e5e7eb; border-radius:10px; font-size:14px; font-weight:600; color:#111827; background:#fafafa; outline:none; transition:all .18s; }
+  .htu-title-inp:focus { border-color:#4a9050; box-shadow:0 0 0 3px rgba(74,144,80,.1); background:#fff; }
+  .htu-title-inp::placeholder { color:#d1d5db; font-weight:400; }
+  .htu-desc-inp { width:100%; padding:8px 12px; border:1.5px solid #e5e7eb; border-radius:10px; font-size:13px; color:#6b7280; background:#fafafa; outline:none; transition:all .18s; }
+  .htu-desc-inp:focus { border-color:#4a9050; box-shadow:0 0 0 3px rgba(74,144,80,.1); background:#fff; }
+  .htu-desc-inp::placeholder { color:#d1d5db; }
+  .htu-remove { flex-shrink:0; width:28px; height:28px; margin-top:4px; border-radius:50%; background:#f3f4f6; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+  .htu-remove:hover { background:#fee2e2; }
+  .htu-remove svg { stroke:#9ca3af; transition:stroke .15s; }
+  .htu-remove:hover svg { stroke:#ef4444; }
+  .htu-add-btn { width:100%; display:flex; align-items:center; justify-content:center; gap:8px; padding:10px; border-radius:12px; border:2px dashed #e5e7eb; background:transparent; color:#9ca3af; font-size:13px; font-weight:500; cursor:pointer; transition:all .18s; margin-top:4px; }
+  .htu-add-btn:hover { border-color:#4a9050; color:#4a9050; background:#f0fdf4; }
 </style>
 </head>
 <body>
@@ -166,6 +173,8 @@ tailwind.config = {
   <form id="addProductForm" method="POST" enctype="multipart/form-data" action="{% url 'add_product' %}" novalidate>
     {% csrf_token %}
     <input type="hidden" name="is_active" id="isActiveInput" value="true"/>
+    <!-- Hidden textarea for how_to_use steps (JSON) -->
+    <textarea name="how_to_use" id="howToUseHidden" class="hidden"></textarea>
     <div id="croppedFilesContainer"></div>
 
     <div class="p-5 sm:p-8">
@@ -210,7 +219,6 @@ tailwind.config = {
           <!-- Detailed Description -->
           <div class="section-card">
             <h2 class="font-bold text-gray-900 text-[15px] mb-4">Detailed Description</h2>
-        
             <div id="descEditor"
               contenteditable="true"
               class="min-h-[140px] p-4 rounded-xl border-1.5 border-gray-200 border text-sm text-gray-700 outline-none focus:ring-2 focus:ring-sage-300 focus:border-sage-400 transition-all leading-relaxed"
@@ -234,12 +242,20 @@ tailwind.config = {
             {% if form.ingredients.errors %}<p class="text-red-500 text-xs mt-1">{{ form.ingredients.errors.0 }}</p>{% endif %}
           </div>
 
-          <!-- How to Use -->
+          <!-- ══ HOW TO USE ══ -->
           <div class="section-card">
             <h2 class="font-bold text-gray-900 text-[15px] mb-1">How to Use</h2>
             <p class="text-xs text-gray-400 mb-4">Provide step-by-step instructions and any safety precautions.</p>
-            <label class="lbl">Application Instructions</label>
-            <textarea name="how_to_use" rows="4" class="inp resize-none" placeholder="e.g. Apply a pea-sized amount to clean, dry skin after serums..."></textarea>
+
+            <!-- Step rows rendered by JS -->
+            <div id="htuSteps" class="flex flex-col gap-4 mb-3"></div>
+
+            <!-- Add Step button -->
+            <button type="button" class="htu-add-btn" onclick="htuAddStep()">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>
+              Add Step
+            </button>
+
             {% if form.how_to_use.errors %}<p class="text-red-500 text-xs mt-1">{{ form.how_to_use.errors.0 }}</p>{% endif %}
           </div>
 
@@ -285,7 +301,7 @@ tailwind.config = {
             <h2 class="font-bold text-gray-900 text-[15px] mb-1">Pricing & Inventory</h2>
             <p class="text-xs text-gray-400 mb-5">Variants are managed separately after publishing.</p>
             <div class="bg-sage-50 border border-sage-100 rounded-xl px-4 py-3 flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-sage-100 flex items-center justify-center flex-shrink:0">
+              <div class="w-8 h-8 rounded-lg bg-sage-100 flex items-center justify-center flex-shrink-0">
                 <svg class="w-4 h-4 text-sage-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               </div>
               <p class="text-xs text-sage-800 font-medium">Pricing, stock & SKU are added per variant after product is published.</p>
@@ -375,7 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ════════════ SIGNOUT ════════════ */
-function openAdminSignoutModal() { document.getElementById('adminSignoutOverlay').classList.add('open'); }
+function openAdminSignoutModal()  { document.getElementById('adminSignoutOverlay').classList.add('open'); }
 function closeAdminSignoutModal() { document.getElementById('adminSignoutOverlay').classList.remove('open'); }
 document.getElementById('adminSignoutOverlay').addEventListener('click', function(e){ if(e.target===this) closeAdminSignoutModal(); });
 
@@ -384,33 +400,26 @@ let croppedImages = [];
 let cropper = null;
 
 function handleFileSelect(e) {
-  const files = Array.from(e.target.files);
-  e.target.value = '';
+  const files = Array.from(e.target.files); e.target.value = '';
   if (!files.length) return;
   processFilesSequentially(files, 0);
 }
-
 function processFilesSequentially(files, idx) {
   if (idx >= files.length) return;
   const file = files[idx];
   const valid = ['image/jpeg','image/png','image/webp','image/jpg'];
   if (!valid.includes(file.type)) {
     showToast('error','Invalid File',`${file.name} is not a valid image type.`);
-    processFilesSequentially(files, idx + 1);
-    return;
+    processFilesSequentially(files, idx+1); return;
   }
-  if (file.size > 2 * 1024 * 1024) {
+  if (file.size > 2*1024*1024) {
     showToast('error','Too Large',`${file.name} exceeds 2MB.`);
-    processFilesSequentially(files, idx + 1);
-    return;
+    processFilesSequentially(files, idx+1); return;
   }
   const reader = new FileReader();
-  reader.onload = (ev) => {
-    openCropModal(ev.target.result, () => { processFilesSequentially(files, idx + 1); });
-  };
+  reader.onload = ev => openCropModal(ev.target.result, () => processFilesSequentially(files, idx+1));
   reader.readAsDataURL(file);
 }
-
 function openCropModal(src, onDone) {
   const modal = document.getElementById('cropModal');
   const img = document.getElementById('cropImage');
@@ -420,54 +429,38 @@ function openCropModal(src, onDone) {
   if (cropper) { cropper.destroy(); cropper = null; }
   img.onload = () => {
     cropper = new Cropper(img, {
-      aspectRatio: 1, viewMode: 1, autoCropArea: 0.9,
-      movable: true, zoomable: true, rotatable: false,
-      scalable: false, background: false, guides: true,
-      highlight: true, cropBoxResizable: true,
+      aspectRatio:1, viewMode:1, autoCropArea:0.9,
+      movable:true, zoomable:true, rotatable:false,
+      scalable:false, background:false, guides:true,
+      highlight:true, cropBoxResizable:true,
     });
   };
   window._cropOnDone = onDone;
 }
-
 function closeCropModal() {
   document.getElementById('cropModal').classList.remove('open');
   document.body.style.overflow = '';
   if (cropper) { cropper.destroy(); cropper = null; }
 }
-
 function applyCrop() {
   if (!cropper) return;
   const canvas = cropper.getCroppedCanvas({ width:800, height:800, imageSmoothingQuality:'high' });
-  canvas.toBlob((blob) => {
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-    croppedImages.push({ blob, dataUrl });
-    renderPreviews();
-    closeCropModal();
-    const onDone = window._cropOnDone;
-    window._cropOnDone = null;
+  canvas.toBlob(blob => {
+    croppedImages.push({ blob, dataUrl: canvas.toDataURL('image/jpeg', 0.92) });
+    renderPreviews(); closeCropModal();
+    const onDone = window._cropOnDone; window._cropOnDone = null;
     if (onDone) onDone();
   }, 'image/jpeg', 0.92);
 }
-
-function removeImage(idx) {
-  croppedImages.splice(idx, 1);
-  renderPreviews();
-}
-
+function removeImage(idx) { croppedImages.splice(idx,1); renderPreviews(); }
 function renderPreviews() {
   const grid = document.getElementById('previewGrid');
   grid.innerHTML = '';
   document.getElementById('imgCount').textContent = croppedImages.length;
   croppedImages.forEach((img, i) => {
     const wrap = document.createElement('div');
-    wrap.className = 'thumb-wrap fade-in' + (i === 0 ? ' thumb-primary' : '');
-    wrap.innerHTML = `
-      <img src="${img.dataUrl}" alt="Product image ${i+1}"/>
-      ${i === 0 ? '<span class="thumb-badge">Primary</span>' : ''}
-      <button type="button" class="thumb-remove" onclick="removeImage(${i})">
-        <svg width="10" height="10" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
-    `;
+    wrap.className = 'thumb-wrap fade-in' + (i===0 ? ' thumb-primary' : '');
+    wrap.innerHTML = `<img src="${img.dataUrl}" alt="Product image ${i+1}"/>${i===0?'<span class="thumb-badge">Primary</span>':''}<button type="button" class="thumb-remove" onclick="removeImage(${i})"><svg width="10" height="10" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>`;
     grid.appendChild(wrap);
   });
   const addBtn = document.createElement('div');
@@ -477,39 +470,25 @@ function renderPreviews() {
   grid.appendChild(addBtn);
   if (croppedImages.length >= 3) setImageError(null);
 }
-
 function setImageError(msg) {
   const el = document.getElementById('imageError');
   const txt = document.getElementById('imageErrorText');
   if (msg) { el.classList.remove('hidden'); txt.textContent = msg; }
   else { el.classList.add('hidden'); }
 }
-
 const zone = document.getElementById('uploadZone');
 zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
 zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
 zone.addEventListener('drop', e => {
-  e.preventDefault();
-  zone.classList.remove('drag-over');
-  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-  processFilesSequentially(files, 0);
+  e.preventDefault(); zone.classList.remove('drag-over');
+  processFilesSequentially(Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')), 0);
 });
 
 /* ════════════ RICH TEXT ════════════ */
 const editor = document.getElementById('descEditor');
 editor.addEventListener('input', updateDescCount);
 function updateDescCount() {
-  const text = editor.innerText || '';
-  document.getElementById('descCount').textContent = Math.min(text.length, 2000);
-}
-function execCmd(cmd) {
-  if (cmd === 'createLink') {
-    const url = prompt('Enter URL:');
-    if (url) document.execCommand('createLink', false, url);
-  } else {
-    document.execCommand(cmd, false, null);
-  }
-  editor.focus();
+  document.getElementById('descCount').textContent = Math.min((editor.innerText||'').length, 2000);
 }
 
 /* ════════════ TAG INPUT ════════════ */
@@ -517,29 +496,17 @@ let tags = [];
 const tagInput = document.getElementById('tagInput');
 const tagContainer = document.getElementById('tagContainer');
 const skinTypeHidden = document.getElementById('skinTypeHidden');
-
 tagInput.addEventListener('keydown', e => {
-  if ((e.key === 'Enter' || e.key === ',') && tagInput.value.trim()) {
-    e.preventDefault();
-    addTag(tagInput.value.trim().replace(/,/g,''));
-    tagInput.value = '';
+  if ((e.key==='Enter'||e.key===',') && tagInput.value.trim()) {
+    e.preventDefault(); addTag(tagInput.value.trim().replace(/,/g,'')); tagInput.value = '';
   }
-  if (e.key === 'Backspace' && tagInput.value === '' && tags.length) {
-    removeTag(tags.length - 1);
-  }
+  if (e.key==='Backspace' && tagInput.value==='' && tags.length) removeTag(tags.length-1);
 });
-function addTag(val) {
-  if (!val || tags.includes(val) || tags.length >= 8) return;
-  tags.push(val);
-  renderTags();
-}
-function removeTag(idx) {
-  tags.splice(idx, 1);
-  renderTags();
-}
+function addTag(val) { if (!val||tags.includes(val)||tags.length>=8) return; tags.push(val); renderTags(); }
+function removeTag(idx) { tags.splice(idx,1); renderTags(); }
 function renderTags() {
   tagContainer.innerHTML = '';
-  tags.forEach((t, i) => {
+  tags.forEach((t,i) => {
     const span = document.createElement('span');
     span.className = 'tag';
     span.innerHTML = `${t} <button type="button" class="tag-remove" onclick="removeTag(${i})">×</button>`;
@@ -566,50 +533,111 @@ function toggleVisibility() {
   }
 }
 
+/* ══════════════════════════════════════════
+   HOW TO USE — STEP BUILDER
+══════════════════════════════════════════ */
+let htuSteps = [];
+
+function htuSerialize() {
+  document.getElementById('howToUseHidden').value = JSON.stringify(htuSteps);
+}
+
+function htuAddStep() {
+  htuSteps.push({ title:'', desc:'' });
+  htuRender();
+}
+
+function htuRemoveStep(i) {
+  htuSteps.splice(i, 1);
+  htuRender();
+}
+
+function htuRender() {
+  const container = document.getElementById('htuSteps');
+  container.innerHTML = '';
+
+  htuSteps.forEach((step, i) => {
+    const row = document.createElement('div');
+    row.className = 'htu-step-row fade-in';
+
+    const num = document.createElement('div');
+    num.className = 'htu-num';
+    num.textContent = i + 1;
+
+    const fields = document.createElement('div');
+    fields.className = 'htu-fields';
+
+    const titleInp = document.createElement('input');
+    titleInp.type = 'text';
+    titleInp.className = 'htu-title-inp';
+    titleInp.placeholder = 'Step title  (e.g. Cleanse & Tone)';
+    titleInp.value = step.title || '';
+    titleInp.addEventListener('input', () => { htuSteps[i].title = titleInp.value; htuSerialize(); });
+
+    const descInp = document.createElement('input');
+    descInp.type = 'text';
+    descInp.className = 'htu-desc-inp';
+    descInp.placeholder = 'Short description...';
+    descInp.value = step.desc || '';
+    descInp.addEventListener('input', () => { htuSteps[i].desc = descInp.value; htuSerialize(); });
+
+    fields.appendChild(titleInp);
+    fields.appendChild(descInp);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'htu-remove';
+    removeBtn.style.visibility = htuSteps.length > 1 ? 'visible' : 'hidden';
+    removeBtn.innerHTML = `<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>`;
+    removeBtn.addEventListener('click', () => htuRemoveStep(i));
+
+    row.appendChild(num);
+    row.appendChild(fields);
+    row.appendChild(removeBtn);
+    container.appendChild(row);
+  });
+
+  htuSerialize();
+}
+
+function initHtu() {
+  htuSteps = [{ title:'', desc:'' }];
+  htuRender();
+}
+
 /* ════════════ FORM SUBMIT ════════════ */
 async function submitProduct() {
   let valid = true;
 
-  // Validate name
   const name = document.getElementById('productName').value.trim();
   const nameErr = document.getElementById('nameError');
   if (!name || name.length < 3) {
     nameErr.textContent = name ? 'Product name is too short (min 3 chars)' : 'Product name is required';
-    nameErr.classList.remove('hidden');
-    valid = false;
-  } else {
-    nameErr.classList.add('hidden');
-  }
+    nameErr.classList.remove('hidden'); valid = false;
+  } else { nameErr.classList.add('hidden'); }
 
-  // Validate description
   const descText = editor.innerText.trim();
   document.getElementById('descHidden').value = editor.innerHTML;
   const descErr = document.getElementById('descError');
   if (!descText || descText.length < 12) {
     descErr.textContent = descText ? 'Description is too short (min 12 chars)' : 'Description is required';
-    descErr.classList.remove('hidden');
-    valid = false;
-  } else {
-    descErr.classList.add('hidden');
-  }
+    descErr.classList.remove('hidden'); valid = false;
+  } else { descErr.classList.add('hidden'); }
 
-  // Validate images
   if (croppedImages.length < 3) {
-    setImageError(`Minimum 3 images required. You have ${croppedImages.length}.`);
-    valid = false;
-  } else {
-    setImageError(null);
-  }
+    setImageError(`Minimum 3 images required. You have ${croppedImages.length}.`); valid = false;
+  } else { setImageError(null); }
 
   if (!valid) {
     showToast('error', 'Validation Failed', 'Please fix the errors before publishing.');
-    // Scroll to first error
     const firstErr = document.querySelector('.text-red-500:not(.hidden), #imageError:not(.hidden)');
     if (firstErr) firstErr.scrollIntoView({ behavior:'smooth', block:'center' });
     return;
   }
 
-  // Build FormData
+  // Serialize steps before submit
+  htuSerialize();
+
   const form = document.getElementById('addProductForm');
   const formData = new FormData(form);
   formData.delete('images');
@@ -618,66 +646,52 @@ async function submitProduct() {
   }
   formData.set('description', editor.innerHTML);
 
-  // Show spinner
   const btn = document.getElementById('publishBtn');
   const btnText = document.getElementById('publishBtnText');
   const spinner = document.getElementById('publishSpinner');
   const icon = document.getElementById('publishIcon');
-  btn.disabled = true;
-  btn.style.opacity = '0.75';
-  btn.style.cursor = 'not-allowed';
+  btn.disabled = true; btn.style.opacity = '0.75'; btn.style.cursor = 'not-allowed';
   btnText.textContent = 'Publishing...';
-  spinner.classList.remove('hidden');
-  icon.classList.add('hidden');
+  spinner.classList.remove('hidden'); icon.classList.add('hidden');
 
   try {
     const resp = await fetch(form.action, { method:'POST', body:formData });
-
     if (resp.redirected || (resp.ok && resp.url && resp.url !== window.location.href)) {
-      showToast('success', 'Published!', 'Product added successfully.');
+      showToast('success','Published!','Product added successfully.');
       setTimeout(() => window.location.href = resp.url || "{% url 'product_management' %}", 800);
       return;
     }
-
     const text = await resp.text();
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(text, 'text/html');
+    const doc = new DOMParser().parseFromString(text, 'text/html');
     const errorEls = doc.querySelectorAll('.text-red-500, .errorlist');
-
-    if (errorEls.length > 0) {
-      showToast('error', 'Server Error', 'Please check the form errors.');
-    } else {
-      showToast('success', 'Published!', 'Product added successfully.');
+    if (errorEls.length > 0) showToast('error','Server Error','Please check the form errors.');
+    else {
+      showToast('success','Published!','Product added successfully.');
       setTimeout(() => window.location.href = "{% url 'product_management' %}", 800);
       return;
     }
-  } catch (err) {
-    showToast('error', 'Network Error', 'Please check your connection and try again.');
+  } catch(err) {
+    showToast('error','Network Error','Please check your connection and try again.');
   }
 
-  // Re-enable button
-  btn.disabled = false;
-  btn.style.opacity = '1';
-  btn.style.cursor = 'pointer';
+  btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer';
   btnText.textContent = 'Publish Product';
-  spinner.classList.add('hidden');
-  icon.classList.remove('hidden');
+  spinner.classList.add('hidden'); icon.classList.remove('hidden');
 }
 
 /* ════════════ INIT ════════════ */
 document.addEventListener('DOMContentLoaded', () => {
   renderPreviews();
-  {% if form.errors %}showToast('error', 'Form Error', 'Please correct the errors below.');{% endif %}
+  initHtu(); // How To Use step builder
 
-  // Auto-expand products dropdown in sidebar
+  {% if form.errors %}showToast('error','Form Error','Please correct the errors below.');{% endif %}
+
   const dd = document.getElementById('products-dropdown');
   const ch = document.getElementById('products-chevron');
-  if (dd && ch) {
-    setTimeout(() => {
-      dd.style.maxHeight = dd.scrollHeight + 'px';
-      ch.style.transform = 'rotate(90deg)';
-    }, 100);
-  }
+  if (dd && ch) setTimeout(() => {
+    dd.style.maxHeight = dd.scrollHeight + 'px';
+    ch.style.transform = 'rotate(90deg)';
+  }, 100);
 });
 </script>
 </body>

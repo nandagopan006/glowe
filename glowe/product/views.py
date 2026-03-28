@@ -5,6 +5,7 @@ from .models import ProductImage,Product,Variant,Category
 from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator  
 from django.db.models import Q,Sum,Min
+import json
 
 def add_product(request):
     
@@ -313,7 +314,15 @@ def product_detail(request,id):
     sku = default_variant.sku if default_variant else "N/A"
     stock_status='In Stock' if total_stock > 0 else "Out of Stock"
     variant_count=variants.filter(is_active=True).count() 
-    low_stock=total_stock <10    
+    low_stock=total_stock <10  
+    skin_types_list = [s.strip() for s in product.skin_type.split(',')] if product.skin_type else []
+    skin_types_list = [s.strip() for s in product.skin_type.split(',')] if product.skin_type else []
+    how_to_use_steps = []
+    if product.how_to_use:
+        try:
+            how_to_use_steps =json.loads(product.how_to_use)
+        except:
+            how_to_use_steps =[] 
         
     return render(request,'admin/product_detail.html',{
         'product':product,
@@ -326,7 +335,9 @@ def product_detail(request,id):
         'sku':sku,
         'stock_status':stock_status,
         'variant_count':variant_count,
-        'low_stock':low_stock})
+        'low_stock':low_stock,
+        'skin_types_list':skin_types_list,
+        'how_to_use_steps':how_to_use_steps,})
     
 def add_variant(request,product_id):
     product = get_object_or_404(Product,id=product_id,is_deleted=False)

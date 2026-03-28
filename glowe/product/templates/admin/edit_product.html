@@ -72,13 +72,29 @@ body { background:#f4f6f3; margin:0; }
 .fade-in { animation:fadeIn .2s ease-out forwards; }
 .bot-bar { position:fixed; bottom:0; left:0; right:0; z-index:30; background:rgba(255,255,255,.96); backdrop-filter:blur(10px); border-top:1px solid #eaede8; box-shadow:0 -4px 24px rgba(0,0,0,.07); padding:14px 24px; display:flex; align-items:center; justify-content:flex-end; gap:10px; }
 @media(min-width:1024px){ .bot-bar{ left:240px; } }
+
+/* ── How To Use Steps ── */
+.htu-step-row { display:flex; align-items:flex-start; gap:12px; }
+.htu-num { flex-shrink:0; width:32px; height:32px; border-radius:50%; background:#f3f4f6; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:#6b7280; margin-top:2px; }
+.htu-fields { flex:1; display:flex; flex-direction:column; gap:6px; }
+.htu-title-inp { width:100%; padding:8px 12px; border:1.5px solid #e5e7eb; border-radius:10px; font-size:14px; font-weight:600; color:#111827; background:#fafafa; outline:none; transition:all .18s; }
+.htu-title-inp:focus { border-color:#4a9050; box-shadow:0 0 0 3px rgba(74,144,80,.1); background:#fff; }
+.htu-title-inp::placeholder { color:#d1d5db; font-weight:400; }
+.htu-desc-inp { width:100%; padding:8px 12px; border:1.5px solid #e5e7eb; border-radius:10px; font-size:13px; color:#6b7280; background:#fafafa; outline:none; transition:all .18s; }
+.htu-desc-inp:focus { border-color:#4a9050; box-shadow:0 0 0 3px rgba(74,144,80,.1); background:#fff; }
+.htu-desc-inp::placeholder { color:#d1d5db; }
+.htu-remove { flex-shrink:0; width:28px; height:28px; margin-top:4px; border-radius:50%; background:#f3f4f6; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .15s; }
+.htu-remove:hover { background:#fee2e2; }
+.htu-remove svg { stroke:#9ca3af; transition:stroke .15s; }
+.htu-remove:hover svg { stroke:#ef4444; }
+.htu-add-btn { width:100%; display:flex; align-items:center; justify-content:center; gap:8px; padding:10px; border-radius:12px; border:2px dashed #e5e7eb; background:transparent; color:#9ca3af; font-size:13px; font-weight:500; cursor:pointer; transition:all .18s; margin-top:4px; }
+.htu-add-btn:hover { border-color:#4a9050; color:#4a9050; background:#f0fdf4; }
 </style>
 </head>
 <body>
 
 {% include 'admin_sidebar.html' %}
 
-<!-- CSRF token available to JS for fetch calls -->
 <input type="hidden" id="csrfToken" value="{{ csrf_token }}"/>
 
 <!-- TOAST -->
@@ -154,7 +170,6 @@ body { background:#f4f6f3; margin:0; }
     <p class="text-xs text-gray-400 mt-0.5">Updating: <span class="font-semibold text-gray-600">{{ product.name }}</span></p>
   </div>
 
-  <!-- THE MAIN EDIT FORM — no nested forms inside -->
   <form id="editForm" method="POST" enctype="multipart/form-data" action="{% url 'edit_product' product.id %}">
     {% csrf_token %}
     <input type="hidden" name="is_active"       id="isActiveInput"  value="{{ product.is_active|yesno:'true,false' }}"/>
@@ -196,7 +211,6 @@ body { background:#f4f6f3; margin:0; }
                 <img src="{{ img.image.url }}" alt="img"/>
                 <span class="thumb-badge badge-primary" id="ebadge-{{ img.id }}" {% if not img.is_primary %}style="display:none"{% endif %}>Primary</span>
                 <div class="thumb-actions">
-                  <!-- Star button: purely visual, sets primaryIdInput -->
                   <button type="button"
                           class="t-btn t-star {% if img.is_primary %}active{% endif %}"
                           id="estar-{{ img.id }}"
@@ -209,7 +223,6 @@ body { background:#f4f6f3; margin:0; }
                       <path stroke-linecap="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
                     </svg>
                   </button>
-                  <!-- Delete button: uses fetch, NOT a nested form -->
                   <button type="button"
                           class="t-btn t-del"
                           onclick="deleteImage({{ img.id }}, this)"
@@ -277,12 +290,23 @@ body { background:#f4f6f3; margin:0; }
             {% endif %}
           </div>
 
-          <!-- How to Use -->
+          <!-- ══ HOW TO USE ══ -->
           <div class="card">
             <h2 class="font-bold text-gray-900 text-[15px] mb-1">How to Use</h2>
             <p class="text-xs text-gray-400 mb-4">Step-by-step application instructions.</p>
-            <label class="lbl">Application Instructions</label>
-            <textarea name="how_to_use" rows="4" class="inp resize-none" placeholder="e.g. Apply a pea-sized amount...">{{ product.how_to_use }}</textarea>
+
+            <!-- Hidden textarea — submits with the form as JSON -->
+            <textarea name="how_to_use" id="howToUseHidden" class="hidden">{{ product.how_to_use }}</textarea>
+
+            <!-- Step rows rendered by JS -->
+            <div id="htuSteps" class="flex flex-col gap-4 mb-3"></div>
+
+            <!-- Add Step -->
+            <button type="button" class="htu-add-btn" onclick="htuAddStep()">
+              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>
+              Add Step
+            </button>
+
             {% if show_form_errors %}
             {% for e in form.how_to_use.errors %}
             <p class="text-red-500 text-xs mt-1 font-medium">{{ e }}</p>
@@ -416,17 +440,14 @@ body { background:#f4f6f3; margin:0; }
   </button>
 </div>
 
-<!-- Hidden file input (outside all forms) -->
 <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp,image/jpg" multiple class="hidden" onchange="onFileSelect(event)"/>
 
-<!-- Django messages as hidden data elements -->
 <div id="django-messages" style="display:none">
   {% for m in messages %}
   <span class="django-message" data-type="{{ m.level_tag }}" data-text="{{ m|escapejs }}"></span>
   {% endfor %}
 </div>
 
-<!-- URL data for JS fetch calls -->
 <div id="urlData"
      data-delete-base="{% url 'delete_product_image' 0 %}"
      data-archive-url="{% url 'soft_delete_product' product.id %}"
@@ -461,129 +482,98 @@ document.querySelectorAll('.overlay').forEach(el => {
   el.addEventListener('click', e => { if (e.target === el) hideOverlay(el.id); });
 });
 
-/* ── SIGNOUT via fetch (avoids nested form) ── */
+/* ── SIGNOUT ── */
 function doSignout() {
-  fetch(URLS.signoutUrl, {
-    method: 'POST',
-    headers: { 'X-CSRFToken': CSRF }
-  }).then(r => { window.location.href = r.url || '/'; });
+  fetch(URLS.signoutUrl, { method:'POST', headers:{'X-CSRFToken':CSRF} })
+    .then(r => { window.location.href = r.url || '/'; });
 }
 
-/* ── ARCHIVE via fetch ── */
+/* ── ARCHIVE ── */
 function doArchive() {
   hideOverlay('archiveOverlay');
-  fetch(URLS.archiveUrl, {
-    method: 'POST',
-    headers: { 'X-CSRFToken': CSRF }
-  }).then(r => { window.location.href = r.url || '/adminpanel/products/'; });
+  fetch(URLS.archiveUrl, { method:'POST', headers:{'X-CSRFToken':CSRF} })
+    .then(r => { window.location.href = r.url || '/adminpanel/products/'; });
 }
 
-/* ── DELETE IMAGE via fetch ── */
+/* ── DELETE IMAGE ── */
 function deleteImage(imageId, btn) {
   if (!confirm('Remove this image?')) return;
-
   const dbImages = document.querySelectorAll('.thumb-wrap[data-id]');
   if (dbImages.length <= 1 && newImgs.length === 0) {
     toast('error', 'Cannot delete', 'Product must have at least one image.');
     return;
   }
-
-  btn.disabled = true;
-  btn.style.opacity = '0.5';
-
-  const url = URLS.deleteBase.replace(/\/0\/$/, '/' + imageId + '/').replace(/\/0$/, '/' + imageId);
-
-  fetch(url, {
-    method: 'POST',
-    headers: { 'X-CSRFToken': CSRF }
-  })
+  btn.disabled = true; btn.style.opacity = '0.5';
+  const url = URLS.deleteBase.replace(/\/0\/$/, '/'+imageId+'/').replace(/\/0$/, '/'+imageId);
+  fetch(url, { method:'POST', headers:{'X-CSRFToken':CSRF} })
   .then(response => {
     if (response.ok || response.redirected) {
-      const wrap = document.getElementById('eimg-' + imageId);
+      const wrap = document.getElementById('eimg-'+imageId);
       if (wrap) wrap.remove();
-
       const remaining = document.querySelectorAll('.thumb-wrap[data-id]');
       const anyPrimary = document.querySelector('.thumb-wrap[data-id] .t-star.active');
-      if (!anyPrimary && remaining.length > 0) {
-        const firstId = remaining[0].dataset.id;
-        setPrimary(parseInt(firstId));
-      }
-
+      if (!anyPrimary && remaining.length > 0) setPrimary(parseInt(remaining[0].dataset.id));
       const primaryInput = document.getElementById('primaryIdInput');
       if (primaryInput.value == imageId) {
         primaryInput.value = '';
-        const remaining2 = document.querySelectorAll('.thumb-wrap[data-id]');
-        if (remaining2.length > 0) {
-          setPrimary(parseInt(remaining2[0].dataset.id));
-        }
+        const r2 = document.querySelectorAll('.thumb-wrap[data-id]');
+        if (r2.length > 0) setPrimary(parseInt(r2[0].dataset.id));
       }
-
       updateBadge();
       toast('success', 'Deleted', 'Image removed successfully.');
     } else {
-      btn.disabled = false;
-      btn.style.opacity = '1';
+      btn.disabled = false; btn.style.opacity = '1';
       toast('error', 'Error', 'Could not delete image. Try again.');
     }
   })
-  .catch(() => {
-    btn.disabled = false;
-    btn.style.opacity = '1';
-    toast('error', 'Error', 'Network error. Try again.');
-  });
+  .catch(() => { btn.disabled = false; btn.style.opacity = '1'; toast('error', 'Error', 'Network error. Try again.'); });
 }
 
-/* ── SET PRIMARY (visual only, synced to hidden input) ── */
+/* ── SET PRIMARY ── */
 function setPrimary(imageId) {
   document.querySelectorAll('.thumb-wrap[data-id]').forEach(wrap => {
     const id = parseInt(wrap.dataset.id);
     wrap.classList.remove('thumb-primary-ring');
-    const badge = document.getElementById('ebadge-' + id);
-    const star  = document.getElementById('estar-' + id);
-    const svg   = document.getElementById('estarsvg-' + id);
+    const badge = document.getElementById('ebadge-'+id);
+    const star  = document.getElementById('estar-'+id);
+    const svg   = document.getElementById('estarsvg-'+id);
     if (badge) badge.style.display = 'none';
     if (star)  star.classList.remove('active');
-    if (svg)   svg.setAttribute('fill', 'none');
+    if (svg)   svg.setAttribute('fill','none');
   });
-
-  const wrap = document.getElementById('eimg-' + imageId);
+  const wrap = document.getElementById('eimg-'+imageId);
   if (wrap) wrap.classList.add('thumb-primary-ring');
-  const badge = document.getElementById('ebadge-' + imageId);
-  const star  = document.getElementById('estar-' + imageId);
-  const svg   = document.getElementById('estarsvg-' + imageId);
+  const badge = document.getElementById('ebadge-'+imageId);
+  const star  = document.getElementById('estar-'+imageId);
+  const svg   = document.getElementById('estarsvg-'+imageId);
   if (badge) badge.style.display = '';
   if (star)  star.classList.add('active');
-  if (svg)   svg.setAttribute('fill', '#fff');
-
+  if (svg)   svg.setAttribute('fill','#fff');
   document.getElementById('primaryIdInput').value = imageId;
 }
 
 /* ── CROPPER ── */
 let newImgs = [];
 let cropper = null;
-
 function onFileSelect(e) {
-  const files = Array.from(e.target.files);
-  e.target.value = '';
+  const files = Array.from(e.target.files); e.target.value = '';
   processFiles(files, 0);
 }
-
 function processFiles(files, i) {
   if (i >= files.length) return;
   const f = files[i];
   if (!['image/jpeg','image/png','image/webp','image/jpg'].includes(f.type)) {
-    toast('error', 'Invalid type', f.name + ' is not supported.');
-    processFiles(files, i + 1); return;
+    toast('error','Invalid type', f.name+' is not supported.');
+    processFiles(files, i+1); return;
   }
-  if (f.size > 2 * 1024 * 1024) {
-    toast('error', 'Too large', f.name + ' must be under 2MB.');
-    processFiles(files, i + 1); return;
+  if (f.size > 2*1024*1024) {
+    toast('error','Too large', f.name+' must be under 2MB.');
+    processFiles(files, i+1); return;
   }
   const r = new FileReader();
-  r.onload = ev => openCrop(ev.target.result, () => processFiles(files, i + 1));
+  r.onload = ev => openCrop(ev.target.result, () => processFiles(files, i+1));
   r.readAsDataURL(f);
 }
-
 function openCrop(src, cb) {
   document.getElementById('cropImg').src = src;
   document.getElementById('cropModal').classList.add('open');
@@ -591,37 +581,28 @@ function openCrop(src, cb) {
   if (cropper) { cropper.destroy(); cropper = null; }
   document.getElementById('cropImg').onload = () => {
     cropper = new Cropper(document.getElementById('cropImg'), {
-      aspectRatio: 1, viewMode: 1, autoCropArea: .9,
-      movable: true, zoomable: true, rotatable: false, scalable: false, background: false
+      aspectRatio:1, viewMode:1, autoCropArea:.9,
+      movable:true, zoomable:true, rotatable:false, scalable:false, background:false
     });
   };
   window._cropCb = cb;
 }
-
 function closeCrop() {
   document.getElementById('cropModal').classList.remove('open');
   document.body.style.overflow = '';
   if (cropper) { cropper.destroy(); cropper = null; }
 }
-
 function applyCrop() {
   if (!cropper) return;
-  cropper.getCroppedCanvas({ width: 800, height: 800, imageSmoothingQuality: 'high' }).toBlob(blob => {
+  cropper.getCroppedCanvas({ width:800, height:800, imageSmoothingQuality:'high' }).toBlob(blob => {
     const dataUrl = URL.createObjectURL(blob);
     newImgs.push({ blob, dataUrl });
-    renderNewImgs();
-    closeCrop();
+    renderNewImgs(); closeCrop();
     const cb = window._cropCb; window._cropCb = null;
     if (cb) cb();
   }, 'image/jpeg', 0.92);
 }
-
-function removeNewImg(i, e) {
-  e.stopPropagation();
-  newImgs.splice(i, 1);
-  renderNewImgs();
-}
-
+function removeNewImg(i, e) { e.stopPropagation(); newImgs.splice(i,1); renderNewImgs(); }
 function renderNewImgs() {
   const slot = document.getElementById('newSlot');
   slot.innerHTML = '';
@@ -633,7 +614,6 @@ function renderNewImgs() {
   });
   updateBadge();
 }
-
 function updateBadge() {
   const exist = document.querySelectorAll('.thumb-wrap[data-id]').length;
   const n = exist + newImgs.length;
@@ -645,15 +625,14 @@ const dz = document.getElementById('dropZone');
 dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
 dz.addEventListener('dragleave', ()  => dz.classList.remove('drag-over'));
 dz.addEventListener('drop', e => {
-  e.preventDefault();
-  dz.classList.remove('drag-over');
+  e.preventDefault(); dz.classList.remove('drag-over');
   processFiles(Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')), 0);
 });
 
 /* ── DESCRIPTION COUNT ── */
 const editor = document.getElementById('descEditor');
 function updateDescCount() {
-  document.getElementById('descCount').textContent = Math.min((editor.innerText || '').length, 2000);
+  document.getElementById('descCount').textContent = Math.min((editor.innerText||'').length, 2000);
 }
 
 /* ── SKIN TYPE TAGS ── */
@@ -664,19 +643,17 @@ function initTags() {
   renderTags();
 }
 document.getElementById('tagInput').addEventListener('keydown', e => {
-  if ((e.key === 'Enter' || e.key === ',') && e.target.value.trim()) {
-    e.preventDefault();
-    addTag(e.target.value.trim().replace(/,/g, ''));
-    e.target.value = '';
+  if ((e.key==='Enter'||e.key===',') && e.target.value.trim()) {
+    e.preventDefault(); addTag(e.target.value.trim().replace(/,/g,'')); e.target.value = '';
   }
-  if (e.key === 'Backspace' && !e.target.value && tags.length) removeTag(tags.length - 1);
+  if (e.key==='Backspace' && !e.target.value && tags.length) removeTag(tags.length-1);
 });
-function addTag(v)    { if (!v || tags.includes(v) || tags.length >= 8) return; tags.push(v); renderTags(); }
-function removeTag(i) { tags.splice(i, 1); renderTags(); }
+function addTag(v)    { if (!v||tags.includes(v)||tags.length>=8) return; tags.push(v); renderTags(); }
+function removeTag(i) { tags.splice(i,1); renderTags(); }
 function renderTags() {
   const box = document.getElementById('tagBox');
   box.innerHTML = '';
-  tags.forEach((t, i) => {
+  tags.forEach((t,i) => {
     const s = document.createElement('span');
     s.className = 'tag';
     s.innerHTML = `${t}<button type="button" class="tag-x" onclick="removeTag(${i})">×</button>`;
@@ -705,6 +682,94 @@ function toggleVis() {
   }
 }
 
+/* ══════════════════════════════════════════
+   HOW TO USE — STEP BUILDER
+══════════════════════════════════════════ */
+let htuSteps = [];
+
+function htuParse() {
+  const raw = (document.getElementById('howToUseHidden').value || '').trim();
+  if (!raw) return;
+  // Try JSON array (previously saved via this UI)
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) { htuSteps = parsed; return; }
+  } catch(e) {}
+  // Fallback: plain text → single step description
+  htuSteps = [{ title:'', desc: raw }];
+}
+
+function htuSerialize() {
+  document.getElementById('howToUseHidden').value = JSON.stringify(htuSteps);
+}
+
+function htuAddStep() {
+  htuSteps.push({ title:'', desc:'' });
+  htuRender();
+}
+
+function htuRemoveStep(i) {
+  htuSteps.splice(i, 1);
+  htuRender();
+}
+
+function htuRender() {
+  const container = document.getElementById('htuSteps');
+  container.innerHTML = '';
+
+  htuSteps.forEach((step, i) => {
+    const row = document.createElement('div');
+    row.className = 'htu-step-row fade-in';
+
+    // Number bubble
+    const num = document.createElement('div');
+    num.className = 'htu-num';
+    num.textContent = i + 1;
+
+    // Fields
+    const fields = document.createElement('div');
+    fields.className = 'htu-fields';
+
+    const titleInp = document.createElement('input');
+    titleInp.type = 'text';
+    titleInp.className = 'htu-title-inp';
+    titleInp.placeholder = 'Step title  (e.g. Cleanse & Tone)';
+    titleInp.value = step.title || '';
+    titleInp.addEventListener('input', () => { htuSteps[i].title = titleInp.value; htuSerialize(); });
+
+    const descInp = document.createElement('input');
+    descInp.type = 'text';
+    descInp.className = 'htu-desc-inp';
+    descInp.placeholder = 'Short description...';
+    descInp.value = step.desc || '';
+    descInp.addEventListener('input', () => { htuSteps[i].desc = descInp.value; htuSerialize(); });
+
+    fields.appendChild(titleInp);
+    fields.appendChild(descInp);
+
+    // Remove button (hidden when only 1 step)
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'htu-remove';
+    removeBtn.style.visibility = htuSteps.length > 1 ? 'visible' : 'hidden';
+    removeBtn.innerHTML = `<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>`;
+    removeBtn.addEventListener('click', () => htuRemoveStep(i));
+
+    row.appendChild(num);
+    row.appendChild(fields);
+    row.appendChild(removeBtn);
+    container.appendChild(row);
+  });
+
+  htuSerialize();
+}
+
+function initHtu() {
+  htuParse();
+  if (htuSteps.length === 0) htuSteps = [{ title:'', desc:'' }];
+  htuRender();
+}
+
 /* ── SAVE ── */
 function saveProduct() {
   let ok = true;
@@ -713,45 +778,34 @@ function saveProduct() {
   const nameErr = document.getElementById('nameErr');
   if (!name || name.length < 3) {
     nameErr.textContent = name ? 'Name too short (min 3 chars)' : 'Product name is required';
-    nameErr.classList.remove('hidden');
-    ok = false;
-  } else {
-    nameErr.classList.add('hidden');
-  }
+    nameErr.classList.remove('hidden'); ok = false;
+  } else { nameErr.classList.add('hidden'); }
 
   const descTxt = (editor.innerText || '').trim();
   const descErr = document.getElementById('descErr');
   if (!descTxt || descTxt.length < 10) {
     descErr.textContent = descTxt ? 'Description too short' : 'Description is required';
-    descErr.classList.remove('hidden');
-    editor.style.borderColor = '#f87171';
-    ok = false;
-  } else {
-    descErr.classList.add('hidden');
-    editor.style.borderColor = '';
-  }
+    descErr.classList.remove('hidden'); editor.style.borderColor = '#f87171'; ok = false;
+  } else { descErr.classList.add('hidden'); editor.style.borderColor = ''; }
 
   const dbImgCount = document.querySelectorAll('.thumb-wrap[data-id]').length;
   if (dbImgCount + newImgs.length < 3) {
-    toast('error', 'Not enough images', 'Please add at least 3 images total.');
-    ok = false;
+    toast('error', 'Not enough images', 'Please add at least 3 images total.'); ok = false;
   }
 
-  if (!ok) {
-    toast('error', 'Fix errors', 'Please correct the highlighted fields.');
-    return;
-  }
+  if (!ok) { toast('error', 'Fix errors', 'Please correct the highlighted fields.'); return; }
 
   document.getElementById('descInput').value = editor.innerHTML;
   document.getElementById('skinInput').value = tags.join(',');
+  htuSerialize(); // write latest steps to hidden textarea
 
   const container = document.getElementById('newFilesContainer');
   container.innerHTML = '';
   if (newImgs.length > 0) {
     const dt = new DataTransfer();
-    newImgs.forEach((img, i) => dt.items.add(new File([img.blob], 'new_' + i + '.jpg', { type: 'image/jpeg' })));
+    newImgs.forEach((img, i) => dt.items.add(new File([img.blob], 'new_'+i+'.jpg', {type:'image/jpeg'})));
     const fi = document.createElement('input');
-    fi.type = 'file'; fi.name = 'images'; fi.multiple = true; fi.style.display = 'none';
+    fi.type='file'; fi.name='images'; fi.multiple=true; fi.style.display='none';
     fi.files = dt.files;
     container.appendChild(fi);
   }
@@ -760,7 +814,6 @@ function saveProduct() {
   document.getElementById('saveIcon').classList.add('hidden');
   document.getElementById('saveTxt').textContent = 'Saving...';
   document.getElementById('saveBtn').disabled = true;
-
   document.getElementById('editForm').submit();
 }
 
@@ -769,12 +822,13 @@ document.addEventListener('DOMContentLoaded', () => {
   updateDescCount();
   updateBadge();
   initTags();
+  initHtu(); // How To Use step builder
 
   document.querySelectorAll('.django-message').forEach(el => {
-    const type = el.dataset.type;
-    const text = el.dataset.text;
-    const titles = { success: 'Done!', error: 'Error', warning: 'Notice', info: 'Info' };
-    toast(type === 'info' ? 'success' : (T[type] ? type : 'success'), titles[type] || 'Notice', text);
+    const type  = el.dataset.type;
+    const text  = el.dataset.text;
+    const titles = { success:'Done!', error:'Error', warning:'Notice', info:'Info' };
+    toast(type==='info' ? 'success' : (T[type] ? type : 'success'), titles[type]||'Notice', text);
   });
 
   {% if show_form_errors %}
