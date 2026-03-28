@@ -14,10 +14,14 @@ class ProductForm(forms.ModelForm):
     def clean_name(self):
         
         name=self.cleaned_data.get('name','').strip()
+        if not name:
+            raise forms.ValidationError("Product name is required.")
         
-        if Product.objects.filter(name__iexact=name).exists():
-            raise forms.ValidationError("Product with this name already exists")
-        
+        qs=Product.objects.filter(name__iexact=name)
+        if self.instance.id:                     # editing existing product
+            qs = qs.exclude(pk=self.instance.id) # ignore itself
+        if qs.exists():
+            raise forms.ValidationError("Product with this name already exists.")
         if len(name)< 3 :
             raise forms.ValidationError("Product name too short")  
         
@@ -49,13 +53,13 @@ class ProductForm(forms.ModelForm):
 
         return how
     def clean_skin_type(self):
-        skin_type=self.cleaned_data.get('skin_type')
+        skin_type=self.cleaned_data.get('skin_type','').strip()
         
         if skin_type:
-            pattern=r'^[A-Za-z\s&-]+$'
+            pattern=r'^[A-Za-z\s&,-]+$'
             
             if not re.match(pattern,skin_type):
-                raise forms.ValidationError("Only letters and spaces allowed (no numbers or special characters)")
+                raise forms.ValidationError("Only letters, spaces, &, -, and commas allowed.")
         return skin_type
     
     

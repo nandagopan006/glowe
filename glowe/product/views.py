@@ -6,83 +6,132 @@ from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator  
 from django.db.models import Q,Sum,Min
 
-
 def add_product(request):
-    form = ProductForm() # empty form for Get request
     
+    categories=Category.objects.filter(is_active=True, is_deleted=False)
+
     if request.method == "POST":
         form=ProductForm(request.POST)
         images=request.FILES.getlist('images')
-        
+
         if form.is_valid():
-            if len(images) < 3 :
+
+            if len(images) < 3:
                 messages.error(request,"Please upload at least 3 images")
-                return render(request, 'admin/add_product.html',{'form': form})
+                return render(request,'admin/add_product.html',{
+                    'form':form,
+                    'categories':categories})
+
             
-            valid_types = ['image/jpeg','image/png','image/webp',"image/jpg"]
+            valid_types=['image/jpeg','image/png','image/webp','image/jpg']
+
             for img in images:
-                
                 if img.content_type not in valid_types:
-                    messages.error(request,"Only JPG,PNG,WEBP allowed")
-                    return render(request,'admin/add_product.html', {'form': form})
-          
-                if img.size > 2* 1024* 1024:
-                    messages.error(request, "Each image must be under 2MB")
-                    return render(request,'admin/add_product.html', {'form': form})
-        
-            product=form.save() #for save product
+                    messages.error(request,"Only JPG, PNG, WEBP allowed")
+                    return render(request,'admin/add_product.html', {
+                        'form':form,
+                        'categories':categories})
+
+                if img.size >2 *1024 *1024:
+                    messages.error(request,"Each image must be under 2MB")
+                    return render(request,'admin/add_product.html', {
+                        'form':form,
+                        'categories':categories})
+
             
-            for i,img in enumerate(images):
+            product = form.save()#for save product
+            # Save images
+            for i, img in enumerate(images):
                 ProductImage.objects.create(
                     product=product,
-                    image=img,is_primary= (i == 0),
+                    image=img,
+                    is_primary=(i ==0)  # first image = primary ak kumm
                 )
-            
+
             messages.success(request,"Product added successfully")
             return redirect('product_management')
-    
-    return render(request,'admin/add_product.html',{'form': form})
+    else:
+        form=ProductForm()
+
+    return render(request, 'admin/add_product.html',{
+        'form': form,
+        'categories': categories
+    })
         
-def edit_product(request,id):
-    product=get_object_or_404(Product,id=id)
-    
-    form=ProductForm(instance=product)
-    
-    if request.method =="POST" :
-        form=ProductForm(request.POST,instance=product)
-        images=request.FILES.getlist('images')
-        
+def edit_product(request, id):
+    product = get_object_or_404(Product, id=id)
+    categories = Category.objects.filter(is_active=True, is_deleted=False)
+
+    if request.method == "POST":
+        form = ProductForm(request.POST, instance=product)
+        images = request.FILES.getlist('images')
+        is_active = request.POST.get('is_active') == 'true'
+        primary_image_id = request.POST.get('primary_image_id', '').strip()
+
         if form.is_valid():
-            
-            if not product.images.exists() and not images:
-                messages.error(request,"Product must have at least one image")
-                return render(request,'admin/edit_product.html',{'form':form,'product':product})
-            
-            if images :
-            
-                valid_type=['image/jpg','image/webp','image/png','image/jpeg']
-                
-                for img in images:
-                    
-                    if img.content_type not in valid_type:
-                        messages.error(request,f"{img.name} is not valid")
-                        return render(request,'admin/edit_product.html',{'form':form,'product': product})
-                    
-                    if img.size > 2* 1024 *1024 :
-                        messages.error(request, f"{img.name} must be under 2MB")
-                        return render(request, 'admin/edit_product.html', {'form': form, 'product': product})
-                
-                for img in images:
-                    
-                    ProductImage.objects.create(product=product,
-                        image=img,is_primary=False
-                    )
-            form.save()
-            
-            messages.success(request,"Product updated successfully")
+            # --- 1. Count existing images + new ones ---
+            existing_count = product.images.count()
+            new_count = len(images)
+            total_images = existing_count + new_count
+
+            if total_images < 3:
+                messages.error(request, "Product must have at least 3 images.")
+                return render(request, 'admin/edit_product.html', {
+                    'form': form, 'product': product, 'categories': categories
+                })
+
+            # --- 2. Validate each new image ---
+            valid_types = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg']
+            for img in images:
+                if img.content_type not in valid_types:
+                    messages.error(request, f"{img.name} is not a valid image type.")
+                    return render(request, 'admin/edit_product.html', {
+                        'form': form, 'product': product, 'categories': categories
+                    })
+                if img.size > 2 * 1024 * 1024:
+                    messages.error(request, f"{img.name} must be under 2MB.")
+                    return render(request, 'admin/edit_product.html', {
+                        'form': form, 'product': product, 'categories': categories
+                    })
+
+            # --- 3. Save product fields ---
+            product = form.save(commit=False)
+            product.is_active = is_active
+            product.save()
+
+            # --- 4. Add new images ---
+            for img in images:
+                ProductImage.objects.create(product=product, image=img, is_primary=False)
+
+            # --- 5. Set primary image if one was chosen ---
+            if primary_image_id:
+                product.images.update(is_primary=False)
+                ProductImage.objects.filter(id=primary_image_id, product=product).update(is_primary=True)
+
+            # --- 6. Ensure at least one image is primary (fallback) ---
+            if not product.images.filter(is_primary=True).exists():
+                first = product.images.order_by('id').first()
+                if first:
+                    first.is_primary = True
+                    first.save()
+
+            messages.success(request, "Product updated successfully.")
             return redirect('product_management')
-        
-        return render(request,'admin/edit_product.html',{'form':form,'product':product})
+
+        else:
+            # Form has errors – show them
+            for errors in form.errors.values():
+                for e in errors:
+                    messages.error(request, e)
+
+    else:
+        form = ProductForm(instance=product)
+
+    return render(request, 'admin/edit_product.html', {
+        'form': form,
+        'product': product,
+        'categories': categories,
+    })
     
 def delete_product_image(request,id):
     if request.method == "POST":
@@ -248,7 +297,6 @@ def product_management(request):
         'selected_category':category,
         'status':status,
         'active_status': active_status,
-        
     })
     
 def add_variant(request,product_id):

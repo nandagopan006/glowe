@@ -1,0 +1,684 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Add New Product — Glowé Admin</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: { sans: ['DM Sans','sans-serif'], serif: ['Playfair Display','serif'] },
+      colors: {
+        sage: { 50:'#f2f7f2',100:'#e2f0e2',200:'#c3dfc3',300:'#94c494',400:'#64a864',500:'#4a9050',600:'#3a7a3e',700:'#2f6232',800:'#264f29',900:'#1e3e20' }
+      }
+    }
+  }
+}
+</script>
+<style>
+  * { font-family:'DM Sans',sans-serif; box-sizing:border-box; }
+  body { background:#f4f6f3; margin:0; }
+
+  @keyframes toastIn { to { transform:translateY(0); opacity:1; } }
+  @keyframes toastOut { to { transform:translateY(-80px); opacity:0; } }
+  @keyframes toastProg { from { width:100%; } to { width:0%; } }
+
+  .upload-zone { border:2px dashed #c3dfc3; border-radius:16px; transition:all .2s; }
+  .upload-zone.drag-over { border-color:#4a9050; background:#f0fdf4; }
+
+  .thumb-wrap { position:relative; border-radius:12px; overflow:hidden; aspect-ratio:1; }
+  .thumb-wrap img { width:100%; height:100%; object-fit:cover; display:block; }
+  .thumb-primary { box-shadow:0 0 0 3px #4a9050; }
+  .thumb-badge { position:absolute; bottom:4px; left:4px; background:#4a9050; color:#fff; font-size:9px; font-weight:700; padding:2px 7px; border-radius:999px; letter-spacing:.05em; }
+  .thumb-remove { position:absolute; top:4px; right:4px; width:22px; height:22px; border-radius:50%; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .15s; border:none; }
+  .thumb-remove:hover { background:#ef4444; }
+  .thumb-add { border:2px dashed #d1d5db; border-radius:12px; aspect-ratio:1; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .2s; }
+  .thumb-add:hover { border-color:#4a9050; background:#f0fdf4; }
+
+  .tgl { display:inline-flex; align-items:center; cursor:pointer; width:48px; height:26px; border-radius:999px; background:#e2e8e2; position:relative; transition:background .25s ease; border:none; padding:0; flex-shrink:0; }
+  .tgl.tgl-on { background:#4a9050; }
+  .tgl-thumb { position:absolute; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.18); transition:transform .25s cubic-bezier(.34,1.56,.64,1); }
+  .tgl.tgl-on .tgl-thumb { transform:translateX(22px); }
+
+  .tag { display:inline-flex; align-items:center; gap:4px; background:#e2f0e2; color:#264f29; font-size:12px; font-weight:600; padding:3px 10px; border-radius:999px; }
+  .tag-remove { cursor:pointer; opacity:.6; font-size:14px; line-height:1; border:none; background:none; padding:0; color:inherit; }
+  .tag-remove:hover { opacity:1; }
+
+  .crop-modal { position:fixed; inset:0; z-index:9990; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(0,0,0,.6); backdrop-filter:blur(6px); opacity:0; pointer-events:none; transition:opacity .25s; }
+  .crop-modal.open { opacity:1; pointer-events:all; }
+  .crop-box { background:#fff; border-radius:20px; width:100%; max-width:480px; overflow:hidden; transform:scale(.94) translateY(12px); transition:transform .25s cubic-bezier(.34,1.56,.64,1); box-shadow:0 32px 80px rgba(0,0,0,.22); }
+  .crop-modal.open .crop-box { transform:scale(1) translateY(0); }
+
+  .tb-btn { width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:7px; border:none; background:transparent; cursor:pointer; color:#6b7280; font-size:13px; transition:all .15s; }
+  .tb-btn:hover { background:#f3f4f6; color:#111827; }
+  .tb-btn.active { background:#e2f0e2; color:#264f29; }
+
+  .section-card { background:#fff; border-radius:18px; border:1px solid #eaede8; padding:24px; transition:box-shadow .2s; }
+  .section-card:hover { box-shadow:0 4px 20px rgba(0,0,0,.06); }
+
+  .inp { width:100%; padding:10px 14px; border:1.5px solid #e5e7eb; border-radius:12px; font-size:14px; color:#111827; background:#fafafa; outline:none; transition:all .18s; }
+  .inp:focus { border-color:#4a9050; box-shadow:0 0 0 3px rgba(74,144,80,.1); background:#fff; }
+  .inp::placeholder { color:#d1d5db; }
+
+  .lbl { font-size:10.5px; font-weight:700; color:#9ca3af; text-transform:uppercase; letter-spacing:.08em; margin-bottom:6px; display:block; }
+
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .spinner { width:16px; height:16px; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:spin .6s linear infinite; }
+
+  @keyframes fadeIn { from { opacity:0; transform:scale(.95); } to { opacity:1; transform:scale(1); } }
+  .fade-in { animation:fadeIn .2s ease-out forwards; }
+
+  .so-overlay { position:fixed; inset:0; z-index:9998; background:rgba(0,0,0,.25); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .25s; }
+  .so-overlay.open { opacity:1; pointer-events:all; }
+  .so-box { background:#fff; border-radius:20px; padding:36px 32px 28px; width:360px; max-width:calc(100vw - 32px); display:flex; flex-direction:column; align-items:center; text-align:center; transform:scale(.94) translateY(8px); transition:transform .28s cubic-bezier(.34,1.56,.64,1); box-shadow:0 20px 60px rgba(0,0,0,.15); }
+  .so-overlay.open .so-box { transform:scale(1) translateY(0); }
+
+  #adminSidebar nav::-webkit-scrollbar { width:4px; }
+  #adminSidebar nav::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:10px; }
+
+  /* ── Bottom sticky bar ── */
+  .bottom-bar {
+    position:fixed; bottom:0; left:0; right:0;
+    z-index:30;
+    background:rgba(255,255,255,.95);
+    backdrop-filter:blur(10px);
+    border-top:1px solid #eaede8;
+    box-shadow:0 -4px 24px rgba(0,0,0,.07);
+    padding:14px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:10px;
+  }
+  @media(min-width:1024px){
+    .bottom-bar { left:240px; }
+  }
+</style>
+</head>
+<body>
+
+{% include 'admin_sidebar.html' %}
+
+<!-- Signout Modal -->
+<div id="adminSignoutOverlay" class="so-overlay">
+  <div class="so-box">
+    <div class="w-14 h-14 rounded-full bg-sage-50 flex items-center justify-center mb-4">
+      <svg class="w-6 h-6 text-sage-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2C9 5.5 6 9 6 13a6 6 0 0012 0c0-4-3-7.5-6-11z"/></svg>
+    </div>
+    <h2 class="text-lg font-bold text-gray-900 mb-2 leading-tight">Sign Out?</h2>
+    <p class="text-sm text-gray-500 mb-6">You will need to login again.</p>
+    <div class="flex gap-3 w-full">
+      <button onclick="closeAdminSignoutModal()" class="flex-1 py-3 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-colors">Cancel</button>
+      <form method="POST" action="{% url 'admin_signout' %}" class="flex-1">
+        {% csrf_token %}
+        <button type="submit" class="w-full py-3 rounded-xl bg-red-500 text-white font-semibold text-sm hover:bg-red-600 transition-colors">Sign Out</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toastContainer" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;min-width:300px;"></div>
+
+<!-- Cropper Modal -->
+<div id="cropModal" class="crop-modal">
+  <div class="crop-box">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+      <div>
+        <p class="font-bold text-gray-900 text-sm">Crop Image</p>
+        <p class="text-xs text-gray-400 mt-0.5">Square 1:1 ratio for best results</p>
+      </div>
+      <button onclick="closeCropModal()" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="p-4" style="max-height:340px;overflow:hidden;">
+      <img id="cropImage" style="max-width:100%;display:block;"/>
+    </div>
+    <div class="flex gap-3 px-5 py-4 border-t border-gray-100">
+      <button onclick="closeCropModal()" class="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors">Cancel</button>
+      <button onclick="applyCrop()" class="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white bg-sage-700 hover:bg-sage-800 transition-colors flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
+        Apply Crop
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="lg:ml-[240px] min-h-screen bg-gray-50 pb-[80px]">
+
+  <!-- Top Header -->
+  <div class="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-gray-100 px-5 sm:px-8 py-4">
+    <div>
+      <h1 class="text-xl font-bold text-gray-900" style="font-family:'Playfair Display',serif;">Add New Product</h1>
+      <p class="text-xs text-gray-400 mt-0.5">Create a new listing for your skincare collection.</p>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <form id="addProductForm" method="POST" enctype="multipart/form-data" action="{% url 'add_product' %}" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="is_active" id="isActiveInput" value="true"/>
+    <div id="croppedFilesContainer"></div>
+
+    <div class="p-5 sm:p-8">
+      <div class="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6 max-w-[1200px] mx-auto">
+
+        <!-- ═══════════ LEFT COLUMN ═══════════ -->
+        <div class="flex flex-col gap-6">
+
+          <!-- Product Media -->
+          <div class="section-card">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h2 class="font-bold text-gray-900 text-[15px]">Product Media</h2>
+                <p class="text-xs text-gray-400 mt-0.5">Upload at least 3 images. First image is primary.</p>
+              </div>
+              <span class="text-[10px] font-bold text-red-500 bg-red-50 border border-red-100 px-2.5 py-1 rounded-full">Required</span>
+            </div>
+            <div id="uploadZone" class="upload-zone p-8 text-center cursor-pointer mb-4" onclick="document.getElementById('fileInput').click()">
+              <div class="w-12 h-12 rounded-2xl bg-sage-50 flex items-center justify-center mx-auto mb-3">
+                <svg class="w-6 h-6 text-sage-500" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                </svg>
+              </div>
+              <p class="font-semibold text-gray-700 text-sm">Click to upload or drag & drop</p>
+              <p class="text-xs text-gray-400 mt-1">JPG, PNG, WEBP (max 2MB each)</p>
+            </div>
+            <div id="previewGrid" class="grid grid-cols-4 sm:grid-cols-6 gap-2.5 mb-3"></div>
+            <div id="imageError" class="hidden flex items-center gap-2 text-red-600 text-xs font-medium bg-red-50 border border-red-100 rounded-xl px-3 py-2.5">
+              <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M12 8v4M12 16h.01"/></svg>
+              <span id="imageErrorText"></span>
+            </div>
+            <p class="text-xs text-gray-400 mt-2"><span id="imgCount">0</span> / 3+ images added</p>
+            {% if messages %}
+              {% for message in messages %}
+                {% if 'image' in message.tags or 'error' in message.tags %}
+                  <p class="text-red-500 text-xs mt-1">{{ message }}</p>
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+          </div>
+
+          <!-- Detailed Description -->
+          <div class="section-card">
+            <h2 class="font-bold text-gray-900 text-[15px] mb-4">Detailed Description</h2>
+        
+            <div id="descEditor"
+              contenteditable="true"
+              class="min-h-[140px] p-4 rounded-xl border-1.5 border-gray-200 border text-sm text-gray-700 outline-none focus:ring-2 focus:ring-sage-300 focus:border-sage-400 transition-all leading-relaxed"
+              style="background:#fafafa;"
+              data-placeholder="Describe the benefits, key features, and general story of the product..."
+              oninput="updateDescCount()">
+            </div>
+            <input type="hidden" name="description" id="descHidden"/>
+            <div class="flex justify-between mt-2">
+              <div id="descError" class="hidden text-red-500 text-xs"></div>
+              <p class="text-xs text-gray-400 ml-auto"><span id="descCount">0</span> / 2000</p>
+            </div>
+          </div>
+
+          <!-- Ingredients -->
+          <div class="section-card">
+            <h2 class="font-bold text-gray-900 text-[15px] mb-1">Ingredients</h2>
+            <p class="text-xs text-gray-400 mb-4">List separated by commas in descending order of concentration.</p>
+            <label class="lbl">Full Ingredient List</label>
+            <textarea name="ingredients" rows="4" class="inp resize-none" placeholder="e.g. Aqua, Glycerin, Niacinamide, Hyaluronic Acid..."></textarea>
+            {% if form.ingredients.errors %}<p class="text-red-500 text-xs mt-1">{{ form.ingredients.errors.0 }}</p>{% endif %}
+          </div>
+
+          <!-- How to Use -->
+          <div class="section-card">
+            <h2 class="font-bold text-gray-900 text-[15px] mb-1">How to Use</h2>
+            <p class="text-xs text-gray-400 mb-4">Provide step-by-step instructions and any safety precautions.</p>
+            <label class="lbl">Application Instructions</label>
+            <textarea name="how_to_use" rows="4" class="inp resize-none" placeholder="e.g. Apply a pea-sized amount to clean, dry skin after serums..."></textarea>
+            {% if form.how_to_use.errors %}<p class="text-red-500 text-xs mt-1">{{ form.how_to_use.errors.0 }}</p>{% endif %}
+          </div>
+
+        </div>
+
+        <!-- ═══════════ RIGHT COLUMN ═══════════ -->
+        <div class="flex flex-col gap-6">
+
+          <!-- General Information -->
+          <div class="section-card">
+            <h2 class="font-bold text-gray-900 text-[15px] mb-5">General Information</h2>
+            <div class="mb-4">
+              <label class="lbl">Product Name <span class="text-red-400">*</span></label>
+              <input type="text" name="name" id="productName" class="inp" placeholder="e.g. Revitalizing Night Cream" value="{{ form.name.value|default:'' }}"/>
+              <div id="nameError" class="hidden text-red-500 text-xs mt-1"></div>
+              {% if form.name.errors %}<p class="text-red-500 text-xs mt-1">{{ form.name.errors.0 }}</p>{% endif %}
+            </div>
+            <div class="mb-4">
+              <label class="lbl">Category</label>
+              <select name="category" class="inp appearance-none cursor-pointer" style="background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 24 24%22 stroke=%22%239ca3af%22 stroke-width=%222%22%3E%3Cpath stroke-linecap=%22round%22 d=%22M19 9l-7 7-7-7%22/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 12px center;background-size:16px;padding-right:38px;">
+                <option value="">Select category</option>
+                {% for cat in categories %}
+                  <option value="{{ cat.id }}" {% if form.category.value == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+                {% endfor %}
+              </select>
+              {% if form.category.errors %}<p class="text-red-500 text-xs mt-1">{{ form.category.errors.0 }}</p>{% endif %}
+            </div>
+            <div>
+              <label class="lbl">Skin Type Tags</label>
+              <div id="tagContainer" class="flex flex-wrap gap-1.5 mb-2"></div>
+              <input type="hidden" name="skin_type" id="skinTypeHidden"/>
+              <div class="relative">
+                <input type="text" id="tagInput" class="inp pr-10" placeholder="Type and press Enter..."/>
+                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 text-xs">↵</div>
+              </div>
+              <p class="text-[11px] text-gray-400 mt-1.5">Suggested: Dry, Combination, Acne-prone, Mature, Oily, Sensitive</p>
+              {% if form.skin_type.errors %}<p class="text-red-500 text-xs mt-1">{{ form.skin_type.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <!-- Pricing & Inventory -->
+          <div class="section-card">
+            <h2 class="font-bold text-gray-900 text-[15px] mb-1">Pricing & Inventory</h2>
+            <p class="text-xs text-gray-400 mb-5">Variants are managed separately after publishing.</p>
+            <div class="bg-sage-50 border border-sage-100 rounded-xl px-4 py-3 flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-sage-100 flex items-center justify-center flex-shrink:0">
+                <svg class="w-4 h-4 text-sage-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <p class="text-xs text-sage-800 font-medium">Pricing, stock & SKU are added per variant after product is published.</p>
+            </div>
+          </div>
+
+          <!-- Product Visibility -->
+          <div class="section-card">
+            <h2 class="font-bold text-gray-900 text-[15px] mb-4">Product Visibility</h2>
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-semibold text-gray-700">Make visible to customers</p>
+                <p class="text-xs text-gray-400 mt-0.5">Publish immediately on store</p>
+              </div>
+              <button type="button" id="visTgl" class="tgl tgl-on" onclick="toggleVisibility()">
+                <span class="tgl-thumb"></span>
+              </button>
+            </div>
+            <div id="visBadge" class="mt-3 flex items-center gap-2 text-xs font-semibold text-green-700 bg-green-50 border border-green-100 rounded-xl px-3 py-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0"></span>
+              Product will be visible on store
+            </div>
+          </div>
+
+          {% if form.non_field_errors %}
+          <div class="section-card border-red-100">
+            {% for error in form.non_field_errors %}
+            <p class="text-red-500 text-sm font-medium">{{ error }}</p>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
+  </form>
+
+</div>
+
+<!-- ═══════════ BOTTOM STICKY BAR ═══════════ -->
+<div class="bottom-bar">
+  <p class="text-xs text-gray-400 mr-auto hidden sm:block">All fields marked <span class="text-red-400 font-bold">*</span> are required</p>
+  <a href="{% url 'product_management' %}"
+     style="display:inline-flex;align-items:center;gap:6px;padding:10px 22px;background:#f3f4f6;color:#374151;font-size:13px;font-weight:600;border-radius:999px;text-decoration:none;border:none;transition:all .18s ease"
+     onmouseover="this.style.background='#e5e7eb'"
+     onmouseout="this.style.background='#f3f4f6'">
+    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+    Cancel
+  </a>
+  <button type="button" id="publishBtn" onclick="submitProduct()"
+          style="display:inline-flex;align-items:center;gap:7px;padding:10px 26px;background:#28542b;color:#fff;font-size:13px;font-weight:600;border-radius:999px;border:none;cursor:pointer;box-shadow:0 2px 8px rgba(40,84,43,.22);transition:all .18s ease"
+          onmouseover="this.style.background='#214522';this.style.boxShadow='0 4px 14px rgba(40,84,43,.3)';this.style.transform='translateY(-1px)'"
+          onmouseout="this.style.background='#28542b';this.style.boxShadow='0 2px 8px rgba(40,84,43,.22)';this.style.transform='translateY(0)'">
+    <span id="publishSpinner" class="spinner hidden"></span>
+    <svg id="publishIcon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
+    <span id="publishBtnText">Publish Product</span>
+  </button>
+</div>
+
+<!-- Hidden real file input -->
+<input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp,image/jpg" multiple class="hidden" onchange="handleFileSelect(event)"/>
+
+<script>
+/* ════════════ TOAST ════════════ */
+const CFG = {
+  success:{ icon:'✓', bg:'#1e3d2f', lb:'#6ee7a8', ttl:'#f0fdf4', msg:'#bbf7d0', pr:'#4ade80' },
+  error:  { icon:'✕', bg:'#3d1e1e', lb:'#fca5a5', ttl:'#fff1f2', msg:'#fecaca', pr:'#f87171' },
+  warning:{ icon:'!', bg:'#3d2000', lb:'#fcd34d', ttl:'#fff8e1', msg:'#fde68a', pr:'#f59e0b' },
+};
+function showToast(type, title, msg) {
+  const c = CFG[type] || CFG.success;
+  const tc = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.style.cssText = `pointer-events:all;display:flex;align-items:center;width:300px;border-radius:14px;overflow:hidden;position:relative;background:${c.bg};box-shadow:0 10px 32px rgba(0,0,0,.25);animation:toastIn .4s cubic-bezier(.34,1.56,.64,1) forwards;transform:translateY(-80px);opacity:0;`;
+  t.innerHTML = `<div style="width:48px;min-width:48px;align-self:stretch;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.15);font-size:16px;font-weight:700;color:#fff;">${c.icon}</div><div style="flex:1;padding:10px 8px 10px 12px;"><p style="font-size:7px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin:0 0 2px;color:${c.lb}">${type}</p><p style="font-size:13px;font-weight:700;margin:0 0 1px;color:${c.ttl}">${title}</p><p style="font-size:10px;margin:0;color:${c.msg};opacity:.85;">${msg}</p></div><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;padding:6px 10px 0 0;align-self:flex-start;color:#fff;opacity:.4;font-size:14px;">✕</button><div style="position:absolute;bottom:0;left:0;height:2px;background:${c.pr};animation:toastProg 3s linear forwards;"></div>`;
+  tc.appendChild(t);
+  setTimeout(() => { t.style.animation = 'toastOut .3s ease forwards'; setTimeout(() => t.remove(), 300); }, 3000);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  {% if messages %}{% for m in messages %}
+    {% if 'success' in m.tags %}showToast('success','Done!','{{ m|escapejs }}');
+    {% elif 'error' in m.tags %}showToast('error','Error','{{ m|escapejs }}');
+    {% elif 'warning' in m.tags %}showToast('warning','Notice','{{ m|escapejs }}');
+    {% endif %}
+  {% endfor %}{% endif %}
+});
+
+/* ════════════ SIGNOUT ════════════ */
+function openAdminSignoutModal() { document.getElementById('adminSignoutOverlay').classList.add('open'); }
+function closeAdminSignoutModal() { document.getElementById('adminSignoutOverlay').classList.remove('open'); }
+document.getElementById('adminSignoutOverlay').addEventListener('click', function(e){ if(e.target===this) closeAdminSignoutModal(); });
+
+/* ════════════ IMAGE UPLOAD + CROPPER ════════════ */
+let croppedImages = [];
+let cropper = null;
+
+function handleFileSelect(e) {
+  const files = Array.from(e.target.files);
+  e.target.value = '';
+  if (!files.length) return;
+  processFilesSequentially(files, 0);
+}
+
+function processFilesSequentially(files, idx) {
+  if (idx >= files.length) return;
+  const file = files[idx];
+  const valid = ['image/jpeg','image/png','image/webp','image/jpg'];
+  if (!valid.includes(file.type)) {
+    showToast('error','Invalid File',`${file.name} is not a valid image type.`);
+    processFilesSequentially(files, idx + 1);
+    return;
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    showToast('error','Too Large',`${file.name} exceeds 2MB.`);
+    processFilesSequentially(files, idx + 1);
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    openCropModal(ev.target.result, () => { processFilesSequentially(files, idx + 1); });
+  };
+  reader.readAsDataURL(file);
+}
+
+function openCropModal(src, onDone) {
+  const modal = document.getElementById('cropModal');
+  const img = document.getElementById('cropImage');
+  img.src = src;
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  if (cropper) { cropper.destroy(); cropper = null; }
+  img.onload = () => {
+    cropper = new Cropper(img, {
+      aspectRatio: 1, viewMode: 1, autoCropArea: 0.9,
+      movable: true, zoomable: true, rotatable: false,
+      scalable: false, background: false, guides: true,
+      highlight: true, cropBoxResizable: true,
+    });
+  };
+  window._cropOnDone = onDone;
+}
+
+function closeCropModal() {
+  document.getElementById('cropModal').classList.remove('open');
+  document.body.style.overflow = '';
+  if (cropper) { cropper.destroy(); cropper = null; }
+}
+
+function applyCrop() {
+  if (!cropper) return;
+  const canvas = cropper.getCroppedCanvas({ width:800, height:800, imageSmoothingQuality:'high' });
+  canvas.toBlob((blob) => {
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    croppedImages.push({ blob, dataUrl });
+    renderPreviews();
+    closeCropModal();
+    const onDone = window._cropOnDone;
+    window._cropOnDone = null;
+    if (onDone) onDone();
+  }, 'image/jpeg', 0.92);
+}
+
+function removeImage(idx) {
+  croppedImages.splice(idx, 1);
+  renderPreviews();
+}
+
+function renderPreviews() {
+  const grid = document.getElementById('previewGrid');
+  grid.innerHTML = '';
+  document.getElementById('imgCount').textContent = croppedImages.length;
+  croppedImages.forEach((img, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'thumb-wrap fade-in' + (i === 0 ? ' thumb-primary' : '');
+    wrap.innerHTML = `
+      <img src="${img.dataUrl}" alt="Product image ${i+1}"/>
+      ${i === 0 ? '<span class="thumb-badge">Primary</span>' : ''}
+      <button type="button" class="thumb-remove" onclick="removeImage(${i})">
+        <svg width="10" height="10" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    `;
+    grid.appendChild(wrap);
+  });
+  const addBtn = document.createElement('div');
+  addBtn.className = 'thumb-add';
+  addBtn.onclick = () => document.getElementById('fileInput').click();
+  addBtn.innerHTML = `<svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>`;
+  grid.appendChild(addBtn);
+  if (croppedImages.length >= 3) setImageError(null);
+}
+
+function setImageError(msg) {
+  const el = document.getElementById('imageError');
+  const txt = document.getElementById('imageErrorText');
+  if (msg) { el.classList.remove('hidden'); txt.textContent = msg; }
+  else { el.classList.add('hidden'); }
+}
+
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+zone.addEventListener('drop', e => {
+  e.preventDefault();
+  zone.classList.remove('drag-over');
+  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+  processFilesSequentially(files, 0);
+});
+
+/* ════════════ RICH TEXT ════════════ */
+const editor = document.getElementById('descEditor');
+editor.addEventListener('input', updateDescCount);
+function updateDescCount() {
+  const text = editor.innerText || '';
+  document.getElementById('descCount').textContent = Math.min(text.length, 2000);
+}
+function execCmd(cmd) {
+  if (cmd === 'createLink') {
+    const url = prompt('Enter URL:');
+    if (url) document.execCommand('createLink', false, url);
+  } else {
+    document.execCommand(cmd, false, null);
+  }
+  editor.focus();
+}
+
+/* ════════════ TAG INPUT ════════════ */
+let tags = [];
+const tagInput = document.getElementById('tagInput');
+const tagContainer = document.getElementById('tagContainer');
+const skinTypeHidden = document.getElementById('skinTypeHidden');
+
+tagInput.addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ',') && tagInput.value.trim()) {
+    e.preventDefault();
+    addTag(tagInput.value.trim().replace(/,/g,''));
+    tagInput.value = '';
+  }
+  if (e.key === 'Backspace' && tagInput.value === '' && tags.length) {
+    removeTag(tags.length - 1);
+  }
+});
+function addTag(val) {
+  if (!val || tags.includes(val) || tags.length >= 8) return;
+  tags.push(val);
+  renderTags();
+}
+function removeTag(idx) {
+  tags.splice(idx, 1);
+  renderTags();
+}
+function renderTags() {
+  tagContainer.innerHTML = '';
+  tags.forEach((t, i) => {
+    const span = document.createElement('span');
+    span.className = 'tag';
+    span.innerHTML = `${t} <button type="button" class="tag-remove" onclick="removeTag(${i})">×</button>`;
+    tagContainer.appendChild(span);
+  });
+  skinTypeHidden.value = tags.join(',');
+}
+
+/* ════════════ VISIBILITY TOGGLE ════════════ */
+function toggleVisibility() {
+  const tgl = document.getElementById('visTgl');
+  const inp = document.getElementById('isActiveInput');
+  const badge = document.getElementById('visBadge');
+  const isOn = tgl.classList.contains('tgl-on');
+  tgl.classList.toggle('tgl-on', !isOn);
+  if (!isOn) {
+    inp.value = 'true';
+    badge.className = 'mt-3 flex items-center gap-2 text-xs font-semibold text-green-700 bg-green-50 border border-green-100 rounded-xl px-3 py-2';
+    badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0"></span>Product will be visible on store';
+  } else {
+    inp.value = 'false';
+    badge.className = 'mt-3 flex items-center gap-2 text-xs font-semibold text-gray-500 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2';
+    badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-gray-400 flex-shrink-0"></span>Product will be hidden from store';
+  }
+}
+
+/* ════════════ FORM SUBMIT ════════════ */
+async function submitProduct() {
+  let valid = true;
+
+  // Validate name
+  const name = document.getElementById('productName').value.trim();
+  const nameErr = document.getElementById('nameError');
+  if (!name || name.length < 3) {
+    nameErr.textContent = name ? 'Product name is too short (min 3 chars)' : 'Product name is required';
+    nameErr.classList.remove('hidden');
+    valid = false;
+  } else {
+    nameErr.classList.add('hidden');
+  }
+
+  // Validate description
+  const descText = editor.innerText.trim();
+  document.getElementById('descHidden').value = editor.innerHTML;
+  const descErr = document.getElementById('descError');
+  if (!descText || descText.length < 12) {
+    descErr.textContent = descText ? 'Description is too short (min 12 chars)' : 'Description is required';
+    descErr.classList.remove('hidden');
+    valid = false;
+  } else {
+    descErr.classList.add('hidden');
+  }
+
+  // Validate images
+  if (croppedImages.length < 3) {
+    setImageError(`Minimum 3 images required. You have ${croppedImages.length}.`);
+    valid = false;
+  } else {
+    setImageError(null);
+  }
+
+  if (!valid) {
+    showToast('error', 'Validation Failed', 'Please fix the errors before publishing.');
+    // Scroll to first error
+    const firstErr = document.querySelector('.text-red-500:not(.hidden), #imageError:not(.hidden)');
+    if (firstErr) firstErr.scrollIntoView({ behavior:'smooth', block:'center' });
+    return;
+  }
+
+  // Build FormData
+  const form = document.getElementById('addProductForm');
+  const formData = new FormData(form);
+  formData.delete('images');
+  for (let i = 0; i < croppedImages.length; i++) {
+    formData.append('images', croppedImages[i].blob, `product_image_${i}.jpg`);
+  }
+  formData.set('description', editor.innerHTML);
+
+  // Show spinner
+  const btn = document.getElementById('publishBtn');
+  const btnText = document.getElementById('publishBtnText');
+  const spinner = document.getElementById('publishSpinner');
+  const icon = document.getElementById('publishIcon');
+  btn.disabled = true;
+  btn.style.opacity = '0.75';
+  btn.style.cursor = 'not-allowed';
+  btnText.textContent = 'Publishing...';
+  spinner.classList.remove('hidden');
+  icon.classList.add('hidden');
+
+  try {
+    const resp = await fetch(form.action, { method:'POST', body:formData });
+
+    if (resp.redirected || (resp.ok && resp.url && resp.url !== window.location.href)) {
+      showToast('success', 'Published!', 'Product added successfully.');
+      setTimeout(() => window.location.href = resp.url || "{% url 'product_management' %}", 800);
+      return;
+    }
+
+    const text = await resp.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text, 'text/html');
+    const errorEls = doc.querySelectorAll('.text-red-500, .errorlist');
+
+    if (errorEls.length > 0) {
+      showToast('error', 'Server Error', 'Please check the form errors.');
+    } else {
+      showToast('success', 'Published!', 'Product added successfully.');
+      setTimeout(() => window.location.href = "{% url 'product_management' %}", 800);
+      return;
+    }
+  } catch (err) {
+    showToast('error', 'Network Error', 'Please check your connection and try again.');
+  }
+
+  // Re-enable button
+  btn.disabled = false;
+  btn.style.opacity = '1';
+  btn.style.cursor = 'pointer';
+  btnText.textContent = 'Publish Product';
+  spinner.classList.add('hidden');
+  icon.classList.remove('hidden');
+}
+
+/* ════════════ INIT ════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  renderPreviews();
+  {% if form.errors %}showToast('error', 'Form Error', 'Please correct the errors below.');{% endif %}
+
+  // Auto-expand products dropdown in sidebar
+  const dd = document.getElementById('products-dropdown');
+  const ch = document.getElementById('products-chevron');
+  if (dd && ch) {
+    setTimeout(() => {
+      dd.style.maxHeight = dd.scrollHeight + 'px';
+      ch.style.transform = 'rotate(90deg)';
+    }, 100);
+  }
+});
+</script>
+</body>
+</html>
