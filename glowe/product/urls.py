@@ -26,4 +26,13 @@ urlpatterns = [
     path('adminpanel/products/variants/delete/<int:id>/', views.delete_variant, name='delete_variant'),
     path('adminpanel/products/variants/toggle-status/<int:id>/', views.toggle_variant_status, name='toggle_variant_status'),
     path('adminpanel/products/variants/set-default/<int:id>/', views.set_default_variant, name='set_default_variant'),
+    
+    
+    path('products/', views.product_listing, name='product_listing'),
+    
+    
+    
+    
+    
+    
 ]

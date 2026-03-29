@@ -5,6 +5,7 @@ from .models import ProductImage,Product,Variant,Category
 from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator  
 from django.db.models import Q,Sum,Min
+from django.db.models import Prefetch
 import json
 
 def add_product(request):
@@ -531,8 +532,102 @@ def variant_management(request,product_id):
     })
  
 
+# --------------- end ---- admin side ayii --
+
+
+#---== user side  statinggg--
+
+def product_listing(request):
+    
+    products=Product.objects.filter(
+        is_active=True,
+        is_deleted=False,
+        variants__is_active=True,
+        variants__is_default=True, 
+    ).distinct()
+    
+    
+    search=request.GET.get('search','').strip()
+    if search:
+        products=products.filter(name__icontains=search) 
+        
+    category=request.GET.get('category','').strip()
+    if category:
+        products =products.filter(category__id=category)
+    
+    skin_type=request.GET.get('skin_type','').strip()
+    if skin_type:
+        products=products.filter(skin_type__iexact=skin_type)
+        
+    #price filtering     
+    min_price=request.GET.get('min_price','').strip()
+    max_price=request.GET.get('max_price','').strip()
+
+    try:
+        min_price = int(min_price) if min_price else None
+        max_price = int(max_price) if max_price else None
+    except ValueError:
+        min_price = None
+        max_price = None
+
+    #if user mistake we correct it swap it 
+    if min_price and max_price:
+        if int(min_price) > int(max_price):
+            min_price,max_price= max_price,min_price
             
-            
+    if min_price:
+        products=products.filter(variants__price__gte=min_price)
+    if max_price:
+        products=products.filter(variants__price__lte=max_price)
+    
+    #sortingg
+    sort=request.GET.get('sort','').strip()
+    
+    if sort == 'price_low':
+        products=products.annotate(min_price=Min("variants__price")).order_by('min_price')
+        
+    elif sort == 'price_high':
+        products=products.annotate(min_price=Min("variants__price")).order_by('-min_price')
+        
+    elif sort == 'a_z':
+        products= products.order_by('name')
+    
+    elif sort == 'z_a':
+        products =products.order_by('-name')
+    
+    else :
+        products =products.order_by('-id')
+        
+    total_count = products.count()
+        
+    products =products.prefetch_related(
+        Prefetch('images',queryset=ProductImage.objects.filter(is_primary=True)),#load only images  is is_primary=True
+        Prefetch('variants',queryset=Variant.objects.filter(is_default=True)) # only the default true   appo load less fast kiitum 
+    )
+
+        
+    paginator=Paginator(products,9)
+    page_number=request.GET.get('page')
+    page_obj=paginator.get_page(page_number)
+    
+    categories =Category.objects.filter(is_active=True,is_deleted=False)
+    skin_types = ['Oily', 'Dry', 'Sensitive', 'Combination', 'Normal','Acnce-prono','Mature','Dehydrated','Dull']
+    
+    return render(request,"user/product_listing.html",{
+        'page_obj':page_obj,
+        "categories":categories,
+        'total_count':total_count,
+         'search_query':search,
+        'selected_category':category,
+        'selected_skin_type':skin_type,
+        'selected_sort':sort,
+        'min_price': min_price or 0,
+        'max_price':max_price or 5000,
+        'skin_types':skin_types,
+    })
+        
+    
+    
             
             
     

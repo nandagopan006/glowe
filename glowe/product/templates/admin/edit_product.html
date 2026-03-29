@@ -14,9 +14,7 @@ tailwind.config = {
   theme: {
     extend: {
       fontFamily: { sans:['DM Sans','sans-serif'], serif:['Playfair Display','serif'] },
-      colors: {
-        sage:{ 50:'#f2f7f2',100:'#e2f0e2',200:'#c3dfc3',300:'#94c494',400:'#64a864',500:'#4a9050',600:'#3a7a3e',700:'#2f6232',800:'#264f29',900:'#1e3e20' }
-      }
+      colors: { sage:{ 50:'#f2f7f2',100:'#e2f0e2',200:'#c3dfc3',300:'#94c494',400:'#64a864',500:'#4a9050',600:'#3a7a3e',700:'#2f6232',800:'#264f29',900:'#1e3e20' } }
     }
   }
 }
@@ -29,6 +27,8 @@ body { background:#f4f6f3; margin:0; }
 @keyframes toastProg{ from { width:100%; } to { width:0%; } }
 @keyframes fadeIn   { from { opacity:0; transform:scale(.95); } to { opacity:1; transform:scale(1); } }
 @keyframes spin     { to { transform:rotate(360deg); } }
+@keyframes skPop    { from { opacity:0; transform:scale(.8) translateY(6px); } to { opacity:1; transform:scale(1) translateY(0); } }
+
 .upload-zone { border:2px dashed #c3dfc3; border-radius:16px; transition:all .2s; }
 .upload-zone.drag-over { border-color:#4a9050; background:#f0fdf4; }
 .thumb-wrap { position:relative; border-radius:12px; overflow:hidden; aspect-ratio:1; transition:all .2s; }
@@ -50,9 +50,6 @@ body { background:#f4f6f3; margin:0; }
 .tgl.tgl-on { background:#4a9050; }
 .tgl-thumb { position:absolute; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.18); transition:transform .25s cubic-bezier(.34,1.56,.64,1); }
 .tgl.tgl-on .tgl-thumb { transform:translateX(22px); }
-.tag { display:inline-flex; align-items:center; gap:4px; background:#e2f0e2; color:#264f29; font-size:12px; font-weight:600; padding:3px 10px; border-radius:999px; }
-.tag-x { cursor:pointer; opacity:.6; font-size:14px; line-height:1; border:none; background:none; padding:0; color:inherit; }
-.tag-x:hover { opacity:1; }
 .crop-modal { position:fixed; inset:0; z-index:9990; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(0,0,0,.6); backdrop-filter:blur(6px); opacity:0; pointer-events:none; transition:opacity .25s; }
 .crop-modal.open { opacity:1; pointer-events:all; }
 .crop-box { background:#fff; border-radius:20px; width:100%; max-width:480px; overflow:hidden; transform:scale(.94) translateY(12px); transition:transform .25s cubic-bezier(.34,1.56,.64,1); box-shadow:0 32px 80px rgba(0,0,0,.22); }
@@ -89,6 +86,23 @@ body { background:#f4f6f3; margin:0; }
 .htu-remove:hover svg { stroke:#ef4444; }
 .htu-add-btn { width:100%; display:flex; align-items:center; justify-content:center; gap:8px; padding:10px; border-radius:12px; border:2px dashed #e5e7eb; background:transparent; color:#9ca3af; font-size:13px; font-weight:500; cursor:pointer; transition:all .18s; margin-top:4px; }
 .htu-add-btn:hover { border-color:#4a9050; color:#4a9050; background:#f0fdf4; }
+
+/* ── Skin Type Selector ── */
+.sk-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.sk { border-radius:12px; padding:12px 10px 11px; border:1.5px solid #e5e7eb; background:#fafafa; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:3px; position:relative; transition:border-color .18s, background .18s, transform .12s; user-select:none; }
+.sk:hover { border-color:#64a864; transform:translateY(-1px); background:#f6fdf6; }
+.sk:active { transform:scale(.97); }
+.sk.on { border-color:#3a7a3e; background:#edf8ed; }
+.sk-dot { position:absolute; top:8px; right:8px; width:16px; height:16px; border-radius:50%; background:#3a7a3e; display:flex; align-items:center; justify-content:center; opacity:0; transform:scale(.3); transition:opacity .18s, transform .22s cubic-bezier(.34,1.7,.64,1); }
+.sk.on .sk-dot { opacity:1; transform:scale(1); }
+.sk-name { font-size:12px; font-weight:600; color:#111827; text-align:center; line-height:1.3; }
+.sk-sub  { font-size:10px; color:#9ca3af; text-align:center; line-height:1.3; }
+.sk.on .sk-name { color:#1e3d20; }
+.sk.on .sk-sub  { color:#4a9050; }
+.sk-badge { font-size:11px; font-weight:500; padding:4px 11px; border-radius:999px; background:#f3f4f6; color:#9ca3af; border:0.5px solid #e5e7eb; transition:all .2s; }
+.sk-badge.has { background:#e2f0e2; color:#264f29; border-color:#a3d9b0; }
+.sk-more-btn { width:100%; padding:9px; border-radius:10px; border:1.5px dashed #e5e7eb; background:transparent; color:#9ca3af; font-size:12px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all .18s; }
+.sk-more-btn:hover { border-color:#64a864; color:#3a7a3e; background:#f6fdf6; }
 </style>
 </head>
 <body>
@@ -96,8 +110,6 @@ body { background:#f4f6f3; margin:0; }
 {% include 'admin_sidebar.html' %}
 
 <input type="hidden" id="csrfToken" value="{{ csrf_token }}"/>
-
-<!-- TOAST -->
 <div id="toastBox" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:99999;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;min-width:300px;"></div>
 
 <!-- SIGNOUT MODAL -->
@@ -120,9 +132,7 @@ body { background:#f4f6f3; margin:0; }
   <div class="obox">
     <div class="obar"></div>
     <div class="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mb-4" style="border:2px solid #fecaca;">
-      <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
-      </svg>
+      <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
     </div>
     <h2 class="text-base font-bold text-gray-900 mb-1">Archive Product?</h2>
     <p class="text-sm text-gray-400 mb-1 max-w-[220px] leading-relaxed">Moves <strong class="text-gray-700">{{ product.name }}</strong> to archived.</p>
@@ -138,10 +148,7 @@ body { background:#f4f6f3; margin:0; }
 <div id="cropModal" class="crop-modal">
   <div class="crop-box">
     <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-      <div>
-        <p class="font-bold text-gray-900 text-sm">Crop Image</p>
-        <p class="text-xs text-gray-400 mt-0.5">Square 1:1 ratio</p>
-      </div>
+      <div><p class="font-bold text-gray-900 text-sm">Crop Image</p><p class="text-xs text-gray-400 mt-0.5">Square 1:1 ratio</p></div>
       <button type="button" onclick="closeCrop()" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
@@ -158,8 +165,6 @@ body { background:#f4f6f3; margin:0; }
 
 <!-- MAIN -->
 <div class="lg:ml-[240px] min-h-screen bg-gray-50 pb-[80px]">
-
-  <!-- Sticky header -->
   <div class="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-gray-100 px-5 sm:px-8 py-4">
     <div class="flex items-center gap-2 mb-1">
       <a href="{% url 'product_management' %}" class="text-xs text-gray-400 hover:text-sage-600 transition-colors">Products</a>
@@ -174,15 +179,14 @@ body { background:#f4f6f3; margin:0; }
     {% csrf_token %}
     <input type="hidden" name="is_active"       id="isActiveInput"  value="{{ product.is_active|yesno:'true,false' }}"/>
     <input type="hidden" name="description"      id="descInput"      value=""/>
-    <input type="hidden" name="skin_type"        id="skinInput"      value="{{ product.skin_type }}"/>
+    <input type="hidden" name="skin_type"        id="skinTypeHidden" value="{{ product.skin_type }}"/>
     <input type="hidden" name="primary_image_id" id="primaryIdInput" value=""/>
+    <textarea name="how_to_use" id="howToUseHidden" class="hidden">{{ product.how_to_use }}</textarea>
     <div id="newFilesContainer"></div>
 
     {% if show_form_errors and form.non_field_errors %}
     <div class="mx-5 sm:mx-8 mt-4 p-4 bg-red-50 border border-red-200 rounded-xl">
-      {% for e in form.non_field_errors %}
-      <p class="text-red-600 text-sm font-medium">{{ e }}</p>
-      {% endfor %}
+      {% for e in form.non_field_errors %}<p class="text-red-600 text-sm font-medium">{{ e }}</p>{% endfor %}
     </div>
     {% endif %}
 
@@ -197,58 +201,35 @@ body { background:#f4f6f3; margin:0; }
             <div class="flex items-center justify-between mb-4">
               <div>
                 <h2 class="font-bold text-gray-900 text-[15px]">Product Media</h2>
-                <p class="text-xs text-gray-400 mt-0.5">⭐ to set primary · ✕ to remove · Primary auto-reassigns on delete</p>
+                <p class="text-xs text-gray-400 mt-0.5">⭐ to set primary · ✕ to remove</p>
               </div>
-              <span id="imgBadge" class="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-sage-50 text-sage-700 border-sage-100">
-                {{ product.images.count }} images
-              </span>
+              <span id="imgBadge" class="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-sage-50 text-sage-700 border-sage-100">{{ product.images.count }} images</span>
             </div>
-
             <div id="imgGrid" class="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-4">
               {% for img in product.images.all %}
-              <div class="thumb-wrap {% if img.is_primary %}thumb-primary-ring{% endif %}"
-                   id="eimg-{{ img.id }}" data-id="{{ img.id }}">
+              <div class="thumb-wrap {% if img.is_primary %}thumb-primary-ring{% endif %}" id="eimg-{{ img.id }}" data-id="{{ img.id }}">
                 <img src="{{ img.image.url }}" alt="img"/>
                 <span class="thumb-badge badge-primary" id="ebadge-{{ img.id }}" {% if not img.is_primary %}style="display:none"{% endif %}>Primary</span>
                 <div class="thumb-actions">
-                  <button type="button"
-                          class="t-btn t-star {% if img.is_primary %}active{% endif %}"
-                          id="estar-{{ img.id }}"
-                          onclick="setPrimary({{ img.id }})"
-                          title="Set as primary">
-                    <svg width="10" height="10"
-                         fill="{% if img.is_primary %}#fff{% else %}none{% endif %}"
-                         id="estarsvg-{{ img.id }}"
-                         stroke="#fff" stroke-width="2" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
-                    </svg>
+                  <button type="button" class="t-btn t-star {% if img.is_primary %}active{% endif %}" id="estar-{{ img.id }}" onclick="setPrimary({{ img.id }})" title="Set as primary">
+                    <svg width="10" height="10" fill="{% if img.is_primary %}#fff{% else %}none{% endif %}" id="estarsvg-{{ img.id }}" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
                   </button>
-                  <button type="button"
-                          class="t-btn t-del"
-                          onclick="deleteImage({{ img.id }}, this)"
-                          title="Remove">
-                    <svg width="10" height="10" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
+                  <button type="button" class="t-btn t-del" onclick="deleteImage({{ img.id }}, this)" title="Remove">
+                    <svg width="10" height="10" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
                   </button>
                 </div>
               </div>
               {% endfor %}
-
               <div id="newSlot"></div>
-
               <div class="thumb-add" onclick="document.getElementById('fileInput').click()">
                 <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>
                 <span class="text-[10px] text-gray-400 font-medium">Add</span>
               </div>
             </div>
-
             <div id="dropZone" class="upload-zone px-5 py-4 cursor-pointer" onclick="document.getElementById('fileInput').click()">
               <div class="flex items-center justify-center gap-3">
                 <div class="w-8 h-8 rounded-xl bg-sage-50 flex items-center justify-center flex-shrink-0">
-                  <svg class="w-4 h-4 text-sage-500" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                  </svg>
+                  <svg class="w-4 h-4 text-sage-500" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
                 </div>
                 <div class="text-left">
                   <p class="text-sm font-semibold text-gray-700">Upload new images</p>
@@ -261,20 +242,13 @@ body { background:#f4f6f3; margin:0; }
           <!-- Description -->
           <div class="card">
             <h2 class="font-bold text-gray-900 text-[15px] mb-4">Detailed Description</h2>
-            <div id="descEditor"
-                 contenteditable="true"
-                 class="min-h-[140px] p-4 rounded-xl border border-gray-200 text-sm text-gray-700 outline-none focus:ring-2 focus:ring-sage-300 focus:border-sage-400 transition-all leading-relaxed"
-                 style="background:#fafafa;"
-                 oninput="updateDescCount()">{{ product.description|safe }}</div>
+            <div id="descEditor" contenteditable="true"
+              class="min-h-[140px] p-4 rounded-xl border border-gray-200 text-sm text-gray-700 outline-none focus:ring-2 focus:ring-sage-300 focus:border-sage-400 transition-all leading-relaxed"
+              style="background:#fafafa;" oninput="updateDescCount()">{{ product.description|safe }}</div>
             <div class="flex justify-between mt-2">
               <p id="descErr" class="hidden text-red-500 text-xs font-medium"></p>
               <p class="text-xs text-gray-400 ml-auto"><span id="descCount">0</span> / 2000</p>
             </div>
-            {% if show_form_errors %}
-            {% for e in form.description.errors %}
-            <p class="text-red-500 text-xs mt-1 font-medium">{{ e }}</p>
-            {% endfor %}
-            {% endif %}
           </div>
 
           <!-- Ingredients -->
@@ -283,35 +257,17 @@ body { background:#f4f6f3; margin:0; }
             <p class="text-xs text-gray-400 mb-4">Separated by commas, descending concentration order.</p>
             <label class="lbl">Full Ingredient List</label>
             <textarea name="ingredients" rows="4" class="inp resize-none" placeholder="e.g. Aqua, Glycerin, Niacinamide...">{{ product.ingredients }}</textarea>
-            {% if show_form_errors %}
-            {% for e in form.ingredients.errors %}
-            <p class="text-red-500 text-xs mt-1 font-medium">{{ e }}</p>
-            {% endfor %}
-            {% endif %}
           </div>
 
-          <!-- ══ HOW TO USE ══ -->
+          <!-- How to Use -->
           <div class="card">
             <h2 class="font-bold text-gray-900 text-[15px] mb-1">How to Use</h2>
             <p class="text-xs text-gray-400 mb-4">Step-by-step application instructions.</p>
-
-            <!-- Hidden textarea — submits with the form as JSON -->
-            <textarea name="how_to_use" id="howToUseHidden" class="hidden">{{ product.how_to_use }}</textarea>
-
-            <!-- Step rows rendered by JS -->
             <div id="htuSteps" class="flex flex-col gap-4 mb-3"></div>
-
-            <!-- Add Step -->
             <button type="button" class="htu-add-btn" onclick="htuAddStep()">
               <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>
               Add Step
             </button>
-
-            {% if show_form_errors %}
-            {% for e in form.how_to_use.errors %}
-            <p class="text-red-500 text-xs mt-1 font-medium">{{ e }}</p>
-            {% endfor %}
-            {% endif %}
           </div>
 
         </div>
@@ -322,19 +278,12 @@ body { background:#f4f6f3; margin:0; }
           <!-- General Info -->
           <div class="card">
             <h2 class="font-bold text-gray-900 text-[15px] mb-5">General Information</h2>
-
             <div class="mb-4">
               <label class="lbl">Product Name <span class="text-red-400">*</span></label>
               <input type="text" name="name" id="nameInput" class="inp" value="{{ product.name }}" placeholder="e.g. Revitalizing Night Cream"/>
               <p id="nameErr" class="hidden text-red-500 text-xs mt-1 font-medium"></p>
-              {% if show_form_errors %}
-              {% for e in form.name.errors %}
-              <p class="text-red-500 text-xs mt-1 font-medium">{{ e }}</p>
-              {% endfor %}
-              {% endif %}
             </div>
-
-            <div class="mb-4">
+            <div class="mb-5">
               <label class="lbl">Category</label>
               <div class="relative">
                 <select name="category" class="inp appearance-none cursor-pointer pr-10">
@@ -345,21 +294,26 @@ body { background:#f4f6f3; margin:0; }
                 </select>
                 <svg class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M19 9l-7 7-7-7"/></svg>
               </div>
-              {% if show_form_errors %}
-              {% for e in form.category.errors %}
-              <p class="text-red-500 text-xs mt-1 font-medium">{{ e }}</p>
-              {% endfor %}
-              {% endif %}
             </div>
 
+            <!-- ── SKIN TYPE SELECTOR ── -->
             <div>
-              <label class="lbl">Skin Type Tags</label>
-              <div id="tagBox" class="flex flex-wrap gap-1.5 mb-2 min-h-[28px]"></div>
-              <div class="relative">
-                <input type="text" id="tagInput" class="inp pr-10" placeholder="Type and press Enter..."/>
-                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-300 text-xs pointer-events-none">↵</span>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                <div>
+                  <p style="margin:0;font-size:10.5px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em;">Skin Type</p>
+                  <p style="margin:2px 0 0;font-size:11px;color:#9ca3af;">Select all that apply</p>
+                </div>
+                <div id="skBadge" class="sk-badge">0 selected</div>
               </div>
-              <p class="text-[11px] text-gray-400 mt-1.5">Suggested: Dry, Oily, Combination, Sensitive, Acne-prone, Mature</p>
+              <div class="sk-grid" id="skGrid"></div>
+              <div style="margin-top:9px;">
+                <button type="button" class="sk-more-btn" onclick="skinTypeToggleMore()">
+                  <span id="skMoreTxt">Show 3 more types</span>
+                  <svg id="skMoreArrow" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" style="transition:transform .22s;">
+                    <path stroke-linecap="round" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -395,9 +349,7 @@ body { background:#f4f6f3; margin:0; }
                 <p class="text-sm font-semibold text-gray-700">Visible to customers</p>
                 <p class="text-xs text-gray-400 mt-0.5">Show on store front</p>
               </div>
-              <button type="button" id="visTgl" class="tgl {% if product.is_active %}tgl-on{% endif %}" onclick="toggleVis()">
-                <span class="tgl-thumb"></span>
-              </button>
+              <button type="button" id="visTgl" class="tgl {% if product.is_active %}tgl-on{% endif %}" onclick="toggleVis()"><span class="tgl-thumb"></span></button>
             </div>
             <div id="visBadge" class="mt-3 flex items-center gap-2 text-xs font-semibold rounded-xl px-3 py-2 border {% if product.is_active %}text-green-700 bg-green-50 border-green-100{% else %}text-gray-500 bg-gray-50 border-gray-100{% endif %}">
               <span id="visDot" class="w-1.5 h-1.5 rounded-full flex-shrink-0 {% if product.is_active %}bg-green-500{% else %}bg-gray-400{% endif %}"></span>
@@ -424,16 +376,12 @@ body { background:#f4f6f3; margin:0; }
 
 <!-- BOTTOM BAR -->
 <div class="bot-bar">
-  <p class="text-xs text-gray-400 mr-auto hidden sm:block">
-    Editing: <span class="font-semibold text-gray-600">{{ product.name }}</span>
-  </p>
-  <a href="{% url 'product_management' %}"
-     class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-full transition-colors no-underline">
-    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
-    Cancel
+  <p class="text-xs text-gray-400 mr-auto hidden sm:block">Editing: <span class="font-semibold text-gray-600">{{ product.name }}</span></p>
+  <a href="{% url 'product_management' %}" class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-full transition-colors no-underline">
+    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>Cancel
   </a>
   <button type="button" id="saveBtn" onclick="saveProduct()"
-          class="inline-flex items-center gap-2 px-6 py-2.5 bg-sage-800 hover:bg-sage-900 text-white text-sm font-semibold rounded-full transition-all shadow-sm">
+    class="inline-flex items-center gap-2 px-6 py-2.5 bg-sage-800 hover:bg-sage-900 text-white text-sm font-semibold rounded-full transition-all shadow-sm">
     <span id="saveSpin" class="spinner hidden"></span>
     <svg id="saveIcon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
     <span id="saveTxt">Save Changes</span>
@@ -441,19 +389,8 @@ body { background:#f4f6f3; margin:0; }
 </div>
 
 <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp,image/jpg" multiple class="hidden" onchange="onFileSelect(event)"/>
-
-<div id="django-messages" style="display:none">
-  {% for m in messages %}
-  <span class="django-message" data-type="{{ m.level_tag }}" data-text="{{ m|escapejs }}"></span>
-  {% endfor %}
-</div>
-
-<div id="urlData"
-     data-delete-base="{% url 'delete_product_image' 0 %}"
-     data-archive-url="{% url 'soft_delete_product' product.id %}"
-     data-signout-url="{% url 'admin_signout' %}"
-     style="display:none">
-</div>
+<div id="django-messages" style="display:none">{% for m in messages %}<span class="django-message" data-type="{{ m.level_tag }}" data-text="{{ m|escapejs }}"></span>{% endfor %}</div>
+<div id="urlData" data-delete-base="{% url 'delete_product_image' 0 %}" data-archive-url="{% url 'soft_delete_product' product.id %}" data-signout-url="{% url 'admin_signout' %}" style="display:none"></div>
 
 <script>
 const CSRF = document.getElementById('csrfToken').value;
@@ -461,386 +398,213 @@ const URLS = document.getElementById('urlData').dataset;
 
 /* ── TOAST ── */
 const T = {
-  success: { icon:'✓', bg:'#1e3d2f', lb:'#6ee7a8', ttl:'#f0fdf4', msg:'#bbf7d0', pr:'#4ade80' },
-  error:   { icon:'✕', bg:'#3d1e1e', lb:'#fca5a5', ttl:'#fff1f2', msg:'#fecaca', pr:'#f87171' },
-  warning: { icon:'!', bg:'#3d2000', lb:'#fcd34d', ttl:'#fff8e1', msg:'#fde68a', pr:'#f59e0b' },
+  success:{ icon:'✓', bg:'#1e3d2f', lb:'#6ee7a8', ttl:'#f0fdf4', msg:'#bbf7d0', pr:'#4ade80' },
+  error:  { icon:'✕', bg:'#3d1e1e', lb:'#fca5a5', ttl:'#fff1f2', msg:'#fecaca', pr:'#f87171' },
+  warning:{ icon:'!', bg:'#3d2000', lb:'#fcd34d', ttl:'#fff8e1', msg:'#fde68a', pr:'#f59e0b' },
 };
 function toast(type, title, msg) {
-  const c = T[type] || T.success;
-  const box = document.getElementById('toastBox');
-  const el = document.createElement('div');
-  el.style.cssText = `pointer-events:all;display:flex;align-items:center;width:300px;border-radius:14px;overflow:hidden;position:relative;background:${c.bg};box-shadow:0 10px 32px rgba(0,0,0,.25);animation:toastIn .4s cubic-bezier(.34,1.56,.64,1) forwards;transform:translateY(-80px);opacity:0;`;
-  el.innerHTML = `<div style="width:48px;min-width:48px;align-self:stretch;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.15);font-size:16px;font-weight:700;color:#fff;">${c.icon}</div><div style="flex:1;padding:10px 8px 10px 12px;"><p style="font-size:7px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin:0 0 2px;color:${c.lb}">${type}</p><p style="font-size:13px;font-weight:700;margin:0 0 1px;color:${c.ttl}">${title}</p><p style="font-size:10px;margin:0;color:${c.msg};opacity:.85;">${msg}</p></div><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;padding:6px 10px 0 0;align-self:flex-start;color:#fff;opacity:.4;font-size:14px;">✕</button><div style="position:absolute;bottom:0;left:0;height:2px;background:${c.pr};animation:toastProg 3s linear forwards;"></div>`;
+  const c=T[type]||T.success, box=document.getElementById('toastBox'), el=document.createElement('div');
+  el.style.cssText=`pointer-events:all;display:flex;align-items:center;width:300px;border-radius:14px;overflow:hidden;position:relative;background:${c.bg};box-shadow:0 10px 32px rgba(0,0,0,.25);animation:toastIn .4s cubic-bezier(.34,1.56,.64,1) forwards;transform:translateY(-80px);opacity:0;`;
+  el.innerHTML=`<div style="width:48px;min-width:48px;align-self:stretch;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.15);font-size:16px;font-weight:700;color:#fff;">${c.icon}</div><div style="flex:1;padding:10px 8px 10px 12px;"><p style="font-size:7px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;margin:0 0 2px;color:${c.lb}">${type}</p><p style="font-size:13px;font-weight:700;margin:0 0 1px;color:${c.ttl}">${title}</p><p style="font-size:10px;margin:0;color:${c.msg};opacity:.85;">${msg}</p></div><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;padding:6px 10px 0 0;align-self:flex-start;color:#fff;opacity:.4;font-size:14px;">✕</button><div style="position:absolute;bottom:0;left:0;height:2px;background:${c.pr};animation:toastProg 3s linear forwards;"></div>`;
   box.appendChild(el);
-  setTimeout(() => { el.style.animation = 'toastOut .3s ease forwards'; setTimeout(() => el.remove(), 300); }, 3000);
+  setTimeout(()=>{el.style.animation='toastOut .3s ease forwards';setTimeout(()=>el.remove(),300);},3000);
 }
 
 /* ── OVERLAYS ── */
-function showOverlay(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
-function hideOverlay(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
-document.querySelectorAll('.overlay').forEach(el => {
-  el.addEventListener('click', e => { if (e.target === el) hideOverlay(el.id); });
-});
-
-/* ── SIGNOUT ── */
-function doSignout() {
-  fetch(URLS.signoutUrl, { method:'POST', headers:{'X-CSRFToken':CSRF} })
-    .then(r => { window.location.href = r.url || '/'; });
-}
-
-/* ── ARCHIVE ── */
-function doArchive() {
-  hideOverlay('archiveOverlay');
-  fetch(URLS.archiveUrl, { method:'POST', headers:{'X-CSRFToken':CSRF} })
-    .then(r => { window.location.href = r.url || '/adminpanel/products/'; });
-}
+function showOverlay(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';}
+function hideOverlay(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
+document.querySelectorAll('.overlay').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)hideOverlay(el.id);}));
+function doSignout(){fetch(URLS.signoutUrl,{method:'POST',headers:{'X-CSRFToken':CSRF}}).then(r=>{window.location.href=r.url||'/';});}
+function doArchive(){hideOverlay('archiveOverlay');fetch(URLS.archiveUrl,{method:'POST',headers:{'X-CSRFToken':CSRF}}).then(r=>{window.location.href=r.url||'/adminpanel/products/';});}
 
 /* ── DELETE IMAGE ── */
-function deleteImage(imageId, btn) {
-  if (!confirm('Remove this image?')) return;
-  const dbImages = document.querySelectorAll('.thumb-wrap[data-id]');
-  if (dbImages.length <= 1 && newImgs.length === 0) {
-    toast('error', 'Cannot delete', 'Product must have at least one image.');
-    return;
-  }
-  btn.disabled = true; btn.style.opacity = '0.5';
-  const url = URLS.deleteBase.replace(/\/0\/$/, '/'+imageId+'/').replace(/\/0$/, '/'+imageId);
-  fetch(url, { method:'POST', headers:{'X-CSRFToken':CSRF} })
-  .then(response => {
-    if (response.ok || response.redirected) {
-      const wrap = document.getElementById('eimg-'+imageId);
-      if (wrap) wrap.remove();
-      const remaining = document.querySelectorAll('.thumb-wrap[data-id]');
-      const anyPrimary = document.querySelector('.thumb-wrap[data-id] .t-star.active');
-      if (!anyPrimary && remaining.length > 0) setPrimary(parseInt(remaining[0].dataset.id));
-      const primaryInput = document.getElementById('primaryIdInput');
-      if (primaryInput.value == imageId) {
-        primaryInput.value = '';
-        const r2 = document.querySelectorAll('.thumb-wrap[data-id]');
-        if (r2.length > 0) setPrimary(parseInt(r2[0].dataset.id));
-      }
-      updateBadge();
-      toast('success', 'Deleted', 'Image removed successfully.');
-    } else {
-      btn.disabled = false; btn.style.opacity = '1';
-      toast('error', 'Error', 'Could not delete image. Try again.');
-    }
-  })
-  .catch(() => { btn.disabled = false; btn.style.opacity = '1'; toast('error', 'Error', 'Network error. Try again.'); });
+function deleteImage(imageId,btn) {
+  if(!confirm('Remove this image?')) return;
+  const dbImages=document.querySelectorAll('.thumb-wrap[data-id]');
+  if(dbImages.length<=1&&newImgs.length===0){toast('error','Cannot delete','Product must have at least one image.');return;}
+  btn.disabled=true;btn.style.opacity='0.5';
+  const url=URLS.deleteBase.replace(/\/0\/$/, '/'+imageId+'/').replace(/\/0$/,'/'+imageId);
+  fetch(url,{method:'POST',headers:{'X-CSRFToken':CSRF}}).then(response=>{
+    if(response.ok||response.redirected){
+      const wrap=document.getElementById('eimg-'+imageId);if(wrap)wrap.remove();
+      const remaining=document.querySelectorAll('.thumb-wrap[data-id]');
+      const anyPrimary=document.querySelector('.thumb-wrap[data-id] .t-star.active');
+      if(!anyPrimary&&remaining.length>0)setPrimary(parseInt(remaining[0].dataset.id));
+      const pi=document.getElementById('primaryIdInput');
+      if(pi.value==imageId){pi.value='';const r2=document.querySelectorAll('.thumb-wrap[data-id]');if(r2.length>0)setPrimary(parseInt(r2[0].dataset.id));}
+      updateBadge();toast('success','Deleted','Image removed successfully.');
+    } else{btn.disabled=false;btn.style.opacity='1';toast('error','Error','Could not delete image.');}
+  }).catch(()=>{btn.disabled=false;btn.style.opacity='1';toast('error','Error','Network error.');});
 }
 
 /* ── SET PRIMARY ── */
 function setPrimary(imageId) {
-  document.querySelectorAll('.thumb-wrap[data-id]').forEach(wrap => {
-    const id = parseInt(wrap.dataset.id);
-    wrap.classList.remove('thumb-primary-ring');
-    const badge = document.getElementById('ebadge-'+id);
-    const star  = document.getElementById('estar-'+id);
-    const svg   = document.getElementById('estarsvg-'+id);
-    if (badge) badge.style.display = 'none';
-    if (star)  star.classList.remove('active');
-    if (svg)   svg.setAttribute('fill','none');
+  document.querySelectorAll('.thumb-wrap[data-id]').forEach(wrap=>{
+    const id=parseInt(wrap.dataset.id);wrap.classList.remove('thumb-primary-ring');
+    const badge=document.getElementById('ebadge-'+id),star=document.getElementById('estar-'+id),svg=document.getElementById('estarsvg-'+id);
+    if(badge)badge.style.display='none';if(star)star.classList.remove('active');if(svg)svg.setAttribute('fill','none');
   });
-  const wrap = document.getElementById('eimg-'+imageId);
-  if (wrap) wrap.classList.add('thumb-primary-ring');
-  const badge = document.getElementById('ebadge-'+imageId);
-  const star  = document.getElementById('estar-'+imageId);
-  const svg   = document.getElementById('estarsvg-'+imageId);
-  if (badge) badge.style.display = '';
-  if (star)  star.classList.add('active');
-  if (svg)   svg.setAttribute('fill','#fff');
-  document.getElementById('primaryIdInput').value = imageId;
+  const wrap=document.getElementById('eimg-'+imageId);if(wrap)wrap.classList.add('thumb-primary-ring');
+  const badge=document.getElementById('ebadge-'+imageId),star=document.getElementById('estar-'+imageId),svg=document.getElementById('estarsvg-'+imageId);
+  if(badge)badge.style.display='';if(star)star.classList.add('active');if(svg)svg.setAttribute('fill','#fff');
+  document.getElementById('primaryIdInput').value=imageId;
 }
 
 /* ── CROPPER ── */
-let newImgs = [];
-let cropper = null;
-function onFileSelect(e) {
-  const files = Array.from(e.target.files); e.target.value = '';
-  processFiles(files, 0);
+let newImgs=[],cropper=null;
+function onFileSelect(e){const files=Array.from(e.target.files);e.target.value='';processFiles(files,0);}
+function processFiles(files,i){
+  if(i>=files.length)return;const f=files[i];
+  if(!['image/jpeg','image/png','image/webp','image/jpg'].includes(f.type)){toast('error','Invalid type',f.name+' not supported.');processFiles(files,i+1);return;}
+  if(f.size>2*1024*1024){toast('error','Too large',f.name+' must be under 2MB.');processFiles(files,i+1);return;}
+  const r=new FileReader();r.onload=ev=>openCrop(ev.target.result,()=>processFiles(files,i+1));r.readAsDataURL(f);
 }
-function processFiles(files, i) {
-  if (i >= files.length) return;
-  const f = files[i];
-  if (!['image/jpeg','image/png','image/webp','image/jpg'].includes(f.type)) {
-    toast('error','Invalid type', f.name+' is not supported.');
-    processFiles(files, i+1); return;
-  }
-  if (f.size > 2*1024*1024) {
-    toast('error','Too large', f.name+' must be under 2MB.');
-    processFiles(files, i+1); return;
-  }
-  const r = new FileReader();
-  r.onload = ev => openCrop(ev.target.result, () => processFiles(files, i+1));
-  r.readAsDataURL(f);
+function openCrop(src,cb){
+  document.getElementById('cropImg').src=src;document.getElementById('cropModal').classList.add('open');document.body.style.overflow='hidden';
+  if(cropper){cropper.destroy();cropper=null;}
+  document.getElementById('cropImg').onload=()=>{cropper=new Cropper(document.getElementById('cropImg'),{aspectRatio:1,viewMode:1,autoCropArea:.9,movable:true,zoomable:true,rotatable:false,scalable:false,background:false});};
+  window._cropCb=cb;
 }
-function openCrop(src, cb) {
-  document.getElementById('cropImg').src = src;
-  document.getElementById('cropModal').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  if (cropper) { cropper.destroy(); cropper = null; }
-  document.getElementById('cropImg').onload = () => {
-    cropper = new Cropper(document.getElementById('cropImg'), {
-      aspectRatio:1, viewMode:1, autoCropArea:.9,
-      movable:true, zoomable:true, rotatable:false, scalable:false, background:false
-    });
-  };
-  window._cropCb = cb;
+function closeCrop(){document.getElementById('cropModal').classList.remove('open');document.body.style.overflow='';if(cropper){cropper.destroy();cropper=null;}}
+function applyCrop(){
+  if(!cropper)return;
+  cropper.getCroppedCanvas({width:800,height:800,imageSmoothingQuality:'high'}).toBlob(blob=>{
+    newImgs.push({blob,dataUrl:URL.createObjectURL(blob)});renderNewImgs();closeCrop();
+    const cb=window._cropCb;window._cropCb=null;if(cb)cb();
+  },'image/jpeg',0.92);
 }
-function closeCrop() {
-  document.getElementById('cropModal').classList.remove('open');
-  document.body.style.overflow = '';
-  if (cropper) { cropper.destroy(); cropper = null; }
-}
-function applyCrop() {
-  if (!cropper) return;
-  cropper.getCroppedCanvas({ width:800, height:800, imageSmoothingQuality:'high' }).toBlob(blob => {
-    const dataUrl = URL.createObjectURL(blob);
-    newImgs.push({ blob, dataUrl });
-    renderNewImgs(); closeCrop();
-    const cb = window._cropCb; window._cropCb = null;
-    if (cb) cb();
-  }, 'image/jpeg', 0.92);
-}
-function removeNewImg(i, e) { e.stopPropagation(); newImgs.splice(i,1); renderNewImgs(); }
-function renderNewImgs() {
-  const slot = document.getElementById('newSlot');
-  slot.innerHTML = '';
-  newImgs.forEach((img, i) => {
-    const d = document.createElement('div');
-    d.className = 'thumb-wrap fade-in';
-    d.innerHTML = `<img src="${img.dataUrl}"/><span class="thumb-badge badge-new">New</span><div class="thumb-actions"><button type="button" class="t-btn t-del" onclick="removeNewImg(${i},event)"><svg width="10" height="10" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button></div>`;
-    slot.appendChild(d);
-  });
+function removeNewImg(i,e){e.stopPropagation();newImgs.splice(i,1);renderNewImgs();}
+function renderNewImgs(){
+  const slot=document.getElementById('newSlot');slot.innerHTML='';
+  newImgs.forEach((img,i)=>{const d=document.createElement('div');d.className='thumb-wrap fade-in';d.innerHTML=`<img src="${img.dataUrl}"/><span class="thumb-badge badge-new">New</span><div class="thumb-actions"><button type="button" class="t-btn t-del" onclick="removeNewImg(${i},event)"><svg width="10" height="10" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button></div>`;slot.appendChild(d);});
   updateBadge();
 }
-function updateBadge() {
-  const exist = document.querySelectorAll('.thumb-wrap[data-id]').length;
-  const n = exist + newImgs.length;
-  document.getElementById('imgBadge').textContent = n + ' image' + (n !== 1 ? 's' : '');
+function updateBadge(){const n=document.querySelectorAll('.thumb-wrap[data-id]').length+newImgs.length;document.getElementById('imgBadge').textContent=n+' image'+(n!==1?'s':'');}
+const dz=document.getElementById('dropZone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');processFiles(Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/')),0);});
+
+/* ── DESC COUNT ── */
+const editor=document.getElementById('descEditor');
+function updateDescCount(){document.getElementById('descCount').textContent=Math.min((editor.innerText||'').length,2000);}
+
+/* ── VISIBILITY ── */
+function toggleVis(){
+  const tgl=document.getElementById('visTgl'),inp=document.getElementById('isActiveInput'),badge=document.getElementById('visBadge'),dot=document.getElementById('visDot'),txt=document.getElementById('visText');
+  const isOn=tgl.classList.toggle('tgl-on');inp.value=isOn?'true':'false';
+  if(isOn){badge.className='mt-3 flex items-center gap-2 text-xs font-semibold rounded-xl px-3 py-2 border text-green-700 bg-green-50 border-green-100';dot.className='w-1.5 h-1.5 rounded-full flex-shrink-0 bg-green-500';txt.textContent='Product is visible on store';}
+  else{badge.className='mt-3 flex items-center gap-2 text-xs font-semibold rounded-xl px-3 py-2 border text-gray-500 bg-gray-50 border-gray-100';dot.className='w-1.5 h-1.5 rounded-full flex-shrink-0 bg-gray-400';txt.textContent='Product is hidden from store';}
 }
 
-/* Drag & drop */
-const dz = document.getElementById('dropZone');
-dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
-dz.addEventListener('dragleave', ()  => dz.classList.remove('drag-over'));
-dz.addEventListener('drop', e => {
-  e.preventDefault(); dz.classList.remove('drag-over');
-  processFiles(Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/')), 0);
-});
+/* ══ SKIN TYPE SELECTOR ══ */
+const SK_TYPES = [
+  { id:'Normal',      sub:'Balanced & clear',    extra:false },
+  { id:'Dry',         sub:'Flaky & tight',       extra:false },
+  { id:'Oily',        sub:'Shiny & pores',       extra:false },
+  { id:'Combination', sub:'Oily T-zone',         extra:false },
+  { id:'Sensitive',   sub:'Reactive & red',      extra:false },
+  { id:'Acne-prone',  sub:'Breakout-prone',      extra:false },
+  { id:'Mature',      sub:'Fine lines & firm',   extra:true  },
+  { id:'Dehydrated',  sub:'Lacks water content', extra:true  },
+  { id:'Dull',        sub:'Tired & lacklustre',  extra:true  },
+];
+let skSel=[],skOpen=false;
 
-/* ── DESCRIPTION COUNT ── */
-const editor = document.getElementById('descEditor');
-function updateDescCount() {
-  document.getElementById('descCount').textContent = Math.min((editor.innerText||'').length, 2000);
+function skTile(t,hidden){
+  const on=skSel.includes(t.id);
+  return `<div class="sk${on?' on':''}${t.extra?' sk-extra-tile':''}" id="skt-${t.id}" style="${hidden?'display:none;':''}" onclick="skinTypeToggle('${t.id}')">
+    <div class="sk-dot"><svg width="8" height="8" fill="none" stroke="#fff" stroke-width="2.8" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 13l4 4L19 7"/></svg></div>
+    <span class="sk-name">${t.id}</span>
+    <span class="sk-sub">${t.sub}</span>
+  </div>`;
 }
-
-/* ── SKIN TYPE TAGS ── */
-let tags = [];
-function initTags() {
-  const val = document.getElementById('skinInput').value.trim();
-  if (val) val.split(',').forEach(t => { const v = t.trim(); if (v && !tags.includes(v)) tags.push(v); });
-  renderTags();
+function skRender(){
+  document.getElementById('skGrid').innerHTML=SK_TYPES.map(t=>skTile(t,t.extra&&!skOpen)).join('');
+  const b=document.getElementById('skBadge');b.textContent=skSel.length?`${skSel.length} selected`:'0 selected';b.className='sk-badge'+(skSel.length?' has':'');
+  document.getElementById('skinTypeHidden').value=skSel.join(',');
 }
-document.getElementById('tagInput').addEventListener('keydown', e => {
-  if ((e.key==='Enter'||e.key===',') && e.target.value.trim()) {
-    e.preventDefault(); addTag(e.target.value.trim().replace(/,/g,'')); e.target.value = '';
-  }
-  if (e.key==='Backspace' && !e.target.value && tags.length) removeTag(tags.length-1);
-});
-function addTag(v)    { if (!v||tags.includes(v)||tags.length>=8) return; tags.push(v); renderTags(); }
-function removeTag(i) { tags.splice(i,1); renderTags(); }
-function renderTags() {
-  const box = document.getElementById('tagBox');
-  box.innerHTML = '';
-  tags.forEach((t,i) => {
-    const s = document.createElement('span');
-    s.className = 'tag';
-    s.innerHTML = `${t}<button type="button" class="tag-x" onclick="removeTag(${i})">×</button>`;
-    box.appendChild(s);
+function skinTypeToggle(id){const i=skSel.indexOf(id);if(i>=0)skSel.splice(i,1);else skSel.push(id);skRender();}
+function skinTypeToggleMore(){
+  skOpen=!skOpen;let delay=0;
+  document.querySelectorAll('.sk-extra-tile').forEach(el=>{
+    el.style.display=skOpen?'flex':'none';
+    if(skOpen){el.style.animation='none';void el.offsetWidth;el.style.animation=`skPop .2s ease-out ${delay}ms both`;delay+=55;}
   });
-  document.getElementById('skinInput').value = tags.join(',');
+  document.getElementById('skMoreTxt').textContent=skOpen?'Show less':'Show 3 more types';
+  document.getElementById('skMoreArrow').style.transform=skOpen?'rotate(180deg)':'rotate(0deg)';
+}
+function skinTypeInitFromSaved(csv){
+  skSel=csv?csv.split(',').map(s=>s.trim()).filter(Boolean):[];
+  const hasExtra=skSel.some(id=>SK_TYPES.find(t=>t.id===id&&t.extra));
+  if(hasExtra)skOpen=true;
+  skRender();
+  if(hasExtra){document.querySelectorAll('.sk-extra-tile').forEach(el=>el.style.display='flex');document.getElementById('skMoreTxt').textContent='Show less';document.getElementById('skMoreArrow').style.transform='rotate(180deg)';}
 }
 
-/* ── VISIBILITY TOGGLE ── */
-function toggleVis() {
-  const tgl   = document.getElementById('visTgl');
-  const inp   = document.getElementById('isActiveInput');
-  const badge = document.getElementById('visBadge');
-  const dot   = document.getElementById('visDot');
-  const txt   = document.getElementById('visText');
-  const isOn  = tgl.classList.toggle('tgl-on');
-  inp.value = isOn ? 'true' : 'false';
-  if (isOn) {
-    badge.className = 'mt-3 flex items-center gap-2 text-xs font-semibold rounded-xl px-3 py-2 border text-green-700 bg-green-50 border-green-100';
-    dot.className   = 'w-1.5 h-1.5 rounded-full flex-shrink-0 bg-green-500';
-    txt.textContent = 'Product is visible on store';
-  } else {
-    badge.className = 'mt-3 flex items-center gap-2 text-xs font-semibold rounded-xl px-3 py-2 border text-gray-500 bg-gray-50 border-gray-100';
-    dot.className   = 'w-1.5 h-1.5 rounded-full flex-shrink-0 bg-gray-400';
-    txt.textContent = 'Product is hidden from store';
-  }
-}
-
-/* ══════════════════════════════════════════
-   HOW TO USE — STEP BUILDER
-══════════════════════════════════════════ */
-let htuSteps = [];
-
-function htuParse() {
-  const raw = (document.getElementById('howToUseHidden').value || '').trim();
-  if (!raw) return;
-  // Try JSON array (previously saved via this UI)
-  try {
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) { htuSteps = parsed; return; }
-  } catch(e) {}
-  // Fallback: plain text → single step description
-  htuSteps = [{ title:'', desc: raw }];
-}
-
-function htuSerialize() {
-  document.getElementById('howToUseHidden').value = JSON.stringify(htuSteps);
-}
-
-function htuAddStep() {
-  htuSteps.push({ title:'', desc:'' });
-  htuRender();
-}
-
-function htuRemoveStep(i) {
-  htuSteps.splice(i, 1);
-  htuRender();
-}
-
-function htuRender() {
-  const container = document.getElementById('htuSteps');
-  container.innerHTML = '';
-
-  htuSteps.forEach((step, i) => {
-    const row = document.createElement('div');
-    row.className = 'htu-step-row fade-in';
-
-    // Number bubble
-    const num = document.createElement('div');
-    num.className = 'htu-num';
-    num.textContent = i + 1;
-
-    // Fields
-    const fields = document.createElement('div');
-    fields.className = 'htu-fields';
-
-    const titleInp = document.createElement('input');
-    titleInp.type = 'text';
-    titleInp.className = 'htu-title-inp';
-    titleInp.placeholder = 'Step title  (e.g. Cleanse & Tone)';
-    titleInp.value = step.title || '';
-    titleInp.addEventListener('input', () => { htuSteps[i].title = titleInp.value; htuSerialize(); });
-
-    const descInp = document.createElement('input');
-    descInp.type = 'text';
-    descInp.className = 'htu-desc-inp';
-    descInp.placeholder = 'Short description...';
-    descInp.value = step.desc || '';
-    descInp.addEventListener('input', () => { htuSteps[i].desc = descInp.value; htuSerialize(); });
-
-    fields.appendChild(titleInp);
-    fields.appendChild(descInp);
-
-    // Remove button (hidden when only 1 step)
-    const removeBtn = document.createElement('button');
-    removeBtn.type = 'button';
-    removeBtn.className = 'htu-remove';
-    removeBtn.style.visibility = htuSteps.length > 1 ? 'visible' : 'hidden';
-    removeBtn.innerHTML = `<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>`;
-    removeBtn.addEventListener('click', () => htuRemoveStep(i));
-
-    row.appendChild(num);
-    row.appendChild(fields);
-    row.appendChild(removeBtn);
-    container.appendChild(row);
+/* ══ HOW TO USE ══ */
+let htuSteps=[];
+function htuSerialize(){document.getElementById('howToUseHidden').value=JSON.stringify(htuSteps);}
+function htuAddStep(){htuSteps.push({title:'',desc:''});htuRender();}
+function htuRemoveStep(i){htuSteps.splice(i,1);htuRender();}
+function htuRender(){
+  const container=document.getElementById('htuSteps');container.innerHTML='';
+  htuSteps.forEach((step,i)=>{
+    const row=document.createElement('div');row.className='htu-step-row fade-in';
+    const num=document.createElement('div');num.className='htu-num';num.textContent=i+1;
+    const fields=document.createElement('div');fields.className='htu-fields';
+    const ti=document.createElement('input');ti.type='text';ti.className='htu-title-inp';ti.placeholder='Step title (e.g. Cleanse & Tone)';ti.value=step.title||'';
+    ti.addEventListener('input',()=>{htuSteps[i].title=ti.value;htuSerialize();});
+    const di=document.createElement('input');di.type='text';di.className='htu-desc-inp';di.placeholder='Short description...';di.value=step.desc||'';
+    di.addEventListener('input',()=>{htuSteps[i].desc=di.value;htuSerialize();});
+    fields.appendChild(ti);fields.appendChild(di);
+    const rb=document.createElement('button');rb.type='button';rb.className='htu-remove';rb.style.visibility=htuSteps.length>1?'visible':'hidden';
+    rb.innerHTML=`<svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>`;
+    rb.addEventListener('click',()=>htuRemoveStep(i));
+    row.appendChild(num);row.appendChild(fields);row.appendChild(rb);container.appendChild(row);
   });
-
   htuSerialize();
 }
-
-function initHtu() {
-  htuParse();
-  if (htuSteps.length === 0) htuSteps = [{ title:'', desc:'' }];
-  htuRender();
+function initHtu(){
+  const raw=(document.getElementById('howToUseHidden').value||'').trim();
+  if(!raw){htuSteps=[{title:'',desc:''}];htuRender();return;}
+  try{const p=JSON.parse(raw);if(Array.isArray(p)){htuSteps=p;htuRender();return;}}catch(e){}
+  htuSteps=[{title:'',desc:raw}];htuRender();
 }
 
-/* ── SAVE ── */
-function saveProduct() {
-  let ok = true;
-
-  const name    = document.getElementById('nameInput').value.trim();
-  const nameErr = document.getElementById('nameErr');
-  if (!name || name.length < 3) {
-    nameErr.textContent = name ? 'Name too short (min 3 chars)' : 'Product name is required';
-    nameErr.classList.remove('hidden'); ok = false;
-  } else { nameErr.classList.add('hidden'); }
-
-  const descTxt = (editor.innerText || '').trim();
-  const descErr = document.getElementById('descErr');
-  if (!descTxt || descTxt.length < 10) {
-    descErr.textContent = descTxt ? 'Description too short' : 'Description is required';
-    descErr.classList.remove('hidden'); editor.style.borderColor = '#f87171'; ok = false;
-  } else { descErr.classList.add('hidden'); editor.style.borderColor = ''; }
-
-  const dbImgCount = document.querySelectorAll('.thumb-wrap[data-id]').length;
-  if (dbImgCount + newImgs.length < 3) {
-    toast('error', 'Not enough images', 'Please add at least 3 images total.'); ok = false;
-  }
-
-  if (!ok) { toast('error', 'Fix errors', 'Please correct the highlighted fields.'); return; }
-
-  document.getElementById('descInput').value = editor.innerHTML;
-  document.getElementById('skinInput').value = tags.join(',');
-  htuSerialize(); // write latest steps to hidden textarea
-
-  const container = document.getElementById('newFilesContainer');
-  container.innerHTML = '';
-  if (newImgs.length > 0) {
-    const dt = new DataTransfer();
-    newImgs.forEach((img, i) => dt.items.add(new File([img.blob], 'new_'+i+'.jpg', {type:'image/jpeg'})));
-    const fi = document.createElement('input');
-    fi.type='file'; fi.name='images'; fi.multiple=true; fi.style.display='none';
-    fi.files = dt.files;
-    container.appendChild(fi);
-  }
-
-  document.getElementById('saveSpin').classList.remove('hidden');
-  document.getElementById('saveIcon').classList.add('hidden');
-  document.getElementById('saveTxt').textContent = 'Saving...';
-  document.getElementById('saveBtn').disabled = true;
+/* ══ SAVE ══ */
+function saveProduct(){
+  let ok=true;
+  const name=document.getElementById('nameInput').value.trim(),nameErr=document.getElementById('nameErr');
+  if(!name||name.length<3){nameErr.textContent=name?'Name too short (min 3 chars)':'Product name is required';nameErr.classList.remove('hidden');ok=false;}else nameErr.classList.add('hidden');
+  const descTxt=(editor.innerText||'').trim(),descErr=document.getElementById('descErr');
+  if(!descTxt||descTxt.length<10){descErr.textContent=descTxt?'Description too short':'Description is required';descErr.classList.remove('hidden');editor.style.borderColor='#f87171';ok=false;}else{descErr.classList.add('hidden');editor.style.borderColor='';}
+  const dbImgCount=document.querySelectorAll('.thumb-wrap[data-id]').length;
+  if(dbImgCount+newImgs.length<3){toast('error','Not enough images','Please add at least 3 images total.');ok=false;}
+  if(!ok){toast('error','Fix errors','Please correct the highlighted fields.');return;}
+  document.getElementById('descInput').value=editor.innerHTML;
+  htuSerialize();
+  const container=document.getElementById('newFilesContainer');container.innerHTML='';
+  if(newImgs.length>0){const dt=new DataTransfer();newImgs.forEach((img,i)=>dt.items.add(new File([img.blob],'new_'+i+'.jpg',{type:'image/jpeg'})));const fi=document.createElement('input');fi.type='file';fi.name='images';fi.multiple=true;fi.style.display='none';fi.files=dt.files;container.appendChild(fi);}
+  document.getElementById('saveSpin').classList.remove('hidden');document.getElementById('saveIcon').classList.add('hidden');document.getElementById('saveTxt').textContent='Saving...';document.getElementById('saveBtn').disabled=true;
   document.getElementById('editForm').submit();
 }
 
-/* ── INIT ── */
-document.addEventListener('DOMContentLoaded', () => {
+/* ══ INIT ══ */
+document.addEventListener('DOMContentLoaded',()=>{
   updateDescCount();
   updateBadge();
-  initTags();
-  initHtu(); // How To Use step builder
+  initHtu();
+  skinTypeInitFromSaved('{{ product.skin_type|escapejs }}');
 
-  document.querySelectorAll('.django-message').forEach(el => {
-    const type  = el.dataset.type;
-    const text  = el.dataset.text;
-    const titles = { success:'Done!', error:'Error', warning:'Notice', info:'Info' };
-    toast(type==='info' ? 'success' : (T[type] ? type : 'success'), titles[type]||'Notice', text);
+  document.querySelectorAll('.django-message').forEach(el=>{
+    const type=el.dataset.type,text=el.dataset.text;
+    const titles={success:'Done!',error:'Error',warning:'Notice',info:'Info'};
+    toast(type==='info'?'success':(T[type]?type:'success'),titles[type]||'Notice',text);
   });
-
-  {% if show_form_errors %}
-  toast('error', 'Fix errors', 'Please correct the form errors below.');
-  {% endif %}
-
-  const dd = document.getElementById('products-dropdown');
-  const ch = document.getElementById('products-chevron');
-  if (dd && ch) setTimeout(() => {
-    dd.style.maxHeight = dd.scrollHeight + 'px';
-    ch.style.transform = 'rotate(90deg)';
-  }, 100);
+  {% if show_form_errors %}toast('error','Fix errors','Please correct the form errors below.');{% endif %}
+  const dd=document.getElementById('products-dropdown'),ch=document.getElementById('products-chevron');
+  if(dd&&ch)setTimeout(()=>{dd.style.maxHeight=dd.scrollHeight+'px';ch.style.transform='rotate(90deg)';},100);
 });
 </script>
 </body>
