@@ -1,0 +1,813 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Glowé Admin — Categories</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          sage: {
+            50:'#f2f7f2', 100:'#e3efe3', 200:'#c7e0c8', 300:'#9ec9a0',
+            400:'#71ad74', 500:'#4d9152', 600:'#3a7a3f', 700:'#306534',
+            800:'#28542b', 900:'#214522',
+          }
+        },
+        fontFamily: { sans: ['DM Sans','sans-serif'], display: ['Playfair Display','serif'] }
+      }
+    }
+  }
+</script>
+<style>
+/* ─── Reset & Base ─── */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0}
+
+/* ─── Smooth all transitions ─── */
+a,button{transition:all .18s cubic-bezier(.4,0,.2,1)}
+
+/* ─── Stat card hover ─── */
+.stat-card{transition:box-shadow .2s ease,transform .2s ease}
+.stat-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.07);transform:translateY(-2px)}
+
+/* ─── Tab switcher ─── */
+.tab-pill-wrap{display:inline-flex;background:#f1f3f1;border-radius:12px;padding:3px;gap:2px}
+.tab-pill{
+  display:flex;align-items:center;gap:6px;padding:7px 16px;
+  border-radius:9px;font-size:12.5px;font-weight:600;color:#6b7280;
+  text-decoration:none;white-space:nowrap;
+  transition:all .15s cubic-bezier(.4,0,.2,1);
+}
+.tab-pill:hover{color:#374151}
+.tab-pill.active{background:#fff;color:#111827;box-shadow:0 1px 5px rgba(0,0,0,.1)}
+.tab-pill.active.t-live{color:#166534}
+.tab-pill.active.t-arch{color:#92400e}
+.t-live-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;flex-shrink:0;box-shadow:0 0 0 2px rgba(34,197,94,.2)}
+.t-arch-dot{width:7px;height:7px;border-radius:50%;background:#f59e0b;flex-shrink:0;box-shadow:0 0 0 2px rgba(245,158,11,.2)}
+.tab-count{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(0,0,0,.07);line-height:1.4}
+
+/* ─── Filter pills ─── */
+.filter-wrap{display:inline-flex;background:#f1f3f1;border-radius:9px;padding:3px;gap:1px}
+.f-btn{
+  display:flex;align-items:center;gap:4px;padding:4px 12px;
+  border-radius:6px;font-size:12px;font-weight:600;color:#6b7280;
+  text-decoration:none;transition:all .15s ease;
+}
+.f-btn:hover{color:#374151}
+.f-btn.f-active{background:#fff;color:#111827;box-shadow:0 1px 3px rgba(0,0,0,.09)}
+
+/* ─── Search ─── */
+.search-input{
+  background:#f8f9f8;border:1.5px solid #e8eae8;border-radius:12px;
+  padding:7px 32px 7px 36px;font-size:13px;color:#111827;width:200px;
+  transition:all .18s ease;outline:none;
+}
+.search-input:focus{border-color:#71ad74;box-shadow:0 0 0 3px rgba(74,144,80,.12);background:#fff}
+.search-input::placeholder{color:#b0b8b0}
+
+/* ─── Table ─── */
+.table-row{transition:background .12s ease}
+.table-row:hover{background:rgba(248,250,248,.8)}
+.category-thumb{width:36px;height:36px;border-radius:10px;flex-shrink:0;object-fit:cover}
+.category-thumb-placeholder{
+  width:36px;height:36px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,#e3efe3,#c7e0c8);
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* ─── Icon buttons ─── */
+.icon-btn{
+  width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  color:#9ca3af;background:transparent;border:none;cursor:pointer;flex-shrink:0;
+  transition:all .15s ease;
+}
+.icon-btn:hover{background:#f3f4f3;color:#374151;transform:scale(1.05)}
+.icon-btn.danger:hover{background:#fef2f2;color:#ef4444}
+
+/* ─── Toggle ─── */
+.tgl{
+  display:inline-flex;align-items:center;cursor:pointer;
+  width:42px;height:23px;border-radius:999px;flex-shrink:0;
+  background:#dde5dd;position:relative;
+  transition:background .22s ease,box-shadow .22s ease;border:none;padding:0;
+}
+.tgl.tgl-on{background:#4a9050;box-shadow:0 0 0 3px rgba(74,144,80,.14)}
+.tgl-thumb{
+  position:absolute;left:2px;width:19px;height:19px;border-radius:50%;background:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,.16);
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1);
+}
+.tgl.tgl-on .tgl-thumb{transform:translateX(19px)}
+
+/* ─── Status badges ─── */
+.badge-active{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;background:#f0fdf4;color:#15803d}
+.badge-inactive{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;background:#fef2f2;color:#dc2626}
+.badge-archived{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:999px;background:#fffbeb;color:#b45309;border:1px solid #fde68a}
+
+/* ─── Pagination ─── */
+.pag-btn{
+  width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:600;color:#6b7280;text-decoration:none;
+  transition:all .14s ease;
+}
+.pag-btn:hover{background:#f1f3f1;color:#111827;transform:scale(1.08)}
+.pag-btn.active{background:#2a542b;color:#fff;box-shadow:0 2px 8px rgba(42,84,43,.28)}
+.pag-btn.disabled{color:#d1d5db;cursor:not-allowed}
+
+/* ─── Modals ─── */
+.modal-wrap{
+  position:fixed;inset:0;z-index:100;
+  display:flex;align-items:center;justify-content:center;padding:16px;
+  opacity:0;pointer-events:none;
+  transition:opacity .18s ease;
+}
+.modal-wrap.open{opacity:1;pointer-events:all}
+.modal-backdrop{position:absolute;inset:0;background:rgba(17,24,39,.4);backdrop-filter:blur(6px)}
+.modal-card{
+  position:relative;background:#fff;border-radius:22px;width:100%;max-width:380px;
+  box-shadow:0 30px 80px rgba(0,0,0,.16),0 4px 20px rgba(0,0,0,.06);
+  transform:translateY(18px) scale(0.96);
+  transition:transform .24s cubic-bezier(.34,1.56,.64,1);
+  overflow:hidden;
+}
+.modal-wrap.open .modal-card{transform:translateY(0) scale(1)}
+
+/* small top accent bars */
+.bar-red  {height:3px;background:linear-gradient(90deg,#f87171,#dc2626)}
+.bar-green{height:3px;background:linear-gradient(90deg,#4ade80,#16a34a)}
+.bar-rose {height:3px;background:linear-gradient(90deg,#fb7185,#e11d48)}
+
+/* modal icon animations */
+@keyframes iconPop{0%{transform:scale(.4);opacity:0}65%{transform:scale(1.1);opacity:1}100%{transform:scale(1)}}
+@keyframes ringOut{0%{transform:scale(1);opacity:.5}100%{transform:scale(2);opacity:0}}
+.modal-wrap.open .pop-icon{animation:iconPop .38s cubic-bezier(.34,1.56,.64,1) .08s both}
+.ring1{position:absolute;inset:-8px;border-radius:50%;border:1.5px solid currentColor;opacity:.3;animation:ringOut 1.8s ease-out infinite}
+.ring2{position:absolute;inset:-16px;border-radius:50%;border:1px solid currentColor;opacity:.18;animation:ringOut 1.8s ease-out .6s infinite}
+
+/* modal buttons */
+.mbtn-cancel{
+  flex:1;padding:10px 16px;background:#f3f4f3;border:none;border-radius:11px;
+  font-size:13px;font-weight:600;color:#374151;cursor:pointer;font-family:'DM Sans',sans-serif;
+  transition:background .13s ease;
+}
+.mbtn-cancel:hover{background:#e8eae8}
+.mbtn-red{
+  flex:1;padding:10px 16px;background:linear-gradient(135deg,#ef4444,#dc2626);border:none;border-radius:11px;
+  font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  box-shadow:0 3px 10px rgba(220,38,38,.25);transition:all .14s ease;
+}
+.mbtn-red:hover{transform:translateY(-1px);box-shadow:0 5px 16px rgba(220,38,38,.34)}
+.mbtn-red:active{transform:none}
+.mbtn-red:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.mbtn-green{
+  flex:1;padding:10px 16px;background:linear-gradient(135deg,#22c55e,#16a34a);border:none;border-radius:11px;
+  font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  box-shadow:0 3px 10px rgba(22,163,74,.22);transition:all .14s ease;
+}
+.mbtn-green:hover{transform:translateY(-1px);box-shadow:0 5px 16px rgba(22,163,74,.32)}
+.mbtn-green:active{transform:none}
+.mbtn-green:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.mbtn-rose{
+  flex:1;padding:10px 16px;background:linear-gradient(135deg,#f43f5e,#e11d48);border:none;border-radius:11px;
+  font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+  box-shadow:0 3px 10px rgba(225,29,72,.25);transition:all .14s ease;
+}
+.mbtn-rose:hover{transform:translateY(-1px);box-shadow:0 5px 16px rgba(225,29,72,.34)}
+.mbtn-rose:active{transform:none}
+.mbtn-rose:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* name badges */
+.nbadge-red  {display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;font-size:12.5px;font-weight:600;color:#b91c1c;word-break:break-all;max-width:100%}
+.nbadge-green{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:12.5px;font-weight:600;color:#166534;word-break:break-all;max-width:100%}
+.nbadge-rose {display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:#fff1f2;border:1px solid #fecdd3;border-radius:8px;font-size:12.5px;font-weight:600;color:#9f1239;word-break:break-all;max-width:100%}
+
+/* ─── Toast ─── */
+@keyframes toastIn {to{transform:translateY(0);opacity:1}}
+@keyframes toastOut{to{transform:translateY(-80px);opacity:0}}
+@keyframes toastProg{from{width:100%}to{width:0%}}
+</style>
+</head>
+
+<body style="font-family:'DM Sans',sans-serif;background:#f6f8f6;color:#111827">
+
+{% include 'admin_sidebar.html' %}
+
+<div class="lg:ml-[240px] min-h-screen flex flex-col">
+  <main class="flex-1 px-5 sm:px-8 py-7 max-w-[1200px] w-full mx-auto">
+
+    <!-- ── Page Header ── -->
+    <div class="flex items-center justify-between mb-7">
+      <div>
+        <h1 style="font-family:'DM Sans',sans-serif;font-size:20px;font-weight:700;color:#111827;letter-spacing:-.02em;margin:0 0 3px">
+          Categories
+        </h1>
+        <p style="font-size:13px;color:#9ca3af;margin:0">Manage all product categories</p>
+      </div>
+      {% if status != 'archived' %}
+      <button onclick="openAddModal()"
+        style="display:flex;align-items:center;gap:7px;padding:9px 20px;background:#28542b;color:#fff;font-size:13px;font-weight:600;border-radius:999px;border:none;cursor:pointer;box-shadow:0 2px 8px rgba(40,84,43,.22);transition:all .18s ease"
+        onmouseover="this.style.background='#214522';this.style.boxShadow='0 4px 14px rgba(40,84,43,.3)';this.style.transform='translateY(-1px)'"
+        onmouseout="this.style.background='#28542b';this.style.boxShadow='0 2px 8px rgba(40,84,43,.22)';this.style.transform='translateY(0)'">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
+        Add Category
+      </button>
+      {% endif %}
+    </div>
+
+    <!-- ── Stat Cards ── -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+
+      <div class="stat-card" style="background:#fff;border-radius:14px;border:1px solid #eef0ee;padding:14px 16px;display:flex;align-items:center;gap:11px">
+        <div style="width:36px;height:36px;border-radius:10px;background:#eff6ff;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="16" height="16" fill="none" stroke="#3b82f6" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        </div>
+        <div>
+          <p style="font-size:10.5px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.07em;margin:0 0 2px">Total</p>
+          <p style="font-size:22px;font-weight:800;color:#111827;line-height:1;margin:0">{{ total_categories }}<span style="font-size:11px;color:#d1d5db;font-weight:500;margin-left:2px">items</span></p>
+        </div>
+      </div>
+
+      <div class="stat-card" style="background:#fff;border-radius:14px;border:1px solid #eef0ee;padding:14px 16px;display:flex;align-items:center;gap:11px">
+        <div style="width:36px;height:36px;border-radius:10px;background:#f0fdf4;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="16" height="16" fill="none" stroke="#22c55e" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div>
+          <p style="font-size:10.5px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.07em;margin:0 0 2px">Active</p>
+          <p style="font-size:22px;font-weight:800;color:#111827;line-height:1;margin:0">{{ active_categories }}<span style="font-size:11px;color:#d1d5db;font-weight:500;margin-left:2px">items</span></p>
+        </div>
+      </div>
+
+      <div class="stat-card" style="background:#fff;border-radius:14px;border:1px solid #eef0ee;padding:14px 16px;display:flex;align-items:center;gap:11px">
+        <div style="width:36px;height:36px;border-radius:10px;background:#fef2f2;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="16" height="16" fill="none" stroke="#ef4444" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+        </div>
+        <div>
+          <p style="font-size:10.5px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.07em;margin:0 0 2px">Inactive</p>
+          <p style="font-size:22px;font-weight:800;color:#111827;line-height:1;margin:0">{{ inactive_categories }}<span style="font-size:11px;color:#d1d5db;font-weight:500;margin-left:2px">items</span></p>
+        </div>
+      </div>
+
+      <div class="stat-card" style="background:#fff;border-radius:14px;border:1px solid #eef0ee;padding:14px 16px;display:flex;align-items:center;gap:11px">
+        <div style="width:36px;height:36px;border-radius:10px;background:#fffbeb;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="16" height="16" fill="none" stroke="#f59e0b" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+        </div>
+        <div>
+          <p style="font-size:10.5px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.07em;margin:0 0 2px">Archived</p>
+          <p style="font-size:22px;font-weight:800;color:#111827;line-height:1;margin:0">{{ archived_count }}<span style="font-size:11px;color:#d1d5db;font-weight:500;margin-left:2px">items</span></p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Table Card ── -->
+    <div style="background:#fff;border-radius:18px;border:1px solid #eef0ee;box-shadow:0 2px 12px rgba(0,0,0,.04);overflow:hidden">
+
+      <!-- Toolbar -->
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid #f3f4f3;gap:10px">
+
+        <!-- Left: Live / Archived tabs -->
+        <div class="tab-pill-wrap">
+          <a href="?status=live&q={{ query }}&active_status={{ active_status }}"
+             class="tab-pill t-live {% if status != 'archived' %}active{% endif %}">
+            <span class="t-live-dot"></span>
+            Live
+            <span class="tab-count">{{ total_categories }}</span>
+          </a>
+          <a href="?status=archived&q={{ query }}"
+             class="tab-pill t-arch {% if status == 'archived' %}active{% endif %}">
+            <span class="t-arch-dot"></span>
+            Archived
+            <span class="tab-count">{{ archived_count }}</span>
+          </a>
+        </div>
+
+        <!-- Right: filter + search -->
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+
+          {% if status != 'archived' %}
+          <div class="filter-wrap">
+            <a href="?status=live&q={{ query }}&active_status=" class="f-btn {% if not active_status %}f-active{% endif %}">All</a>
+            <a href="?status=live&q={{ query }}&active_status=active" class="f-btn {% if active_status == 'active' %}f-active{% endif %}">
+              <span style="width:5px;height:5px;border-radius:50%;background:#22c55e;flex-shrink:0"></span>Active
+            </a>
+            <a href="?status=live&q={{ query }}&active_status=inactive" class="f-btn {% if active_status == 'inactive' %}f-active{% endif %}">
+              <span style="width:5px;height:5px;border-radius:50%;background:#ef4444;flex-shrink:0"></span>Inactive
+            </a>
+          </div>
+          {% endif %}
+
+          <form method="GET" action="" style="display:flex;align-items:center;gap:6px">
+            <input type="hidden" name="status" value="{{ status }}"/>
+            <input type="hidden" name="active_status" value="{{ active_status }}"/>
+            <div style="position:relative">
+              <svg style="position:absolute;left:11px;top:50%;transform:translateY(-50%);pointer-events:none;color:#9ca3af" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
+              <input type="text" name="q" id="searchInput" value="{{ query }}"
+                     placeholder="Search categories…"
+                     oninput="toggleClearBtn(this.value)"
+                     class="search-input"/>
+              <button type="button" id="clearSearchBtn" onclick="clearSearch()"
+                      style="position:absolute;right:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;border-radius:50%;background:#b0b8b0;border:none;cursor:pointer;align-items:center;justify-content:center;transition:background .13s;display:{% if query %}flex{% else %}none{% endif %}"
+                      onmouseover="this.style.background='#6b7280'" onmouseout="this.style.background='#b0b8b0'">
+                <svg width="8" height="8" fill="none" stroke="#fff" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <button type="submit"
+              style="padding:7px 14px;background:#28542b;color:#fff;font-size:12.5px;font-weight:600;border-radius:10px;border:none;cursor:pointer;transition:all .15s ease;white-space:nowrap"
+              onmouseover="this.style.background='#214522'" onmouseout="this.style.background='#28542b'">
+              Search
+            </button>
+          </form>
+
+        </div>
+      </div>
+
+      <!-- ═══ LIVE TABLE ═══ -->
+      {% if status != 'archived' %}
+      <div style="overflow-x:auto">
+        <table style="width:100%;min-width:520px;border-collapse:collapse">
+          <thead>
+            <tr style="border-bottom:1px solid #f3f4f3;background:#fafafa">
+              <th style="text-align:left;font-size:10.5px;font-weight:600;color:#b0b8b0;text-transform:uppercase;letter-spacing:.08em;padding:11px 20px;width:48px">#</th>
+              <th style="text-align:left;font-size:10.5px;font-weight:600;color:#b0b8b0;text-transform:uppercase;letter-spacing:.08em;padding:11px 14px">Name</th>
+              <th style="text-align:left;font-size:10.5px;font-weight:600;color:#b0b8b0;text-transform:uppercase;letter-spacing:.08em;padding:11px 14px;width:90px">Products</th>
+              <th style="text-align:left;font-size:10.5px;font-weight:600;color:#b0b8b0;text-transform:uppercase;letter-spacing:.08em;padding:11px 14px;width:90px">Status</th>
+              <th style="text-align:right;font-size:10.5px;font-weight:600;color:#b0b8b0;text-transform:uppercase;letter-spacing:.08em;padding:11px 20px;width:120px">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for category in categories %}
+            <tr class="table-row" style="border-bottom:1px solid #f7f8f7">
+              <td style="padding:13px 20px;font-size:12.5px;color:#c0c8c0">{{ forloop.counter }}</td>
+              <td style="padding:13px 14px">
+                <div style="display:flex;align-items:center;gap:10px">
+                  {% if category.image %}
+                    <img src="{{ category.image.url }}" alt="{{ category.name }}" class="category-thumb"/>
+                  {% else %}
+                    <div class="category-thumb-placeholder">
+                      <svg width="15" height="15" fill="none" stroke="#71ad74" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                    </div>
+                  {% endif %}
+                  <span style="font-size:13.5px;font-weight:500;color:#111827">{{ category.name }}</span>
+                </div>
+              </td>
+              <td style="padding:13px 14px;font-size:13px;color:#6b7280">{{ category.product_count }}</td>
+              <td style="padding:13px 14px">
+                {% if category.is_active %}
+                  <span class="badge-active">
+                    <span style="width:5px;height:5px;border-radius:50%;background:#22c55e;flex-shrink:0"></span>Active
+                  </span>
+                {% else %}
+                  <span class="badge-inactive">
+                    <span style="width:5px;height:5px;border-radius:50%;background:#ef4444;flex-shrink:0"></span>Inactive
+                  </span>
+                {% endif %}
+              </td>
+              <td style="padding:13px 20px">
+                <div style="display:flex;align-items:center;justify-content:flex-end;gap:4px">
+                  <button type="button"
+                          class="icon-btn"
+                          data-edit-url="{% url 'edit_category' category.id %}"
+                          onclick="openEditModal(this.dataset.editUrl,'{{ category.name|escapejs }}',{{ category.is_active|lower }})"
+                          title="Edit">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                  </button>
+                  <form method="POST" action="{% url 'toggle_category' category.id %}" onsubmit="disableBtn(this)">
+                    {% csrf_token %}
+                    <button type="submit" class="tgl {% if category.is_active %}tgl-on{% endif %}" title="Toggle">
+                      <span class="tgl-thumb"></span>
+                    </button>
+                  </form>
+                  <button type="button"
+                          class="icon-btn danger"
+                          data-url="{% url 'soft_delete_category' category.id %}"
+                          data-name="{{ category.name|escapejs }}"
+                          onclick="openArchiveModal(this.dataset.url,this.dataset.name)"
+                          title="Archive">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" style="padding:60px 20px;text-align:center">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+                  <div style="width:48px;height:48px;border-radius:14px;background:#f1f3f1;display:flex;align-items:center;justify-content:center">
+                    <svg width="22" height="22" fill="none" stroke="#b0b8b0" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                  </div>
+                  <p style="font-size:13.5px;font-weight:500;color:#9ca3af;margin:0">
+                    {% if query %}No results for "{{ query }}"
+                    {% else %}No live categories yet{% endif %}
+                  </p>
+                  {% if query %}<a href="?status=live" style="font-size:12.5px;color:#3a7a3f;text-decoration:none;font-weight:600">Clear search</a>{% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ═══ ARCHIVED TABLE ═══ -->
+      {% else %}
+      <div style="overflow-x:auto">
+        <table style="width:100%;min-width:520px;border-collapse:collapse">
+          <thead>
+            <tr style="border-bottom:1px solid #f3f4f3;background:#fafafa">
+              <th style="text-align:left;font-size:10.5px;font-weight:600;color:#b0b8b0;text-transform:uppercase;letter-spacing:.08em;padding:11px 20px;width:48px">#</th>
+              <th style="text-align:left;font-size:10.5px;font-weight:600;color:#b0b8b0;text-transform:uppercase;letter-spacing:.08em;padding:11px 14px">Name</th>
+              <th style="text-align:left;font-size:10.5px;font-weight:600;color:#b0b8b0;text-transform:uppercase;letter-spacing:.08em;padding:11px 14px;width:90px">Products</th>
+              <th style="text-align:right;font-size:10.5px;font-weight:600;color:#b0b8b0;text-transform:uppercase;letter-spacing:.08em;padding:11px 20px;width:160px">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for category in categories %}
+            <tr class="table-row" style="border-bottom:1px solid #f7f8f7;opacity:.8">
+              <td style="padding:13px 20px;font-size:12.5px;color:#c0c8c0">{{ forloop.counter }}</td>
+              <td style="padding:13px 14px">
+                <div style="display:flex;align-items:center;gap:10px">
+                  {% if category.image %}
+                    <img src="{{ category.image.url }}" alt="{{ category.name }}" class="category-thumb" style="opacity:.7"/>
+                  {% else %}
+                    <div class="category-thumb-placeholder" style="opacity:.6">
+                      <svg width="15" height="15" fill="none" stroke="#71ad74" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                    </div>
+                  {% endif %}
+                  <div style="display:flex;align-items:center;gap:7px">
+                    <span style="font-size:13.5px;font-weight:500;color:#6b7280;text-decoration:line-through;text-decoration-color:#d1d5db">{{ category.name }}</span>
+                    <span class="badge-archived">Archived</span>
+                  </div>
+                </div>
+              </td>
+              <td style="padding:13px 14px;font-size:13px;color:#9ca3af">{{ category.product_count }}</td>
+              <td style="padding:13px 20px">
+                <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px">
+
+                  <!-- ── Restore button: modern minimal green pill ── -->
+                  <button type="button"
+                          data-url="{% url 'restore_category' category.id %}"
+                          data-name="{{ category.name|escapejs }}"
+                          onclick="openRestoreModal(this.dataset.url,this.dataset.name)"
+                          title="Restore"
+                          style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;border:none;font-size:12px;font-weight:600;color:#059669;background:#ecfdf5;cursor:pointer;transition:all .15s ease;white-space:nowrap;font-family:'DM Sans',sans-serif"
+                          onmouseover="this.style.background='#d1fae5';this.style.transform='translateY(-1px)'"
+                          onmouseout="this.style.background='#ecfdf5';this.style.transform='none'">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    Restore
+                  </button>
+
+                  <!-- ── Delete button: icon-only red square ── -->
+                  <button type="button"
+                          data-url="{% url 'permanent_delete_category' category.id %}"
+                          data-name="{{ category.name|escapejs }}"
+                          onclick="openPermDeleteModal(this.dataset.url,this.dataset.name)"
+                          title="Delete permanently"
+                          style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;border:none;background:#fef2f2;color:#ef4444;cursor:pointer;transition:all .15s ease;flex-shrink:0"
+                          onmouseover="this.style.background='#fee2e2';this.style.transform='scale(1.08)'"
+                          onmouseout="this.style.background='#fef2f2';this.style.transform='none'">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  </button>
+
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" style="padding:60px 20px;text-align:center">
+                <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+                  <div style="width:48px;height:48px;border-radius:14px;background:#fffbeb;display:flex;align-items:center;justify-content:center">
+                    <svg width="22" height="22" fill="none" stroke="#f59e0b" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+                  </div>
+                  <p style="font-size:13.5px;font-weight:500;color:#9ca3af;margin:0">
+                    {% if query %}No archived results for "{{ query }}"{% else %}Nothing archived yet{% endif %}
+                  </p>
+                  {% if query %}<a href="?status=archived" style="font-size:12.5px;color:#3a7a3f;text-decoration:none;font-weight:600">Clear search</a>{% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
+      <!-- Pagination -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 20px;border-top:1px solid #f3f4f3;gap:10px;flex-wrap:wrap">
+        <p style="font-size:12.5px;color:#9ca3af;margin:0">
+          Showing <strong style="color:#374151">{{ categories.start_index }}–{{ categories.end_index }}</strong>
+          of <strong style="color:#374151">{{ categories.paginator.count }}</strong>
+        </p>
+        <div style="display:flex;align-items:center;gap:3px">
+          {% if categories.has_previous %}
+          <a href="?status={{ status }}&q={{ query }}&active_status={{ active_status }}&page={{ categories.previous_page_number }}" class="pag-btn">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>
+          </a>
+          {% else %}
+          <span class="pag-btn disabled"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg></span>
+          {% endif %}
+
+          {% for num in categories.paginator.page_range %}
+            {% if categories.number == num %}
+              <span class="pag-btn active">{{ num }}</span>
+            {% elif num > categories.number|add:'-3' and num < categories.number|add:'3' %}
+              <a href="?status={{ status }}&q={{ query }}&active_status={{ active_status }}&page={{ num }}" class="pag-btn">{{ num }}</a>
+            {% endif %}
+          {% endfor %}
+
+          {% if categories.has_next %}
+          <a href="?status={{ status }}&q={{ query }}&active_status={{ active_status }}&page={{ categories.next_page_number }}" class="pag-btn">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M9 5l7 7-7 7"/></svg>
+          </a>
+          {% else %}
+          <span class="pag-btn disabled"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M9 5l7 7-7 7"/></svg></span>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+
+<!-- ════════════ ADD MODAL ════════════ -->
+<div id="addModal" class="modal-wrap">
+  <div class="modal-backdrop" onclick="closeModal('addModal')"></div>
+  <div class="modal-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 22px 16px;border-bottom:1px solid #f3f4f3">
+      <div>
+        <h2 style="font-size:15px;font-weight:700;color:#111827;margin:0 0 2px">Add Category</h2>
+        <p style="font-size:12px;color:#9ca3af;margin:0">Create a new product category</p>
+      </div>
+      <button onclick="closeModal('addModal')" style="width:30px;height:30px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#9ca3af;transition:all .14s ease" onmouseover="this.style.background='#f3f4f3';this.style.color='#374151'" onmouseout="this.style.background='transparent';this.style.color='#9ca3af'">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form method="POST" action="{% url 'add_category' %}" style="padding:20px 22px;display:flex;flex-direction:column;gap:16px" onsubmit="disableBtn(this)">
+      {% csrf_token %}
+      <div>
+        <label style="display:block;font-size:11px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Category Name <span style="color:#ef4444">*</span></label>
+        <input type="text" name="name" placeholder="e.g. Anti-Aging Serums" required
+               style="width:100%;padding:9px 14px;font-size:13.5px;background:#f8f9f8;border:1.5px solid #e8eae8;border-radius:11px;outline:none;transition:all .16s ease;font-family:'DM Sans',sans-serif;color:#111827"
+               onfocus="this.style.borderColor='#71ad74';this.style.boxShadow='0 0 0 3px rgba(113,173,116,.12)';this.style.background='#fff'"
+               onblur="this.style.borderColor='#e8eae8';this.style.boxShadow='none';this.style.background='#f8f9f8'"/>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;background:#f8f9f8;border:1px solid #eef0ee;border-radius:12px;padding:12px 14px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:32px;height:32px;border-radius:9px;background:#fff;border:1px solid #e8eae8;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="14" height="14" fill="none" stroke="#9ca3af" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+          </div>
+          <div>
+            <p style="font-size:13px;font-weight:600;color:#374151;margin:0 0 1px">Active on store</p>
+            <p style="font-size:11px;color:#9ca3af;margin:0">Visible to customers</p>
+          </div>
+        </div>
+        <button type="button" id="addVisTgl" class="tgl tgl-on" onclick="toggleVis('addVisTgl','addIsActive')">
+          <span class="tgl-thumb"></span>
+        </button>
+        <input type="hidden" name="is_active" id="addIsActive" value="true"/>
+      </div>
+      <div style="display:flex;gap:10px;padding-top:2px">
+        <button type="button" onclick="closeModal('addModal')" class="mbtn-cancel">Cancel</button>
+        <button type="submit" style="flex:1;padding:10px;background:linear-gradient(135deg,#3a7a3f,#28542b);border:none;border-radius:11px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .14s ease;box-shadow:0 3px 10px rgba(40,84,43,.22)" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 5px 16px rgba(40,84,43,.3)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 3px 10px rgba(40,84,43,.22)'">Save Category</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- ════════════ EDIT MODAL ════════════ -->
+<div id="editModal" class="modal-wrap">
+  <div class="modal-backdrop" onclick="closeModal('editModal')"></div>
+  <div class="modal-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 22px 16px;border-bottom:1px solid #f3f4f3">
+      <div>
+        <h2 style="font-size:15px;font-weight:700;color:#111827;margin:0 0 2px">Edit Category</h2>
+        <p style="font-size:12px;color:#9ca3af;margin:0">Update category details</p>
+      </div>
+      <button onclick="closeModal('editModal')" style="width:30px;height:30px;border-radius:8px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#9ca3af;transition:all .14s ease" onmouseover="this.style.background='#f3f4f3';this.style.color='#374151'" onmouseout="this.style.background='transparent';this.style.color='#9ca3af'">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="editForm" method="POST" action="" style="padding:20px 22px;display:flex;flex-direction:column;gap:16px" onsubmit="disableBtn(this)">
+      {% csrf_token %}
+      <div>
+        <label style="display:block;font-size:11px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Category Name <span style="color:#ef4444">*</span></label>
+        <input type="text" name="name" id="editName" placeholder="e.g. Anti-Aging Serums" required
+               style="width:100%;padding:9px 14px;font-size:13.5px;background:#f8f9f8;border:1.5px solid #e8eae8;border-radius:11px;outline:none;transition:all .16s ease;font-family:'DM Sans',sans-serif;color:#111827"
+               onfocus="this.style.borderColor='#71ad74';this.style.boxShadow='0 0 0 3px rgba(113,173,116,.12)';this.style.background='#fff'"
+               onblur="this.style.borderColor='#e8eae8';this.style.boxShadow='none';this.style.background='#f8f9f8'"/>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;background:#f8f9f8;border:1px solid #eef0ee;border-radius:12px;padding:12px 14px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:32px;height:32px;border-radius:9px;background:#fff;border:1px solid #e8eae8;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="14" height="14" fill="none" stroke="#9ca3af" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+          </div>
+          <div>
+            <p style="font-size:13px;font-weight:600;color:#374151;margin:0 0 1px">Active on store</p>
+            <p style="font-size:11px;color:#9ca3af;margin:0">Visible to customers</p>
+          </div>
+        </div>
+        <button type="button" id="editVisTgl" class="tgl" onclick="toggleVis('editVisTgl','editIsActive')">
+          <span class="tgl-thumb"></span>
+        </button>
+        <input type="hidden" name="is_active" id="editIsActive" value="true"/>
+      </div>
+      <div style="display:flex;gap:10px;padding-top:2px">
+        <button type="button" onclick="closeModal('editModal')" class="mbtn-cancel">Cancel</button>
+        <button type="submit" style="flex:1;padding:10px;background:linear-gradient(135deg,#3a7a3f,#28542b);border:none;border-radius:11px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .14s ease;box-shadow:0 3px 10px rgba(40,84,43,.22)" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">Update Category</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- ════════════ ARCHIVE MODAL ════════════ -->
+<div id="archiveModal" class="modal-wrap">
+  <div class="modal-backdrop" onclick="closeModal('archiveModal')"></div>
+  <div class="modal-card">
+    <div class="bar-red"></div>
+    <div style="padding:28px 26px 24px;display:flex;flex-direction:column;align-items:center;text-align:center">
+      <div style="position:relative;display:inline-flex;margin-bottom:18px">
+        <span style="position:absolute;inset:-8px;border-radius:50%;border:1.5px solid #fca5a5;animation:ringOut 1.8s ease-out infinite;color:#fca5a5"></span>
+        <span style="position:absolute;inset:-16px;border-radius:50%;border:1px solid #fecaca;animation:ringOut 1.8s ease-out .6s infinite;color:#fecaca"></span>
+        <div class="pop-icon" style="width:54px;height:54px;border-radius:50%;background:#fef2f2;border:2px solid #fecaca;display:flex;align-items:center;justify-content:center">
+          <svg width="22" height="22" fill="none" stroke="#ef4444" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+        </div>
+      </div>
+      <h3 style="font-size:16px;font-weight:700;color:#111827;margin:0 0 6px">Archive Category?</h3>
+      <p style="font-size:13px;color:#9ca3af;margin:0 0 16px;max-width:240px;line-height:1.6">Moves to <strong style="color:#92400e">Archived</strong>. Restore it anytime from the Archived tab.</p>
+      <div class="nbadge-red" style="margin-bottom:20px"><span id="archiveName"></span></div>
+      <div style="width:100%;height:1px;background:#f3f4f3;margin-bottom:18px"></div>
+      <div style="display:flex;gap:10px;width:100%">
+        <button onclick="closeModal('archiveModal')" class="mbtn-cancel">Cancel</button>
+        <form id="archiveForm" method="POST" action="" style="flex:1" onsubmit="disableBtn(this)">
+          {% csrf_token %}
+          <button type="submit" class="mbtn-red" style="width:100%">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+            Archive
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════ RESTORE MODAL ════════════ -->
+<div id="restoreModal" class="modal-wrap">
+  <div class="modal-backdrop" onclick="closeModal('restoreModal')"></div>
+  <div class="modal-card">
+    <div class="bar-green"></div>
+    <div style="padding:28px 26px 24px;display:flex;flex-direction:column;align-items:center;text-align:center">
+      <div style="position:relative;display:inline-flex;margin-bottom:18px">
+        <div class="pop-icon" style="width:54px;height:54px;border-radius:50%;background:#f0fdf4;border:2px solid #bbf7d0;display:flex;align-items:center;justify-content:center">
+          <svg width="22" height="22" fill="none" stroke="#22c55e" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </div>
+      </div>
+      <h3 style="font-size:16px;font-weight:700;color:#111827;margin:0 0 6px">Restore Category?</h3>
+      <p style="font-size:13px;color:#9ca3af;margin:0 0 16px;max-width:240px;line-height:1.6">Moves back to <strong style="color:#166534">Live</strong> and becomes visible on your store.</p>
+      <div class="nbadge-green" style="margin-bottom:20px"><span id="restoreName"></span></div>
+      <div style="width:100%;height:1px;background:#f3f4f3;margin-bottom:18px"></div>
+      <div style="display:flex;gap:10px;width:100%">
+        <button onclick="closeModal('restoreModal')" class="mbtn-cancel">Cancel</button>
+        <form id="restoreForm" method="POST" action="" style="flex:1" onsubmit="disableBtn(this)">
+          {% csrf_token %}
+          <button type="submit" class="mbtn-green" style="width:100%">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Restore
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════ PERMANENT DELETE MODAL ════════════ -->
+<div id="permDeleteModal" class="modal-wrap">
+  <div class="modal-backdrop" onclick="closeModal('permDeleteModal')"></div>
+  <div class="modal-card">
+    <div class="bar-rose"></div>
+    <div style="padding:28px 26px 24px;display:flex;flex-direction:column;align-items:center;text-align:center">
+      <div style="position:relative;display:inline-flex;margin-bottom:18px">
+        <span style="position:absolute;inset:-8px;border-radius:50%;border:1.5px solid #fda4af;animation:ringOut 1.8s ease-out infinite"></span>
+        <span style="position:absolute;inset:-16px;border-radius:50%;border:1px solid #fecdd3;animation:ringOut 1.8s ease-out .6s infinite"></span>
+        <div class="pop-icon" style="width:54px;height:54px;border-radius:50%;background:#fff1f2;border:2px solid #fecdd3;display:flex;align-items:center;justify-content:center">
+          <svg width="22" height="22" fill="none" stroke="#f43f5e" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        </div>
+      </div>
+      <h3 style="font-size:16px;font-weight:700;color:#111827;margin:0 0 6px">Delete Permanently?</h3>
+      <p style="font-size:13px;color:#9ca3af;margin:0 0 4px;max-width:240px;line-height:1.6">This <strong style="color:#e11d48">cannot be undone.</strong> The category will be erased forever.</p>
+      <p style="font-size:11.5px;color:#b0b8b0;margin:0 0 16px">Categories with products cannot be deleted.</p>
+      <div class="nbadge-rose" style="margin-bottom:20px"><span id="permDeleteName"></span></div>
+      <div style="width:100%;height:1px;background:#f3f4f3;margin-bottom:18px"></div>
+      <div style="display:flex;gap:10px;width:100%">
+        <button onclick="closeModal('permDeleteModal')" class="mbtn-cancel">Cancel</button>
+        <form id="permDeleteForm" method="POST" action="" style="flex:1" onsubmit="disableBtn(this)">
+          {% csrf_token %}
+          <button type="submit" class="mbtn-rose" style="width:100%">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            Delete Forever
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════ TOAST CONTAINER ════════════ -->
+<div id="toastContainer" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none"></div>
+
+<script>
+/* ── Toast ── */
+const _TCFG={
+  success:{icon:'✓',bg:'#1e3d2f',lb:'#6ee7a8',ti:'#f0fdf4',ms:'#bbf7d0',pr:'#4ade80',ic:'radial-gradient(circle,#3aaa72,#1a6644)'},
+  error:  {icon:'✕',bg:'#3d1e1e',lb:'#fca5a5',ti:'#fff1f2',ms:'#fecaca',pr:'#f87171',ic:'radial-gradient(circle,#e05050,#a82020)'},
+  warning:{icon:'!',bg:'#3d2000',lb:'#fcd34d',ti:'#fff8e1',ms:'#fde68a',pr:'#f59e0b',ic:'radial-gradient(circle,#f59e0b,#b45309)'},
+};
+function _dt(t){if(!t||t._d)return;t._d=true;clearTimeout(t._tm);t.style.animation='toastOut .3s cubic-bezier(.4,0,1,1) forwards';setTimeout(()=>t.remove(),300)}
+function showToast(type,title,msg){
+  const c=_TCFG[type]||_TCFG.success;
+  const t=document.createElement('div');
+  t.style.cssText=`pointer-events:all;display:flex;align-items:center;width:290px;border-radius:13px;overflow:hidden;position:relative;background:${c.bg};box-shadow:0 8px 28px rgba(0,0,0,.18);animation:toastIn .45s cubic-bezier(.34,1.56,.64,1) forwards;transform:translateY(-60px);opacity:0;`;
+  t.innerHTML=`<div style="width:48px;min-width:48px;align-self:stretch;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.12)"><div style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;background:${c.ic}">${c.icon}</div></div><div style="flex:1;padding:9px 8px 9px 10px"><p style="font-family:'DM Sans',sans-serif;font-size:7px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;margin:0 0 2px;color:${c.lb};opacity:.85">${type}</p><p style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;line-height:1.2;margin:0 0 1px;color:${c.ti}">${title}</p><p style="font-family:'DM Sans',sans-serif;font-size:11px;line-height:1.4;margin:0;color:${c.ms};opacity:.85">${msg}</p></div><button onclick="(el=>{if(!el||el._d)return;el._d=true;clearTimeout(el._tm);el.style.animation='toastOut .3s cubic-bezier(.4,0,1,1) forwards';setTimeout(()=>el.remove(),300)})(this.parentElement)" style="background:none;border:none;cursor:pointer;font-size:10px;padding:5px 10px 0 0;align-self:flex-start;color:#fff;opacity:.4">✕</button><div style="position:absolute;bottom:0;left:0;height:2px;background:${c.pr};animation:toastProg 3s linear forwards"></div>`;
+  document.getElementById('toastContainer').appendChild(t);
+  t._tm=setTimeout(()=>_dt(t),3000);
+}
+
+/* ── Django messages → toast ── */
+document.addEventListener('DOMContentLoaded',function(){
+  {% if messages %}
+    {% for message in messages %}
+      {% if 'success' in message.tags %}showToast('success','Done!','{{ message|escapejs }}');
+      {% elif 'error' in message.tags %}showToast('error','Error','{{ message|escapejs }}');
+      {% elif 'warning' in message.tags %}showToast('warning','Notice','{{ message|escapejs }}');
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+});
+
+/* ── Helpers ── */
+function disableBtn(form){
+  const b=form.querySelector('button[type="submit"]');
+  if(b&&!b.disabled){b.disabled=true;b.style.opacity='.6';b.style.cursor='not-allowed';
+  setTimeout(()=>{b.disabled=false;b.style.opacity='1';b.style.cursor='pointer'},2500)}
+}
+function toggleVis(tid,iid){
+  const t=document.getElementById(tid),i=document.getElementById(iid);
+  const on=t.classList.contains('tgl-on');
+  t.classList.toggle('tgl-on',!on);i.value=on?'false':'true';
+}
+function toggleClearBtn(val){
+  const btn=document.getElementById('clearSearchBtn');
+  if(btn) btn.style.display=val.trim()?'flex':'none';
+}
+function clearSearch(){
+  const p=new URLSearchParams(window.location.search);p.delete('q');p.delete('page');
+  window.location.href='?'+p.toString();
+}
+
+/* ── Modal open/close ── */
+function openModal(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden'}
+function closeModal(id){document.getElementById(id).classList.remove('open');document.body.style.overflow=''}
+
+function openAddModal(){openModal('addModal')}
+function openEditModal(url,name,isActive){
+  document.getElementById('editForm').action=url;
+  document.getElementById('editName').value=name;
+  const t=document.getElementById('editVisTgl'),i=document.getElementById('editIsActive');
+  t.classList.toggle('tgl-on',isActive);i.value=isActive?'true':'false';
+  openModal('editModal');
+}
+function openArchiveModal(url,name){
+  document.getElementById('archiveName').textContent='"'+name+'"';
+  document.getElementById('archiveForm').action=url;
+  openModal('archiveModal');
+}
+function openRestoreModal(url,name){
+  document.getElementById('restoreName').textContent='"'+name+'"';
+  document.getElementById('restoreForm').action=url;
+  openModal('restoreModal');
+}
+function openPermDeleteModal(url,name){
+  document.getElementById('permDeleteName').textContent='"'+name+'"';
+  document.getElementById('permDeleteForm').action=url;
+  openModal('permDeleteModal');
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')
+    ['addModal','editModal','archiveModal','restoreModal','permDeleteModal'].forEach(closeModal);
+});
+</script>
+</body>
+</html>
