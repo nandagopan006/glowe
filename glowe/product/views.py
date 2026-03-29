@@ -629,18 +629,61 @@ def product_listing(request):
 
 def product_detail_view(request,slug):
    
-    product = get_object_or_404(Product, slug=slug, is_deleted=False)
-    
+    product=get_object_or_404(
+        Product.objects.prefetch_related('images', 'variants'),
+        slug=slug,
+        is_deleted=False
+    )
+
     if not product.is_active:
         return redirect("product_listing")
     
-    variant_id= request.GET.get('variant')
+    variants=product.variants.filter(is_active=True).order_by('size')
     
-    if variant_id :
-        selected_variant = product.variants.filter(id=variant_id).first()
-    else:
-        selected_variant = product.variants.first()
+    if not variants.exists():
+        return redirect('product_listing')
 
-    in_stock = selected_variant.stock > 0 if selected_variant else False
+    variant_id=request.GET.get('variant')
+    # get selected variant
+    if variant_id:
+        selected_variant=variants.filter(id=variant_id).first()
+    else:
+        selected_variant=None
+    #If fallback.. to first variant
+    if not selected_variant:
+        selected_variant=variants.first()
+
+    stock = selected_variant.stock if selected_variant else 0
+    low_stock = stock if 0 < stock <= 5 else None
+    all_out_of_stock =not variants.filter(stock__gt=0).exists()
     
-    images = product.images.all()
+    skin_type = product.skin_type if product.skin_type else "All Skin Types"
+    description = product.description
+    ingredients = product.ingredients
+    how_to_use = product.how_to_use
+    
+    #not use now  ok appo venda
+    delivery_info = "Free delivery in 3-5 days"
+    
+    images=product.images.all()
+    
+    related_products=Product.objects.filter(
+        category=product.category,
+        is_active=True,
+        is_deleted=False
+    ).exclude(id=product.id)[:4]
+    
+    return render(request,'user/product_detail_view.html',{
+        'product':product,
+        'variants':variants,
+        'selected_variant': selected_variant,
+        'stock':stock,                   
+        'low_stock':low_stock,
+        'all_out_of_stock':all_out_of_stock,
+        'skin_type':skin_type,
+        'description':description,
+        'ingredients':ingredients,
+        'how_to_use':how_to_use,
+        'images':images,
+        'related_products':related_products,
+    })
