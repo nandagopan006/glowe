@@ -1,6 +1,6 @@
 from django.db import models
 from django.conf import settings
-from product.models import Variant,Product
+from product.models import Variant  
 
 
 class Cart(models.Model):
