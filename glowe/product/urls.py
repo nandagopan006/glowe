@@ -28,7 +28,9 @@ urlpatterns = [
     path('adminpanel/products/variants/set-default/<int:id>/', views.set_default_variant, name='set_default_variant'),
     
     
-    path('products/', views.product_listing, name='product_listing'),
+    path('products/',views.product_listing, name='product_listing'),
+    path('product/detail/<slug:slug>/',views.product_detail_view, name='product_detail_view'),
+    path('add-to-cart/',views.add_to_cart,name='add_to_cart'),
     
     
     

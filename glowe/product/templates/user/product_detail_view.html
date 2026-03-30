@@ -1,0 +1,604 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} – Glowé{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Custom animations and smooth UI effects */
+    .fade-in { animation: PDPfadeIn 0.6s ease-out forwards; }
+    @keyframes PDPfadeIn {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Hide arrows in number input */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+    
+    /* Brand Buttons */
+    .btn-dark-brown { background-color: #3b2e2a; }
+    .btn-dark-brown:hover { background-color: #271e1c; }
+    
+    /* Hide Scrollbar for tabs */
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    .tab-content:not(.hidden) .step-animate {
+        opacity: 1;
+        transform: translateY(0);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="bg-[#faf8f5] text-[#1a1208] min-h-screen pt-6 pb-24 fade-in relative overflow-x-hidden">
+    
+    {% if messages %}
+    <div id="toast-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-3 pointer-events-none">
+        {% for message in messages %}
+        <div class="toast-notification transform translate-x-[120%] transition-transform duration-500 ease-out flex items-center w-[350px] px-5 py-4 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 font-montserrat text-[13px] tracking-wide font-semibold
+            {% if message.tags == 'error' %} text-red-600
+            {% elif message.tags == 'warning' %} text-orange-500
+            {% else %} text-green-600 {% endif %}">
+            
+            {% if message.tags == 'error' %}
+                <svg class="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            {% elif message.tags == 'warning' %}
+                <svg class="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            {% else %}
+                <svg class="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            {% endif %}
+            
+            <span class="flex-1">{{ message }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    <div class="max-w-[1200px] mx-auto px-5 md:px-8 mb-6 text-[10px] font-montserrat font-bold tracking-[0.18em] uppercase text-gray-400">
+        <a href="{% url 'home' %}" class="hover:text-black transition-colors">Home</a>
+        <span class="mx-2 font-light">/</span>
+        <a href="{% url 'product_listing' %}" class="hover:text-black transition-colors">Skincare</a>
+        <span class="mx-2 font-light">/</span>
+        <span class="text-black">{{ product.name }}</span>
+    </div>
+
+    <div class="max-w-[1200px] mx-auto px-5 md:px-8 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 mb-16">
+        
+        <div class="flex flex-col gap-3">
+            <div class="relative w-full aspect-[4/5] bg-[#F9D698] rounded-xl overflow-hidden group flex items-center justify-center">
+                {% if primary_image %}
+                    <img id="mainImage" 
+                         src="{{ primary_image.image.url }}" 
+                         alt="{{ product.name }}" 
+                         class="w-full h-full object-cover object-center transition-transform duration-700 ease-in-out group-hover:scale-[1.03]">
+                {% elif images %}
+                    <img id="mainImage" 
+                         src="{{ images.0.image.url }}" 
+                         alt="{{ product.name }}" 
+                         class="w-full h-full object-cover object-center transition-transform duration-700 ease-in-out group-hover:scale-[1.03]">
+                {% else %}
+                    <span class="font-montserrat text-gray-400">No Image Available</span>
+                {% endif %}
+            </div>
+            
+            {% if images|length > 1 %}
+            <div class="grid grid-cols-4 gap-3">
+                {% for img in images %}
+                <button type="button" onclick="changeImage('{{ img.image.url }}', this)" 
+                        class="thumb-btn aspect-square bg-white rounded-xl overflow-hidden border-2 transition-all duration-300 
+                        {% if primary_image and img.id == primary_image.id %} border-gray-800 
+                        {% elif not primary_image and forloop.first %} border-gray-800 
+                        {% else %} border-transparent hover:border-gray-300 {% endif %}">
+                    <img src="{{ img.image.url }}" alt="Thumbnail" class="w-full h-full object-cover">
+                </button>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="flex flex-col pt-2 lg:pt-4">
+            
+            <div class="flex items-center gap-2 mb-3">
+                <div class="flex text-gray-800">
+                    {% for i in "12345" %}
+                    <svg class="w-3.5 h-3.5 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                    {% endfor %}
+                </div>
+                <span class="text-[11px] font-montserrat font-medium text-gray-400">(128 Reviews)</span>
+            </div>
+
+            <h1 class="text-[40px] leading-tight font-cormorant text-[#1a1208] tracking-tight mb-4">
+                {{ product.name }}
+            </h1>
+            
+            <div class="flex items-center gap-4 mb-14 font-montserrat">
+                <span class="text-[22px] font-semibold text-[#1a1208]">₹{{ selected_variant.price|default:"0.00" }}</span>
+                {% if product.old_price %}
+                <span class="text-[14px] font-medium text-[#c4b9b0] line-through">₹{{ product.old_price }}</span>
+                {% endif %}
+                
+                {% if stock > 0 %}
+                <span class="px-2.5 py-1 bg-[#eae6e1] text-[#1a1208] text-[9px] font-bold tracking-[0.1em] rounded uppercase">In Stock</span>
+                {% else %}
+                <span class="px-2.5 py-1 bg-red-100 text-red-800 text-[9px] font-bold tracking-[0.1em] rounded uppercase">Out of Stock</span>
+                {% endif %}
+            </div>
+
+            <form method="POST" action="{% url 'add_to_cart' %}" class="flex flex-col">
+                {% csrf_token %}
+                <input type="hidden" name="variant_id" value="{{ selected_variant.id }}">
+
+                {% if variants %}
+                <div class="mb-8">
+                    <label class="block font-montserrat text-[10px] font-bold tracking-[0.15em] uppercase text-[#1a1208] mb-4">Select Size</label>
+                    <div id="variant-container" class="flex flex-wrap gap-2.5">
+                        {% for variant in variants %}
+                        <a href="?variant={{ variant.id }}" 
+                           class="px-6 py-2.5 rounded-lg font-montserrat text-[11px] font-semibold transition-colors border
+                                  {% if variant.stock == 0 %} opacity-40 border-gray-200 text-gray-400 pointer-events-none
+                                  {% elif variant.id == selected_variant.id %} bg-[#3b2e2a] text-white border-[#3b2e2a] shadow-md
+                                  {% else %} bg-transparent text-[#1a1208] border-[#e5e7eb] hover:border-[#1a1208] hover:shadow-sm {% endif %}">
+                            {{ variant.size }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="mb-10">
+                    <label class="block font-montserrat text-[10px] font-bold tracking-[0.15em] uppercase text-[#1a1208] mb-4">Quantity</label>
+                    <div class="flex items-center border border-[#e5e7eb] rounded-lg bg-transparent w-[110px] h-11 justify-between shadow-sm">
+                        <button type="button" onclick="updateQuantity(-1)" class="w-10 h-full flex items-center justify-center text-gray-500 hover:text-black transition-colors font-montserrat text-lg">−</button>
+                        <input type="number" id="qtyInput" name="quantity" value="1" min="1" max="5" class="w-8 text-center font-montserrat text-xs font-semibold text-black bg-transparent border-none focus:ring-0 p-0 pointer-events-none">
+                        <button type="button" onclick="updateQuantity(1)" class="w-10 h-full flex items-center justify-center text-gray-500 hover:text-black transition-colors font-montserrat text-lg">+</button>
+                    </div>
+                    {% if low_stock_count %}
+                    <p class="text-orange-600 font-montserrat text-[10px] font-semibold mt-3 tracking-wide uppercase">Only {{ low_stock_count }} left in stock!</p>
+                    {% endif %}
+                </div>
+
+                <div class="flex items-center gap-3 mb-10">
+                    <button type="submit" 
+                            {% if all_out_of_stock or stock == 0 %}disabled{% endif %}
+                            class="flex-1 btn-dark-brown text-white rounded-lg h-12 font-montserrat text-[10px] font-bold tracking-[0.2em] uppercase transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md">
+                        Add to Cart
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                    </button>
+
+                    <button type="button" class="w-12 h-12 border border-[#e5e7eb] rounded-lg flex items-center justify-center text-gray-800 hover:border-[#1a1208] transition-colors bg-white shadow-sm shrink-0">
+                        <svg class="w-5 h-5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+                    </button>
+                </div>
+
+                {% if skin_type %}
+<div class="pt-8 mt-4 border-t border-[#eae6e1]">
+    <h4 class="text-center font-montserrat text-[11px] font-bold tracking-[0.2em] text-[#3b2e2a] uppercase mb-6">Suitable For</h4>
+    
+    <div class="flex flex-wrap justify-center gap-3">
+        {% with skin_types_str=skin_type|lower %}
+            {% if 'all' in skin_types_str %}
+                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
+                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8m-4-4h8"/></svg>
+                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Normal</span>
+                </div>
+                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
+                    <svg class="w-5 h-5 mb-1.5 fill-[#3b2e2a]" viewBox="0 0 24 24"><circle cx="12" cy="7" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="17" r="1.5"/><circle cx="7" cy="12" r="1.5"/><circle cx="17" cy="12" r="1.5"/><circle cx="8.5" cy="8.5" r="1.5"/><circle cx="15.5" cy="8.5" r="1.5"/><circle cx="8.5" cy="15.5" r="1.5"/><circle cx="15.5" cy="15.5" r="1.5"/></svg>
+                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Dry</span>
+                </div>
+                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
+                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 21a6 6 0 0 0 6-6c0-3.5-6-11-6-11S6 11.5 6 15a6 6 0 0 0 6 6z"/><path d="M12 17a2 2 0 0 0 2-2"/></svg>
+                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Oily</span>
+                </div>
+                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
+                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 3v18m0-18l-7 4.5v1.5l7-4.5 7 4.5v1.5l-7-4.5zM6 9l-2 5c0 1.5 1 2.5 3 2.5s3-1 3-2.5L8 9H6zm10 0l-2 5c0 1.5 1 2.5 3 2.5s3-1 3-2.5l-2-5h-2z"/></svg>
+                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Combo</span>
+                </div>
+                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
+                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 5v2m0 10v2m-6-7h2m10 0h2M7.05 7.05l1.414 1.414m7.072 7.072l1.414 1.414M7.05 16.95l1.414-1.414m7.072-7.072l1.414-1.414M12 15a3 3 0 100-6 3 3 0 000 6z"/></svg>
+                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Sensitive</span>
+                </div>
+            {% else %}
+                {% if 'normal' in skin_types_str %}
+                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
+                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8m-4-4h8"/></svg>
+                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Normal</span>
+                </div>
+                {% endif %}
+                {% if 'dry' in skin_types_str %}
+                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
+                    <svg class="w-5 h-5 mb-1.5 fill-[#3b2e2a]" viewBox="0 0 24 24"><circle cx="12" cy="7" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="17" r="1.5"/><circle cx="7" cy="12" r="1.5"/><circle cx="17" cy="12" r="1.5"/><circle cx="8.5" cy="8.5" r="1.5"/><circle cx="15.5" cy="8.5" r="1.5"/><circle cx="8.5" cy="15.5" r="1.5"/><circle cx="15.5" cy="15.5" r="1.5"/></svg>
+                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Dry</span>
+                </div>
+                {% endif %}
+                {% if 'oily' in skin_types_str %}
+                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
+                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 21a6 6 0 0 0 6-6c0-3.5-6-11-6-11S6 11.5 6 15a6 6 0 0 0 6 6z"/><path d="M12 17a2 2 0 0 0 2-2"/></svg>
+                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Oily</span>
+                </div>
+                {% endif %}
+                {% if 'combo' in skin_types_str or 'combination' in skin_types_str %}
+                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
+                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 3v18m0-18l-7 4.5v1.5l7-4.5 7 4.5v1.5l-7-4.5zM6 9l-2 5c0 1.5 1 2.5 3 2.5s3-1 3-2.5L8 9H6zm10 0l-2 5c0 1.5 1 2.5 3 2.5s3-1 3-2.5l-2-5h-2z"/></svg>
+                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Combo</span>
+                </div>
+                {% endif %}
+                {% if 'sensitive' in skin_types_str %}
+                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
+                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 5v2m0 10v2m-6-7h2m10 0h2M7.05 7.05l1.414 1.414m7.072 7.072l1.414 1.414M7.05 16.95l1.414-1.414m7.072-7.072l1.414-1.414M12 15a3 3 0 100-6 3 3 0 000 6z"/></svg>
+                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Sensitive</span>
+                </div>
+                {% endif %}
+                {% if 'acne' in skin_types_str or 'acne-prone' in skin_types_str %}
+                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
+                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Acne‑prone</span>
+                </div>
+                {% endif %}
+                {% if 'mature' in skin_types_str %}
+                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
+                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Mature</span>
+                </div>
+                {% endif %}
+                {% if 'dehydrated' in skin_types_str %}
+                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
+                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75m-1.5-6h6m-6 3h6m-6 3h6M15 5.25h3.375c.621 0 1.125.504 1.125 1.125V15"/></svg>
+                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Dehydrated</span>
+                </div>
+                {% endif %}
+                {% if 'dull' in skin_types_str %}
+                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
+                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Dull</span>
+                </div>
+                {% endif %}
+            {% endif %}
+        {% endwith %}
+    </div>
+</div>
+{% endif %}
+
+            </form>
+        </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto px-5 mb-20 mt-10">
+        <div class="flex justify-center gap-10 md:gap-16 border-b border-gray-200 overflow-x-auto hide-scrollbar">
+            <button onclick="switchTab('tab-desc', this)" class="tab-btn pb-3 font-cormorant text-[19px] font-medium text-[#1a1208] border-b-[3px] border-gray-500 transition-colors whitespace-nowrap">Description</button>
+            <button onclick="switchTab('tab-ingr', this)" class="tab-btn pb-3 font-cormorant text-[19px] font-medium text-gray-400 border-b-[3px] border-transparent hover:text-[#1a1208] transition-colors whitespace-nowrap">Ingredients</button>
+            <button onclick="switchTab('tab-use', this)" class="tab-btn pb-3 font-cormorant text-[19px] font-medium text-gray-400 border-b-[3px] border-transparent hover:text-[#1a1208] transition-colors whitespace-nowrap">How to Use</button>
+        </div>
+
+  <div id="tab-desc" class="tab-content font-cormorant italic font-bold text-center mt-4 text-[20px] text-[#5a4f43] leading-[1.2] fade-in">
+    {{ description|safe }}
+</div>
+
+<div id="tab-ingr" class="tab-content font-cormorant italic font-bold text-center mt-4 text-[20px] text-[#5a4f43] leading-[1.2] hidden fade-in">
+    {{ ingredients|safe }}
+</div>
+           <div id="tab-use" class="tab-content hidden mt-8 px-5 pb-10">
+    <div class="max-w-md mx-auto">
+        <div class="relative">
+            <div class="absolute left-[17px] top-2 bottom-6 w-[1px] bg-gradient-to-b from-[#4A604F] via-[#e5e7eb] to-transparent"></div>
+
+            {% if how_to_use_steps %}
+                <div class="space-y-8">
+                    {% for step in how_to_use_steps %}
+                    <div class="relative flex gap-6 items-start group opacity-0 translate-y-4 transition-all duration-700 ease-out step-animate" 
+                         style="transition-delay: {{ forloop.counter0|add:forloop.counter0 }}00ms;">
+                        
+                        <div class="relative z-10 flex-shrink-0">
+                            <div class="w-9 h-9 rounded-full bg-[#4A604F] text-white flex items-center justify-center font-cormorant text-sm font-bold shadow-md group-hover:scale-110 transition-transform duration-500">
+                                {{ forloop.counter }}
+                            </div>
+                            <div class="absolute -inset-1 border border-[#4A604F] rounded-full opacity-10 group-hover:opacity-30 group-hover:scale-110 transition-all duration-500"></div>
+                        </div>
+                        
+                        <div class="pt-1 text-left">
+                            <h4 class="font-cormorant text-[19px] font-bold text-[#1a1208] mb-1.5 leading-tight tracking-wide">
+                                {{ step.title|safe }}
+                            </h4>
+                            <p class="font-montserrat text-[12.5px] text-[#5a4f43] leading-relaxed font-light">
+                                {{ step.description|default:step.desc|safe }}
+                            </p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% elif how_to_use %}
+                <div class="font-cormorant italic text-center text-[22px] text-[#5a4f43] leading-[1.5] px-6 animate-fade-in">
+                    {{ how_to_use|safe }}
+                </div>
+            {% else %}
+                <div class="text-center py-10">
+                    <p class="font-cormorant italic text-gray-400 text-lg">Instructions coming soon...</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+        </div>
+    </div>
+
+    <div class="max-w-[1000px] mx-auto px-5 md:px-8 mb-24">
+        <h2 class="text-4xl font-cormorant text-[#1a1208] mb-12">Customer Stories</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-10 mb-10">
+            <div class="md:col-span-4 lg:col-span-3 flex flex-col justify-center">
+                <div class="flex items-center gap-4 mb-4">
+                    <span class="text-[64px] leading-none font-cormorant text-[#1a1208]">4.8</span>
+                    <div class="flex flex-col gap-1.5">
+                        <div class="flex text-[#3b2e2a]">
+                            {% for i in "12345" %}
+                            <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                            {% endfor %}
+                        </div>
+                        <span class="text-[9px] font-montserrat text-gray-500 uppercase tracking-widest leading-relaxed">Based on 128<br>reviews</span>
+                    </div>
+                </div>
+                <button class="w-full max-w-[200px] bg-[#3b2e2a] hover:bg-[#271e1c] text-white rounded-md py-3.5 flex items-center justify-center gap-2 transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
+                    <span class="font-montserrat text-[10px] font-bold tracking-[0.15em] uppercase">Write a Review</span>
+                </button>
+            </div>
+            
+            <div class="md:col-span-8 lg:col-span-9 flex flex-col gap-2.5 justify-center pl-0 md:pl-10">
+                <div class="flex items-center gap-4">
+                    <span class="font-montserrat text-xs font-bold text-[#1a1208] w-2">5</span>
+                    <div class="flex-1 h-1.5 bg-[#eae6e1] rounded-full overflow-hidden"><div class="bg-[#3b2e2a] h-full rounded-full" style="width: 81%"></div></div>
+                    <span class="font-montserrat text-[10px] text-gray-500 w-6 text-right">81%</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="font-montserrat text-xs font-bold text-[#1a1208] w-2">4</span>
+                    <div class="flex-1 h-1.5 bg-[#eae6e1] rounded-full overflow-hidden"><div class="bg-[#3b2e2a] h-full rounded-full" style="width: 12%"></div></div>
+                    <span class="font-montserrat text-[10px] text-gray-500 w-6 text-right">12%</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="font-montserrat text-xs font-bold text-[#1a1208] w-2">3</span>
+                    <div class="flex-1 h-1.5 bg-[#eae6e1] rounded-full overflow-hidden"><div class="bg-[#3b2e2a] h-full rounded-full" style="width: 4%"></div></div>
+                    <span class="font-montserrat text-[10px] text-gray-500 w-6 text-right">4%</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="font-montserrat text-xs font-bold text-[#1a1208] w-2">2</span>
+                    <div class="flex-1 h-1.5 bg-[#eae6e1] rounded-full overflow-hidden"><div class="bg-[#3b2e2a] h-full rounded-full" style="width: 2%"></div></div>
+                    <span class="font-montserrat text-[10px] text-gray-500 w-6 text-right">2%</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="font-montserrat text-xs font-bold text-[#1a1208] w-2">1</span>
+                    <div class="flex-1 h-1.5 bg-[#eae6e1] rounded-full overflow-hidden"><div class="bg-[#3b2e2a] h-full rounded-full" style="width: 1%"></div></div>
+                    <span class="font-montserrat text-[10px] text-gray-500 w-6 text-right">1%</span>
+                </div>
+            </div>
+        </div>
+
+        <hr class="border-[#eae6e1] my-8">
+
+        <div class="flex flex-wrap items-center gap-3 mb-8">
+            <button class="bg-[#3b2e2a] text-white px-6 py-2.5 rounded-full font-montserrat text-[10px] font-medium transition-colors">Most Recent</button>
+            <button class="bg-transparent border border-[#d8d2ca] text-[#1a1208] px-6 py-2.5 rounded-full font-montserrat text-[10px] font-medium hover:border-gray-400 transition-colors">With Photos</button>
+            <button class="bg-transparent border border-[#d8d2ca] text-[#1a1208] px-6 py-2.5 rounded-full font-montserrat text-[10px] font-medium hover:border-gray-400 transition-colors">Highest Rating</button>
+        </div>
+
+        <div class="flex flex-col gap-5">
+            
+            <div class="bg-white rounded-2xl p-7 md:p-9 border border-[#eae6e1] flex flex-col md:flex-row justify-between gap-8 shadow-[0_4px_20px_rgb(0,0,0,0.02)]">
+                <div class="flex-1">
+                    <div class="font-montserrat text-[13px] font-bold text-[#1a1208] mb-1.5">Sarah M.</div>
+                    <div class="flex gap-0.5 mb-4 text-[#3b2e2a]">
+                        {% for i in "12345" %}
+                        <svg class="w-3.5 h-3.5 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                        {% endfor %}
+                    </div>
+                    <h4 class="font-cormorant text-[22px] font-bold text-[#1a1208] mb-3">Absolutely changed my skin texture</h4>
+                    <p class="font-montserrat text-[12px] text-[#5a4f43] leading-relaxed mb-6">
+                        I've been using the Natural Radiance Serum for about three weeks now, and the difference is night and day. My skin feels so much smoother and the dullness is completely gone. It absorbs quickly and doesn't leave any sticky residue. Highly recommend for anyone looking for that natural glow!
+                    </p>
+                    <span class="font-montserrat text-[9px] font-bold tracking-widest text-gray-400 uppercase">2 Days Ago</span>
+                </div>
+                <div class="flex gap-3 shrink-0">
+                    <img src="https://via.placeholder.com/150/f0ebe2/8a7e72?text=Img" class="w-20 h-20 md:w-24 md:h-24 rounded-xl object-cover border border-gray-100" alt="Review Image">
+                    <img src="https://via.placeholder.com/150/F9D698/3b2e2a?text=Img" class="w-20 h-20 md:w-24 md:h-24 rounded-xl object-cover border border-gray-100" alt="Review Image">
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl p-7 md:p-9 border border-[#eae6e1] shadow-[0_4px_20px_rgb(0,0,0,0.02)]">
+                <div class="font-montserrat text-[13px] font-bold text-[#1a1208] mb-1.5">Emily R.</div>
+                <div class="flex gap-0.5 mb-4 text-[#3b2e2a]">
+                    {% for i in "12345" %}
+                    <svg class="w-3.5 h-3.5 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                    {% endfor %}
+                </div>
+                <h4 class="font-cormorant text-[22px] font-bold text-[#1a1208] mb-3">A staple in my morning routine</h4>
+                <p class="font-montserrat text-[12px] text-[#5a4f43] leading-relaxed mb-6">
+                    This serum is everything. It's lightweight enough to wear under makeup but hydrating enough to make my skin feel plump all day. The scent is very subtle and natural, which I love.
+                </p>
+                <span class="font-montserrat text-[9px] font-bold tracking-widest text-gray-400 uppercase">1 Week Ago</span>
+            </div>
+            
+            <div class="flex justify-center mt-10 mb-6">
+                <a href="#" class="inline-block font-montserrat text-[10px] font-bold tracking-[0.2em] text-[#1a1208] uppercase border-b-[1.5px] border-[#1a1208] pb-1.5 hover:text-gray-500 hover:border-gray-500 transition-colors">
+                    Load More Reviews
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if related_products %}
+    <div class="max-w-[1200px] mx-auto px-5 md:px-8 mt-24">
+        
+        <div class="flex justify-between items-end mb-10">
+            <div>
+                <h2 class="text-[32px] font-cormorant text-[#1a1208] mb-2 leading-none">Complete Your Routine</h2>
+                <p class="font-cormorant italic text-[16px] text-[#8a7e72]">Products that work perfectly together.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button class="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center text-gray-400 hover:text-black hover:border-gray-500 transition-colors">
+                    <svg class="w-4 h-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="1.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+                </button>
+                <button class="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center text-gray-400 hover:text-black hover:border-gray-500 transition-colors">
+                    <svg class="w-4 h-4 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="1.2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 md:gap-8">
+            {% for rel in related_products %}
+            <a href="{% url 'product_detail_view' rel.slug %}" class="group block no-underline">
+                <div class="w-full aspect-[4/5] bg-white rounded-2xl mb-4 overflow-hidden relative shadow-[0_2px_10px_rgb(0,0,0,0.02)]">
+                    {% with first_image=rel.images.first %}
+                    {% if first_image %}
+                    <img src="{{ first_image.image.url }}" alt="{{ rel.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out">
+                    {% else %}
+                    <div class="w-full h-full flex items-center justify-center text-gray-400 font-montserrat text-xs">No Image</div>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+                <div class="mt-4">
+                    <p class="font-montserrat text-[10px] font-medium tracking-[0.2em] uppercase text-[#a8a196] mb-1.5">
+                        {{ rel.category.name|default:"SERUM" }}
+                    </p>
+                    
+                    <div class="flex justify-between items-baseline gap-2">
+                        <h3 class="font-montserrat text-[14px] font-bold tracking-[0.05em] uppercase text-[#1a1208] group-hover:text-[#4A604F] transition-colors truncate">
+                            {{ rel.name }}
+                        </h3>
+                        
+                        <p class="font-montserrat font-bold text-[15px] text-[#1a1208] whitespace-nowrap"><span class="font-montserrat text-[10px] text-gray-400 mt-1 block">from</span>
+                            ₹{{ rel.variants.first.price|default:"199" }}
+                        </p>
+                    </div>
+                    
+                    
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Frontend Variant Sorting (Numeric Ascending)
+    document.addEventListener('DOMContentLoaded', () => {
+        
+        // TOAST ANIMATION LOGIC ADDED HERE
+        const toasts = document.querySelectorAll('.toast-notification');
+        if (toasts.length > 0) {
+            toasts.forEach((toast, index) => {
+                // Slide in
+                setTimeout(() => {
+                    toast.classList.remove('translate-x-[120%]');
+                    toast.classList.add('translate-x-0');
+                }, 100 + (index * 150)); 
+
+                // Slide out and remove after 4 seconds
+                setTimeout(() => {
+                    toast.classList.remove('translate-x-0');
+                    toast.classList.add('translate-x-[120%]');
+                    setTimeout(() => toast.remove(), 500); 
+                }, 4000 + (index * 150));
+            });
+        }
+
+        const variantContainer = document.getElementById('variant-container');
+        
+        if (variantContainer) {
+            // Get all the variant buttons into an array
+            const variantsList = Array.from(variantContainer.children);
+            
+            // Sort them by extracting the number from the text (e.g., "50g" -> 50)
+            variantsList.sort((a, b) => {
+                // regex /\D/g removes all non-numeric characters so "100ml" becomes "100"
+                const sizeA = parseInt(a.textContent.replace(/\D/g, '')) || 0;
+                const sizeB = parseInt(b.textContent.replace(/\D/g, '')) || 0;
+                return sizeA - sizeB; // Sorts lowest to highest
+            });
+            
+            // Re-append the sorted buttons back into the container
+            variantsList.forEach(variant => variantContainer.appendChild(variant));
+        }
+    });
+
+    // Image Gallery Swap with Border Highlight
+    function changeImage(src, btnElement) {
+        const mainImage = document.getElementById('mainImage');
+        if (!mainImage) return;
+        
+        mainImage.style.opacity = '0.5';
+        setTimeout(() => {
+            mainImage.src = src;
+            mainImage.style.opacity = '1';
+        }, 150);
+
+        document.querySelectorAll('.thumb-btn').forEach(btn => {
+            btn.classList.remove('border-gray-800');
+            btn.classList.add('border-transparent');
+        });
+        btnElement.classList.remove('border-transparent');
+        btnElement.classList.add('border-gray-800');
+    }
+
+    // Quantity Logic (Capped at 5 or available stock)
+    function updateQuantity(change) {
+        const input = document.getElementById('qtyInput');
+        let currentVal = parseInt(input.value) || 1;
+        
+        // Ensure we respect both max=5 and the backend stock
+        let maxVal = parseInt(input.getAttribute('max')) || 5;
+        let stockVal = parseInt('{{ stock }}') || 0;
+        let limit = Math.min(maxVal, stockVal);
+        
+        let newVal = currentVal + change;
+        
+        if (newVal >= 1 && newVal <= limit) {
+            input.value = newVal;
+        }
+    }
+
+    // Tabs Switcher Logic
+     function switchTab(tabId, btnElement) {
+
+        document.querySelectorAll('.tab-content').forEach(el => {
+
+            el.classList.add('hidden');
+
+            el.classList.remove('fade-in');
+
+        });
+
+        document.querySelectorAll('.tab-btn').forEach(el => {
+
+            el.classList.remove('border-gray-500', 'text-[#1a1208]');
+
+            el.classList.add('border-transparent', 'text-gray-400');
+
+        });
+
+        const targetContent = document.getElementById(tabId);
+
+        if(targetContent) {
+
+            targetContent.classList.remove('hidden');
+
+            void targetContent.offsetWidth;
+
+            targetContent.classList.add('fade-in');
+
+        }
+
+        btnElement.classList.remove('border-transparent', 'text-gray-400');
+
+        btnElement.classList.add('border-gray-500', 'text-[#1a1208]');
+
+    }
+</script>
+{% endblock %}

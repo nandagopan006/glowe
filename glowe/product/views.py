@@ -653,37 +653,113 @@ def product_detail_view(request,slug):
     if not selected_variant:
         selected_variant=variants.first()
 
-    stock = selected_variant.stock if selected_variant else 0
-    low_stock = stock if 0 < stock <= 5 else None
+    stock =selected_variant.stock if selected_variant else 0
+    low_stock_count= stock if 0 < stock <= 5 else None
     all_out_of_stock =not variants.filter(stock__gt=0).exists()
     
-    skin_type = product.skin_type if product.skin_type else "All Skin Types"
-    description = product.description
-    ingredients = product.ingredients
+    skin_type =product.skin_type if product.skin_type else "All Skin Types"
+    description=product.description
+    ingredients=product.ingredients
     how_to_use = product.how_to_use
+    how_to_use_steps = []
+    if how_to_use:
+        try:
+            how_to_use_steps = json.loads(how_to_use)
+        except:
+            how_to_use_steps = []
+
     
     #not use now  ok appo venda
     delivery_info = "Free delivery in 3-5 days"
     
     images=product.images.all()
+    primary_image = images.filter(is_primary=True).first()
+    
     
     related_products=Product.objects.filter(
         category=product.category,
         is_active=True,
         is_deleted=False
-    ).exclude(id=product.id)[:4]
+    ).exclude(id=product.id)[:5]
     
     return render(request,'user/product_detail_view.html',{
         'product':product,
         'variants':variants,
         'selected_variant': selected_variant,
         'stock':stock,                   
-        'low_stock':low_stock,
+        'low_stock_count':low_stock_count,
         'all_out_of_stock':all_out_of_stock,
         'skin_type':skin_type,
         'description':description,
         'ingredients':ingredients,
         'how_to_use':how_to_use,
+        'how_to_use_steps': how_to_use_steps,
         'images':images,
+        'primary_image': primary_image,
         'related_products':related_products,
     })
+    
+
+def add_to_cart(request):
+    if request.method != 'POST':
+        return redirect('product_listing')
+    variant_id =request.POST.get('variant_id')
+    
+    max_qty=5
+    
+    try :
+        
+        quantity=int(request.POST.get('quantity',1))
+    except:
+        quantity=1
+    #if neg or 0 not aloow
+    if quantity <=0 :
+        quantity=1
+    
+    if quantity > max_qty:
+        quantity=max_qty
+    
+    variant = get_object_or_404(Variant, id=variant_id)
+    product = variant.product
+
+    if not product.is_active or product.is_deleted:
+        messages.error(request,"Product not available")
+        return redirect('product_listing')
+    
+    if not variant.is_active:
+        messages.error(request,"Variant not available")
+        return redirect('product_detail_view',slug=product.slug)
+    
+    stock = variant.stock
+    #out of stock
+    if stock == 0 :
+        messages.error(request,"Out of stock")
+        return redirect('product_detail_view',slug=product.slug)
+    
+    if quantity > stock:
+        messages.error(request,f"Only {stock} items available")
+        return redirect('product_detail_view',slug=product.slug)
+    
+    cart=request.session.get('cart',{})
+    key=str(variant_id)
+    
+    if key in cart:
+        new_qty=cart[key] + quantity
+        
+        if new_qty > max_qty:      
+            new_qty=max_qty
+            messages.warning(request, f"Max {max_qty} items per order")
+    
+        if new_qty > stock:
+                messages.error(request, f"Only {stock} items available")
+                return redirect('product_detail_view', slug=product.slug)
+    
+        cart[key]=new_qty
+        messages.success(request,f"Cart updated ({new_qty} items)")
+    else:
+        cart[key]=quantity
+        messages.success(request, "Added to cart")
+        
+    request.session['cart'] =cart
+
+    return redirect('product_detail_view',slug=product.slug)

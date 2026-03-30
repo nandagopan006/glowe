@@ -475,7 +475,7 @@ body { background: var(--cream); font-family: 'Jost', sans-serif; color: var(--i
       {% with avg=product.avg_rating|default:0 rev=product.review_count|default:0 %}
       <article class="pcard">
 
-        <a class="pcard-img-wrap" href="{% url 'product_detail' product.id %}">
+        <a class="pcard-img-wrap" href="{% url 'product_detail_view' product.slug %}">
           {% if image %}
             <img src="{{ image.image.url }}" alt="{{ product.name }}" loading="lazy">
           {% else %}
@@ -503,7 +503,7 @@ body { background: var(--cream); font-family: 'Jost', sans-serif; color: var(--i
           <div class="pcard-cat">{{ product.category.name }}</div>
           {% endif %}
 
-          <a class="pcard-name" href="{% url 'product_detail' product.id %}">{{ product.name }}</a>
+          <a class="pcard-name" href="{% url 'product_detail_view' product.slug %}">{{ product.name }}</a>
 
           <div class="pcard-rule"></div>
 
@@ -750,4 +750,4 @@ function addToCart(productId, variantId) {}
 (function(){ drawFill(); updateBadge(); })();
 </script>
 
-{% endblock %}      
+{% endblock %}
