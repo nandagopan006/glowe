@@ -113,17 +113,16 @@ class VariantForm(forms.ModelForm):
         cleaned_data =super().clean()
         size=cleaned_data.get('size')
         is_default = cleaned_data.get('is_default')
-        is_active = cleaned_data.get('is_active')
-
+        
+        if is_default:
+            cleaned_data['is_active'] = True
+            
         if size and getattr(self.instance,"product",None):
             exists=Variant.objects.filter(product=self.instance.product,size=size
                                           ).exclude(id=self.instance.id).exists()
 
             if exists:
                 raise forms.ValidationError("This size already exists for this product")
-            
-        if is_default and not is_active:
-            raise forms.ValidationError("Default variant must be active")
 
         return cleaned_data
             

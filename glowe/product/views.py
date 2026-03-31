@@ -380,15 +380,19 @@ def edit_variant(request,id):
     product=variant.product
     
     if request.method == "POST":
+        post_data = request.POST.copy()
+        if variant.is_default:
+            post_data['is_active'] = 'True'
+            
         form =VariantForm(request.POST,instance=variant)
         
         if form.is_valid():
             updated_variant = form.save(commit=False)
             
-            updated_variant.is_active = 'is_active' in request.POST
-            
             if updated_variant.is_default:
-                updated_variant.is_active =True
+                updated_variant.is_active = True
+            
+                
            #  if user select default remove other defaults
             if updated_variant.is_default :
                 product.variants.exclude(id=variant.id).filter(is_default=True).update(is_default=False)
@@ -396,6 +400,7 @@ def edit_variant(request,id):
              #if no default exists so that make this default
             if not product.variants.exclude(id=variant.id).filter(is_default=True).exists():
                 updated_variant.is_default =True
+                updated_variant.is_active = True
 
             updated_variant.save()
             
