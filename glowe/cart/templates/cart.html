@@ -1,0 +1,625 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Shopping Bag — Glowé{% endblock %}
+
+{% block content %}
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap');
+
+  :root {
+    --cream:    #F5F0E8;
+    --beige:    #EDE8DC;
+    --brown:    #2C1F14;
+    --brown-md: #5C3D2E;
+    --brown-lt: #9C7A65;
+    --accent:   #C4A882;
+    --red:      #C0392B;
+    --orange:   #D4760A;
+    --white:    #FDFAF5;
+  }
+
+  body { background-color: var(--cream); }
+  .font-display { font-family: 'Cormorant Garamond', serif; }
+  .font-body    { font-family: 'Jost', sans-serif; }
+
+  /* fade-in */
+  .fade-up {
+    opacity: 0;
+    transform: translateY(18px);
+    animation: fadeUp 0.55s ease forwards;
+  }
+  @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+  .delay-1 { animation-delay: 0.08s; }
+  .delay-2 { animation-delay: 0.16s; }
+
+  /* cart card */
+  .cart-card {
+    background: var(--white);
+    border-radius: 16px;
+    border: 1px solid rgba(196,168,130,.2);
+    transition: box-shadow .25s ease, transform .25s ease;
+  }
+  .cart-card:hover {
+    box-shadow: 0 8px 32px rgba(44,31,20,.09);
+    transform: translateY(-1px);
+  }
+
+  /* product image link */
+  .item-img-link { display: block; flex-shrink: 0; }
+  .item-img {
+    width: 96px; height: 96px;
+    object-fit: cover;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(44,31,20,.10);
+    transition: transform .3s ease, box-shadow .3s ease;
+  }
+  .item-img-link:hover .item-img {
+    transform: scale(1.05);
+    box-shadow: 0 8px 22px rgba(44,31,20,.16);
+  }
+
+  /* qty */
+  .qty-btn {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 1.5px solid var(--accent);
+    background: transparent;
+    color: var(--brown);
+    font-size: 18px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: background .2s, color .2s, transform .15s;
+    font-family: 'Jost', sans-serif;
+    user-select: none;
+  }
+  .qty-btn:hover:not(:disabled) {
+    background: var(--brown);
+    color: var(--white);
+    transform: scale(1.08);
+  }
+  .qty-btn:disabled { opacity: 0.32; cursor: not-allowed; }
+
+  /* qty loading spinner */
+  .qty-loading {
+    width: 16px; height: 16px;
+    border: 2px solid var(--accent);
+    border-top-color: var(--brown);
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* remove btn */
+  .remove-btn {
+    font-family: 'Jost', sans-serif;
+    font-size: 11px; letter-spacing: .08em;
+    color: var(--brown-lt);
+    text-transform: uppercase;
+    display: flex; align-items: center; gap: 4px;
+    cursor: pointer;
+    background: none; border: none; padding: 0;
+    transition: color .2s, opacity .2s;
+    opacity: .75;
+  }
+  .remove-btn:hover { color: var(--red); opacity: 1; }
+
+  /* summary */
+  .summary-card {
+    background: var(--white);
+    border-radius: 16px;
+    border: 1px solid rgba(196,168,130,.2);
+    position: sticky;
+    top: 100px;
+  }
+
+  /* checkout */
+  .checkout-btn {
+    background: var(--brown);
+    color: var(--white);
+    font-family: 'Jost', sans-serif;
+    font-size: 12px; letter-spacing: .18em;
+    text-transform: uppercase;
+    border-radius: 9999px;
+    padding: 16px 28px;
+    width: 100%;
+    border: none; cursor: pointer;
+    text-align: center; display: block; text-decoration: none;
+    transition: background .22s, transform .18s, box-shadow .22s;
+  }
+  .checkout-btn:hover:not(.disabled) {
+    background: var(--brown-md);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(44,31,20,.22);
+  }
+  .checkout-btn.disabled { opacity: .45; pointer-events: none; cursor: not-allowed; }
+
+  /* continue link */
+  .continue-link {
+    font-family: 'Jost', sans-serif;
+    font-size: 11px; letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--brown-lt);
+    text-decoration: none;
+    transition: color .2s;
+  }
+  .continue-link:hover { color: var(--brown); }
+
+  /* ── empty cart button ── */
+  .empty-shop-btn {
+    display: inline-block;
+    background: var(--brown);
+    color: var(--white);
+    font-family: 'Jost', sans-serif;
+    font-size: 12px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    border-radius: 9999px;
+    padding: 15px 48px;
+    text-decoration: none;
+    transition: background .22s, transform .18s, box-shadow .22s;
+    white-space: nowrap;
+  }
+  .empty-shop-btn:hover {
+    background: var(--brown-md);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(44,31,20,.22);
+  }
+
+  /* divider / trust */
+  .divider { border-top: 1px solid rgba(196,168,130,.28); }
+  .trust-item {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    font-family: 'Jost', sans-serif;
+    font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--brown-lt);
+  }
+
+  /* modal */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(44,31,20,.45);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999;
+    opacity: 0; pointer-events: none;
+    transition: opacity .25s ease;
+  }
+  .modal-overlay.active { opacity: 1; pointer-events: all; }
+  .modal-box {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 36px 32px 28px;
+    max-width: 400px; width: 92%;
+    text-align: center;
+    transform: translateY(16px) scale(.97);
+    transition: transform .28s ease;
+    box-shadow: 0 24px 60px rgba(44,31,20,.18);
+  }
+  .modal-overlay.active .modal-box { transform: translateY(0) scale(1); }
+  .modal-cancel {
+    border: 1.5px solid var(--accent);
+    background: transparent; color: var(--brown-md);
+    font-family: 'Jost', sans-serif;
+    font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
+    border-radius: 9999px; padding: 11px 24px;
+    cursor: pointer; transition: background .2s;
+  }
+  .modal-cancel:hover { background: var(--beige); }
+  .modal-confirm {
+    background: var(--brown); color: var(--white);
+    font-family: 'Jost', sans-serif;
+    font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
+    border-radius: 9999px; padding: 11px 24px;
+    border: none; cursor: pointer;
+    transition: background .2s, transform .18s;
+  }
+  .modal-confirm:hover { background: var(--red); transform: scale(1.03); }
+
+  /* flash animation for totals */
+  @keyframes flashUpdate { 0% { opacity:.35; } 100% { opacity:1; } }
+  .flash { animation: flashUpdate .35s ease; }
+</style>
+
+<!-- ══ HEADER ══ -->
+<section class="pt-14 pb-8 text-center fade-up">
+  <h1 class="font-display text-5xl md:text-6xl font-light text-[var(--brown)] leading-tight">
+    Shopping Bag
+  </h1>
+  <p class="mt-2 font-body text-sm tracking-widest text-[var(--brown-lt)] uppercase">
+    Your curated selection for radiant skin
+  </p>
+</section>
+
+<!-- ══ EMPTY CART ══ -->
+{% if is_empty %}
+<section class="flex flex-col items-center justify-center py-24 px-4 fade-up delay-1">
+  <svg width="56" height="56" viewBox="0 0 24 24" fill="none"
+       stroke="var(--accent)" stroke-width="1.2" class="mb-7 opacity-60">
+    <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+    <line x1="3" y1="6" x2="21" y2="6"/>
+    <path d="M16 10a4 4 0 01-8 0"/>
+  </svg>
+  <p class="font-display text-4xl text-[var(--brown)] font-light mb-3">Your bag is empty</p>
+  <p class="font-body text-sm text-[var(--brown-lt)] mb-10 tracking-wide text-center max-w-xs">
+    Discover our collection of premium skincare crafted for radiant skin.
+  </p>
+  <a href="{% url 'product_listing' %}" class="empty-shop-btn">
+    Continue Shopping
+  </a>
+</section>
+
+{% else %}
+
+<!-- ══ MAIN GRID ══ -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pb-56">
+  <div class="flex flex-col lg:flex-row gap-8 items-start">
+
+    <!-- ── LEFT : CART ITEMS ── -->
+    <div class="w-full lg:w-[68%] flex flex-col gap-4 fade-up delay-1">
+
+      {% for entry in cart_items %}
+      <div class="cart-card p-5 sm:p-6"
+           data-item-id="{{ entry.item.id }}"
+           data-oos="{{ entry.is_out_of_stock|yesno:'true,false' }}"
+           data-price="{{ entry.price }}">
+
+        <div class="flex items-start gap-4 sm:gap-5">
+
+          <!-- ── clickable product image ── -->
+          <a href="{% url 'product_detail_view' entry.product.slug %}"
+             class="item-img-link" title="View {{ entry.product.name }}">
+            {% if entry.product.images.first %}
+              <img src="{{ entry.product.images.first.image.url }}"
+                   alt="{{ entry.product.name }}"
+                   class="item-img">
+            {% else %}
+              <div class="item-img bg-[var(--beige)] flex items-center justify-center">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+                     stroke="var(--accent)" stroke-width="1.4">
+                  <rect x="3" y="3" width="18" height="18" rx="3"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+              </div>
+            {% endif %}
+          </a>
+
+          <!-- ── info block ── -->
+          <div class="flex-1 min-w-0">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <a href="{% url 'product_detail_view' entry.product.slug %}"
+                   class="font-display text-lg sm:text-xl font-medium text-[var(--brown)]
+                          leading-tight hover:text-[var(--brown-md)] transition-colors"
+                   style="text-decoration:none;">
+                  {{ entry.product.name }}
+                </a>
+                <p class="font-body text-xs tracking-wide text-[var(--brown-lt)] mt-0.5">
+                  {% if entry.variant.size %}{{ entry.variant.size }}{% endif %}
+                  {% if entry.variant.size and entry.variant.color %} | {% endif %}
+                  {% if entry.variant.color %}{{ entry.variant.color }}{% endif %}
+                </p>
+              </div>
+              <span class="font-body font-medium text-[var(--brown)] whitespace-nowrap text-sm item-price">
+                ${{ entry.price }}
+              </span>
+            </div>
+
+            <!-- stock states -->
+            {% if entry.is_out_of_stock %}
+              <p class="mt-2 font-body text-xs font-medium tracking-wide text-[var(--red)]">
+                ● Out of Stock
+              </p>
+            {% elif entry.low_stock %}
+              <p class="mt-2 font-body text-xs font-medium tracking-wide text-[var(--orange)]">
+                ● Only {{ entry.stock }} left
+              </p>
+            {% endif %}
+
+            <!-- qty + remove row -->
+            <div class="mt-4 flex items-center justify-between">
+
+              <!-- QUANTITY CONTROL (AJAX — no reload) -->
+              <div class="flex items-center gap-3">
+                <button type="button" class="qty-btn dec-btn"
+                  data-item="{{ entry.item.id }}"
+                  data-stock="{{ entry.stock }}"
+                  {% if entry.is_out_of_stock or entry.quantity <= 1 %}disabled{% endif %}>
+                  −
+                </button>
+
+                <span class="font-body text-sm font-medium text-[var(--brown)] w-6 text-center qty-display"
+                      id="qty-display-{{ entry.item.id }}">
+                  {% if entry.is_out_of_stock %}0{% else %}{{ entry.quantity }}{% endif %}
+                </span>
+
+                <span class="qty-loading" id="qty-spin-{{ entry.item.id }}"></span>
+
+                <button type="button" class="qty-btn inc-btn"
+                  data-item="{{ entry.item.id }}"
+                  data-stock="{{ entry.stock }}"
+                  {% if entry.is_out_of_stock or entry.quantity >= entry.stock or entry.quantity >= 5 %}disabled{% endif %}>
+                  +
+                </button>
+              </div>
+
+              <!-- remove -->
+              <button type="button" class="remove-btn"
+                onclick="openRemoveModal(
+                  {{ entry.item.id }},
+                  '{{ entry.product.name|escapejs }}',
+                  '{{ entry.variant.size|default:''|escapejs }}',
+                  '{{ entry.price }}',
+                  '{% if entry.product.images.first %}{{ entry.product.images.first.image.url }}{% endif %}'
+                )">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="1.8">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+                  <path d="M10 11v6M14 11v6"/>
+                  <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+                </svg>
+                Remove
+              </button>
+
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+
+    </div><!-- end LEFT -->
+
+    <!-- ── RIGHT : ORDER SUMMARY ── -->
+    <div class="w-full lg:w-[32%] fade-up delay-2">
+      <div class="summary-card p-7">
+        <h2 class="font-display text-2xl font-medium text-[var(--brown)] mb-6">Order Summary</h2>
+
+        <div class="flex flex-col gap-3 mb-5">
+          <div class="flex justify-between items-center">
+            <span class="font-body text-sm text-[var(--brown-lt)]">Subtotal</span>
+            <span class="font-body text-sm text-[var(--brown)]" id="summary-subtotal">
+              ${{ total }}
+            </span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="font-body text-sm text-[var(--brown-lt)] flex items-center gap-1">
+              Shipping
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="1.8" class="opacity-40">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 16v-4M12 8h.01"/>
+              </svg>
+            </span>
+            <span class="font-body text-sm text-[var(--brown)]">$5.00</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="font-body text-sm text-[var(--brown-lt)]">Estimated Tax</span>
+            <span class="font-body text-sm text-[var(--brown-lt)] italic">TBD</span>
+          </div>
+        </div>
+
+        <div class="divider my-5"></div>
+
+        <div class="flex justify-between items-end mb-1">
+          <span class="font-body text-xs tracking-widest text-[var(--brown)] uppercase">Total</span>
+          <span class="font-display text-4xl font-medium text-[var(--brown)]"
+                id="summary-total">${{ total|add:5 }}</span>
+        </div>
+        <p class="font-body text-[10px] tracking-widest uppercase text-[var(--brown-lt)] text-right mb-6">
+          Price in USD
+        </p>
+
+        <a href=""
+           id="checkout-btn"
+           class="checkout-btn {% for entry in cart_items %}{% if entry.is_out_of_stock %}disabled{% endif %}{% endfor %}">
+          Proceed to Checkout →
+        </a>
+
+        <div class="divider my-6"></div>
+
+        <div class="flex justify-between items-center mb-6">
+          <div class="trust-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                 stroke="var(--accent)" stroke-width="1.5">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            Secure Payment
+          </div>
+          <div class="trust-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                 stroke="var(--accent)" stroke-width="1.5">
+              <rect x="1" y="3" width="15" height="13" rx="2"/>
+              <path d="M16 8h4l3 5v3h-7V8z"/>
+              <circle cx="5.5" cy="18.5" r="2.5"/>
+              <circle cx="18.5" cy="18.5" r="2.5"/>
+            </svg>
+            Global Delivery
+          </div>
+          <div class="trust-item">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                 stroke="var(--accent)" stroke-width="1.5">
+              <path d="M12 2a9 9 0 100 18A9 9 0 0012 2z"/>
+              <path d="M7 12l3 3 5-5"/>
+            </svg>
+            Pure Ingredients
+          </div>
+        </div>
+
+        <div class="text-center">
+          <a href="{% url 'product_listing' %}" class="continue-link">Continue Shopping</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endif %}
+
+<!-- ══ DELETE CONFIRMATION MODAL ══ -->
+<div id="removeModal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal-box">
+    <div class="flex items-center justify-center w-12 h-12 rounded-full bg-red-50 mx-auto mb-5">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+           stroke="var(--red)" stroke-width="1.8">
+        <polyline points="3 6 5 6 21 6"/>
+        <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+        <path d="M10 11v6M14 11v6"/>
+        <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+      </svg>
+    </div>
+    <h3 class="font-display text-2xl font-medium text-[var(--brown)] mb-2">Remove Item?</h3>
+    <p class="font-body text-sm text-[var(--brown-lt)]">
+      Are you sure you want to remove
+      <strong id="modalProductName" class="text-[var(--brown)]"></strong>
+      from your cart?
+    </p>
+    <div class="flex items-center gap-3 bg-[var(--cream)] rounded-xl p-3 mt-5 mb-6 text-left">
+      <div class="w-12 h-12 rounded-lg bg-[var(--beige)] flex-shrink-0 overflow-hidden"
+           id="modalImgWrap"></div>
+      <div>
+        <p id="modalPreviewName" class="font-body text-xs font-medium text-[var(--brown)]"></p>
+        <p id="modalPreviewMeta" class="font-body text-[10px] text-[var(--brown-lt)]"></p>
+        <p id="modalPreviewPrice" class="font-body text-xs font-medium text-[var(--brown)] mt-0.5"></p>
+      </div>
+    </div>
+    <div class="flex gap-3">
+      <button type="button" class="modal-cancel flex-1" onclick="closeRemoveModal()">Cancel</button>
+      <form id="removeForm" method="POST" action="" class="flex-1">
+        {% csrf_token %}
+        <button type="submit" class="modal-confirm w-full">Yes, Remove</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ══ JAVASCRIPT ══ -->
+<script>
+const CSRF  = '{{ csrf_token }}';
+const SHIPPING = 5;
+
+/* ── AJAX quantity update ── */
+document.addEventListener('DOMContentLoaded', function () {
+
+  document.querySelectorAll('.dec-btn, .inc-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const itemId  = this.dataset.item;
+      const stock   = parseInt(this.dataset.stock) || 0;
+      const isInc   = this.classList.contains('inc-btn');
+      const display = document.getElementById('qty-display-' + itemId);
+      const spinner = document.getElementById('qty-spin-'   + itemId);
+      const card    = document.querySelector('[data-item-id="' + itemId + '"]');
+
+      let currentQty = parseInt(display.textContent) || 0;
+      let newQty = isInc ? currentQty + 1 : currentQty - 1;
+
+      // bounds
+      if (newQty < 1 || newQty > Math.min(stock, 5)) return;
+
+      // disable all qty buttons on this card, show spinner
+      card.querySelectorAll('.qty-btn').forEach(b => b.disabled = true);
+      display.style.visibility = 'hidden';
+      spinner.style.display = 'inline-block';
+
+      const fd = new FormData();
+      fd.append('item_id', itemId);
+      fd.append('quantity', newQty);
+      fd.append('csrfmiddlewaretoken', CSRF);
+
+      fetch("{% url 'update_cart' %}", {
+        method: 'POST',
+        body: fd,
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        redirect: 'manual'
+      })
+      .then(function() {
+        // update display
+        display.textContent = newQty;
+
+        // re-evaluate button states
+        const decBtn = card.querySelector('.dec-btn');
+        const incBtn = card.querySelector('.inc-btn');
+        decBtn.disabled = (newQty <= 1);
+        incBtn.disabled = (newQty >= Math.min(stock, 5));
+
+        // update summary
+        recalcSummary();
+      })
+      .catch(function(err) {
+        console.error('Cart update error:', err);
+      })
+      .finally(function() {
+        display.style.visibility = 'visible';
+        spinner.style.display = 'none';
+      });
+    });
+  });
+
+});
+
+/* ── recalculate summary totals ── */
+function recalcSummary() {
+  let subtotal = 0;
+
+  document.querySelectorAll('[data-item-id]').forEach(function(card) {
+    if (card.dataset.oos === 'true') return;
+    const itemId  = card.dataset.itemId;
+    const price   = parseFloat(card.dataset.price) || 0;
+    const qtyEl   = document.getElementById('qty-display-' + itemId);
+    const qty     = parseInt(qtyEl ? qtyEl.textContent : 0) || 0;
+    subtotal += price * qty;
+  });
+
+  const subEl   = document.getElementById('summary-subtotal');
+  const totalEl = document.getElementById('summary-total');
+
+  if (subEl) {
+    subEl.textContent = '$' + subtotal.toFixed(2);
+    triggerFlash(subEl);
+  }
+  if (totalEl) {
+    totalEl.textContent = '$' + (subtotal + SHIPPING).toFixed(2);
+    triggerFlash(totalEl);
+  }
+}
+
+function triggerFlash(el) {
+  el.classList.remove('flash');
+  void el.offsetWidth;          // force reflow
+  el.classList.add('flash');
+}
+
+/* ── remove modal ── */
+function openRemoveModal(itemId, productName, variantSize, price, imgUrl) {
+  document.getElementById('removeForm').action = '/cart/remove/' + itemId + '/';
+  document.getElementById('modalProductName').textContent  = productName;
+  document.getElementById('modalPreviewName').textContent  = productName;
+  document.getElementById('modalPreviewMeta').textContent  = variantSize || '';
+  document.getElementById('modalPreviewPrice').textContent = '$' + price;
+
+  const wrap = document.getElementById('modalImgWrap');
+  wrap.innerHTML = imgUrl
+    ? '<img src="' + imgUrl + '" alt="' + productName + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px">'
+    : '';
+
+  document.getElementById('removeModal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeRemoveModal() {
+  document.getElementById('removeModal').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('removeModal').addEventListener('click', function(e) {
+  if (e.target === this) closeRemoveModal();
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeRemoveModal();
+});
+</script>
+
+{% endblock %}

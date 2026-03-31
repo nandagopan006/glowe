@@ -63,6 +63,8 @@ def cart(request):
                     'low_stock':low_stock,
                 })
     is_empty= not cart_items
+    
+    cart_count=request.user.cart.items.count()
             
     return render(request, 'cart.html',{
         'cart_items':cart_items,

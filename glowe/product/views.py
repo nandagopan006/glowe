@@ -353,12 +353,7 @@ def add_variant(request,product_id):
             variant.product = product
             
             
-            user_active = request.POST.get('is_active') == 'True'
-            if variant.stock == 0:
-                variant.is_active = False
-            else:
-                variant.is_active = user_active
-            
+            variant.is_active = request.POST.get('is_active') == 'True'
             
             #if select as default true  and change pervies default false 
             if variant.is_default:
@@ -393,12 +388,7 @@ def edit_variant(request,id):
         if form.is_valid():
             updated_variant = form.save(commit=False)
             
-            user_active = request.POST.get('is_active') == 'True'
-            if updated_variant.stock == 0:
-                updated_variant.is_active = False
-            else:
-                updated_variant.is_active = user_active
-            
+            updated_variant.is_active = request.POST.get('is_active') == 'True'
             
             if variant.is_default:
                 updated_variant.is_active = True
@@ -457,14 +447,11 @@ def toggle_variant_status(request, id):
         if variant.is_default:
             messages.error(request, 'Default variant cannot be disabled')
         else:
-            # Prevent activating a variant with zero stock
-            if not variant.is_active and variant.stock == 0:
-                messages.error(request, 'Cannot activate a variant with zero stock.')
-            else:
-                variant.is_active = not variant.is_active
-                variant.save()
-                messages.success(request, "Variant status updated successfully.")
-
+            # Prevent activating a variant 
+            variant.is_active = not variant.is_active
+            variant.save()
+            messages.success(request, "Variant status updated successfully.")
+            
     return redirect('variant_management', product_id=variant.product.id)
 
 def set_default_variant(request, id):

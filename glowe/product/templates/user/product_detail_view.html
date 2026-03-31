@@ -41,23 +41,25 @@
 <main class="bg-[#faf8f5] text-[#1a1208] min-h-screen pt-6 pb-24 fade-in relative overflow-x-hidden">
     
     {% if messages %}
-    <div id="toast-container" class="fixed top-5 right-5 z-[9999] flex flex-col gap-3 pointer-events-none">
+    <div id="toast-container" class="fixed top-8 right-14 z-[9999] pr-4 flex flex-col gap-3 pointer-events-none">
         {% for message in messages %}
-        <div class="toast-notification transform translate-x-[120%] transition-transform duration-500 ease-out flex items-center w-[350px] px-5 py-4 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 font-montserrat text-[13px] tracking-wide font-semibold
-            {% if message.tags == 'error' %} text-red-600 toast-error
-            {% elif message.tags == 'warning' %} text-orange-500 toast-warning
-            {% else %} text-green-600 toast-success {% endif %}">
-            
-            {% if message.tags == 'error' %}
-                <svg class="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            {% elif message.tags == 'warning' %}
-                <svg class="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-            {% else %}
-                <svg class="w-5 h-5 mr-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            {% if forloop.first %}
+            <div class="toast-notification transform translate-x-[120%] transition-transform duration-500 ease-out flex items-center w-[380px] px-8 py-5 bg-white rounded-xl shadow-[0_15px_50px_rgba(0,0,0,0.1)] border border-gray-100 font-montserrat text-[13px] tracking-wide font-semibold
+                {% if message.tags == 'error' %} text-red-600 toast-error
+                {% elif message.tags == 'warning' %} text-orange-500 toast-warning
+                {% else %} text-green-600 toast-success {% endif %}">
+                
+                {% if message.tags == 'error' %}
+                    <svg class="w-5 h-5 mr-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                {% elif message.tags == 'warning' %}
+                    <svg class="w-5 h-5 mr-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                {% else %}
+                    <svg class="w-5 h-5 mr-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                {% endif %}
+                
+                <span class="flex-1">{{ message }}</span>
+            </div>
             {% endif %}
-            
-            <span class="flex-1">{{ message }}</span>
-        </div>
         {% endfor %}
     </div>
     {% endif %}
@@ -72,7 +74,7 @@
     <div class="max-w-[1200px] mx-auto px-5 md:px-8 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 mb-16">
         
         <div class="flex flex-col gap-3">
-            <div class="relative w-full aspect-[4/5] bg-[#F9D698] rounded-xl overflow-hidden group flex items-center justify-center">
+            <div id="image-zoom-container" class="relative w-full aspect-[4/4.5] bg-[#F9D698] rounded-xl overflow-hidden group flex items-center justify-center shadow-sm cursor-crosshair">
                 {% if primary_image %}
                     <img id="mainImage" 
                          src="{{ primary_image.image.url }}" 
@@ -104,7 +106,6 @@
         </div>
 
         <div class="flex flex-col pt-2 lg:pt-4">
-            
             <div class="flex items-center gap-2 mb-3">
                 <div class="flex text-gray-800">
                     {% for i in "12345" %}
@@ -178,93 +179,47 @@
                 </div>
 
                 {% if skin_type %}
-<div class="pt-8 mt-4 border-t border-[#eae6e1]">
-    <h4 class="text-center font-montserrat text-[11px] font-bold tracking-[0.2em] text-[#3b2e2a] uppercase mb-6">Suitable For</h4>
-    
-    <div class="flex flex-wrap justify-center gap-3">
-        {% with skin_types_str=skin_type|lower %}
-            {% if 'all' in skin_types_str %}
-                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
-                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8m-4-4h8"/></svg>
-                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Normal</span>
-                </div>
-                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
-                    <svg class="w-5 h-5 mb-1.5 fill-[#3b2e2a]" viewBox="0 0 24 24"><circle cx="12" cy="7" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="17" r="1.5"/><circle cx="7" cy="12" r="1.5"/><circle cx="17" cy="12" r="1.5"/><circle cx="8.5" cy="8.5" r="1.5"/><circle cx="15.5" cy="8.5" r="1.5"/><circle cx="8.5" cy="15.5" r="1.5"/><circle cx="15.5" cy="15.5" r="1.5"/></svg>
-                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Dry</span>
-                </div>
-                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
-                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 21a6 6 0 0 0 6-6c0-3.5-6-11-6-11S6 11.5 6 15a6 6 0 0 0 6 6z"/><path d="M12 17a2 2 0 0 0 2-2"/></svg>
-                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Oily</span>
-                </div>
-                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
-                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 3v18m0-18l-7 4.5v1.5l7-4.5 7 4.5v1.5l-7-4.5zM6 9l-2 5c0 1.5 1 2.5 3 2.5s3-1 3-2.5L8 9H6zm10 0l-2 5c0 1.5 1 2.5 3 2.5s3-1 3-2.5l-2-5h-2z"/></svg>
-                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Combo</span>
-                </div>
-                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
-                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 5v2m0 10v2m-6-7h2m10 0h2M7.05 7.05l1.414 1.414m7.072 7.072l1.414 1.414M7.05 16.95l1.414-1.414m7.072-7.072l1.414-1.414M12 15a3 3 0 100-6 3 3 0 000 6z"/></svg>
-                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Sensitive</span>
-                </div>
-            {% else %}
-                {% if 'normal' in skin_types_str %}
-                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
-                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8m-4-4h8"/></svg>
-                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Normal</span>
-                </div>
-                {% endif %}
-                {% if 'dry' in skin_types_str %}
-                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
-                    <svg class="w-5 h-5 mb-1.5 fill-[#3b2e2a]" viewBox="0 0 24 24"><circle cx="12" cy="7" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="17" r="1.5"/><circle cx="7" cy="12" r="1.5"/><circle cx="17" cy="12" r="1.5"/><circle cx="8.5" cy="8.5" r="1.5"/><circle cx="15.5" cy="8.5" r="1.5"/><circle cx="8.5" cy="15.5" r="1.5"/><circle cx="15.5" cy="15.5" r="1.5"/></svg>
-                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Dry</span>
-                </div>
-                {% endif %}
-                {% if 'oily' in skin_types_str %}
-                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
-                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 21a6 6 0 0 0 6-6c0-3.5-6-11-6-11S6 11.5 6 15a6 6 0 0 0 6 6z"/><path d="M12 17a2 2 0 0 0 2-2"/></svg>
-                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Oily</span>
+                <div class="pt-8 mt-4 border-t border-[#eae6e1]">
+                    <h4 class="text-center font-montserrat text-[11px] font-bold tracking-[0.2em] text-[#3b2e2a] uppercase mb-6">Suitable For</h4>
+                    
+                    <div class="flex flex-wrap justify-center gap-3">
+                        {% with skin_types_str=skin_type|lower %}
+                            {% if 'all' in skin_types_str %}
+                                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
+                                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8m-4-4h8"/></svg>
+                                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Normal</span>
+                                </div>
+                                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
+                                    <svg class="w-5 h-5 mb-1.5 fill-[#3b2e2a]" viewBox="0 0 24 24"><circle cx="12" cy="7" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="17" r="1.5"/><circle cx="7" cy="12" r="1.5"/><circle cx="17" cy="12" r="1.5"/><circle cx="8.5" cy="8.5" r="1.5"/><circle cx="15.5" cy="8.5" r="1.5"/><circle cx="8.5" cy="15.5" r="1.5"/><circle cx="15.5" cy="15.5" r="1.5"/></svg>
+                                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Dry</span>
+                                </div>
+                                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
+                                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 21a6 6 0 0 0 6-6c0-3.5-6-11-6-11S6 11.5 6 15a6 6 0 0 0 6 6z"/><path d="M12 17a2 2 0 0 0 2-2"/></svg>
+                                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Oily</span>
+                                </div>
+                                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
+                                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 3v18m0-18l-7 4.5v1.5l7-4.5 7 4.5v1.5l-7-4.5zM6 9l-2 5c0 1.5 1 2.5 3 2.5s3-1 3-2.5L8 9H6zm10 0l-2 5c0 1.5 1 2.5 3 2.5s3-1 3-2.5l-2-5h-2z"/></svg>
+                                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Combo</span>
+                                </div>
+                                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
+                                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 5v2m0 10v2m-6-7h2m10 0h2M7.05 7.05l1.414 1.414m7.072 7.072l1.414 1.414M7.05 16.95l1.414-1.414m7.072-7.072l1.414-1.414M12 15a3 3 0 100-6 3 3 0 000 6z"/></svg>
+                                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Sensitive</span>
+                                </div>
+                            {% else %}
+                                {% if 'normal' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8m-4-4h8"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Normal</span></div>{% endif %}
+                                {% if 'dry' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 fill-[#3b2e2a]" viewBox="0 0 24 24"><circle cx="12" cy="7" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="17" r="1.5"/><circle cx="7" cy="12" r="1.5"/><circle cx="17" cy="12" r="1.5"/><circle cx="8.5" cy="8.5" r="1.5"/><circle cx="15.5" cy="8.5" r="1.5"/><circle cx="8.5" cy="15.5" r="1.5"/><circle cx="15.5" cy="15.5" r="1.5"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Dry</span></div>{% endif %}
+                                {% if 'oily' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 21a6 6 0 0 0 6-6c0-3.5-6-11-6-11S6 11.5 6 15a6 6 0 0 0 6 6z"/><path d="M12 17a2 2 0 0 0 2-2"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Oily</span></div>{% endif %}
+                                {% if 'combo' in skin_types_str or 'combination' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 3v18m0-18l-7 4.5v1.5l7-4.5 7 4.5v1.5l-7-4.5zM6 9l-2 5c0 1.5 1 2.5 3 2.5s3-1 3-2.5L8 9H6zm10 0l-2 5c0 1.5 1 2.5 3 2.5s3-1 3-2.5l-2-5h-2z"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Combo</span></div>{% endif %}
+                                {% if 'sensitive' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 5v2m0 10v2m-6-7h2m10 0h2M7.05 7.05l1.414 1.414m7.072 7.072l1.414 1.414M7.05 16.95l1.414-1.414m7.072-7.072l1.414-1.414M12 15a3 3 0 100-6 3 3 0 000 6z"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Sensitive</span></div>{% endif %}
+                                {% if 'acne' in skin_types_str or 'acne-prone' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Acne‑prone</span></div>{% endif %}
+                                {% if 'mature' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Mature</span></div>{% endif %}
+                                {% if 'dehydrated' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75m-1.5-6h6m-6 3h6m-6 3h6M15 5.25h3.375c.621 0 1.125.504 1.125 1.125V15"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Dehydrated</span></div>{% endif %}
+                                {% if 'dull' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Dull</span></div>{% endif %}
+                            {% endif %}
+                        {% endwith %}
+                    </div>
                 </div>
                 {% endif %}
-                {% if 'combo' in skin_types_str or 'combination' in skin_types_str %}
-                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
-                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 3v18m0-18l-7 4.5v1.5l7-4.5 7 4.5v1.5l-7-4.5zM6 9l-2 5c0 1.5 1 2.5 3 2.5s3-1 3-2.5L8 9H6zm10 0l-2 5c0 1.5 1 2.5 3 2.5s3-1 3-2.5l-2-5h-2z"/></svg>
-                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Combo</span>
-                </div>
-                {% endif %}
-                {% if 'sensitive' in skin_types_str %}
-                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
-                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 5v2m0 10v2m-6-7h2m10 0h2M7.05 7.05l1.414 1.414m7.072 7.072l1.414 1.414M7.05 16.95l1.414-1.414m7.072-7.072l1.414-1.414M12 15a3 3 0 100-6 3 3 0 000 6z"/></svg>
-                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Sensitive</span>
-                </div>
-                {% endif %}
-                {% if 'acne' in skin_types_str or 'acne-prone' in skin_types_str %}
-                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
-                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
-                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Acne‑prone</span>
-                </div>
-                {% endif %}
-                {% if 'mature' in skin_types_str %}
-                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
-                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Mature</span>
-                </div>
-                {% endif %}
-                {% if 'dehydrated' in skin_types_str %}
-                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
-                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75m-1.5-6h6m-6 3h6m-6 3h6M15 5.25h3.375c.621 0 1.125.504 1.125 1.125V15"/></svg>
-                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Dehydrated</span>
-                </div>
-                {% endif %}
-                {% if 'dull' in skin_types_str %}
-                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
-                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Dull</span>
-                </div>
-                {% endif %}
-            {% endif %}
-        {% endwith %}
-    </div>
-</div>
-{% endif %}
-
             </form>
         </div>
     </div>
@@ -456,7 +411,7 @@
                     {% if first_image %}
                     <img src="{{ first_image.image.url }}" alt="{{ rel.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out">
                     {% else %}
-                    <div class="w-full h-full flex items-center justify-center text-gray-400 font-montserrat text-xs">No Image</div>
+                    <div class="absolute inset-0 flex items-center justify-center text-gray-400 font-montserrat text-xs text-center w-full h-full">No Image</div>
                     {% endif %}
                     {% endwith %}
                 </div>
@@ -474,9 +429,8 @@
                             ₹{{ rel.variants.first.price|default:"199" }}
                         </p>
                     </div>
-                    
-                    
                 </div>
+            </a>
             {% endfor %}
         </div>
     </div>
@@ -515,19 +469,20 @@
         const variantInput = document.querySelector('input[name="variant_id"]');
 
         if (addToCartForm && addToCartBtn && variantInput) {
-            addToCartForm.addEventListener('submit', () => {
-                sessionStorage.setItem('last_added_variant', variantInput.value);
+            addToCartBtn.addEventListener('click', () => {
+                if (addToCartBtn.type === 'submit') {
+                    sessionStorage.setItem('last_added_variant', variantInput.value);
+                }
             });
 
             const lastAdded = sessionStorage.getItem('last_added_variant');
             const hasSuccessToast = document.querySelector('.toast-success');
-            const hasWarningToast = document.querySelector('.toast-warning'); // Added this
+            const hasWarningToast = document.querySelector('.toast-warning'); 
             const hasErrorToast = document.querySelector('.toast-error');
 
             if (hasErrorToast) {
                 sessionStorage.removeItem('last_added_variant');
-            } else if (lastAdded === variantInput.value && (hasSuccessToast || hasWarningToast)) {
-                // Now it changes to "Go to Cart" even if they hit the 5 limit warning!
+            } else if (lastAdded == variantInput.value && (hasSuccessToast || hasWarningToast)) {
                 setGoToCartState();
             }
         }
@@ -542,11 +497,10 @@
             addToCartBtn.type = 'button';
             addToCartBtn.onclick = (e) => {
                 e.preventDefault();
-                window.location.href = '/cart/'; // Make sure this matches your actual cart URL!
+                window.location.href = '/cart/'; 
             };
         }
 
-        // Expose reset function globally so updateQuantity can use it
         window.resetAddToCartState = function() {
             if (addToCartBtn && addToCartBtn.type === 'button') {
                 addToCartBtn.innerHTML = `
@@ -572,9 +526,38 @@
             });
             variantsList.forEach(variant => variantContainer.appendChild(variant));
         }
+
+        // IMAGE ZOOM EFFECT LOGIC
+        const zoomContainer = document.getElementById('image-zoom-container');
+        const mainImg = document.getElementById('mainImage');
+
+        if (zoomContainer && mainImg) {
+            zoomContainer.addEventListener('mousemove', (e) => {
+                const rect = zoomContainer.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const xPercent = (x / rect.width) * 100;
+                const yPercent = (y / rect.height) * 100;
+
+                mainImg.style.transformOrigin = `${xPercent}% ${yPercent}%`;
+                mainImg.style.transform = 'scale(1.15)';
+            });
+
+            zoomContainer.addEventListener('mouseenter', () => {
+                mainImg.style.transition = 'transform 0.4s ease-out';
+            });
+
+            zoomContainer.addEventListener('mouseleave', () => {
+                mainImg.style.transformOrigin = 'center center';
+                mainImg.style.transform = 'scale(1)';
+                setTimeout(() => {
+                    mainImg.style.transition = '';
+                }, 400);
+            });
+        }
     });
 
-    // Image Gallery Swap with Border Highlight
     function changeImage(src, btnElement) {
         const mainImage = document.getElementById('mainImage');
         if (!mainImage) return;
@@ -593,12 +576,10 @@
         btnElement.classList.add('border-gray-800');
     }
 
-    // Quantity Logic (Capped at 5 or available stock)
     function updateQuantity(change) {
         const input = document.getElementById('qtyInput');
         let currentVal = parseInt(input.value) || 1;
         
-        // Ensure we respect both max=5 and the backend stock
         let maxVal = parseInt(input.getAttribute('max')) || 5;
         let stockVal = parseInt('{{ stock }}') || 0;
         let limit = Math.min(maxVal, stockVal);
@@ -607,46 +588,30 @@
         
         if (newVal >= 1 && newVal <= limit) {
             input.value = newVal;
-            // Restore "Add to Cart" button if quantity is changed
             if (window.resetAddToCartState) window.resetAddToCartState();
         }
     }
 
-    // Tabs Switcher Logic
      function switchTab(tabId, btnElement) {
-
         document.querySelectorAll('.tab-content').forEach(el => {
-
             el.classList.add('hidden');
-
             el.classList.remove('fade-in');
-
         });
 
         document.querySelectorAll('.tab-btn').forEach(el => {
-
             el.classList.remove('border-gray-500', 'text-[#1a1208]');
-
             el.classList.add('border-transparent', 'text-gray-400');
-
         });
 
         const targetContent = document.getElementById(tabId);
-
         if(targetContent) {
-
             targetContent.classList.remove('hidden');
-
             void targetContent.offsetWidth;
-
             targetContent.classList.add('fade-in');
-
         }
 
         btnElement.classList.remove('border-transparent', 'text-gray-400');
-
         btnElement.classList.add('border-gray-500', 'text-[#1a1208]');
-
     }
 </script>
 {% endblock %}
