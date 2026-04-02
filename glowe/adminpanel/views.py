@@ -102,54 +102,46 @@ def admin_forget_password(request):
 
         
         send_mail(
-    'Glowé Admin — OTP Verification 🔐',
+    'Glowé Admin — OTP Verification',
     f'''
 ════════════════════════════════
-           🌿 Glowé
-        Admin Control Panel
+              Glowé
+         Admin Control Panel
 ════════════════════════════════
 
 Hello Admin,
 
-A login attempt was made to the
-Glowé Admin Control Panel.
+A login attempt was made to the Glowé Admin Control Panel.
 
-Use the code below to verify
-your identity and proceed.
+Use the One-Time Password (OTP) below to verify your identity:
 
   ──────────────────────────
-  Your Admin OTP:
+        Admin OTP
 
-       {' '.join(str(otp))}
+           {' '.join(str(otp))}
 
-  ⏱  Valid for 5 minute only
+  This code is valid for 5 minutes.
   ──────────────────────────
 
-🔒 SECURITY NOTICE:
-   This OTP is for admin access only.
-   Never share this code with anyone.
+SECURITY NOTICE:
+- This OTP is strictly for admin access.
+- Never share this code with anyone.
+- If you did not initiate this login attempt, secure your account immediately and contact support.
 
-   If you did not attempt to login,
-   please secure your account
-   immediately and contact support.
-
-────────────────────────────────
-⚠️  ADMIN ACCESS WARNING:
-   This panel contains sensitive data.
-   Unauthorized access is strictly
-   prohibited and will be logged.
-────────────────────────────────
-
-Need help? Contact us:
-📧 glowe639@gmail.com
+For assistance, contact:
+glowe639@gmail.com
 
 ════════════════════════════════
+Regards,  
+Glowé Team
+
 © 2025 Glowé. All rights reserved.
 Kerala, India — Admin Panel
 ════════════════════════════════
 ''',
     settings.EMAIL_HOST_USER,
     [email],
+    fail_silently=False,
 )
 
         request.session['reset_user']=user.id
@@ -220,48 +212,35 @@ def admin_resend_otp(request):
         expires_at=timezone.now() +timedelta(minutes=2))
 
     send_mail(
-    'Glowé Admin — New OTP Requested 🔄',
+    'Glowé Admin — New OTP Requested',
     f'''
 ════════════════════════════════
-           🌿 Glowé
-        Admin Control Panel
+              Glowé
+         Admin Control Panel
 ════════════════════════════════
 
 Hello Admin,
 
-You requested a new OTP for the
-Glowé Admin Control Panel.
+You requested a new OTP for the Glowé Admin Control Panel.
 
 Your previous OTP has been cancelled.
-Use the new code below to verify
-your identity and proceed.
+Use the new code below to verify your identity:
 
   ──────────────────────────
-  Your New Admin OTP:
+        Admin OTP
 
-       {' '.join(str(otp))}
+           {' '.join(str(otp))}
 
-  ⏱  Valid for 5 minute only
+  This code is valid for 5 minutes.
   ──────────────────────────
 
-🔒 SECURITY NOTICE:
-   This OTP is for admin access only.
-   Never share this code with anyone.
+SECURITY NOTICE:
+- This OTP is strictly for admin access.
+- Never share this code with anyone.
+- If you did not request a new OTP, secure your account immediately and contact support.
 
-   If you did not request a new OTP,
-   please secure your account
-   immediately and contact support.
-
-────────────────────────────────
-⚠️  ADMIN ACCESS WARNING:
-   This panel contains sensitive data.
-   Unauthorized access is strictly
-   prohibited and will be logged.
-────────────────────────────────
-
-Need help? Contact us:
-📧 glowe639@gmail.com
-
+For assistance, contact:
+glowe639@gmail.com
 ════════════════════════════════
 © 2025 Glowé. All rights reserved.
 Kerala, India — Admin Panel
@@ -269,8 +248,8 @@ Kerala, India — Admin Panel
 ''',
     settings.EMAIL_HOST_USER,
     [user.email],
+    fail_silently=False,
 )
-
     messages.success(request,"New OTP sent")
     return redirect('admin_otp_verification')
 

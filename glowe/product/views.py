@@ -314,13 +314,18 @@ def product_detail(request,id):
     base_price=default_variant.price if default_variant else 0
      
     total_stock= variants.aggregate(total=Sum('stock'))['total']or 0
+    
     sku = default_variant.sku if default_variant else "N/A"
+    
     stock_status='In Stock' if total_stock > 0 else "Out of Stock"
+    
     variant_count=variants.filter(is_active=True).count() 
+    
     low_stock=total_stock <10  
     skin_types_list = [s.strip() for s in product.skin_type.split(',')] if product.skin_type else []
     skin_types_list = [s.strip() for s in product.skin_type.split(',')] if product.skin_type else []
     how_to_use_steps = []
+    
     if product.how_to_use:
         try:
             how_to_use_steps =json.loads(product.how_to_use)

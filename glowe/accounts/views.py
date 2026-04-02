@@ -62,56 +62,29 @@ def signup_page(request):
                     expires_at =timezone.now() + timedelta(minutes=1),)
             
             send_mail(
-    'Your Glowé Verification Code',
+    'Verify Your Glowé Account',
     f'''
-════════════════════════════════
-           🌿 Glowé
-     Your Natural Beauty Store
-════════════════════════════════
+Dear {user.full_name or user.email.split('@')[0].capitalize()},
 
-Hey {user.full_name or user.email.split('@')[0].capitalize()},
+We received a request to verify your account.
 
-Welcome to Glowé! We received a request
-to verify your account. Use the code
-below to complete your verification.
+Your One-Time Password (OTP) is:
 
-  ──────────────────────────
-  Your One-Time Password:
+{''.join(otp_code)}
 
-       {' '.join(otp_code)}
+This code is valid for 1 minute.
 
-  ⏱  Valid for 1 minute only
-  ──────────────────────────
+If you did not request this verification, please ignore this email.
 
-🔒 SECURITY NOTICE:
-   Glowé will NEVER ask for your OTP.
-   Do not share this code with anyone,
-   including Glowé staff.
+For assistance, contact:
+glowe639@gmail.com
 
-   If you did not request this code,
-   please ignore this email immediately.
-
-────────────────────────────────
-💚 Why Glowé?
-   ✔ 100% Natural Ingredients
-   ✔ Dermatologist Tested
-   ✔ Premium Luxury Skincare
-   ✔ Cruelty Free
-────────────────────────────────
-
-Need help? Contact us:
-📧 glowe639@gmail.com
-
-════════════════════════════════
-Thank you for choosing Glowé —
-your natural beauty destination.
-
-© 2025 Glowé. All rights reserved.
-Kerala, India
-════════════════════════════════
+Regards,  
+Glowé Team
 ''',
     settings.EMAIL_HOST_USER,
     [user.email],
+    fail_silently=False,
 )
             # in signup view — SAVE the email before redirecting
             request.session ['email']=user.email # it will store in broswer session
@@ -218,57 +191,50 @@ def signup_resend_otp(request):
     user.save()
     
     send_mail(
-    'Your Glowé Verification Code',
+    'Verify Your Glowé Account',
     f'''
 ════════════════════════════════
-           🌿 Glowé
-     Your Natural Beauty Store
+              Glowé
+      Your Natural Beauty Store
 ════════════════════════════════
 
-Hey {user.full_name or user.email.split('@')[0].capitalize()},
+Dear {user.full_name or user.email.split('@')[0].capitalize()},
 
-Welcome to Glowé! We received a request
-to verify your account. Use the code
-below to complete your verification.
+We received a request to verify your Glowé account.
+
+Please use the One-Time Password (OTP) below:
 
   ──────────────────────────
-  Your One-Time Password:
+        Verification Code
 
-       {' '.join(otp_code)}
+         {' '.join(otp_code)}
 
-  ⏱  Valid for 1 minute only
+  Valid for 1 minute
   ──────────────────────────
 
-🔒 SECURITY NOTICE:
-   Glowé will NEVER ask for your OTP.
-   Do not share this code with anyone,
-   including Glowé staff.
+SECURITY NOTICE:
+Do not share this code with anyone.
+Glowé will never request your OTP.
 
-   If you did not request this code,
-   please ignore this email immediately.
+If you did not request this, you may ignore this email.
 
 ────────────────────────────────
-💚 Why Glowé?
-   ✔ 100% Natural Ingredients
-   ✔ Dermatologist Tested
-   ✔ Premium Luxury Skincare
-   ✔ Cruelty Free
+For assistance, contact:
+glowe639@gmail.com
 ────────────────────────────────
-
-Need help? Contact us:
-📧 glowe639@gmail.com
 
 ════════════════════════════════
-Thank you for choosing Glowé —
-your natural beauty destination.
+Regards,  
+Glowé Team
 
 © 2025 Glowé. All rights reserved.
-Kerala, India
 ════════════════════════════════
 ''',
     settings.EMAIL_HOST_USER,
     [user.email],
-) 
+    fail_silently=False,
+)
+    
     request.session['otp_msg'] = 'New OTP sent to your email.'   
     return redirect('signup_otp_verify')
 
@@ -353,56 +319,40 @@ def forget_password(request):
                     reverse('reset_password', kwargs={'uidb64': uid, 'token': token}))
                 
                 send_mail(
-    'Reset Your Glowé Password 🔐',
+    'Reset Your Glowé Password',
     f'''
 ════════════════════════════════
-           🌿 Glowé
-     Your Natural Beauty Store
+              Glowé
+      Your Natural Beauty Store
 ════════════════════════════════
 
-Hey {user.full_name or user.email.split('@')[0].capitalize()},
+Dear {user.full_name or user.email.split('@')[0].capitalize()},
 
-We received a request to reset the
-password for your Glowé account.
+We received a request to reset the password for your Glowé account.
 
-Click the link below to reset it:
+Please click the link below to reset your password:
 
   ──────────────────────────
   {reset_link}
   ──────────────────────────
 
-⏱  This link expires in 15 minutes.
+This link will expire in 15 minutes.
 
-🔒 SECURITY NOTICE:
-   If you did not request a password
-   reset, please ignore this email.
-   Your account is safe and no changes
-   have been made.
-
-   Never share this link with anyone,
-   including Glowé staff.
+SECURITY NOTICE:
+- If you did not request a password reset, please ignore this email.
+- Never share this link with anyone, including Glowé staff.
 
 ────────────────────────────────
-💚 Why Glowé?
-   ✔ 100% Natural Ingredients
-   ✔ Dermatologist Tested
-   ✔ Premium Luxury Skincare
-   ✔ Cruelty Free
+For assistance, contact:
+glowe639@gmail.com
 ────────────────────────────────
-
-Need help? Contact us:
-📧 glowe639@gmail.com
-
-════════════════════════════════
-Thank you for choosing Glowé —
-your natural beauty destination.
-
 © 2025 Glowé. All rights reserved.
 Kerala, India
 ════════════════════════════════
 ''',
     settings.EMAIL_HOST_USER,
     [user.email],
+    fail_silently=False,
 )
                 
                 request.session['reset_email'] = user.email
@@ -499,61 +449,43 @@ def resend_reset_email(request):
         reverse('reset_password', kwargs={'uidb64': uid, 'token': token}))
  
     send_mail(
-    'Reset Your Glowé Password 🔐',
+    'Reset Your Glowé Password',
     f'''
 ════════════════════════════════
-           🌿 Glowé
-     Your Natural Beauty Store
+              Glowé
+      Your Natural Beauty Store
 ════════════════════════════════
 
-Hey {user.full_name or user.email.split('@')[0].capitalize()},
+Dear {user.full_name or user.email.split('@')[0].capitalize()},
 
-We received a request to reset the
-password for your Glowé account.
+We received a request to reset the password for your Glowé account.
 
-Click the link below to reset it:
+Please click the link below to reset your password:
 
   ──────────────────────────
   {reset_link}
   ──────────────────────────
 
-⏱  This link expires in 15 minutes.
+This link will expire in 15 minutes.
 
-🔒 SECURITY NOTICE:
-   If you did not request a password
-   reset, please ignore this email.
-   Your account is safe and no changes
-   have been made.
-
-   Never share this link with anyone,
-   including Glowé staff.
+SECURITY NOTICE:
+- If you did not request a password reset, please ignore this email.
+- Never share this link with anyone, including Glowé staff.
 
 ────────────────────────────────
-💚 Why Glowé?
-   ✔ 100% Natural Ingredients
-   ✔ Dermatologist Tested
-   ✔ Premium Luxury Skincare
-   ✔ Cruelty Free
+For assistance, contact:
+glowe639@gmail.com
 ────────────────────────────────
-
-Need help? Contact us:
-📧 glowe639@gmail.com
-
-════════════════════════════════
-Thank you for choosing Glowé —
-your natural beauty destination.
-
 © 2025 Glowé. All rights reserved.
 Kerala, India
 ════════════════════════════════
 ''',
     settings.EMAIL_HOST_USER,
     [user.email],
-)
- 
+    fail_silently=False,
+) 
     messages.success(request, 'Reset link sent to your email.')
     return redirect('forget_password_link')
-
 
 
 def reset_password(request,uidb64,token):
