@@ -64,7 +64,8 @@ def wishlist_page(request):
     ).exclude(id__in=wishlist_items.values_list('variant_id',flat=True)) #not include the exist product in wishlist
     
     recommend_products=recommend_products.select_related('product')
-    #fro images to geting 2images all.. and limit products 8
+    
+    #for images to geting 2images all.. and limit products 8
     recommend_products=recommend_products.prefetch_related('product__images')[:8]
     
     return render(request,"wishlist/wishlist.html",{
@@ -72,3 +73,10 @@ def wishlist_page(request):
         'wishlist_count':wishlist_count,
         'recommend_products':recommend_products,
     })
+
+def clear_wishlist(request) :
+    
+    if request.method=="POST":
+        Wishlist.objects.filter(user=request.user).delete()
+    
+    return redirect("wishlist")
