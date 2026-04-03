@@ -34,6 +34,11 @@
         opacity: 1;
         transform: translateY(0);
     }
+
+    /* Fullscreen Modal Image Transition */
+    #fs-main-image {
+        transition: transform 0.3s ease-out;
+    }
 </style>
 {% endblock %}
 
@@ -73,25 +78,30 @@
 
     <div class="max-w-[1200px] mx-auto px-5 md:px-8 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 mb-16">
         
-        <div class="flex flex-col gap-3">
-            <div id="image-zoom-container" class="relative w-full aspect-[4/4.5] bg-[#F9D698] rounded-xl overflow-hidden group flex items-center justify-center shadow-sm cursor-crosshair">
-                {% if primary_image %}
-                    <img id="mainImage" 
-                         src="{{ primary_image.image.url }}" 
-                         alt="{{ product.name }}" 
-                         class="w-full h-full object-cover object-center transition-transform duration-700 ease-in-out group-hover:scale-[1.03]">
-                {% elif images %}
-                    <img id="mainImage" 
-                         src="{{ images.0.image.url }}" 
-                         alt="{{ product.name }}" 
-                         class="w-full h-full object-cover object-center transition-transform duration-700 ease-in-out group-hover:scale-[1.03]">
-                {% else %}
-                    <span class="font-montserrat text-gray-400">No Image Available</span>
-                {% endif %}
+        <div class="flex flex-col gap-3 relative z-40">
+            
+            <div class="relative w-full">
+                <div id="image-zoom-container" onclick="openFullScreenGallery()" class="relative w-full aspect-[4/4.5] bg-[#F9D698] rounded-xl overflow-hidden group flex items-center justify-center shadow-sm cursor-zoom-in lg:cursor-crosshair">
+                    {% if primary_image %}
+                        <img id="mainImage" 
+                             src="{{ primary_image.image.url }}" 
+                             alt="{{ product.name }}" 
+                             class="w-full h-full object-cover object-center transition-opacity duration-300">
+                    {% elif images %}
+                        <img id="mainImage" 
+                             src="{{ images.0.image.url }}" 
+                             alt="{{ product.name }}" 
+                             class="w-full h-full object-cover object-center transition-opacity duration-300">
+                    {% else %}
+                        <span class="font-montserrat text-gray-400">No Image Available</span>
+                    {% endif %}
+                    
+                    <div id="inner-zoom-overlay" class="absolute inset-0 z-10 bg-white pointer-events-none opacity-0 transition-opacity duration-300 bg-no-repeat" style="background-size: 200%;"></div>
+                </div>
             </div>
             
             {% if images|length > 1 %}
-            <div class="grid grid-cols-4 gap-3">
+            <div class="grid grid-cols-4 gap-3 relative z-10">
                 {% for img in images %}
                 <button type="button" onclick="changeImage('{{ img.image.url }}', this)" 
                         class="thumb-btn aspect-square bg-white rounded-xl overflow-hidden border-2 transition-all duration-300 
@@ -105,7 +115,7 @@
             {% endif %}
         </div>
 
-        <div class="flex flex-col pt-2 lg:pt-4">
+        <div class="flex flex-col pt-2 lg:pt-4 relative z-10">
             
             <div class="flex items-center gap-2 mb-3">
                 <div class="flex text-gray-800">
@@ -181,47 +191,47 @@
                 </div>
 
                 {% if skin_type %}
-<div class="pt-8 mt-4 border-t border-[#eae6e1]">
-    <h4 class="text-center font-montserrat text-[11px] font-bold tracking-[0.2em] text-[#3b2e2a] uppercase mb-6">Suitable For</h4>
-    
-    <div class="flex flex-wrap justify-center gap-3">
-        {% with skin_types_str=skin_type|lower %}
-            {% if 'all' in skin_types_str %}
-                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
-                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8m-4-4h8"/></svg>
-                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Normal</span>
+                <div class="pt-8 mt-4 border-t border-[#eae6e1]">
+                    <h4 class="text-center font-montserrat text-[11px] font-bold tracking-[0.2em] text-[#3b2e2a] uppercase mb-6">Suitable For</h4>
+                    
+                    <div class="flex flex-wrap justify-center gap-3">
+                        {% with skin_types_str=skin_type|lower %}
+                            {% if 'all' in skin_types_str %}
+                                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
+                                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8m-4-4h8"/></svg>
+                                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Normal</span>
+                                </div>
+                                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
+                                    <svg class="w-5 h-5 mb-1.5 fill-[#3b2e2a]" viewBox="0 0 24 24"><circle cx="12" cy="7" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="17" r="1.5"/><circle cx="7" cy="12" r="1.5"/><circle cx="17" cy="12" r="1.5"/><circle cx="8.5" cy="8.5" r="1.5"/><circle cx="15.5" cy="8.5" r="1.5"/><circle cx="8.5" cy="15.5" r="1.5"/><circle cx="15.5" cy="15.5" r="1.5"/></svg>
+                                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Dry</span>
+                                </div>
+                                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
+                                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 21a6 6 0 0 0 6-6c0-3.5-6-11-6-11S6 11.5 6 15a6 6 0 0 0 6 6z"/><path d="M12 17a2 2 0 0 0 2-2"/></svg>
+                                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Oily</span>
+                                </div>
+                                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
+                                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 3v18m0-18l-7 4.5v1.5l7-4.5 7 4.5v1.5l-7-4.5zM6 9l-2 5c0 1.5 1 2.5 3 2.5s3-1 3-2.5L8 9H6zm10 0l-2 5c0 1.5 1 2.5 3 2.5s3-1 3-2.5l-2-5h-2z"/></svg>
+                                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Combo</span>
+                                </div>
+                                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
+                                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 5v2m0 10v2m-6-7h2m10 0h2M7.05 7.05l1.414 1.414m7.072 7.072l1.414 1.414M7.05 16.95l1.414-1.414m7.072-7.072l1.414-1.414M12 15a3 3 0 100-6 3 3 0 000 6z"/></svg>
+                                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Sensitive</span>
+                                </div>
+                            {% else %}
+                                {% if 'normal' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8m-4-4h8"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Normal</span></div>{% endif %}
+                                {% if 'dry' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 fill-[#3b2e2a]" viewBox="0 0 24 24"><circle cx="12" cy="7" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="17" r="1.5"/><circle cx="7" cy="12" r="1.5"/><circle cx="17" cy="12" r="1.5"/><circle cx="8.5" cy="8.5" r="1.5"/><circle cx="15.5" cy="8.5" r="1.5"/><circle cx="8.5" cy="15.5" r="1.5"/><circle cx="15.5" cy="15.5" r="1.5"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Dry</span></div>{% endif %}
+                                {% if 'oily' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 21a6 6 0 0 0 6-6c0-3.5-6-11-6-11S6 11.5 6 15a6 6 0 0 0 6 6z"/><path d="M12 17a2 2 0 0 0 2-2"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Oily</span></div>{% endif %}
+                                {% if 'combo' in skin_types_str or 'combination' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 3v18m0-18l-7 4.5v1.5l7-4.5 7 4.5v1.5l-7-4.5zM6 9l-2 5c0 1.5 1 2.5 3 2.5s3-1 3-2.5L8 9H6zm10 0l-2 5c0 1.5 1 2.5 3 2.5s3-1 3-2.5l-2-5h-2z"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Combo</span></div>{% endif %}
+                                {% if 'sensitive' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 5v2m0 10v2m-6-7h2m10 0h2M7.05 7.05l1.414 1.414m7.072 7.072l1.414 1.414M7.05 16.95l1.414-1.414m7.072-7.072l1.414-1.414M12 15a3 3 0 100-6 3 3 0 000 6z"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Sensitive</span></div>{% endif %}
+                                {% if 'acne' in skin_types_str or 'acne-prone' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Acne‑prone</span></div>{% endif %}
+                                {% if 'mature' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Mature</span></div>{% endif %}
+                                {% if 'dehydrated' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75m-1.5-6h6m-6 3h6m-6 3h6M15 5.25h3.375c.621 0 1.125.504 1.125 1.125V15"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Dehydrated</span></div>{% endif %}
+                                {% if 'dull' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Dull</span></div>{% endif %}
+                            {% endif %}
+                        {% endwith %}
+                    </div>
                 </div>
-                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
-                    <svg class="w-5 h-5 mb-1.5 fill-[#3b2e2a]" viewBox="0 0 24 24"><circle cx="12" cy="7" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="17" r="1.5"/><circle cx="7" cy="12" r="1.5"/><circle cx="17" cy="12" r="1.5"/><circle cx="8.5" cy="8.5" r="1.5"/><circle cx="15.5" cy="8.5" r="1.5"/><circle cx="8.5" cy="15.5" r="1.5"/><circle cx="15.5" cy="15.5" r="1.5"/></svg>
-                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Dry</span>
-                </div>
-                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
-                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 21a6 6 0 0 0 6-6c0-3.5-6-11-6-11S6 11.5 6 15a6 6 0 0 0 6 6z"/><path d="M12 17a2 2 0 0 0 2-2"/></svg>
-                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Oily</span>
-                </div>
-                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
-                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 3v18m0-18l-7 4.5v1.5l7-4.5 7 4.5v1.5l-7-4.5zM6 9l-2 5c0 1.5 1 2.5 3 2.5s3-1 3-2.5L8 9H6zm10 0l-2 5c0 1.5 1 2.5 3 2.5s3-1 3-2.5l-2-5h-2z"/></svg>
-                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Combo</span>
-                </div>
-                <div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors">
-                    <svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 5v2m0 10v2m-6-7h2m10 0h2M7.05 7.05l1.414 1.414m7.072 7.072l1.414 1.414M7.05 16.95l1.414-1.414m7.072-7.072l1.414-1.414M12 15a3 3 0 100-6 3 3 0 000 6z"/></svg>
-                    <span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Sensitive</span>
-                </div>
-            {% else %}
-                {% if 'normal' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><circle cx="12" cy="12" r="9"/><path d="M12 8v8m-4-4h8"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Normal</span></div>{% endif %}
-                {% if 'dry' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 fill-[#3b2e2a]" viewBox="0 0 24 24"><circle cx="12" cy="7" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="17" r="1.5"/><circle cx="7" cy="12" r="1.5"/><circle cx="17" cy="12" r="1.5"/><circle cx="8.5" cy="8.5" r="1.5"/><circle cx="15.5" cy="8.5" r="1.5"/><circle cx="8.5" cy="15.5" r="1.5"/><circle cx="15.5" cy="15.5" r="1.5"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Dry</span></div>{% endif %}
-                {% if 'oily' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 21a6 6 0 0 0 6-6c0-3.5-6-11-6-11S6 11.5 6 15a6 6 0 0 0 6 6z"/><path d="M12 17a2 2 0 0 0 2-2"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Oily</span></div>{% endif %}
-                {% if 'combo' in skin_types_str or 'combination' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 3v18m0-18l-7 4.5v1.5l7-4.5 7 4.5v1.5l-7-4.5zM6 9l-2 5c0 1.5 1 2.5 3 2.5s3-1 3-2.5L8 9H6zm10 0l-2 5c0 1.5 1 2.5 3 2.5s3-1 3-2.5l-2-5h-2z"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Combo</span></div>{% endif %}
-                {% if 'sensitive' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 5v2m0 10v2m-6-7h2m10 0h2M7.05 7.05l1.414 1.414m7.072 7.072l1.414 1.414M7.05 16.95l1.414-1.414m7.072-7.072l1.414-1.414M12 15a3 3 0 100-6 3 3 0 000 6z"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Sensitive</span></div>{% endif %}
-                {% if 'acne' in skin_types_str or 'acne-prone' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Acne‑prone</span></div>{% endif %}
-                {% if 'mature' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Mature</span></div>{% endif %}
-                {% if 'dehydrated' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75m-1.5-6h6m-6 3h6m-6 3h6M15 5.25h3.375c.621 0 1.125.504 1.125 1.125V15"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Dehydrated</span></div>{% endif %}
-                {% if 'dull' in skin_types_str %}<div class="w-[110px] h-[75px] bg-[#faf8f5] border border-[#e6e0d8] rounded-xl flex flex-col items-center justify-center shadow-sm hover:border-[#c4b9b0] transition-colors"><svg class="w-5 h-5 mb-1.5 stroke-[#3b2e2a]" fill="none" viewBox="0 0 24 24" stroke-width="1.2"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg><span class="font-montserrat text-[9px] font-medium tracking-[0.1em] text-[#5a4f43] uppercase">Dull</span></div>{% endif %}
-            {% endif %}
-        {% endwith %}
-    </div>
-</div>
-{% endif %}
+                {% endif %}
 
             </form>
         </div>
@@ -345,7 +355,6 @@
         </div>
 
         <div class="flex flex-col gap-5">
-            
             <div class="bg-white rounded-2xl p-7 md:p-9 border border-[#eae6e1] flex flex-col md:flex-row justify-between gap-8 shadow-[0_4px_20px_rgb(0,0,0,0.02)]">
                 <div class="flex-1">
                     <div class="font-montserrat text-[13px] font-bold text-[#1a1208] mb-1.5">Sarah M.</div>
@@ -424,11 +433,140 @@
     </div>
     {% endif %}
 
+    <div id="fullscreen-gallery" class="fixed inset-0 z-[10000] bg-white hidden flex-col opacity-0 transition-opacity duration-300 ease-in-out">
+        <div class="absolute top-0 w-full flex justify-between items-center p-4 md:p-6 z-50 bg-gradient-to-b from-white/80 to-transparent">
+            <span id="fs-counter" class="font-montserrat text-sm font-bold tracking-widest text-[#1a1208]">1 / 1</span>
+            <button onclick="closeFullScreenGallery()" class="w-10 h-10 flex items-center justify-center bg-gray-100/80 hover:bg-gray-200 rounded-full transition-colors backdrop-blur-sm">
+                <svg class="w-5 h-5 text-[#1a1208]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <div id="fs-image-wrapper" onclick="toggleFullScreenZoom(event)" class="flex-1 flex items-center justify-center relative overflow-hidden bg-white cursor-zoom-in">
+            <button onclick="navigateGallery(-1, event)" class="absolute left-4 md:left-8 z-40 w-12 h-12 flex items-center justify-center bg-white/50 hover:bg-white rounded-full border border-gray-200 shadow-sm transition-all text-gray-800">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+            </button>
+            
+            <img id="fs-main-image" src="" alt="Zoomed Product Image" class="max-w-full max-h-[85vh] object-contain select-none" style="transform-origin: center center;">
+            
+            <button onclick="navigateGallery(1, event)" class="absolute right-4 md:right-8 z-40 w-12 h-12 flex items-center justify-center bg-white/50 hover:bg-white rounded-full border border-gray-200 shadow-sm transition-all text-gray-800">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+            </button>
+        </div>
+    </div>
 </main>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+    // --- FULL SCREEN ZOOM LOGIC ---
+    let fsImages = [];
+    let currentFsIndex = 0;
+    let isZoomed = false;
+
+    // Elements
+    const fsModal = document.getElementById('fullscreen-gallery');
+    const fsMainImage = document.getElementById('fs-main-image');
+    const fsWrapper = document.getElementById('fs-image-wrapper');
+    const fsCounter = document.getElementById('fs-counter');
+
+    function initGalleryArray() {
+        fsImages = [];
+        const thumbs = document.querySelectorAll('.thumb-btn img');
+        if (thumbs.length > 0) {
+            thumbs.forEach(img => fsImages.push(img.src));
+        } else {
+            const mainImg = document.getElementById('mainImage');
+            if(mainImg) fsImages.push(mainImg.src);
+        }
+    }
+
+    function openFullScreenGallery() {
+        if (fsImages.length === 0) initGalleryArray();
+        if (fsImages.length === 0) return; 
+        
+        const innerOverlay = document.getElementById('inner-zoom-overlay');
+        if (innerOverlay) {
+            innerOverlay.classList.remove('opacity-100');
+            innerOverlay.classList.add('opacity-0');
+        }
+
+        const activeSrc = document.getElementById('mainImage').src;
+        currentFsIndex = fsImages.indexOf(activeSrc);
+        if (currentFsIndex === -1) currentFsIndex = 0;
+
+        updateGalleryUI();
+
+        fsModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden'; 
+        
+        requestAnimationFrame(() => {
+            fsModal.classList.remove('opacity-0');
+            fsModal.classList.add('opacity-100');
+        });
+    }
+
+    function closeFullScreenGallery() {
+        fsModal.classList.remove('opacity-100');
+        fsModal.classList.add('opacity-0');
+        
+        setTimeout(() => {
+            fsModal.classList.add('hidden');
+            document.body.style.overflow = ''; 
+            resetZoom();
+        }, 300);
+    }
+
+    function updateGalleryUI() {
+        fsMainImage.src = fsImages[currentFsIndex];
+        fsCounter.textContent = `${currentFsIndex + 1} / ${fsImages.length}`;
+        resetZoom();
+    }
+
+    function navigateGallery(direction, event) {
+        if (event) event.stopPropagation(); 
+        currentFsIndex += direction;
+        
+        if (currentFsIndex < 0) currentFsIndex = fsImages.length - 1; 
+        if (currentFsIndex >= fsImages.length) currentFsIndex = 0; 
+        
+        updateGalleryUI();
+    }
+
+    function toggleFullScreenZoom(event) {
+        if (event.target.closest('button')) return;
+
+        isZoomed = !isZoomed;
+        
+        if (isZoomed) {
+            fsWrapper.classList.remove('cursor-zoom-in');
+            fsWrapper.classList.add('cursor-zoom-out');
+            fsMainImage.style.transform = 'scale(2.5)';
+            panImage(event); 
+        } else {
+            resetZoom();
+        }
+    }
+
+    function panImage(event) {
+        if (!isZoomed) return;
+        
+        const rect = fsWrapper.getBoundingClientRect();
+        const xPercent = ((event.clientX - rect.left) / rect.width) * 100;
+        const yPercent = ((event.clientY - rect.top) / rect.height) * 100;
+        
+        fsMainImage.style.transformOrigin = `${xPercent}% ${yPercent}%`;
+    }
+
+    fsWrapper.addEventListener('mousemove', panImage);
+
+    function resetZoom() {
+        isZoomed = false;
+        fsWrapper.classList.add('cursor-zoom-in');
+        fsWrapper.classList.remove('cursor-zoom-out');
+        fsMainImage.style.transform = 'scale(1)';
+        setTimeout(() => { fsMainImage.style.transformOrigin = 'center center'; }, 300);
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         
         // TOAST ANIMATION & PLACEMENT LOGIC
@@ -457,7 +595,6 @@
                 btn.addEventListener('click', function(e) {
                     e.preventDefault();
 
-                    // Update Active Button Styles
                     variantButtons.forEach(b => {
                         b.classList.remove('bg-[#3b2e2a]', 'text-white', 'border-[#3b2e2a]', 'shadow-md');
                         b.classList.add('bg-transparent', 'text-[#1a1208]', 'border-[#e5e7eb]');
@@ -465,16 +602,13 @@
                     this.classList.remove('bg-transparent', 'text-[#1a1208]', 'border-[#e5e7eb]');
                     this.classList.add('bg-[#3b2e2a]', 'text-white', 'border-[#3b2e2a]', 'shadow-md');
 
-                    // Get Data
                     const vId = this.getAttribute('data-variant-id');
                     const vPrice = this.getAttribute('data-variant-price');
                     const vStock = parseInt(this.getAttribute('data-variant-stock')) || 0;
 
-                    // Update Price & Input
                     document.getElementById('product-price').textContent = '₹' + vPrice;
                     document.getElementById('hidden-variant-id').value = vId;
 
-                    // Update Stock Badge
                     const stockBadge = document.getElementById('stock-badge');
                     if (vStock > 0) {
                         stockBadge.textContent = 'In Stock';
@@ -484,7 +618,6 @@
                         stockBadge.className = 'px-2.5 py-1 text-[9px] font-bold tracking-[0.1em] rounded uppercase bg-red-100 text-red-800';
                     }
 
-                    // Update Low Stock Warning
                     const lowStockP = document.getElementById('low-stock-warning');
                     const lowStockSpan = document.getElementById('low-stock-count');
                     if (vStock > 0 && vStock <= 5) {
@@ -494,7 +627,6 @@
                         lowStockP.classList.add('hidden');
                     }
 
-                    // Disable/Enable Add to Cart
                     const cartBtn = document.getElementById('add-to-cart-btn');
                     if (vStock === 0) {
                         cartBtn.disabled = true;
@@ -502,7 +634,6 @@
                         cartBtn.disabled = false;
                     }
 
-                    // Manage State
                     window.currentDynamicStock = vStock;
 
                     if (!window.isRestoringState) {
@@ -512,28 +643,6 @@
                     }
                 });
             });
-        }
-
-        // ==========================================
-        // SIZE SORTING & AUTO-SELECT DEFAULT
-        // ==========================================
-        const variantContainer = document.getElementById('variant-container');
-        if (variantContainer) {
-            const variantsList = Array.from(variantContainer.children);
-            variantsList.sort((a, b) => {
-                const sizeA = parseInt(a.textContent.replace(/\D/g, '')) || 0;
-                const sizeB = parseInt(b.textContent.replace(/\D/g, '')) || 0;
-                return sizeA - sizeB;
-            });
-            variantsList.forEach(variant => variantContainer.appendChild(variant));
-
-            // NEW: Auto-select the smallest variant on fresh load
-            if (!window.location.search.includes('variant=')) {
-                window.isRestoringState = true;
-                variantsList[0].click();
-                window.isRestoringState = false;
-                window.history.replaceState(null, '', '?variant=' + variantsList[0].getAttribute('data-variant-id'));
-            }
         }
 
         // ==========================================
@@ -561,8 +670,6 @@
                 sessionStorage.removeItem('last_added_variant');
                 sessionStorage.removeItem('last_added_qty');
             } else if (lastAdded) {
-                
-                // Restore the variant that was added
                 if (variantInput.value !== lastAdded) {
                     const targetBtn = document.querySelector(`.variant-btn[data-variant-id="${lastAdded}"]`);
                     if (targetBtn) {
@@ -572,7 +679,6 @@
                     }
                 }
 
-                // Restore UI state for successful add
                 if (hasSuccessToast || hasWarningToast) {
                     if (lastQty) {
                         document.getElementById('qtyInput').value = lastQty;
@@ -611,46 +717,56 @@
             }
         }
 
-        // IMAGE ZOOM EFFECT LOGIC
+        // ==========================================
+        // INNER ZOOM LOGIC (REPLACED OUTSIDE ZOOM)
+        // ==========================================
         const zoomContainer = document.getElementById('image-zoom-container');
         const mainImg = document.getElementById('mainImage');
+        const innerZoomOverlay = document.getElementById('inner-zoom-overlay');
 
-        if (zoomContainer && mainImg) {
+        if (zoomContainer && mainImg && innerZoomOverlay) {
+            zoomContainer.addEventListener('mouseenter', () => {
+                if (window.innerWidth >= 1024) { 
+                    innerZoomOverlay.style.backgroundImage = `url('${mainImg.src}')`;
+                    innerZoomOverlay.classList.remove('opacity-0');
+                    innerZoomOverlay.classList.add('opacity-100');
+                    mainImg.style.opacity = '0';
+                }
+            });
+
+            zoomContainer.addEventListener('mouseleave', () => {
+                if (window.innerWidth >= 1024) {
+                    innerZoomOverlay.classList.remove('opacity-100');
+                    innerZoomOverlay.classList.add('opacity-0');
+                    mainImg.style.opacity = '1';
+                }
+            });
+
             zoomContainer.addEventListener('mousemove', (e) => {
+                if (window.innerWidth < 1024) return;
+                
                 const rect = zoomContainer.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
                 
                 const xPercent = (x / rect.width) * 100;
                 const yPercent = (y / rect.height) * 100;
-
-                mainImg.style.transformOrigin = `${xPercent}% ${yPercent}%`;
-                mainImg.style.transform = 'scale(1.15)';
-            });
-
-            zoomContainer.addEventListener('mouseenter', () => {
-                mainImg.style.transition = 'transform 0.4s ease-out';
-            });
-
-            zoomContainer.addEventListener('mouseleave', () => {
-                mainImg.style.transformOrigin = 'center center';
-                mainImg.style.transform = 'scale(1)';
-                setTimeout(() => {
-                    mainImg.style.transition = '';
-                }, 400);
+                
+                innerZoomOverlay.style.backgroundPosition = `${xPercent}% ${yPercent}%`;
             });
         }
     });
 
-    // Image Gallery Swap with Border Highlight
     function changeImage(src, btnElement) {
         const mainImage = document.getElementById('mainImage');
+        const innerOverlay = document.getElementById('inner-zoom-overlay');
         if (!mainImage) return;
         
         mainImage.style.opacity = '0.5';
         setTimeout(() => {
             mainImage.src = src;
             mainImage.style.opacity = '1';
+            if(innerOverlay) innerOverlay.style.backgroundImage = `url('${src}')`;
         }, 150);
 
         document.querySelectorAll('.thumb-btn').forEach(btn => {
