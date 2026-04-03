@@ -38,11 +38,13 @@ def remove_from_wishlist(request, variant_id):
     
     variant=get_object_or_404(Variant,id=variant_id)
     
-    wishlist_item=Wishlist.objects.filter(user=request.user,variant=variant)
+    wishlist_item=Wishlist.objects.filter(user=request.user,variant=variant).first()
     
-    if wishlist_item.exists():
+    if wishlist_item:
         wishlist_item.delete()
         messages.success(request,"Item removed from wishlist")
+    else:
+        messages.warning(request, "Item not found")
         
     return redirect("wishlist")
         
