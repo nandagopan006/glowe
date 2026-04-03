@@ -676,7 +676,7 @@ def product_detail_view(request,slug):
         category=product.category,
         is_active=True,
         is_deleted=False
-    ).exclude(id=product.id)[:5]
+    ).exclude(id=product.id)[:7]
     
     return render(request,'user/product_detail_view.html',{
         'product':product,

@@ -47,11 +47,28 @@ def remove_from_wishlist(request, variant_id):
         messages.warning(request, "Item not found")
         
     return redirect("wishlist")
-        
-    
 
-
-
-
+@login_required     
 def wishlist_page(request):
-    return render(request,"wishlist/wishlist.html")
+    
+    wishlist_items=Wishlist.objects.filter(
+        user=request.user).select_related('variant','variant__product')
+    # order sort
+    wishlist_items =wishlist_items.order_by('-created_at')
+    
+    wishlist_count=wishlist_items.count()
+    
+    recommend_products=Variant.objects.filter(
+        is_active=True,product__is_active=True,
+        product__is_deleted=False,
+    ).exclude(id__in=wishlist_items.values_list('variant_id',flat=True)) #not include the exist product in wishlist
+    
+    recommend_products=recommend_products.select_related('product')
+    #fro images to geting 2images all.. and limit products 8
+    recommend_products=recommend_products.prefetch_related('product__images')[:8]
+    
+    return render(request,"wishlist/wishlist.html",{
+        'wishlist_items':wishlist_items,
+        'wishlist_count':wishlist_count,
+        'recommend_products':recommend_products,
+    })
