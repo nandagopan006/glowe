@@ -84,7 +84,7 @@ def clear_wishlist(request) :
     return redirect("wishlist")
 
 @login_required
-def wishlist_item_to_cart(request,variant_id):
+def move_to_cart(request,variant_id):
     
     variant =get_object_or_404(Variant,id=variant_id,is_active=True)
     
