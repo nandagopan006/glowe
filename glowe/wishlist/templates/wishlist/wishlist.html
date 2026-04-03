@@ -1,0 +1,536 @@
+{% comment %} {% extends "base.html" %}
+{% load static %}
+
+{% block title %}Your Favorites – Glowé{% endblock %}
+
+{% block extra_css %}
+/* ── WISHLIST PAGE ── */
+.wl-hero {
+  background: #f0ebe2;
+  text-align: center;
+  padding: 56px 24px 40px;
+  border-bottom: 1px solid #e6e0d8;
+}
+.wl-hero-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 48px;
+  font-weight: 400;
+  color: #1a1208;
+  margin: 0 0 10px;
+  line-height: 1.1;
+}
+.wl-hero-sub {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 300;
+  color: #7a6e62;
+  letter-spacing: 0.04em;
+  font-style: italic;
+  margin: 0;
+}
+
+/* top bar */
+.wl-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 48px;
+  background: #f0ebe2;
+}
+.wl-count {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #5a4f43;
+}
+.wl-topbar-actions {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+.wl-topbar-btn {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: #5a4f43;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 0;
+  transition: color 0.2s;
+}
+.wl-topbar-btn:hover { color: #1a1208; }
+
+/* main grid section */
+.wl-section {
+  background: #f0ebe2;
+  padding: 24px 48px 64px;
+}
+
+/* product grid */
+.wl-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+/* product card */
+.wl-card {
+  background: #fff;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  transition: box-shadow 0.25s, transform 0.25s;
+}
+.wl-card:hover {
+  box-shadow: 0 8px 32px rgba(26,18,8,0.1);
+  transform: translateY(-2px);
+}
+
+.wl-card-img-wrap {
+  position: relative;
+  width: 100%;
+  padding-top: 100%;
+  background: #f5f0ea;
+  overflow: hidden;
+}
+.wl-card-img-wrap img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+.wl-card:hover .wl-card-img-wrap img { transform: scale(1.04); }
+
+/* badge */
+.wl-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 2px;
+  z-index: 2;
+}
+.wl-badge-seller {
+  background: #1a1208;
+  color: #fff;
+}
+.wl-badge-oos {
+  background: rgba(26,18,8,0.72);
+  color: #fff;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  padding: 6px 12px;
+  font-size: 8px;
+}
+
+/* remove btn */
+.wl-remove-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  background: #fff;
+  border: 1px solid #e6e0d8;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 3;
+  transition: background 0.15s, border-color 0.15s;
+}
+.wl-remove-btn:hover { background: #fdf3f1; border-color: #e05050; }
+.wl-remove-btn svg { pointer-events: none; }
+
+/* card body */
+.wl-card-body {
+  padding: 14px 14px 18px;
+}
+.wl-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.wl-card-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: #1a1208;
+  line-height: 1.2;
+  margin: 0;
+}
+.wl-card-price {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #1a1208;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.wl-card-sub {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9px;
+  font-weight: 300;
+  color: #8a7e72;
+  letter-spacing: 0.04em;
+  margin: 0 0 14px;
+}
+
+/* card buttons */
+.wl-btn-cart {
+  display: block;
+  width: 100%;
+  padding: 11px 16px;
+  background: #1a1208;
+  color: #fff;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.2s;
+}
+.wl-btn-cart:hover { background: #2d1f0e; }
+
+.wl-btn-notify {
+  display: block;
+  width: 100%;
+  padding: 11px 16px;
+  background: #fff;
+  color: #1a1208;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  border: 1px solid #c8b89a;
+  border-radius: 9999px;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.2s, border-color 0.2s;
+}
+.wl-btn-notify:hover { background: #f7f3ee; border-color: #8a7e72; }
+
+/* empty state */
+.wl-empty {
+  text-align: center;
+  padding: 80px 24px;
+}
+.wl-empty-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 400;
+  color: #1a1208;
+  margin: 0 0 10px;
+}
+.wl-empty-sub {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 300;
+  color: #8a7e72;
+  margin: 0 0 28px;
+}
+.wl-empty-link {
+  display: inline-block;
+  padding: 14px 40px;
+  background: #1a1208;
+  color: #fff;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  border-radius: 9999px;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.wl-empty-link:hover { background: #2d1f0e; }
+
+/* ────────────────────────────
+   RECOMMENDED SECTION
+──────────────────────────── */
+.wl-rec-section {
+  background: #faf8f5;
+  padding: 56px 48px 72px;
+}
+.wl-rec-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px;
+  font-weight: 400;
+  color: #1a1208;
+  text-align: center;
+  margin: 0 0 36px;
+}
+.wl-rec-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+.wl-rec-card {
+  background: #fff;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: box-shadow 0.25s, transform 0.25s;
+  cursor: pointer;
+}
+.wl-rec-card:hover {
+  box-shadow: 0 8px 32px rgba(26,18,8,0.09);
+  transform: translateY(-2px);
+}
+.wl-rec-img-wrap {
+  width: 100%;
+  padding-top: 100%;
+  position: relative;
+  overflow: hidden;
+  background: #f5f0ea;
+}
+.wl-rec-img-wrap img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+.wl-rec-card:hover .wl-rec-img-wrap img { transform: scale(1.04); }
+.wl-rec-body {
+  padding: 12px 14px 16px;
+}
+.wl-rec-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 15px;
+  font-weight: 500;
+  color: #1a1208;
+  margin: 0 0 4px;
+  line-height: 1.2;
+}
+.wl-rec-price {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  color: #5a4f43;
+  margin: 0;
+}
+
+/* responsive tweaks */
+@media (max-width: 900px) {
+  .wl-grid, .wl-rec-grid { grid-template-columns: repeat(2, 1fr); }
+  .wl-section, .wl-topbar, .wl-rec-section { padding-left: 20px; padding-right: 20px; }
+  .wl-hero-title { font-size: 36px; }
+}
+@media (max-width: 540px) {
+  .wl-grid, .wl-rec-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .wl-card-name { font-size: 13px; }
+}
+{% endblock %}
+
+{% block content %}
+
+<!-- ──────────── HERO ──────────── -->
+<section class="wl-hero">
+  <h1 class="wl-hero-title">Your Favorites</h1>
+  <p class="wl-hero-sub">"Curated by you, designed for your natural radiance."</p>
+</section>
+
+<!-- ──────────── TOP BAR ──────────── -->
+<div class="wl-topbar">
+  <span class="wl-count">{{ wishlist_items|length }} ITEM{% if wishlist_items|length != 1 %}S{% endif %} SAVED</span>
+  <div class="wl-topbar-actions">
+    <button class="wl-topbar-btn" onclick="handleShare()">Share Wishlist</button>
+    <button class="wl-topbar-btn" onclick="handleClearAll()">Clear All</button>
+  </div>
+</div>
+
+<!-- ──────────── WISHLIST GRID ──────────── -->
+<section class="wl-section">
+  {% if wishlist_items %}
+    <div class="wl-grid" id="wishlist-grid">
+      {% for item in wishlist_items %}
+        {% with variant=item.variant product=item.variant.product %}
+        <div class="wl-card" id="wl-card-{{ item.id }}">
+
+          <!-- image -->
+          <div class="wl-card-img-wrap">
+            {% with primary_img=product.images.first %}
+              {% if primary_img %}
+                <img src="{{ primary_img.image.url }}" alt="{{ product.name }}" loading="lazy"/>
+              {% else %}
+                <img src="https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&q=80" alt="{{ product.name }}" loading="lazy"/>
+              {% endif %}
+            {% endwith %}
+
+            <!-- badge -->
+            {% if variant.stock == 0 %}
+              <span class="wl-badge wl-badge-oos">OUT OF STOCK</span>
+            {% elif forloop.first %}
+              <span class="wl-badge wl-badge-seller">BEST SELLER</span>
+            {% endif %}
+          </div>
+
+          <!-- remove button -->
+          <button class="wl-remove-btn" onclick="removeItem({{ item.id }})" title="Remove">
+            <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="#5a4f43" stroke-width="2" stroke-linecap="round">
+              <line x1="1" y1="1" x2="13" y2="13"/><line x1="13" y1="1" x2="1" y2="13"/>
+            </svg>
+          </button>
+
+          <!-- card body -->
+          <div class="wl-card-body">
+            <div class="wl-card-top">
+              <p class="wl-card-name">{{ product.name }}</p>
+              <span class="wl-card-price">${{ variant.price }}</span>
+            </div>
+            <p class="wl-card-sub">{{ product.skin_type|default:product.description|truncatechars:32 }}</p>
+
+            {% if variant.stock == 0 %}
+              <button class="wl-btn-notify" disabled>Notify Me</button>
+            {% else %}
+              <button class="wl-btn-cart" onclick="addToCart({{ variant.id }})">ADD TO CART</button>
+            {% endif %}
+          </div>
+        </div>
+        {% endwith %}
+      {% endfor %}
+    </div>
+
+  {% else %}
+    <!-- Empty state -->
+    <div class="wl-empty">
+      <p class="wl-empty-title">Your wishlist is empty</p>
+      <p class="wl-empty-sub">Explore our collection and save your favorites here.</p>
+      <a href="{% url 'product_listing' %}" class="wl-empty-link">Shop Now</a>
+    </div>
+  {% endif %}
+</section>
+
+<!-- ──────────── RECOMMENDED SECTION ──────────── -->
+<section class="wl-rec-section">
+  <h2 class="wl-rec-title">Recommended For You</h2>
+  <div class="wl-rec-grid">
+
+    <!-- Rec Card 1 -->
+    <div class="wl-rec-card">
+      <div class="wl-rec-img-wrap">
+        <img src="https://images.unsplash.com/photo-1599305090598-fe179d501227?w=400&q=80" alt="Purifying Clay Mask" loading="lazy"/>
+      </div>
+      <div class="wl-rec-body">
+        <p class="wl-rec-name">Purifying Clay Mask</p>
+        <p class="wl-rec-price">$38.00</p>
+      </div>
+    </div>
+
+    <!-- Rec Card 2 -->
+    <div class="wl-rec-card">
+      <div class="wl-rec-img-wrap">
+        <img src="https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=400&q=80" alt="Rose Water Toner" loading="lazy"/>
+      </div>
+      <div class="wl-rec-body">
+        <p class="wl-rec-name">Rose Water Toner</p>
+        <p class="wl-rec-price">$24.00</p>
+      </div>
+    </div>
+
+    <!-- Rec Card 3 -->
+    <div class="wl-rec-card">
+      <div class="wl-rec-img-wrap">
+        <img src="https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400&q=80" alt="Mineral SPF 50" loading="lazy"/>
+      </div>
+      <div class="wl-rec-body">
+        <p class="wl-rec-name">Mineral SPF 50</p>
+        <p class="wl-rec-price">$34.00</p>
+      </div>
+    </div>
+
+    <!-- Rec Card 4 -->
+    <div class="wl-rec-card">
+      <div class="wl-rec-img-wrap">
+        <img src="https://images.unsplash.com/photo-1631729371254-42c2892f0e6e?w=400&q=80" alt="Brightening Eye Cream" loading="lazy"/>
+      </div>
+      <div class="wl-rec-body">
+        <p class="wl-rec-name">Brightening Eye Cream</p>
+        <p class="wl-rec-price">$45.00</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+function removeItem(itemId) {
+  const card = document.getElementById('wl-card-' + itemId);
+  if (card) {
+    card.style.transition = 'opacity 0.3s, transform 0.3s';
+    card.style.opacity = '0';
+    card.style.transform = 'scale(0.95)';
+    setTimeout(() => {
+      card.remove();
+      // update count
+      const grid = document.getElementById('wishlist-grid');
+      const remaining = grid ? grid.querySelectorAll('.wl-card').length : 0;
+      const countEl = document.querySelector('.wl-count');
+      if (countEl) {
+        countEl.textContent = remaining + ' ITEM' + (remaining !== 1 ? 'S' : '') + ' SAVED';
+      }
+    }, 320);
+  }
+}
+
+function handleClearAll() {
+  const grid = document.getElementById('wishlist-grid');
+  if (!grid) return;
+  const cards = grid.querySelectorAll('.wl-card');
+  cards.forEach((card, i) => {
+    setTimeout(() => {
+      card.style.transition = 'opacity 0.3s, transform 0.3s';
+      card.style.opacity = '0';
+      card.style.transform = 'scale(0.95)';
+      setTimeout(() => card.remove(), 320);
+    }, i * 60);
+  });
+  setTimeout(() => {
+    const countEl = document.querySelector('.wl-count');
+    if (countEl) countEl.textContent = '0 ITEMS SAVED';
+  }, cards.length * 60 + 320);
+}
+
+function handleShare() {
+  if (navigator.share) {
+    navigator.share({ title: 'My Glowé Wishlist', url: window.location.href });
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(window.location.href);
+    showToast('info', 'Link Copied!', 'Wishlist link copied to clipboard.');
+  }
+}
+
+function addToCart(variantId) {
+  // UI-only feedback; real cart logic handled by cart app
+  showToast('success', 'Added!', 'Item added to your cart.');
+}
+</script>
+{% endblock %} {% endcomment %}
