@@ -6,7 +6,6 @@ __pycache__/
 *.pyd
 
 # Virtual Environment
-venv/
 myenv/
 
 # Django
