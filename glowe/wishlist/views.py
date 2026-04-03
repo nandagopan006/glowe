@@ -61,15 +61,21 @@ def wishlist_page(request):
     
     wishlist_count=wishlist_items.count()
     
-    recommend_products=Variant.objects.filter(
+    # exclude products already in wishlist (all variants of those products)
+    wishlisted_product_ids=wishlist_items.values_list('variant__product_id',flat=True)
+    
+    # get one variant per product (default variant or first) using distinct product
+    from django.db.models import Min
+    one_variant_ids=Variant.objects.filter(
         is_active=True,product__is_active=True,
         product__is_deleted=False,
-    ).exclude(id__in=wishlist_items.values_list('variant_id',flat=True)) #not include the exist product in wishlist
+    ).exclude(product_id__in=wishlisted_product_ids).values('product_id').annotate(
+        first_variant=Min('id')
+    ).values_list('first_variant',flat=True)
     
-    recommend_products=recommend_products.select_related('product')
-    
-    #for images to geting 2images all.. and limit products 8
-    recommend_products=recommend_products.prefetch_related('product__images')[:8]
+    recommend_products=Variant.objects.filter(
+        id__in=one_variant_ids
+    ).select_related('product').prefetch_related('product__images')[:8]
     
     return render(request,"wishlist/wishlist.html",{
         'wishlist_items':wishlist_items,
