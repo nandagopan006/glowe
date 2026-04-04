@@ -184,6 +184,23 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
 .wish-nav-icon svg { transition:transform 0.25s ease, fill 0.25s ease; }
 .wish-nav-icon:hover svg { transform:scale(1.12); }
 
+/* ── Nav link underline animation ── */
+.gl-nav-link {
+  position:relative;
+  padding-bottom:3px;
+}
+.gl-nav-link::after {
+  content:''; position:absolute;
+  width:0; height:1.5px;
+  bottom:0; left:50%;
+  background:#1a1208;
+  transition:all 0.35s cubic-bezier(0.25,0.46,0.45,0.94);
+  transform:translateX(-50%);
+}
+.gl-nav-link:hover::after { width:100%; }
+.gl-nav-link.active::after { width:100%; }
+.gl-nav-link.active { color:#1a1208 !important; }
+
 {% block extra_css %}{% endblock %}
 </style>
 </head>
@@ -388,10 +405,10 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
         <span class="font-cormorant text-[22px] font-semibold tracking-[0.04em] text-[#1a1208]">Glowé</span>
       </a>
       <nav class="flex items-center gap-10 absolute left-1/2 -translate-x-1/2">
-        <a href="{% url 'product_listing' %}" class="font-montserrat text-[11px] font-medium tracking-[0.16em] uppercase text-[#2a2018] no-underline hover:text-black">Shop</a>
-        <a href="#" class="font-montserrat text-[11px] font-medium tracking-[0.16em] uppercase text-[#2a2018] no-underline hover:text-black">Collections</a>
-        <a href="#" class="font-montserrat text-[11px] font-medium tracking-[0.16em] uppercase text-[#2a2018] no-underline hover:text-black">About</a>
-        <a href="#" class="font-montserrat text-[11px] font-medium tracking-[0.16em] uppercase text-[#2a2018] no-underline hover:text-black">Contact</a>
+        <a href="{% url 'product_listing' %}" class="gl-nav-link font-montserrat text-[11px] font-medium tracking-[0.16em] uppercase text-[#2a2018] no-underline hover:text-black {% if '/products' in request.path %}active{% endif %}">Shop</a>
+        <a href="#" class="gl-nav-link font-montserrat text-[11px] font-medium tracking-[0.16em] uppercase text-[#2a2018] no-underline hover:text-black {% if '/collections' in request.path %}active{% endif %}">Collections</a>
+        <a href="#" class="gl-nav-link font-montserrat text-[11px] font-medium tracking-[0.16em] uppercase text-[#2a2018] no-underline hover:text-black {% if '/about' in request.path %}active{% endif %}">About</a>
+        <a href="#" class="gl-nav-link font-montserrat text-[11px] font-medium tracking-[0.16em] uppercase text-[#2a2018] no-underline hover:text-black {% if '/contact' in request.path %}active{% endif %}">Contact</a>
       </nav>
       <div class="flex items-center gap-5 shrink-0">
 
