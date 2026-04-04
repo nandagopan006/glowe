@@ -7,6 +7,7 @@ from product.models import Variant
 from cart.models import Cart,CartItem
 from cart.utils import get_user_cart
 from .models import StockNotification
+from django.db.models import Min
 
 @login_required
 def toggle_wishlist(request, variant_id):
@@ -65,7 +66,7 @@ def wishlist_page(request):
     wishlisted_product_ids=wishlist_items.values_list('variant__product_id',flat=True)
     
     # get one variant per product (default variant or first) using distinct product
-    from django.db.models import Min
+    
     one_variant_ids=Variant.objects.filter(
         is_active=True,product__is_active=True,
         product__is_deleted=False,

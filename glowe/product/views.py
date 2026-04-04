@@ -9,6 +9,8 @@ from django.db.models import Prefetch
 import json
 from cart.models import CartItem
 from cart.utils import get_user_cart
+from django.contrib.auth.decorators import login_required
+from wishlist.models import Wishlist
 
 def add_product(request):
     
@@ -61,7 +63,8 @@ def add_product(request):
         'form': form,
         'categories': categories
     })
-        
+
+
 def edit_product(request, id):
     product = get_object_or_404(Product, id=id)
     categories = Category.objects.filter(is_active=True, is_deleted=False)
@@ -136,7 +139,7 @@ def edit_product(request, id):
         'product': product,
         'categories': categories,
     })
-    
+
 def delete_product_image(request,id):
     if request.method == "POST":
     
@@ -532,7 +535,7 @@ def variant_management(request,product_id):
 
 
 #---== user side  statinggg--
-
+@login_required
 def product_listing(request):
     
     products=Product.objects.filter(
@@ -609,6 +612,15 @@ def product_listing(request):
     categories =Category.objects.filter(is_active=True,is_deleted=False)
     skin_types = ['Oily', 'Dry', 'Sensitive', 'Combination', 'Normal','Acnce-prono','Mature','Dehydrated','Dull']
     
+    # wishlisted variant ids for heart icon
+    wishlisted_ids = []
+    
+    if request.user.is_authenticated:
+        wishlisted_ids = list(
+            Wishlist.objects.filter(user=request.user)
+            .values_list('variant_id', flat=True)
+        )
+    
     return render(request,"user/product_listing.html",{
         'page_obj':page_obj,
         "categories":categories,
@@ -620,9 +632,10 @@ def product_listing(request):
         'min_price': min_price or 0,
         'max_price':max_price or 5000,
         'skin_types':skin_types,
+        'wishlisted_ids':wishlisted_ids,
     })
         
-
+@login_required
 def product_detail_view(request,slug):
    
     product=get_object_or_404(
@@ -678,6 +691,15 @@ def product_detail_view(request,slug):
         is_deleted=False
     ).exclude(id=product.id)[:7]
     
+    # wishlisted variant ids for heart icon
+    wishlisted_ids = []
+    
+    if request.user.is_authenticated:
+        wishlisted_ids = list(
+            Wishlist.objects.filter(user=request.user)
+            .values_list('variant_id', flat=True)
+        )
+    
     return render(request,'user/product_detail_view.html',{
         'product':product,
         'variants':variants,
@@ -693,13 +715,13 @@ def product_detail_view(request,slug):
         'images':images,
         'primary_image': primary_image,
         'related_products':related_products,
+        'wishlisted_ids': wishlisted_ids,
     })
     
-
+@login_required
 def add_to_cart(request):
     
-    if not request.user.is_authenticated:
-        return redirect('signin')
+    
     
     if request.method != 'POST':
         return redirect('product_listing')

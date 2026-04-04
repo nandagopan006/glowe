@@ -39,35 +39,89 @@
     #fs-main-image {
         transition: transform 0.3s ease-out;
     }
+
+    /* Wishlist Heart Button */
+    .wish-btn {
+        position: relative;
+        transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1),
+                    background 0.25s ease,
+                    border-color 0.25s ease,
+                    box-shadow 0.25s ease;
+    }
+    .wish-btn:hover {
+        transform: scale(1.12);
+        box-shadow: 0 4px 16px rgba(220,38,38,0.15);
+    }
+    .wish-btn:active {
+        transform: scale(0.94);
+    }
+    .wish-btn.wishlisted {
+        color: #dc2626;
+        border-color: #fca5a5;
+        background-color: #fef2f2;
+        box-shadow: 0 0 0 3px rgba(220,38,38,0.08);
+    }
+    .wish-btn.wishlisted:hover {
+        box-shadow: 0 4px 16px rgba(220,38,38,0.25);
+    }
+    .wish-btn .wish-svg {
+        transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .wish-btn.pop .wish-svg {
+        animation: heartPop 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
+    }
+    @keyframes heartPop {
+        0%   { transform: scale(1); }
+        30%  { transform: scale(1.5); }
+        60%  { transform: scale(0.88); }
+        100% { transform: scale(1); }
+    }
+    /* Tooltip */
+    .wish-tooltip {
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%) translateY(4px);
+        background: #1a1208;
+        color: #fff;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        white-space: nowrap;
+        padding: 5px 10px;
+        border-radius: 6px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .wish-tooltip::after {
+        content: '';
+        position: absolute;
+        top: 100%; left: 50%;
+        transform: translateX(-50%);
+        border: 5px solid transparent;
+        border-top-color: #1a1208;
+    }
+    .wish-btn:hover .wish-tooltip {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <main class="bg-[#faf8f5] text-[#1a1208] min-h-screen pt-6 pb-24 fade-in relative overflow-x-hidden">
     
+    {# ── Django messages are handled via showToast() in extra_js below ── #}
+    {# Hidden data carrier for Django messages #}
     {% if messages %}
-    <div id="toast-container" class="fixed top-8 right-14 z-[9999] pr-4 flex flex-col gap-3 pointer-events-none">
+    <div id="django-messages-data" hidden>
         {% for message in messages %}
-            {% if forloop.first %}
-            <div class="toast-notification transform translate-x-[120%] transition-transform duration-500 ease-out flex items-center w-[380px] px-8 py-5 bg-white rounded-xl shadow-[0_15px_50px_rgba(0,0,0,0.1)] border border-gray-100 font-montserrat text-[13px] tracking-wide font-semibold
-                {% if message.tags == 'error' %} text-red-600 toast-error
-                {% elif message.tags == 'warning' %} text-orange-500 toast-warning
-                {% else %} text-green-600 toast-success {% endif %}">
-                
-                {% if message.tags == 'error' %}
-                    <svg class="w-5 h-5 mr-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                {% elif message.tags == 'warning' %}
-                    <svg class="w-5 h-5 mr-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                {% else %}
-                    <svg class="w-5 h-5 mr-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                {% endif %}
-                
-                <span class="flex-1">{{ message }}</span>
-            </div>
-            {% endif %}
+        <span data-tags="{{ message.tags }}" data-msg="{{ message|escapejs }}"></span>
         {% endfor %}
     </div>
     {% endif %}
+
     <div class="max-w-[1200px] mx-auto px-5 md:px-8 mb-6 text-[10px] font-montserrat font-bold tracking-[0.18em] uppercase text-gray-400">
         <a href="{% url 'home' %}" class="hover:text-black transition-colors">Home</a>
         <span class="mx-2 font-light">/</span>
@@ -185,8 +239,34 @@
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                     </button>
 
-                    <button type="button" class="w-12 h-12 border border-[#e5e7eb] rounded-lg flex items-center justify-center text-gray-800 hover:border-[#1a1208] transition-colors bg-white shadow-sm shrink-0">
-                        <svg class="w-5 h-5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+                    <!-- ♥ Wishlist Button (standalone – NO nested form) -->
+                    <button type="button"
+                            id="wishlist-btn-main"
+                            class="wish-btn relative w-12 h-12 border rounded-xl flex items-center justify-center bg-white shadow-sm shrink-0
+                                   {% if selected_variant.id in wishlisted_ids %}
+                                       wishlisted text-red-500 border-red-200
+                                   {% else %}
+                                       text-gray-400 border-[#e5e7eb]
+                                   {% endif %}"
+                            data-action="{% url 'toggle_wishlist' selected_variant.id %}"
+                            data-variant-id="{{ selected_variant.id }}"
+                            data-csrf="{{ csrf_token }}"
+                            aria-label="{% if selected_variant.id in wishlisted_ids %}Remove from wishlist{% else %}Add to wishlist{% endif %}">
+
+                        <!-- Tooltip -->
+                        <span class="wish-tooltip" id="wish-tooltip-text">
+                            {% if selected_variant.id in wishlisted_ids %}Wishlisted ♥{% else %}Add to Wishlist{% endif %}
+                        </span>
+
+                        <!-- Heart SVG -->
+                        <svg class="wish-svg w-5 h-5"
+                             fill="{% if selected_variant.id in wishlisted_ids %}currentColor{% else %}none{% endif %}"
+                             stroke="currentColor"
+                             viewBox="0 0 24 24"
+                             stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
+                        </svg>
                     </button>
                 </div>
 
@@ -458,6 +538,9 @@
 
 {% block extra_js %}
 <script>
+    // Pass wishlisted IDs to JavaScript
+    window.wishlistedIds = {{ wishlisted_ids|safe }};
+
     // --- FULL SCREEN ZOOM LOGIC ---
     let fsImages = [];
     let currentFsIndex = 0;
@@ -568,21 +651,98 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        
-        // TOAST ANIMATION & PLACEMENT LOGIC
-        const toasts = document.querySelectorAll('.toast-notification');
-        if (toasts.length > 0) {
-            toasts.forEach((toast, index) => {
-                setTimeout(() => {
-                    toast.classList.remove('translate-x-[120%]');
-                    toast.classList.add('translate-x-0');
-                }, 100 + (index * 150)); 
 
-                setTimeout(() => {
-                    toast.classList.remove('translate-x-0');
-                    toast.classList.add('translate-x-[120%]');
-                    setTimeout(() => toast.remove(), 500); 
-                }, 4000 + (index * 150));
+        // ==========================================
+        // WISHLIST BUTTON HANDLER (no nested form)
+        // ==========================================
+        const wishBtn = document.getElementById('wishlist-btn-main');
+        if (wishBtn) {
+            wishBtn.addEventListener('click', function() {
+                const btn     = this;
+                const svg     = btn.querySelector('.wish-svg');
+                const tooltip = btn.querySelector('.wish-tooltip');
+                const action  = btn.dataset.action;
+                const csrf    = btn.dataset.csrf;
+                const wasWishlisted = btn.classList.contains('wishlisted');
+
+                // ── Instant optimistic UI ──
+                btn.classList.toggle('wishlisted');
+                btn.classList.add('pop');
+                setTimeout(() => btn.classList.remove('pop'), 500);
+
+                if (!wasWishlisted) {
+                    svg.setAttribute('fill', 'currentColor');
+                    btn.classList.add('text-red-500', 'border-red-200');
+                    btn.classList.remove('text-gray-400', 'border-[#e5e7eb]');
+                    btn.setAttribute('aria-label', 'Remove from wishlist');
+                    if (tooltip) tooltip.textContent = 'Wishlisted ♥';
+                    showToast('success', 'Wishlisted!', 'Product saved to your wishlist.');
+                } else {
+                    svg.setAttribute('fill', 'none');
+                    btn.classList.remove('text-red-500', 'border-red-200');
+                    btn.classList.add('text-gray-400', 'border-[#e5e7eb]');
+                    btn.setAttribute('aria-label', 'Add to wishlist');
+                    if (tooltip) tooltip.textContent = 'Add to Wishlist';
+                    showToast('info', 'Removed', 'Product removed from your wishlist.');
+                }
+
+                // ── AJAX POST ──
+                const fd = new FormData();
+                fd.append('csrfmiddlewaretoken', csrf);
+                fetch(action, {
+                    method: 'POST',
+                    body: fd,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin'
+                })
+                .then(response => {
+                    if (response.redirected &&
+                        (response.url.includes('signin') || response.url.includes('login'))) {
+                        // Not logged in — revert + redirect
+                        btn.classList.toggle('wishlisted');
+                        const now = btn.classList.contains('wishlisted');
+                        svg.setAttribute('fill', now ? 'currentColor' : 'none');
+                        if (tooltip) tooltip.textContent = now ? 'Wishlisted ♥' : 'Add to Wishlist';
+                        showToast('error', 'Sign In Required', 'Please sign in to use wishlist.');
+                        setTimeout(() => { window.location.href = response.url; }, 1500);
+                    }
+                    // Any other redirect = success (Django redirects back after toggle)
+                })
+                .catch(() => {
+                    // Network error — revert
+                    btn.classList.toggle('wishlisted');
+                    const now = btn.classList.contains('wishlisted');
+                    svg.setAttribute('fill', now ? 'currentColor' : 'none');
+                    if (tooltip) tooltip.textContent = now ? 'Wishlisted ♥' : 'Add to Wishlist';
+                    showToast('error', 'Error', 'Something went wrong. Please try again.');
+                });
+            });
+        }
+
+        // ── Fire Django messages via base.html showToast() ──
+        const msgContainer = document.getElementById('django-messages-data');
+        if (msgContainer) {
+            const spans = msgContainer.querySelectorAll('[data-tags]');
+            spans.forEach((span, i) => {
+                const tags = span.dataset.tags || '';
+                const msg  = span.dataset.msg  || '';
+                let type  = 'info';
+                let title = 'Notice';
+                if (tags.includes('error')) {
+                    type  = 'error';
+                    title = 'Error';
+                } else if (tags.includes('warning')) {
+                    type  = 'warning';
+                    title = 'Notice';
+                } else if (tags.includes('success')) {
+                    type  = 'success';
+                    title = 'Done!';
+                } else if (tags.includes('info')) {
+                    type  = 'info';
+                    title = 'Info';
+                }
+                // Stagger multiple messages slightly
+                setTimeout(() => showToast(type, title, msg), i * 400);
             });
         }
 
@@ -608,6 +768,33 @@
 
                     document.getElementById('product-price').textContent = '₹' + vPrice;
                     document.getElementById('hidden-variant-id').value = vId;
+
+                    // Update wishlist button action and heart state
+                    const wlBtn = document.getElementById('wishlist-btn-main');
+                    if (wlBtn) {
+                        const newAction = '/wishlist/toggle/' + vId + '/';
+                        wlBtn.dataset.action   = newAction;
+                        wlBtn.dataset.variantId = vId;
+
+                        // Check if this variant is wishlisted
+                        const isWishlisted = window.wishlistedIds && window.wishlistedIds.includes(parseInt(vId));
+                        const wlSvg     = wlBtn.querySelector('.wish-svg');
+                        const wlTooltip = wlBtn.querySelector('.wish-tooltip');
+                        if (isWishlisted) {
+                            wlBtn.classList.add('wishlisted', 'text-red-500', 'border-red-200');
+                            wlBtn.classList.remove('text-gray-400', 'border-[#e5e7eb]');
+                            if (wlSvg)     wlSvg.setAttribute('fill', 'currentColor');
+                            if (wlTooltip) wlTooltip.textContent = 'Wishlisted ♥';
+                            wlBtn.setAttribute('aria-label', 'Remove from wishlist');
+                        } else {
+                            wlBtn.classList.remove('wishlisted', 'text-red-500', 'border-red-200');
+                            wlBtn.classList.add('text-gray-400', 'border-[#e5e7eb]');
+                            if (wlSvg)     wlSvg.setAttribute('fill', 'none');
+                            if (wlTooltip) wlTooltip.textContent = 'Add to Wishlist';
+                            wlBtn.setAttribute('aria-label', 'Add to wishlist');
+                        }
+                    }
+
 
                     const stockBadge = document.getElementById('stock-badge');
                     if (vStock > 0) {
@@ -638,84 +825,130 @@
 
                     if (!window.isRestoringState) {
                         document.getElementById('qtyInput').value = 1;
-                        if (window.resetAddToCartState) window.resetAddToCartState();
+                        if (window.resetAddToCartState) {
+                            window.resetAddToCartState(vId, vStock === 0);
+                        }
                         window.history.replaceState(null, '', '?variant=' + vId);
                     }
+
                 });
             });
         }
 
         // ==========================================
-        // ADD TO CART SMART UI LOGIC
+        // ADD TO CART – SMART PER-VARIANT STATE
         // ==========================================
         const addToCartForm = document.getElementById('add-to-cart-form');
-        const addToCartBtn = document.getElementById('add-to-cart-btn');
-        const variantInput = document.querySelector('input[name="variant_id"]');
+        const addToCartBtn  = document.getElementById('add-to-cart-btn');
+        const variantInput  = document.querySelector('input[name="variant_id"]');
 
-        if (addToCartForm && addToCartBtn && variantInput) {
-            addToCartBtn.addEventListener('click', () => {
-                if (addToCartBtn.type === 'submit') {
-                    sessionStorage.setItem('last_added_variant', variantInput.value);
-                    sessionStorage.setItem('last_added_qty', document.getElementById('qtyInput').value);
-                }
-            });
+        // Key for sessionStorage — store a JSON array of variant IDs that are in cart
+        const CART_KEY = 'glowe_in_cart_{{ product.id }}';
 
-            const lastAdded = sessionStorage.getItem('last_added_variant');
-            const lastQty = sessionStorage.getItem('last_added_qty');
-            const hasSuccessToast = document.querySelector('.toast-success');
-            const hasWarningToast = document.querySelector('.toast-warning'); 
-            const hasErrorToast = document.querySelector('.toast-error');
-
-            if (hasErrorToast) {
-                sessionStorage.removeItem('last_added_variant');
-                sessionStorage.removeItem('last_added_qty');
-            } else if (lastAdded) {
-                if (variantInput.value !== lastAdded) {
-                    const targetBtn = document.querySelector(`.variant-btn[data-variant-id="${lastAdded}"]`);
-                    if (targetBtn) {
-                        window.isRestoringState = true;
-                        targetBtn.click();
-                        window.isRestoringState = false;
-                    }
-                }
-
-                if (hasSuccessToast || hasWarningToast) {
-                    if (lastQty) {
-                        document.getElementById('qtyInput').value = lastQty;
-                    }
-                    setGoToCartState();
-                }
-            }
+        function getCartedVariants() {
+            try { return new Set(JSON.parse(sessionStorage.getItem(CART_KEY) || '[]')); }
+            catch { return new Set(); }
+        }
+        function saveCartedVariants(set) {
+            sessionStorage.setItem(CART_KEY, JSON.stringify([...set]));
+        }
+        function markVariantCarted(variantId) {
+            const set = getCartedVariants();
+            set.add(String(variantId));
+            saveCartedVariants(set);
+        }
+        function isVariantCarted(variantId) {
+            return getCartedVariants().has(String(variantId));
+        }
+        function unmarkVariantCarted(variantId) {
+            const set = getCartedVariants();
+            set.delete(String(variantId));
+            saveCartedVariants(set);
         }
 
+        // ── Button state helpers ──
         function setGoToCartState() {
-            addToCartBtn.innerHTML = `
-                Go to Cart
-                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-            `;
+            if (!addToCartBtn) return;
+            addToCartBtn.innerHTML =
+                'Go to Cart <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>';
             addToCartBtn.classList.remove('btn-dark-brown');
             addToCartBtn.classList.add('bg-[#4A604F]', 'hover:bg-[#3b4d3f]');
             addToCartBtn.type = 'button';
+            addToCartBtn.disabled = false;
             addToCartBtn.onclick = (e) => {
                 e.preventDefault();
-                window.location.href = "{% url 'cart' %}"; 
+                window.location.href = "{% url 'cart' %}";
             };
         }
 
-        window.resetAddToCartState = function() {
-            if (addToCartBtn && addToCartBtn.type === 'button') {
-                addToCartBtn.innerHTML = `
-                    Add to Cart
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                `;
-                addToCartBtn.classList.add('btn-dark-brown');
-                addToCartBtn.classList.remove('bg-[#4A604F]', 'hover:bg-[#3b4d3f]');
-                addToCartBtn.type = 'submit';
-                addToCartBtn.onclick = null;
-                sessionStorage.removeItem('last_added_variant');
-                sessionStorage.removeItem('last_added_qty');
-            }
+        function setAddToCartState(disabledByStock) {
+            if (!addToCartBtn) return;
+            addToCartBtn.innerHTML =
+                'Add to Cart <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>';
+            addToCartBtn.classList.add('btn-dark-brown');
+            addToCartBtn.classList.remove('bg-[#4A604F]', 'hover:bg-[#3b4d3f]');
+            addToCartBtn.type = 'submit';
+            addToCartBtn.onclick = null;
+            addToCartBtn.disabled = !!disabledByStock;
         }
+
+        // Expose so variant-switcher can call it
+        window.resetAddToCartState = function(variantId, stockDisabled) {
+            if (!addToCartBtn) return;
+            if (variantId && isVariantCarted(variantId)) {
+                setGoToCartState();
+            } else {
+                setAddToCartState(stockDisabled);
+            }
+        };
+
+        if (addToCartForm && addToCartBtn && variantInput) {
+
+            // Save the variant being submitted just before form posts
+            addToCartBtn.addEventListener('click', () => {
+                if (addToCartBtn.type === 'submit') {
+                    // Store which variant was just submitted
+                    sessionStorage.setItem('glowe_pending_variant', variantInput.value);
+                }
+            });
+
+            // ── On page load: check if we just returned from a successful add ──
+            const msgContainer = document.getElementById('django-messages-data');
+            const pendingVariant = sessionStorage.getItem('glowe_pending_variant');
+
+            if (msgContainer && pendingVariant) {
+                const spans = msgContainer.querySelectorAll('[data-tags]');
+                let hasSuccess = false, hasError = false;
+
+                spans.forEach(span => {
+                    const tags = span.dataset.tags || '';
+                    if (tags.includes('success') || tags.includes('warning')) hasSuccess = true;
+                    if (tags.includes('error')) hasError = true;
+                });
+
+                sessionStorage.removeItem('glowe_pending_variant');
+
+                if (hasError) {
+                    // Cart add failed — do NOT mark as carted
+                    unmarkVariantCarted(pendingVariant);
+                } else if (hasSuccess) {
+                    // Cart add succeeded — mark this variant as carted
+                    markVariantCarted(pendingVariant);
+                }
+            } else if (pendingVariant) {
+                // Page reloaded without messages — clear pending
+                sessionStorage.removeItem('glowe_pending_variant');
+            }
+
+            // ── Set initial button state for current variant ──
+            const currentVariantId = variantInput.value;
+            if (currentVariantId && isVariantCarted(currentVariantId)) {
+                setGoToCartState();
+            }
+            // (if disabled by stock, the Django template already renders it disabled)
+        }
+
+
 
         // ==========================================
         // INNER ZOOM LOGIC (REPLACED OUTSIDE ZOOM)
@@ -813,6 +1046,154 @@
 
         btnElement.classList.remove('border-transparent', 'text-gray-400');
         btnElement.classList.add('border-gray-500', 'text-[#1a1208]');
+    }
+
+    /* ── Toast notification helper ── */
+    function showToast(type, title, message) {
+        // Remove existing dynamic toasts
+        var existingToasts = document.querySelectorAll('.dynamic-toast');
+        existingToasts.forEach(function(toast) {
+            toast.remove();
+        });
+
+        // Create toast container if it doesn't exist
+        var container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            container.className = 'fixed top-8 right-14 z-[9999] pr-4 flex flex-col gap-3 pointer-events-none';
+            document.body.appendChild(container);
+        }
+
+        // Determine icon and color based on type
+        var iconSvg = '';
+        var textColor = '';
+        
+        if (type === 'error') {
+            textColor = 'text-red-600';
+            iconSvg = '<svg class="w-5 h-5 mr-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+        } else if (type === 'warning' || type === 'info') {
+            textColor = 'text-orange-500';
+            iconSvg = '<svg class="w-5 h-5 mr-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
+        } else {
+            textColor = 'text-green-600';
+            iconSvg = '<svg class="w-5 h-5 mr-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+        }
+
+        // Create toast element
+        var toast = document.createElement('div');
+        toast.className = 'dynamic-toast transform translate-x-[120%] transition-transform duration-500 ease-out flex items-center w-[380px] px-8 py-5 bg-white rounded-xl shadow-[0_15px_50px_rgba(0,0,0,0.1)] border border-gray-100 font-montserrat text-[13px] tracking-wide font-semibold ' + textColor;
+        toast.innerHTML = iconSvg + '<span class="flex-1">' + message + '</span>';
+
+        // Add to container
+        container.appendChild(toast);
+
+        // Animate in
+        setTimeout(function() {
+            toast.classList.remove('translate-x-[120%]');
+            toast.classList.add('translate-x-0');
+        }, 100);
+
+        // Animate out after 3 seconds
+        setTimeout(function() {
+            toast.classList.remove('translate-x-0');
+            toast.classList.add('translate-x-[120%]');
+            setTimeout(function() {
+                toast.remove();
+            }, 500);
+        }, 3000);
+    }
+
+    /* ── Wishlist toggle (AJAX, no page reload) ── */
+    function toggleWish(btn, variantId) {
+        console.log('=== WISHLIST TOGGLE START ===');
+        console.log('Variant ID:', variantId);
+        
+        var form = btn.closest('form');
+        console.log('Form element:', form);
+        console.log('Form action:', form.action);
+        
+        // Check if user is authenticated by checking if we have a valid CSRF token
+        var csrfToken = form.querySelector('[name=csrfmiddlewaretoken]');
+        if (!csrfToken) {
+            console.error('CSRF token not found - user might not be logged in');
+            showToast('error', 'Sign In Required', 'Please sign in to add items to your wishlist.');
+            setTimeout(function() {
+                window.location.href = '{% url "signin" %}';
+            }, 1500);
+            return;
+        }
+        csrfToken = csrfToken.value;
+        console.log('CSRF token found');
+        
+        // Make sure the form action has the correct variant ID
+        var currentAction = form.action;
+        var expectedAction = '/wishlist/toggle/' + variantId + '/';
+        if (!currentAction.includes(expectedAction)) {
+            console.log('Fixing form action from', currentAction, 'to', expectedAction);
+            form.action = expectedAction;
+        }
+        
+        /* Check state BEFORE toggling */
+        var wasWishlisted = btn.classList.contains('wishlisted');
+        console.log('Was wishlisted:', wasWishlisted);
+        
+        /* Optimistic UI toggle */
+        btn.classList.toggle('wishlisted');
+        btn.classList.add('pop');
+        var svg = btn.querySelector('svg');
+        
+        /* Update SVG fill based on NEW state */
+        if (!wasWishlisted) {
+            // Was NOT wishlisted, now IS wishlisted
+            svg.setAttribute('fill', 'currentColor');
+            showToast('success', 'Added!', 'Product added to your wishlist.');
+        } else {
+            // WAS wishlisted, now NOT wishlisted
+            svg.setAttribute('fill', 'none');
+            showToast('info', 'Removed', 'Product removed from your wishlist.');
+        }
+        setTimeout(function(){ btn.classList.remove('pop'); }, 500);
+
+        /* Send via fetch (no reload) */
+        console.log('Sending POST request to:', form.action);
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        })
+        .then(function(response) {
+            console.log('Response status:', response.status);
+            console.log('Response redirected:', response.redirected);
+            
+            // Check if we got redirected (likely to login page)
+            if (response.redirected) {
+                console.log('Redirected to:', response.url);
+                // Revert UI changes
+                btn.classList.toggle('wishlisted');
+                svg.setAttribute('fill', btn.classList.contains('wishlisted') ? 'currentColor' : 'none');
+                showToast('error', 'Sign In Required', 'Please sign in to add items to your wishlist.');
+                setTimeout(function() {
+                    window.location.href = response.url;
+                }, 1500);
+                return;
+            }
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.status);
+            }
+            console.log('=== WISHLIST TOGGLE SUCCESS ===');
+        })
+        .catch(function(error) {
+            console.error('=== WISHLIST TOGGLE ERROR ===');
+            console.error('Error details:', error);
+            /* Revert on network error */
+            btn.classList.toggle('wishlisted');
+            svg.setAttribute('fill', btn.classList.contains('wishlisted') ? 'currentColor' : 'none');
+            showToast('error', 'Error', 'Something went wrong. Please try again.');
+        });
     }
 </script>
 {% endblock %}
