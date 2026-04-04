@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
       'allauth.socialaccount.providers.google',
+       'wishlist.apps.WishlistConfig',
 
     'accounts',
     'core',
@@ -56,7 +57,7 @@ INSTALLED_APPS = [
     'category',
     'product',
     'cart',
-    'wishlist',
+    
     
 ]
 
@@ -83,6 +84,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "wishlist.context_processors.wishlist_count",
             ],
         },
     },

@@ -39,35 +39,89 @@
     #fs-main-image {
         transition: transform 0.3s ease-out;
     }
+
+    /* Wishlist Heart Button */
+    .wish-btn {
+        position: relative;
+        transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1),
+                    background 0.25s ease,
+                    border-color 0.25s ease,
+                    box-shadow 0.25s ease;
+    }
+    .wish-btn:hover {
+        transform: scale(1.12);
+        box-shadow: 0 4px 16px rgba(220,38,38,0.15);
+    }
+    .wish-btn:active {
+        transform: scale(0.94);
+    }
+    .wish-btn.wishlisted {
+        color: #dc2626;
+        border-color: #fca5a5;
+        background-color: #fef2f2;
+        box-shadow: 0 0 0 3px rgba(220,38,38,0.08);
+    }
+    .wish-btn.wishlisted:hover {
+        box-shadow: 0 4px 16px rgba(220,38,38,0.25);
+    }
+    .wish-btn .wish-svg {
+        transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .wish-btn.pop .wish-svg {
+        animation: heartPop 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
+    }
+    @keyframes heartPop {
+        0%   { transform: scale(1); }
+        30%  { transform: scale(1.5); }
+        60%  { transform: scale(0.88); }
+        100% { transform: scale(1); }
+    }
+    /* Tooltip */
+    .wish-tooltip {
+        position: absolute;
+        bottom: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-50%) translateY(4px);
+        background: #1a1208;
+        color: #fff;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        white-space: nowrap;
+        padding: 5px 10px;
+        border-radius: 6px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .wish-tooltip::after {
+        content: '';
+        position: absolute;
+        top: 100%; left: 50%;
+        transform: translateX(-50%);
+        border: 5px solid transparent;
+        border-top-color: #1a1208;
+    }
+    .wish-btn:hover .wish-tooltip {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <main class="bg-[#faf8f5] text-[#1a1208] min-h-screen pt-6 pb-24 fade-in relative overflow-x-hidden">
     
+    {# ── Django messages are handled via showToast() in extra_js below ── #}
+    {# Hidden data carrier for Django messages #}
     {% if messages %}
-    <div id="toast-container" class="fixed top-8 right-14 z-[9999] pr-4 flex flex-col gap-3 pointer-events-none">
+    <div id="django-messages-data" hidden>
         {% for message in messages %}
-            {% if forloop.first %}
-            <div class="toast-notification transform translate-x-[120%] transition-transform duration-500 ease-out flex items-center w-[380px] px-8 py-5 bg-white rounded-xl shadow-[0_15px_50px_rgba(0,0,0,0.1)] border border-gray-100 font-montserrat text-[13px] tracking-wide font-semibold
-                {% if message.tags == 'error' %} text-red-600 toast-error
-                {% elif message.tags == 'warning' %} text-orange-500 toast-warning
-                {% else %} text-green-600 toast-success {% endif %}">
-                
-                {% if message.tags == 'error' %}
-                    <svg class="w-5 h-5 mr-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                {% elif message.tags == 'warning' %}
-                    <svg class="w-5 h-5 mr-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                {% else %}
-                    <svg class="w-5 h-5 mr-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                {% endif %}
-                
-                <span class="flex-1">{{ message }}</span>
-            </div>
-            {% endif %}
+        <span data-tags="{{ message.tags }}" data-msg="{{ message|escapejs }}"></span>
         {% endfor %}
     </div>
     {% endif %}
+
     <div class="max-w-[1200px] mx-auto px-5 md:px-8 mb-6 text-[10px] font-montserrat font-bold tracking-[0.18em] uppercase text-gray-400">
         <a href="{% url 'home' %}" class="hover:text-black transition-colors">Home</a>
         <span class="mx-2 font-light">/</span>
@@ -185,8 +239,34 @@
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                     </button>
 
-                    <button type="button" class="w-12 h-12 border border-[#e5e7eb] rounded-lg flex items-center justify-center text-gray-800 hover:border-[#1a1208] transition-colors bg-white shadow-sm shrink-0">
-                        <svg class="w-5 h-5 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>
+                    <!-- ♥ Wishlist Button (standalone – NO nested form) -->
+                    <button type="button"
+                            id="wishlist-btn-main"
+                            class="wish-btn relative w-12 h-12 border rounded-xl flex items-center justify-center bg-white shadow-sm shrink-0
+                                   {% if selected_variant.id in wishlisted_ids %}
+                                       wishlisted text-red-500 border-red-200
+                                   {% else %}
+                                       text-gray-400 border-[#e5e7eb]
+                                   {% endif %}"
+                            data-action="{% url 'toggle_wishlist' selected_variant.id %}"
+                            data-variant-id="{{ selected_variant.id }}"
+                            data-csrf="{{ csrf_token }}"
+                            aria-label="{% if selected_variant.id in wishlisted_ids %}Remove from wishlist{% else %}Add to wishlist{% endif %}">
+
+                        <!-- Tooltip -->
+                        <span class="wish-tooltip" id="wish-tooltip-text">
+                            {% if selected_variant.id in wishlisted_ids %}Wishlisted ♥{% else %}Add to Wishlist{% endif %}
+                        </span>
+
+                        <!-- Heart SVG -->
+                        <svg class="wish-svg w-5 h-5"
+                             fill="{% if selected_variant.id in wishlisted_ids %}currentColor{% else %}none{% endif %}"
+                             stroke="currentColor"
+                             viewBox="0 0 24 24"
+                             stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/>
+                        </svg>
                     </button>
                 </div>
 
@@ -397,192 +477,682 @@
         </div>
     </div>
 
+
     {% if related_products %}
-    <div class="max-w-[1200px] mx-auto px-5 md:px-8 mt-24">
-        <h2 class="text-[32px] font-cormorant text-[#1a1208] mb-10 leading-none">Complete Your Routine</h2>
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 md:gap-8">
-            {% for rel in related_products %}
-            <a href="{% url 'product_detail_view' rel.slug %}" class="group block no-underline">
-                <div class="w-full aspect-[4/5] bg-white rounded-2xl mb-4 overflow-hidden relative shadow-[0_2px_10px_rgb(0,0,0,0.02)]">
-                    {% with first_image=rel.images.first %}
-                    {% if first_image %}
-                    <img src="{{ first_image.image.url }}" alt="{{ rel.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out">
+    <!-- ══ Similar Products Carousel ══ -->
+    <style>
+        /* ── Card ── */
+        .sp-card {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            background: #1a1208;
+            cursor: pointer;
+            flex: 0 0 auto;
+            /* width set by JS / CSS custom prop */
+            aspect-ratio: 3/4;
+            transition: transform 0.45s cubic-bezier(0.34,1.26,0.64,1),
+                        box-shadow 0.45s ease;
+            box-shadow: 0 4px 20px rgba(26,18,8,0.06);
+            text-decoration: none;
+            display: block;
+        }
+        @media(hover:hover){
+            .sp-card:hover {
+                transform: translateY(-10px) scale(1.02);
+                box-shadow: 0 24px 60px rgba(26,18,8,0.18);
+            }
+            .sp-card:hover .sp-img  { transform: scale(1.1); }
+            .sp-card:hover .sp-cta  { opacity:1; transform:translateY(0); }
+            .sp-card:hover .sp-name { transform:translateY(-3px); }
+        }
+        .sp-img {
+            position:absolute; inset:0;
+            width:100%; height:100%;
+            object-fit:cover;
+            transition: transform 0.7s cubic-bezier(0.4,0,0.2,1);
+        }
+        .sp-overlay {
+            position:absolute; inset:0;
+            background: linear-gradient(to top,
+                rgba(8,5,2,0.92) 0%,
+                rgba(8,5,2,0.55) 42%,
+                rgba(8,5,2,0.08) 72%,
+                transparent 100%);
+        }
+        .sp-info {
+            position:absolute; bottom:0; left:0; right:0;
+            padding:18px 14px 16px; z-index:2;
+        }
+        .sp-cat  { font-family:'Montserrat',sans-serif; font-size:8px; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:rgba(255,255,255,0.42); margin-bottom:4px; }
+        .sp-name { font-family:'Cormorant Garamond',serif; font-size:17px; font-weight:500; color:#fff; line-height:1.18; margin-bottom:5px; transition:transform 0.3s ease; }
+        .sp-price-row { display:flex; align-items:baseline; gap:5px; }
+        .sp-from  { font-family:'Montserrat',sans-serif; font-size:8px; color:rgba(255,255,255,0.42); letter-spacing:0.1em; text-transform:uppercase; }
+        .sp-price { font-family:'Montserrat',sans-serif; font-size:13px; font-weight:700; color:#fff; }
+        .sp-cta {
+            position:absolute; top:12px; right:12px; z-index:3;
+            font-family:'Montserrat',sans-serif; font-size:8px; font-weight:700;
+            letter-spacing:0.16em; text-transform:uppercase;
+            color:#1a1208; background:rgba(255,255,255,0.94);
+            backdrop-filter:blur(8px); padding:5px 11px; border-radius:99px;
+            opacity:0; transform:translateY(-5px);
+            transition:opacity 0.3s,transform 0.35s cubic-bezier(0.34,1.26,0.64,1);
+            pointer-events:none; white-space:nowrap;
+        }
+        @media(hover:none){ .sp-cta{opacity:1;transform:translateY(0);} }
+
+        /* ── Track / Viewport ── */
+        #sp-viewport {
+            overflow: hidden;
+            position: relative;
+        }
+        #sp-track {
+            display: flex;
+            gap: 16px;
+            transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
+            will-change: transform;
+            user-select: none;
+        }
+        /* ── Arrow buttons ── */
+        .sp-arrow {
+            position:absolute; top:50%; z-index:10;
+            transform:translateY(-50%);
+            width:44px; height:44px;
+            border-radius:50%;
+            background:rgba(255,255,255,0.96);
+            backdrop-filter:blur(8px);
+            border:1px solid rgba(26,18,8,0.08);
+            box-shadow:0 4px 20px rgba(26,18,8,0.12);
+            display:flex; align-items:center; justify-content:center;
+            color:#1a1208; cursor:pointer;
+            transition:background 0.2s, box-shadow 0.2s, opacity 0.3s, transform 0.2s;
+        }
+        .sp-arrow:hover  { background:#1a1208; color:#fff; box-shadow:0 8px 28px rgba(26,18,8,0.25); }
+        .sp-arrow:active { transform:translateY(-50%) scale(0.92); }
+        .sp-arrow.hidden { opacity:0; pointer-events:none; }
+        #sp-prev { left:-22px; }
+        #sp-next { right:-22px; }
+        @media(max-width:767px){
+            #sp-prev { left:4px; }
+            #sp-next { right:4px; }
+            .sp-arrow { width:36px; height:36px; }
+        }
+
+        /* ── Dots ── */
+        .sp-dot {
+            width:6px; height:6px; border-radius:50%;
+            background:rgba(26,18,8,0.18);
+            transition:background 0.3s, transform 0.3s, width 0.3s;
+            cursor:pointer;
+        }
+        .sp-dot.active {
+            background:#1a1208;
+            width:20px; border-radius:99px;
+        }
+
+        /* ── Entrance ── */
+        .sp-card { opacity:0; }
+        .sp-card.sp-visible {
+            animation: spIn 0.55s cubic-bezier(0.34,1.26,0.64,1) forwards;
+        }
+        @keyframes spIn {
+            from { opacity:0; transform:translateY(24px) scale(0.97); }
+            to   { opacity:1; transform:translateY(0)  scale(1);     }
+        }
+    </style>
+
+    <div class="max-w-[1200px] mx-auto px-5 md:px-10 mt-28">
+
+        <!-- Header row -->
+        <div class="flex items-center justify-between mb-8 gap-4">
+            <div>
+                <p class="font-montserrat text-[9px] font-bold tracking-[0.28em] uppercase text-[#a8a196] mb-1">You May Also Like</p>
+                <h2 class="font-cormorant text-[32px] md:text-[40px] text-[#1a1208] leading-none">Similar Products</h2>
+            </div>
+            <!-- Arrows (desktop right-aligned) -->
+            <div class="hidden md:flex items-center gap-3">
+                <button id="sp-prev-top" aria-label="Previous"
+                        class="w-10 h-10 rounded-full border border-[#d4c4b0] flex items-center justify-center text-[#1a1208] hover:bg-[#1a1208] hover:text-white hover:border-[#1a1208] transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/>
+                    </svg>
+                </button>
+                <button id="sp-next-top" aria-label="Next"
+                        class="w-10 h-10 rounded-full border border-[#d4c4b0] flex items-center justify-center text-[#1a1208] hover:bg-[#1a1208] hover:text-white hover:border-[#1a1208] transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Carousel viewport -->
+        <div id="sp-viewport" class="relative">
+
+            <!-- Mobile floating arrows -->
+            <button id="sp-prev" class="sp-arrow hidden" aria-label="Previous">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/>
+                </svg>
+            </button>
+            <button id="sp-next" class="sp-arrow" aria-label="Next">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
+                </svg>
+            </button>
+
+            <!-- Track -->
+            <div id="sp-track">
+                {% for rel in related_products %}
+                <a href="{% url 'product_detail_view' rel.slug %}"
+                   class="sp-card"
+                   style="animation-delay:{{ forloop.counter0 }}00ms;">
+
+                    {% with fi=rel.images.first %}
+                    {% if fi %}
+                    <img src="{{ fi.image.url }}" alt="{{ rel.name }}" class="sp-img">
                     {% else %}
-                    <div class="absolute inset-0 flex items-center justify-center text-gray-400 font-montserrat text-xs text-center w-full h-full">No Image</div>
+                    <div class="absolute inset-0 bg-gradient-to-br from-[#3b2e2a] to-[#1a1208] flex items-center justify-center">
+                        <span class="font-cormorant text-7xl text-white/10 select-none">{{ rel.name|first|upper }}</span>
+                    </div>
                     {% endif %}
                     {% endwith %}
-                </div>
-                <div class="mt-4">
-                    <p class="font-montserrat text-[10px] font-medium tracking-[0.2em] uppercase text-[#a8a196] mb-1.5">
-                        {{ rel.category.name|default:"SERUM" }}
-                    </p>
-                    
-                    <div class="flex justify-between items-baseline gap-2">
-                        <h3 class="font-montserrat text-[14px] font-bold tracking-[0.05em] uppercase text-[#1a1208] group-hover:text-[#4A604F] transition-colors truncate">
-                            {{ rel.name }}
-                        </h3>
-                        
-                        <p class="font-montserrat font-bold text-[15px] text-[#1a1208] whitespace-nowrap"><span class="font-montserrat text-[10px] text-gray-400 mt-1 block">from</span>
-                            ₹{{ rel.variants.first.price|default:"199" }}
-                        </p>
+
+                    <div class="sp-overlay"></div>
+                    <div class="sp-cta">View →</div>
+                    <div class="sp-info">
+                        <p class="sp-cat">{{ rel.category.name|default:"Skincare" }}</p>
+                        <h3 class="sp-name">{{ rel.name }}</h3>
+                        <div class="sp-price-row">
+                            <span class="sp-from">from</span>
+                            <span class="sp-price">₹{{ rel.variants.first.price|default:"199" }}</span>
+                        </div>
                     </div>
-                </div>
-            </a>
-            {% endfor %}
+                </a>
+                {% endfor %}
+            </div>
         </div>
+
+        <!-- Dot indicators -->
+        <div id="sp-dots" class="flex items-center justify-center gap-2 mt-6"></div>
     </div>
+    <div class="mb-24"></div>
+
+    <script>
+    (function(){
+        const track    = document.getElementById('sp-track');
+        const viewport = document.getElementById('sp-viewport');
+        const dotsWrap = document.getElementById('sp-dots');
+        if (!track) return;
+
+        const cards = Array.from(track.querySelectorAll('.sp-card'));
+        const total = cards.length;
+        if (!total) return;
+
+        // ── Card width responsive ────────────────────────────────
+        function cardW() {
+            const vw = viewport.clientWidth;
+            if (vw >= 1024) return Math.floor((vw - 16*3) / 3.5);  // ~3.5 cards desktop
+            if (vw >= 640)  return Math.floor((vw - 16*2) / 2.4);  // ~2.4 cards tablet
+            return Math.floor((vw - 16)   / 1.5);                  // ~1.5 cards mobile
+        }
+
+        let cw = cardW();
+        let cur = 0;
+        let maxIdx = 0;
+        const gap = 16;
+
+        function setWidths() {
+            cw = cardW();
+            cards.forEach(c => { c.style.width = cw + 'px'; });
+            maxIdx = Math.max(0, total - Math.round(viewport.clientWidth / (cw + gap)));
+            goTo(Math.min(cur, maxIdx), false);
+            buildDots();
+        }
+
+        // ── Navigate ─────────────────────────────────────────────
+        function goTo(idx, animate) {
+            cur = Math.max(0, Math.min(idx, maxIdx));
+            const offset = cur * (cw + gap);
+            track.style.transition = animate !== false
+                ? 'transform 0.5s cubic-bezier(0.4,0,0.2,1)' : 'none';
+            track.style.transform = `translateX(-${offset}px)`;
+            updateArrows();
+            updateDots();
+        }
+
+        function prev() { goTo(cur - 1, true); }
+        function next() { goTo(cur + 1, true); }
+
+        // ── Arrow buttons ─────────────────────────────────────────
+        function updateArrows() {
+            ['sp-prev','sp-prev-top'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.toggle('hidden', cur === 0);
+                if (el && id === 'sp-prev') el.classList.toggle('hidden', cur === 0);
+            });
+            ['sp-next','sp-next-top'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.toggle('hidden', cur >= maxIdx);
+            });
+        }
+
+        document.getElementById('sp-prev')?.addEventListener('click', prev);
+        document.getElementById('sp-next')?.addEventListener('click', next);
+        document.getElementById('sp-prev-top')?.addEventListener('click', prev);
+        document.getElementById('sp-next-top')?.addEventListener('click', next);
+
+        // ── Dots ──────────────────────────────────────────────────
+        function buildDots() {
+            dotsWrap.innerHTML = '';
+            if (maxIdx < 1) return;
+            for (let i = 0; i <= maxIdx; i++) {
+                const d = document.createElement('button');
+                d.className = 'sp-dot' + (i === cur ? ' active' : '');
+                d.setAttribute('aria-label', 'Go to slide ' + (i+1));
+                d.addEventListener('click', () => goTo(i, true));
+                dotsWrap.appendChild(d);
+            }
+        }
+        function updateDots() {
+            dotsWrap.querySelectorAll('.sp-dot').forEach((d,i) => {
+                d.classList.toggle('active', i === cur);
+            });
+        }
+
+        // ── Touch / mouse drag ────────────────────────────────────
+        let startX = 0, startOffset = 0, dragging = false, moved = false;
+
+        function dragStart(x) {
+            startX = x;
+            startOffset = cur * (cw + gap);
+            dragging = true; moved = false;
+            track.style.transition = 'none';
+        }
+        function dragMove(x) {
+            if (!dragging) return;
+            const dx = startX - x;
+            if (Math.abs(dx) > 6) moved = true;
+            const rawOffset = Math.max(-60, Math.min(startOffset + dx, maxIdx*(cw+gap) + 60));
+            track.style.transform = `translateX(-${rawOffset}px)`;
+        }
+        function dragEnd(x) {
+            if (!dragging) return;
+            dragging = false;
+            const dx = startX - x;
+            if (Math.abs(dx) > 60)  { goTo(dx > 0 ? cur+1 : cur-1, true); }
+            else                     { goTo(cur, true); }
+        }
+
+        // Touch
+        track.addEventListener('touchstart', e => dragStart(e.touches[0].clientX), {passive:true});
+        track.addEventListener('touchmove',  e => dragMove(e.touches[0].clientX), {passive:true});
+        track.addEventListener('touchend',   e => dragEnd(e.changedTouches[0].clientX));
+
+        // Mouse
+        track.addEventListener('mousedown', e => { dragStart(e.clientX); });
+        window.addEventListener('mousemove', e => { if(dragging) { e.preventDefault(); dragMove(e.clientX); } });
+        window.addEventListener('mouseup',   e => dragEnd(e.clientX));
+
+        // Prevent link click when dragged
+        track.querySelectorAll('a').forEach(a => {
+            a.addEventListener('click', e => { if (moved) e.preventDefault(); });
+        });
+
+        // ── Keyboard ─────────────────────────────────────────────
+        viewport.addEventListener('keydown', e => {
+            if (e.key === 'ArrowLeft')  prev();
+            if (e.key === 'ArrowRight') next();
+        });
+
+        // ── Resize ───────────────────────────────────────────────
+        window.addEventListener('resize', () => { clearTimeout(window._spRz); window._spRz = setTimeout(setWidths, 150); });
+
+        // ── Scroll-triggered entrance animation ───────────────────
+        const io = new IntersectionObserver(entries => {
+            entries.forEach(en => {
+                if (en.isIntersecting) { en.target.classList.add('sp-visible'); io.unobserve(en.target); }
+            });
+        }, { threshold: 0.1 });
+        cards.forEach(c => io.observe(c));
+
+        // ── Init ─────────────────────────────────────────────────
+        setWidths();
+    })();
+    </script>
     {% endif %}
 
-    <div id="fullscreen-gallery" class="fixed inset-0 z-[10000] bg-white hidden flex-col opacity-0 transition-opacity duration-300 ease-in-out">
-        <div class="absolute top-0 w-full flex justify-between items-center p-4 md:p-6 z-50 bg-gradient-to-b from-white/80 to-transparent">
-            <span id="fs-counter" class="font-montserrat text-sm font-bold tracking-widest text-[#1a1208]">1 / 1</span>
-            <button onclick="closeFullScreenGallery()" class="w-10 h-10 flex items-center justify-center bg-gray-100/80 hover:bg-gray-200 rounded-full transition-colors backdrop-blur-sm">
-                <svg class="w-5 h-5 text-[#1a1208]" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+
+
+
+    <!-- ═══ FULLSCREEN GALLERY MODAL (mobile-first full-bleed) ═══ -->
+    <div id="fullscreen-gallery"
+         class="fixed inset-0 z-[10000] hidden"
+         style="background:#000;opacity:0;transition:opacity 0.3s ease;">
+
+        <!-- Top bar -->
+        <div class="absolute top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3"
+             style="background:linear-gradient(to bottom,rgba(0,0,0,0.7) 0%,transparent 100%);padding-top:max(12px,env(safe-area-inset-top));">
+            <span id="fs-counter"
+                  class="font-montserrat text-xs font-bold tracking-[0.2em] text-white/80">1 / 1</span>
+            <button onclick="closeFullScreenGallery()"
+                    class="w-9 h-9 flex items-center justify-center rounded-full bg-white/15 backdrop-blur-md text-white hover:bg-white/25 transition-all active:scale-90">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
             </button>
         </div>
 
-        <div id="fs-image-wrapper" onclick="toggleFullScreenZoom(event)" class="flex-1 flex items-center justify-center relative overflow-hidden bg-white cursor-zoom-in">
-            <button onclick="navigateGallery(-1, event)" class="absolute left-4 md:left-8 z-40 w-12 h-12 flex items-center justify-center bg-white/50 hover:bg-white rounded-full border border-gray-200 shadow-sm transition-all text-gray-800">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
-            </button>
-            
-            <img id="fs-main-image" src="" alt="Zoomed Product Image" class="max-w-full max-h-[85vh] object-contain select-none" style="transform-origin: center center;">
-            
-            <button onclick="navigateGallery(1, event)" class="absolute right-4 md:right-8 z-40 w-12 h-12 flex items-center justify-center bg-white/50 hover:bg-white rounded-full border border-gray-200 shadow-sm transition-all text-gray-800">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
-            </button>
+        <!-- Image track (swipeable) -->
+        <div id="fs-track"
+             style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+            <img id="fs-main-image"
+                 src="" alt="Product Image"
+                 style="width:100%;height:100%;object-fit:contain;object-position:center;
+                        transition:transform 0.3s ease;transform-origin:center center;
+                        user-select:none;-webkit-user-drag:none;">
+        </div>
+
+        <!-- Prev / Next arrows (hidden on smallest screens, shown on md+) -->
+        <button id="fs-prev"
+                onclick="navigateGallery(-1, event)"
+                class="absolute left-3 top-1/2 -translate-y-1/2 z-50 hidden md:flex w-11 h-11 items-center justify-center rounded-full bg-white/15 backdrop-blur-md text-white hover:bg-white/25 transition-all active:scale-90">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/>
+            </svg>
+        </button>
+        <button id="fs-next"
+                onclick="navigateGallery(1, event)"
+                class="absolute right-3 top-1/2 -translate-y-1/2 z-50 hidden md:flex w-11 h-11 items-center justify-center rounded-full bg-white/15 backdrop-blur-md text-white hover:bg-white/25 transition-all active:scale-90">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
+            </svg>
+        </button>
+
+        <!-- Dot indicators -->
+        <div id="fs-dots"
+             class="absolute bottom-6 left-0 right-0 z-50 flex justify-center gap-2"
+             style="padding-bottom:env(safe-area-inset-bottom);">
         </div>
     </div>
+
 </main>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // --- FULL SCREEN ZOOM LOGIC ---
-    let fsImages = [];
-    let currentFsIndex = 0;
-    let isZoomed = false;
+    // Pass wishlisted IDs to JavaScript
+    window.wishlistedIds = {{ wishlisted_ids|safe }};
 
-    // Elements
-    const fsModal = document.getElementById('fullscreen-gallery');
-    const fsMainImage = document.getElementById('fs-main-image');
-    const fsWrapper = document.getElementById('fs-image-wrapper');
-    const fsCounter = document.getElementById('fs-counter');
+    // ═══════════════════════════════════════════
+    //  FULLSCREEN GALLERY  –  clean rewrite
+    // ═══════════════════════════════════════════
+    const fsModal     = document.getElementById('fullscreen-gallery');
+    const fsImg       = document.getElementById('fs-main-image');
+    const fsTrack     = document.getElementById('fs-track');
+    const fsCounter   = document.getElementById('fs-counter');
+    const fsDots      = document.getElementById('fs-dots');
 
-    function initGalleryArray() {
+    let fsImages   = [];
+    let fsIdx      = 0;
+    let fsZoomed   = false;
+
+    // ── Build image array from thumbnails ──────────────────────────
+    function fsInit() {
         fsImages = [];
-        const thumbs = document.querySelectorAll('.thumb-btn img');
-        if (thumbs.length > 0) {
-            thumbs.forEach(img => fsImages.push(img.src));
-        } else {
-            const mainImg = document.getElementById('mainImage');
-            if(mainImg) fsImages.push(mainImg.src);
+        document.querySelectorAll('.thumb-btn img').forEach(i => fsImages.push(i.src));
+        if (!fsImages.length) {
+            const m = document.getElementById('mainImage');
+            if (m) fsImages.push(m.src);
         }
     }
 
-    function openFullScreenGallery() {
-        if (fsImages.length === 0) initGalleryArray();
-        if (fsImages.length === 0) return; 
-        
-        const innerOverlay = document.getElementById('inner-zoom-overlay');
-        if (innerOverlay) {
-            innerOverlay.classList.remove('opacity-100');
-            innerOverlay.classList.add('opacity-0');
-        }
-
-        const activeSrc = document.getElementById('mainImage').src;
-        currentFsIndex = fsImages.indexOf(activeSrc);
-        if (currentFsIndex === -1) currentFsIndex = 0;
-
-        updateGalleryUI();
-
-        fsModal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden'; 
-        
-        requestAnimationFrame(() => {
-            fsModal.classList.remove('opacity-0');
-            fsModal.classList.add('opacity-100');
+    // ── Dots ───────────────────────────────────────────────────────
+    function fsBuildDots() {
+        if (!fsDots) return;
+        fsDots.innerHTML = '';
+        if (fsImages.length < 2) return;
+        fsImages.forEach((_, i) => {
+            const d = document.createElement('div');
+            const active = i === fsIdx;
+            d.style.cssText = `width:${active?8:5}px;height:${active?8:5}px;border-radius:50%;`
+                + `background:${active?'#fff':'rgba(255,255,255,0.35)'};`
+                + `transition:all .3s ease;margin:0 3px;`;
+            fsDots.appendChild(d);
         });
     }
 
-    function closeFullScreenGallery() {
-        fsModal.classList.remove('opacity-100');
-        fsModal.classList.add('opacity-0');
-        
-        setTimeout(() => {
-            fsModal.classList.add('hidden');
-            document.body.style.overflow = ''; 
-            resetZoom();
-        }, 300);
-    }
-
-    function updateGalleryUI() {
-        fsMainImage.src = fsImages[currentFsIndex];
-        fsCounter.textContent = `${currentFsIndex + 1} / ${fsImages.length}`;
-        resetZoom();
-    }
-
-    function navigateGallery(direction, event) {
-        if (event) event.stopPropagation(); 
-        currentFsIndex += direction;
-        
-        if (currentFsIndex < 0) currentFsIndex = fsImages.length - 1; 
-        if (currentFsIndex >= fsImages.length) currentFsIndex = 0; 
-        
-        updateGalleryUI();
-    }
-
-    function toggleFullScreenZoom(event) {
-        if (event.target.closest('button')) return;
-
-        isZoomed = !isZoomed;
-        
-        if (isZoomed) {
-            fsWrapper.classList.remove('cursor-zoom-in');
-            fsWrapper.classList.add('cursor-zoom-out');
-            fsMainImage.style.transform = 'scale(2.5)';
-            panImage(event); 
+    // ── Update image & UI ──────────────────────────────────────────
+    function fsShow(idx, animate) {
+        fsIdx = (idx + fsImages.length) % fsImages.length;
+        fsZoomReset();
+        if (animate) {
+            fsImg.style.opacity = '0';
+            setTimeout(() => { fsImg.src = fsImages[fsIdx]; fsImg.style.opacity = '1'; }, 150);
         } else {
-            resetZoom();
+            fsImg.src = fsImages[fsIdx];
+            fsImg.style.opacity = '1';
         }
+        if (fsCounter) fsCounter.textContent = `${fsIdx + 1} / ${fsImages.length}`;
+        fsBuildDots();
     }
 
-    function panImage(event) {
-        if (!isZoomed) return;
-        
-        const rect = fsWrapper.getBoundingClientRect();
-        const xPercent = ((event.clientX - rect.left) / rect.width) * 100;
-        const yPercent = ((event.clientY - rect.top) / rect.height) * 100;
-        
-        fsMainImage.style.transformOrigin = `${xPercent}% ${yPercent}%`;
+    // ── Zoom ───────────────────────────────────────────────────────
+    function fsZoomAt(x, y) {
+        if (!fsTrack) return;
+        const r = fsTrack.getBoundingClientRect();
+        const ox = ((x - r.left) / r.width)  * 100;
+        const oy = ((y - r.top)  / r.height) * 100;
+        fsImg.style.transformOrigin = `${ox}% ${oy}%`;
+        fsImg.style.transform       = 'scale(2.5)';
+        fsImg.style.cursor          = 'zoom-out';
+        fsZoomed = true;
     }
 
-    fsWrapper.addEventListener('mousemove', panImage);
-
-    function resetZoom() {
-        isZoomed = false;
-        fsWrapper.classList.add('cursor-zoom-in');
-        fsWrapper.classList.remove('cursor-zoom-out');
-        fsMainImage.style.transform = 'scale(1)';
-        setTimeout(() => { fsMainImage.style.transformOrigin = 'center center'; }, 300);
+    function fsZoomReset() {
+        fsZoomed = false;
+        fsImg.style.transform       = 'scale(1)';
+        fsImg.style.cursor          = 'zoom-in';
+        setTimeout(() => { fsImg.style.transformOrigin = 'center center'; }, 300);
     }
+
+    function fsZoomToggle(x, y) {
+        if (fsZoomed) { fsZoomReset(); } else { fsZoomAt(x, y); }
+    }
+
+    // ── Pan while zoomed ──────────────────────────────────────────
+    function fsPan(x, y) {
+        if (!fsZoomed || !fsTrack) return;
+        const r = fsTrack.getBoundingClientRect();
+        fsImg.style.transformOrigin =
+            `${((x - r.left) / r.width) * 100}% ${((y - r.top) / r.height) * 100}%`;
+    }
+
+    // ── Open / Close ───────────────────────────────────────────────
+    function openFullScreenGallery() {
+        if (!fsImages.length) fsInit();
+        if (!fsImages.length) return;
+
+        const cur = document.getElementById('mainImage');
+        const src = cur ? cur.src : '';
+        const i   = fsImages.indexOf(src);
+        fsShow(i >= 0 ? i : 0, false);
+
+        fsModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        requestAnimationFrame(() => { fsModal.style.opacity = '1'; });
+    }
+
+    function closeFullScreenGallery() {
+        fsModal.style.opacity = '0';
+        document.body.style.overflow = '';
+        setTimeout(() => { fsModal.classList.add('hidden'); fsZoomReset(); }, 300);
+    }
+
+    function navigateGallery(dir, ev) {
+        if (ev) ev.stopPropagation();
+        fsShow(fsIdx + dir, true);
+    }
+
+    // ── Desktop mouse: mousemove pans, click toggles zoom ─────────
+    if (fsTrack) {
+        fsTrack.addEventListener('mousemove', e => { fsPan(e.clientX, e.clientY); });
+    }
+
+    // ── Touch / Mobile ────────────────────────────────────────────
+    let _tx = 0, _ty = 0, _tm = false, _tt = 0;
+
+    if (fsModal) {
+        fsModal.addEventListener('touchstart', e => {
+            _tx = e.touches[0].clientX;
+            _ty = e.touches[0].clientY;
+            _tm = false;
+            _tt = Date.now();
+        }, { passive: true });
+
+        fsModal.addEventListener('touchmove', e => {
+            const dx = Math.abs(e.touches[0].clientX - _tx);
+            const dy = Math.abs(e.touches[0].clientY - _ty);
+            if (dx > 6 || dy > 6) _tm = true;
+            fsPan(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: true });
+
+        fsModal.addEventListener('touchend', e => {
+            // If user tapped a button, let its click fire normally
+            if (e.target.closest('button')) return;
+
+            // Block the synthetic click that fires after touch (prevents double-trigger)
+            e.preventDefault();
+
+            const ex = e.changedTouches[0].clientX;
+            const ey = e.changedTouches[0].clientY;
+            const dx = _tx - ex;
+            const dy = Math.abs(_ty - ey);
+
+            if (!_tm) {
+                // TAP  ─  zoom toggle
+                fsZoomToggle(ex, ey);
+            } else if (!fsZoomed && Math.abs(dx) > 45 && dy < 80) {
+                // SWIPE  ─  navigate
+                fsShow(fsIdx + (dx > 0 ? 1 : -1), true);
+            }
+            // zoomed + drag  ─  was panning, nothing on lift
+        }); // NOT passive so preventDefault works
+
+
+        // Desktop click (fires on non-touch screens)
+        fsModal.addEventListener('click', e => {
+            if (Date.now() - _tt < 600) return; // suppress post-touch click
+            if (e.target.closest('button')) return;
+            if (e.target === fsModal) return; // backdrop click → don't zoom
+            fsZoomToggle(e.clientX, e.clientY);
+        });
+    }
+
+    // ── Keyboard nav ──────────────────────────────────────────────
+    document.addEventListener('keydown', e => {
+        if (!fsModal || fsModal.classList.contains('hidden')) return;
+        if (e.key === 'ArrowLeft')  fsShow(fsIdx - 1, true);
+        if (e.key === 'ArrowRight') fsShow(fsIdx + 1, true);
+        if (e.key === 'Escape')     closeFullScreenGallery();
+    });
+
+    // ── Pre-load image array on page ready ────────────────────────
+    document.addEventListener('DOMContentLoaded', fsInit);
 
     document.addEventListener('DOMContentLoaded', () => {
-        
-        // TOAST ANIMATION & PLACEMENT LOGIC
-        const toasts = document.querySelectorAll('.toast-notification');
-        if (toasts.length > 0) {
-            toasts.forEach((toast, index) => {
-                setTimeout(() => {
-                    toast.classList.remove('translate-x-[120%]');
-                    toast.classList.add('translate-x-0');
-                }, 100 + (index * 150)); 
 
-                setTimeout(() => {
-                    toast.classList.remove('translate-x-0');
-                    toast.classList.add('translate-x-[120%]');
-                    setTimeout(() => toast.remove(), 500); 
-                }, 4000 + (index * 150));
+        // ==========================================
+        // WISHLIST BUTTON HANDLER (no nested form)
+        // ==========================================
+        const wishBtn = document.getElementById('wishlist-btn-main');
+        if (wishBtn) {
+            wishBtn.addEventListener('click', function() {
+                const btn     = this;
+                const svg     = btn.querySelector('.wish-svg');
+                const tooltip = btn.querySelector('.wish-tooltip');
+                const action  = btn.dataset.action;
+                const csrf    = btn.dataset.csrf;
+                const wasWishlisted = btn.classList.contains('wishlisted');
+
+                // ── Instant optimistic UI ──
+                btn.classList.toggle('wishlisted');
+                btn.classList.add('pop');
+                setTimeout(() => btn.classList.remove('pop'), 500);
+
+                if (!wasWishlisted) {
+                    svg.setAttribute('fill', 'currentColor');
+                    btn.classList.add('text-red-500', 'border-red-200');
+                    btn.classList.remove('text-gray-400', 'border-[#e5e7eb]');
+                    btn.setAttribute('aria-label', 'Remove from wishlist');
+                    if (tooltip) tooltip.textContent = 'Wishlisted ♥';
+                    showToast('success', 'Wishlisted!', 'Product saved to your wishlist.');
+                } else {
+                    svg.setAttribute('fill', 'none');
+                    btn.classList.remove('text-red-500', 'border-red-200');
+                    btn.classList.add('text-gray-400', 'border-[#e5e7eb]');
+                    btn.setAttribute('aria-label', 'Add to wishlist');
+                    if (tooltip) tooltip.textContent = 'Add to Wishlist';
+                    showToast('info', 'Removed', 'Product removed from your wishlist.');
+                }
+
+                // ── AJAX POST ──
+                const fd = new FormData();
+                fd.append('csrfmiddlewaretoken', csrf);
+                fetch(action, {
+                    method: 'POST',
+                    body: fd,
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin'
+                })
+                .then(response => {
+                    if (response.redirected &&
+                        (response.url.includes('signin') || response.url.includes('login'))) {
+                        // Not logged in — revert + redirect
+                        btn.classList.toggle('wishlisted');
+                        const now = btn.classList.contains('wishlisted');
+                        svg.setAttribute('fill', now ? 'currentColor' : 'none');
+                        if (tooltip) tooltip.textContent = now ? 'Wishlisted ♥' : 'Add to Wishlist';
+                        showToast('error', 'Sign In Required', 'Please sign in to use wishlist.');
+                        setTimeout(() => { window.location.href = response.url; }, 1500);
+                    }
+                    // Any other redirect = success (Django redirects back after toggle)
+                })
+                .catch(() => {
+                    // Network error — revert
+                    btn.classList.toggle('wishlisted');
+                    const now = btn.classList.contains('wishlisted');
+                    svg.setAttribute('fill', now ? 'currentColor' : 'none');
+                    if (tooltip) tooltip.textContent = now ? 'Wishlisted ♥' : 'Add to Wishlist';
+                    showToast('error', 'Error', 'Something went wrong. Please try again.');
+                });
+            });
+        }
+
+        // ── Fire Django messages via base.html showToast() ──
+        const msgContainer = document.getElementById('django-messages-data');
+        if (msgContainer) {
+            const spans = msgContainer.querySelectorAll('[data-tags]');
+            spans.forEach((span, i) => {
+                const tags = span.dataset.tags || '';
+                const msg  = span.dataset.msg  || '';
+                let type  = 'info';
+                let title = 'Notice';
+                if (tags.includes('error')) {
+                    type  = 'error';
+                    title = 'Error';
+                } else if (tags.includes('warning')) {
+                    type  = 'warning';
+                    title = 'Notice';
+                } else if (tags.includes('success')) {
+                    type  = 'success';
+                    title = 'Done!';
+                } else if (tags.includes('info')) {
+                    type  = 'info';
+                    title = 'Info';
+                }
+                // Stagger multiple messages slightly
+                setTimeout(() => showToast(type, title, msg), i * 400);
             });
         }
 
@@ -608,6 +1178,33 @@
 
                     document.getElementById('product-price').textContent = '₹' + vPrice;
                     document.getElementById('hidden-variant-id').value = vId;
+
+                    // Update wishlist button action and heart state
+                    const wlBtn = document.getElementById('wishlist-btn-main');
+                    if (wlBtn) {
+                        const newAction = '/wishlist/toggle/' + vId + '/';
+                        wlBtn.dataset.action   = newAction;
+                        wlBtn.dataset.variantId = vId;
+
+                        // Check if this variant is wishlisted
+                        const isWishlisted = window.wishlistedIds && window.wishlistedIds.includes(parseInt(vId));
+                        const wlSvg     = wlBtn.querySelector('.wish-svg');
+                        const wlTooltip = wlBtn.querySelector('.wish-tooltip');
+                        if (isWishlisted) {
+                            wlBtn.classList.add('wishlisted', 'text-red-500', 'border-red-200');
+                            wlBtn.classList.remove('text-gray-400', 'border-[#e5e7eb]');
+                            if (wlSvg)     wlSvg.setAttribute('fill', 'currentColor');
+                            if (wlTooltip) wlTooltip.textContent = 'Wishlisted ♥';
+                            wlBtn.setAttribute('aria-label', 'Remove from wishlist');
+                        } else {
+                            wlBtn.classList.remove('wishlisted', 'text-red-500', 'border-red-200');
+                            wlBtn.classList.add('text-gray-400', 'border-[#e5e7eb]');
+                            if (wlSvg)     wlSvg.setAttribute('fill', 'none');
+                            if (wlTooltip) wlTooltip.textContent = 'Add to Wishlist';
+                            wlBtn.setAttribute('aria-label', 'Add to wishlist');
+                        }
+                    }
+
 
                     const stockBadge = document.getElementById('stock-badge');
                     if (vStock > 0) {
@@ -638,84 +1235,130 @@
 
                     if (!window.isRestoringState) {
                         document.getElementById('qtyInput').value = 1;
-                        if (window.resetAddToCartState) window.resetAddToCartState();
+                        if (window.resetAddToCartState) {
+                            window.resetAddToCartState(vId, vStock === 0);
+                        }
                         window.history.replaceState(null, '', '?variant=' + vId);
                     }
+
                 });
             });
         }
 
         // ==========================================
-        // ADD TO CART SMART UI LOGIC
+        // ADD TO CART – SMART PER-VARIANT STATE
         // ==========================================
         const addToCartForm = document.getElementById('add-to-cart-form');
-        const addToCartBtn = document.getElementById('add-to-cart-btn');
-        const variantInput = document.querySelector('input[name="variant_id"]');
+        const addToCartBtn  = document.getElementById('add-to-cart-btn');
+        const variantInput  = document.querySelector('input[name="variant_id"]');
 
-        if (addToCartForm && addToCartBtn && variantInput) {
-            addToCartBtn.addEventListener('click', () => {
-                if (addToCartBtn.type === 'submit') {
-                    sessionStorage.setItem('last_added_variant', variantInput.value);
-                    sessionStorage.setItem('last_added_qty', document.getElementById('qtyInput').value);
-                }
-            });
+        // Key for sessionStorage — store a JSON array of variant IDs that are in cart
+        const CART_KEY = 'glowe_in_cart_{{ product.id }}';
 
-            const lastAdded = sessionStorage.getItem('last_added_variant');
-            const lastQty = sessionStorage.getItem('last_added_qty');
-            const hasSuccessToast = document.querySelector('.toast-success');
-            const hasWarningToast = document.querySelector('.toast-warning'); 
-            const hasErrorToast = document.querySelector('.toast-error');
-
-            if (hasErrorToast) {
-                sessionStorage.removeItem('last_added_variant');
-                sessionStorage.removeItem('last_added_qty');
-            } else if (lastAdded) {
-                if (variantInput.value !== lastAdded) {
-                    const targetBtn = document.querySelector(`.variant-btn[data-variant-id="${lastAdded}"]`);
-                    if (targetBtn) {
-                        window.isRestoringState = true;
-                        targetBtn.click();
-                        window.isRestoringState = false;
-                    }
-                }
-
-                if (hasSuccessToast || hasWarningToast) {
-                    if (lastQty) {
-                        document.getElementById('qtyInput').value = lastQty;
-                    }
-                    setGoToCartState();
-                }
-            }
+        function getCartedVariants() {
+            try { return new Set(JSON.parse(sessionStorage.getItem(CART_KEY) || '[]')); }
+            catch { return new Set(); }
+        }
+        function saveCartedVariants(set) {
+            sessionStorage.setItem(CART_KEY, JSON.stringify([...set]));
+        }
+        function markVariantCarted(variantId) {
+            const set = getCartedVariants();
+            set.add(String(variantId));
+            saveCartedVariants(set);
+        }
+        function isVariantCarted(variantId) {
+            return getCartedVariants().has(String(variantId));
+        }
+        function unmarkVariantCarted(variantId) {
+            const set = getCartedVariants();
+            set.delete(String(variantId));
+            saveCartedVariants(set);
         }
 
+        // ── Button state helpers ──
         function setGoToCartState() {
-            addToCartBtn.innerHTML = `
-                Go to Cart
-                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-            `;
+            if (!addToCartBtn) return;
+            addToCartBtn.innerHTML =
+                'Go to Cart <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>';
             addToCartBtn.classList.remove('btn-dark-brown');
             addToCartBtn.classList.add('bg-[#4A604F]', 'hover:bg-[#3b4d3f]');
             addToCartBtn.type = 'button';
+            addToCartBtn.disabled = false;
             addToCartBtn.onclick = (e) => {
                 e.preventDefault();
-                window.location.href = "{% url 'cart' %}"; 
+                window.location.href = "{% url 'cart' %}";
             };
         }
 
-        window.resetAddToCartState = function() {
-            if (addToCartBtn && addToCartBtn.type === 'button') {
-                addToCartBtn.innerHTML = `
-                    Add to Cart
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                `;
-                addToCartBtn.classList.add('btn-dark-brown');
-                addToCartBtn.classList.remove('bg-[#4A604F]', 'hover:bg-[#3b4d3f]');
-                addToCartBtn.type = 'submit';
-                addToCartBtn.onclick = null;
-                sessionStorage.removeItem('last_added_variant');
-                sessionStorage.removeItem('last_added_qty');
-            }
+        function setAddToCartState(disabledByStock) {
+            if (!addToCartBtn) return;
+            addToCartBtn.innerHTML =
+                'Add to Cart <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>';
+            addToCartBtn.classList.add('btn-dark-brown');
+            addToCartBtn.classList.remove('bg-[#4A604F]', 'hover:bg-[#3b4d3f]');
+            addToCartBtn.type = 'submit';
+            addToCartBtn.onclick = null;
+            addToCartBtn.disabled = !!disabledByStock;
         }
+
+        // Expose so variant-switcher can call it
+        window.resetAddToCartState = function(variantId, stockDisabled) {
+            if (!addToCartBtn) return;
+            if (variantId && isVariantCarted(variantId)) {
+                setGoToCartState();
+            } else {
+                setAddToCartState(stockDisabled);
+            }
+        };
+
+        if (addToCartForm && addToCartBtn && variantInput) {
+
+            // Save the variant being submitted just before form posts
+            addToCartBtn.addEventListener('click', () => {
+                if (addToCartBtn.type === 'submit') {
+                    // Store which variant was just submitted
+                    sessionStorage.setItem('glowe_pending_variant', variantInput.value);
+                }
+            });
+
+            // ── On page load: check if we just returned from a successful add ──
+            const msgContainer = document.getElementById('django-messages-data');
+            const pendingVariant = sessionStorage.getItem('glowe_pending_variant');
+
+            if (msgContainer && pendingVariant) {
+                const spans = msgContainer.querySelectorAll('[data-tags]');
+                let hasSuccess = false, hasError = false;
+
+                spans.forEach(span => {
+                    const tags = span.dataset.tags || '';
+                    if (tags.includes('success') || tags.includes('warning')) hasSuccess = true;
+                    if (tags.includes('error')) hasError = true;
+                });
+
+                sessionStorage.removeItem('glowe_pending_variant');
+
+                if (hasError) {
+                    // Cart add failed — do NOT mark as carted
+                    unmarkVariantCarted(pendingVariant);
+                } else if (hasSuccess) {
+                    // Cart add succeeded — mark this variant as carted
+                    markVariantCarted(pendingVariant);
+                }
+            } else if (pendingVariant) {
+                // Page reloaded without messages — clear pending
+                sessionStorage.removeItem('glowe_pending_variant');
+            }
+
+            // ── Set initial button state for current variant ──
+            const currentVariantId = variantInput.value;
+            if (currentVariantId && isVariantCarted(currentVariantId)) {
+                setGoToCartState();
+            }
+            // (if disabled by stock, the Django template already renders it disabled)
+        }
+
+
 
         // ==========================================
         // INNER ZOOM LOGIC (REPLACED OUTSIDE ZOOM)
@@ -813,6 +1456,154 @@
 
         btnElement.classList.remove('border-transparent', 'text-gray-400');
         btnElement.classList.add('border-gray-500', 'text-[#1a1208]');
+    }
+
+    /* ── Toast notification helper ── */
+    function showToast(type, title, message) {
+        // Remove existing dynamic toasts
+        var existingToasts = document.querySelectorAll('.dynamic-toast');
+        existingToasts.forEach(function(toast) {
+            toast.remove();
+        });
+
+        // Create toast container if it doesn't exist
+        var container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            container.className = 'fixed top-8 right-14 z-[9999] pr-4 flex flex-col gap-3 pointer-events-none';
+            document.body.appendChild(container);
+        }
+
+        // Determine icon and color based on type
+        var iconSvg = '';
+        var textColor = '';
+        
+        if (type === 'error') {
+            textColor = 'text-red-600';
+            iconSvg = '<svg class="w-5 h-5 mr-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+        } else if (type === 'warning' || type === 'info') {
+            textColor = 'text-orange-500';
+            iconSvg = '<svg class="w-5 h-5 mr-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
+        } else {
+            textColor = 'text-green-600';
+            iconSvg = '<svg class="w-5 h-5 mr-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+        }
+
+        // Create toast element
+        var toast = document.createElement('div');
+        toast.className = 'dynamic-toast transform translate-x-[120%] transition-transform duration-500 ease-out flex items-center w-[380px] px-8 py-5 bg-white rounded-xl shadow-[0_15px_50px_rgba(0,0,0,0.1)] border border-gray-100 font-montserrat text-[13px] tracking-wide font-semibold ' + textColor;
+        toast.innerHTML = iconSvg + '<span class="flex-1">' + message + '</span>';
+
+        // Add to container
+        container.appendChild(toast);
+
+        // Animate in
+        setTimeout(function() {
+            toast.classList.remove('translate-x-[120%]');
+            toast.classList.add('translate-x-0');
+        }, 100);
+
+        // Animate out after 3 seconds
+        setTimeout(function() {
+            toast.classList.remove('translate-x-0');
+            toast.classList.add('translate-x-[120%]');
+            setTimeout(function() {
+                toast.remove();
+            }, 500);
+        }, 3000);
+    }
+
+    /* ── Wishlist toggle (AJAX, no page reload) ── */
+    function toggleWish(btn, variantId) {
+        console.log('=== WISHLIST TOGGLE START ===');
+        console.log('Variant ID:', variantId);
+        
+        var form = btn.closest('form');
+        console.log('Form element:', form);
+        console.log('Form action:', form.action);
+        
+        // Check if user is authenticated by checking if we have a valid CSRF token
+        var csrfToken = form.querySelector('[name=csrfmiddlewaretoken]');
+        if (!csrfToken) {
+            console.error('CSRF token not found - user might not be logged in');
+            showToast('error', 'Sign In Required', 'Please sign in to add items to your wishlist.');
+            setTimeout(function() {
+                window.location.href = '{% url "signin" %}';
+            }, 1500);
+            return;
+        }
+        csrfToken = csrfToken.value;
+        console.log('CSRF token found');
+        
+        // Make sure the form action has the correct variant ID
+        var currentAction = form.action;
+        var expectedAction = '/wishlist/toggle/' + variantId + '/';
+        if (!currentAction.includes(expectedAction)) {
+            console.log('Fixing form action from', currentAction, 'to', expectedAction);
+            form.action = expectedAction;
+        }
+        
+        /* Check state BEFORE toggling */
+        var wasWishlisted = btn.classList.contains('wishlisted');
+        console.log('Was wishlisted:', wasWishlisted);
+        
+        /* Optimistic UI toggle */
+        btn.classList.toggle('wishlisted');
+        btn.classList.add('pop');
+        var svg = btn.querySelector('svg');
+        
+        /* Update SVG fill based on NEW state */
+        if (!wasWishlisted) {
+            // Was NOT wishlisted, now IS wishlisted
+            svg.setAttribute('fill', 'currentColor');
+            showToast('success', 'Added!', 'Product added to your wishlist.');
+        } else {
+            // WAS wishlisted, now NOT wishlisted
+            svg.setAttribute('fill', 'none');
+            showToast('info', 'Removed', 'Product removed from your wishlist.');
+        }
+        setTimeout(function(){ btn.classList.remove('pop'); }, 500);
+
+        /* Send via fetch (no reload) */
+        console.log('Sending POST request to:', form.action);
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        })
+        .then(function(response) {
+            console.log('Response status:', response.status);
+            console.log('Response redirected:', response.redirected);
+            
+            // Check if we got redirected (likely to login page)
+            if (response.redirected) {
+                console.log('Redirected to:', response.url);
+                // Revert UI changes
+                btn.classList.toggle('wishlisted');
+                svg.setAttribute('fill', btn.classList.contains('wishlisted') ? 'currentColor' : 'none');
+                showToast('error', 'Sign In Required', 'Please sign in to add items to your wishlist.');
+                setTimeout(function() {
+                    window.location.href = response.url;
+                }, 1500);
+                return;
+            }
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.status);
+            }
+            console.log('=== WISHLIST TOGGLE SUCCESS ===');
+        })
+        .catch(function(error) {
+            console.error('=== WISHLIST TOGGLE ERROR ===');
+            console.error('Error details:', error);
+            /* Revert on network error */
+            btn.classList.toggle('wishlisted');
+            svg.setAttribute('fill', btn.classList.contains('wishlisted') ? 'currentColor' : 'none');
+            showToast('error', 'Error', 'Something went wrong. Please try again.');
+        });
     }
 </script>
 {% endblock %}

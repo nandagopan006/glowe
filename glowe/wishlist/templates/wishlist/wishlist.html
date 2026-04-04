@@ -1,536 +1,794 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Your Favorites – Glowé{% endblock %}
+{% block title %}Your Favorites | Glowé{% endblock %}
 
 {% block extra_css %}
-/* ── WISHLIST PAGE ── */
-.wl-hero {
-  background: #f0ebe2;
-  text-align: center;
-  padding: 56px 24px 40px;
-  border-bottom: 1px solid #e6e0d8;
+/* ─── Touch highlight ─── */
+button, a { -webkit-tap-highlight-color: rgba(74,55,40,0.1); }
+html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+
+/* ─── Nav underline ─── */
+.nav-link { position:relative; }
+.nav-link::after {
+  content:''; position:absolute; width:0; height:1px;
+  bottom:-2px; left:50%; background:#4A3728;
+  transition:all 0.3s ease; transform:translateX(-50%);
 }
-.wl-hero-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 48px;
-  font-weight: 400;
-  color: #1a1208;
-  margin: 0 0 10px;
-  line-height: 1.1;
+.nav-link:hover::after { width:100%; }
+
+/* ══ PRODUCT CARD – PREMIUM REDESIGN ══ */
+.product-card {
+  position:relative;
+  border-radius:20px;
+  overflow:hidden;
+  background:#fff;
+  box-shadow:0 2px 12px rgba(74,55,40,0.06);
+  transition:transform 0.45s cubic-bezier(0.34,1.26,0.64,1), box-shadow 0.45s ease;
+  cursor:pointer;
 }
-.wl-hero-sub {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 11px;
-  font-weight: 300;
-  color: #7a6e62;
-  letter-spacing: 0.04em;
-  font-style: italic;
-  margin: 0;
+@media(hover:hover){
+  .product-card:hover {
+    transform:translateY(-10px) scale(1.015);
+    box-shadow:0 20px 52px rgba(74,55,40,0.14);
+  }
+  .product-card:hover .img-primary  { opacity:0 !important; }
+  .product-card:hover .img-secondary { opacity:1 !important; }
+  .product-card:hover .card-cta      { transform:translateY(0); opacity:1; }
+  .product-card:hover .remove-btn    { opacity:1; transform:scale(1); }
 }
 
-/* top bar */
-.wl-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 48px;
-  background: #f0ebe2;
+/* Image transition */
+.img-primary, .img-secondary {
+  position:absolute; inset:0;
+  width:100%; height:100%; object-fit:cover;
+  transition:opacity 0.55s ease;
 }
-.wl-count {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: #5a4f43;
-}
-.wl-topbar-actions {
-  display: flex;
-  gap: 20px;
-  align-items: center;
-}
-.wl-topbar-btn {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  color: #5a4f43;
-  background: none;
-  border: none;
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  padding: 0;
-  transition: color 0.2s;
-}
-.wl-topbar-btn:hover { color: #1a1208; }
+.img-primary  { opacity:1; z-index:1; }
+.img-secondary{ opacity:0; z-index:2; }
 
-/* main grid section */
-.wl-section {
-  background: #f0ebe2;
-  padding: 24px 48px 64px;
+/* Bottom gradient info panel */
+.card-info-panel {
+  position:absolute; bottom:0; left:0; right:0; z-index:4;
+  background:linear-gradient(to top, rgba(26,18,8,0.88) 0%, rgba(26,18,8,0.55) 55%, transparent 100%);
+  padding:40px 14px 14px;
+  pointer-events:none;
 }
 
-/* product grid */
-.wl-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+/* CTA slides up on hover */
+.card-cta {
+  transform:translateY(8px);
+  opacity:0;
+  transition:transform 0.35s cubic-bezier(0.34,1.26,0.64,1), opacity 0.3s ease;
+  position:relative; z-index:5; pointer-events:all;
+}
+@media(hover:none){ .card-cta { transform:translateY(0); opacity:1; } }
+
+/* Remove button */
+.remove-btn {
+  position:absolute; top:12px; right:12px; z-index:10;
+  width:30px; height:30px;
+  background:rgba(255,255,255,0.92);
+  backdrop-filter:blur(6px);
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  color:#4A3728; border:none;
+  opacity:0; transform:scale(0.8);
+  transition:opacity 0.25s ease, transform 0.3s cubic-bezier(0.34,1.56,0.64,1), background 0.2s;
+  cursor:pointer;
+}
+@media(hover:none){ .remove-btn { opacity:1; transform:scale(1); } }
+.remove-btn:hover { background:#4A3728; color:#fff; }
+
+/* Badge */
+.card-badge {
+  position:absolute; top:12px; left:12px; z-index:10;
+  background:rgba(74,55,40,0.85); backdrop-filter:blur(4px);
+  color:#F5F0EB; font-family:'Montserrat',sans-serif;
+  font-size:8px; font-weight:700; letter-spacing:0.18em;
+  padding:4px 10px; border-radius:6px;
 }
 
-/* product card */
-.wl-card {
-  background: #fff;
-  border-radius: 4px;
-  overflow: hidden;
-  position: relative;
-  transition: box-shadow 0.25s, transform 0.25s;
+/* Tag */
+.tag-badge {
+  display:inline-flex; align-items:center; gap:3px;
+  font-size:8px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase;
+  padding:3px 8px; border-radius:9999px;
+  background:rgba(255,255,255,0.18); color:#fff; border:1px solid rgba(255,255,255,0.3);
+  backdrop-filter:blur(4px);
+  transition:all 0.2s ease; cursor:default;
 }
-.wl-card:hover {
-  box-shadow: 0 8px 32px rgba(26,18,8,0.1);
-  transform: translateY(-2px);
+.tag-badge .tag-remove {
+  cursor:pointer; opacity:0.6; transition:opacity 0.2s;
+  font-size:9px; line-height:1; margin-left:2px;
+}
+.tag-badge .tag-remove:hover { opacity:1; }
+.tag-menu {
+  position:absolute; bottom:calc(100% + 6px); left:0; z-index:30;
+  background:#fff; border-radius:14px; padding:6px;
+  box-shadow:0 10px 36px rgba(74,55,40,0.16); border:1px solid #f0ebe2;
+  opacity:0; pointer-events:none; transform:translateY(4px);
+  transition:all 0.2s ease; min-width:140px;
+}
+.tag-menu.open { opacity:1; pointer-events:all; transform:translateY(0); }
+.tag-menu button {
+  display:flex; align-items:center; gap:8px; width:100%; text-align:left; padding:8px 12px;
+  font-size:10px; font-weight:500; color:#4A3728; border:none;
+  background:none; cursor:pointer; border-radius:8px; transition:background 0.15s;
+  font-family:'Montserrat',sans-serif; letter-spacing:0.05em;
+}
+.tag-menu button:hover { background:#F5F0EB; }
+
+/* OOS overlay — only blurs the image, sits BEHIND the info panel */
+.out-of-stock-overlay {
+  position:absolute; inset:0; z-index:2;
+  background:rgba(255,255,255,0.38); backdrop-filter:blur(4px) saturate(0.7);
+}
+/* Always show CTA for OOS cards (no hover needed) */
+.product-card.is-oos .card-cta {
+  transform:translateY(0) !important;
+  opacity:1 !important;
 }
 
-.wl-card-img-wrap {
-  position: relative;
-  width: 100%;
-  padding-top: 100%;
-  background: #f5f0ea;
-  overflow: hidden;
-}
-.wl-card-img-wrap img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s ease;
-}
-.wl-card:hover .wl-card-img-wrap img { transform: scale(1.04); }
 
-/* badge */
-.wl-badge {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  font-family: 'Montserrat', sans-serif;
-  font-size: 7px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  padding: 4px 8px;
-  border-radius: 2px;
-  z-index: 2;
+/* Action link */
+.action-link {
+  position:relative; transition:color 0.3s ease;
+  padding:8px 4px; min-height:44px; display:inline-flex; align-items:center;
 }
-.wl-badge-seller {
-  background: #1a1208;
-  color: #fff;
+.action-link::after {
+  content:''; position:absolute; width:0; height:1px;
+  bottom:6px; left:4px; background:#4A3728; transition:width 0.3s ease;
 }
-.wl-badge-oos {
-  background: rgba(26,18,8,0.72);
-  color: #fff;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  white-space: nowrap;
-  padding: 6px 12px;
-  font-size: 8px;
+@media(hover:hover){
+  .action-link:hover { color:#4A3728; }
+  .action-link:hover::after { width:calc(100% - 8px); }
 }
 
-/* remove btn */
-.wl-remove-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 26px;
-  height: 26px;
-  background: #fff;
-  border: 1px solid #e6e0d8;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 3;
-  transition: background 0.15s, border-color 0.15s;
+/* Recommended card */
+.recommended-card { transition:all 0.4s ease; }
+@media(hover:hover){
+  .recommended-card:hover { transform:translateY(-6px); }
+  .recommended-card:hover .rec-image { transform:scale(1.08); }
 }
-.wl-remove-btn:hover { background: #fdf3f1; border-color: #e05050; }
-.wl-remove-btn svg { pointer-events: none; }
+.rec-image { transition:transform 0.5s ease; }
 
-/* card body */
-.wl-card-body {
-  padding: 14px 14px 18px;
-}
-.wl-card-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 2px;
-}
-.wl-card-name {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 16px;
-  font-weight: 500;
-  color: #1a1208;
-  line-height: 1.2;
-  margin: 0;
-}
-.wl-card-price {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-  color: #1a1208;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.wl-card-sub {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 9px;
-  font-weight: 300;
-  color: #8a7e72;
-  letter-spacing: 0.04em;
-  margin: 0 0 14px;
-}
+/* Carousel */
+#rec-carousel { transition:transform 0.5s cubic-bezier(0.4,0,0.2,1); }
 
-/* card buttons */
-.wl-btn-cart {
-  display: block;
-  width: 100%;
-  padding: 11px 16px;
-  background: #1a1208;
-  color: #fff;
-  font-family: 'Montserrat', sans-serif;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  border: none;
-  border-radius: 9999px;
-  cursor: pointer;
-  text-align: center;
-  transition: background 0.2s;
+/* Modal */
+.wl-modal-overlay {
+  position:fixed; inset:0; z-index:9000;
+  background:rgba(253,252,251,0.82); backdrop-filter:blur(8px);
+  display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity 0.25s ease;
 }
-.wl-btn-cart:hover { background: #2d1f0e; }
+.wl-modal-overlay.open { opacity:1; pointer-events:all; }
+.wl-modal {
+  background:#fff; border-radius:20px;
+  padding:36px 32px 28px; width:360px; max-width:calc(100vw - 32px);
+  display:flex; flex-direction:column; align-items:center; text-align:center;
+  transform:scale(0.92) translateY(10px);
+  transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow:0 24px 72px rgba(74,55,40,0.14),0 4px 16px rgba(74,55,40,0.07);
+}
+.wl-modal-overlay.open .wl-modal { transform:scale(1) translateY(0); }
 
-.wl-btn-notify {
-  display: block;
-  width: 100%;
-  padding: 11px 16px;
-  background: #fff;
-  color: #1a1208;
-  font-family: 'Montserrat', sans-serif;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  border: 1px solid #c8b89a;
-  border-radius: 9999px;
-  cursor: pointer;
-  text-align: center;
-  transition: background 0.2s, border-color 0.2s;
-}
-.wl-btn-notify:hover { background: #f7f3ee; border-color: #8a7e72; }
+/* Drag */
+.drag-handle { cursor:grab; }
+.drag-handle:active { cursor:grabbing; }
+[draggable="true"].dragging { opacity:0.35; transform:scale(0.95) rotate(-1deg); }
+.drag-over { outline:2px dashed #4A3728; outline-offset:4px; border-radius:20px; }
 
-/* empty state */
-.wl-empty {
-  text-align: center;
-  padding: 80px 24px;
-}
-.wl-empty-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 28px;
-  font-weight: 400;
-  color: #1a1208;
-  margin: 0 0 10px;
-}
-.wl-empty-sub {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 11px;
-  font-weight: 300;
-  color: #8a7e72;
-  margin: 0 0 28px;
-}
-.wl-empty-link {
-  display: inline-block;
-  padding: 14px 40px;
-  background: #1a1208;
-  color: #fff;
-  font-family: 'Montserrat', sans-serif;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  border-radius: 9999px;
-  text-decoration: none;
-  transition: background 0.2s;
-}
-.wl-empty-link:hover { background: #2d1f0e; }
-
-/* ────────────────────────────
-   RECOMMENDED SECTION
-──────────────────────────── */
-.wl-rec-section {
-  background: #faf8f5;
-  padding: 56px 48px 72px;
-}
-.wl-rec-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 32px;
-  font-weight: 400;
-  color: #1a1208;
-  text-align: center;
-  margin: 0 0 36px;
-}
-.wl-rec-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-}
-.wl-rec-card {
-  background: #fff;
-  border-radius: 4px;
-  overflow: hidden;
-  transition: box-shadow 0.25s, transform 0.25s;
-  cursor: pointer;
-}
-.wl-rec-card:hover {
-  box-shadow: 0 8px 32px rgba(26,18,8,0.09);
-  transform: translateY(-2px);
-}
-.wl-rec-img-wrap {
-  width: 100%;
-  padding-top: 100%;
-  position: relative;
-  overflow: hidden;
-  background: #f5f0ea;
-}
-.wl-rec-img-wrap img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s ease;
-}
-.wl-rec-card:hover .wl-rec-img-wrap img { transform: scale(1.04); }
-.wl-rec-body {
-  padding: 12px 14px 16px;
-}
-.wl-rec-name {
-  font-family: 'Cormorant Garamond', serif;
-  font-size: 15px;
-  font-weight: 500;
-  color: #1a1208;
-  margin: 0 0 4px;
-  line-height: 1.2;
-}
-.wl-rec-price {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 11px;
-  font-weight: 400;
-  color: #5a4f43;
-  margin: 0;
-}
-
-/* responsive tweaks */
-@media (max-width: 900px) {
-  .wl-grid, .wl-rec-grid { grid-template-columns: repeat(2, 1fr); }
-  .wl-section, .wl-topbar, .wl-rec-section { padding-left: 20px; padding-right: 20px; }
-  .wl-hero-title { font-size: 36px; }
-}
-@media (max-width: 540px) {
-  .wl-grid, .wl-rec-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
-  .wl-card-name { font-size: 13px; }
+@supports(padding:max(0px)){
+  .safe-area-padding {
+    padding-left:max(1rem,env(safe-area-inset-left));
+    padding-right:max(1rem,env(safe-area-inset-right));
+  }
 }
 {% endblock %}
 
+
 {% block content %}
 
-<!-- ──────────── HERO ──────────── -->
-<section class="wl-hero">
-  <h1 class="wl-hero-title">Your Favorites</h1>
-  <p class="wl-hero-sub">"Curated by you, designed for your natural radiance."</p>
+<!-- Full-width white wrapper -->
+<div class="bg-white w-full">
+
+<!-- ══ HERO ══ -->
+<section class="py-8 sm:py-10 md:py-14 lg:py-16 text-center px-4">
+  <h1 class="font-cormorant text-3xl xs:text-4xl sm:text-5xl lg:text-[56px] text-[#4A3728] mb-2 sm:mb-3 font-normal tracking-tight leading-tight">
+    Your Favorites
+  </h1>
+  <p class="text-gray-400 text-xs sm:text-sm italic font-light max-w-md mx-auto">
+    "Curated by you, designed for your natural radiance."
+  </p>
 </section>
 
-<!-- ──────────── TOP BAR ──────────── -->
-<div class="wl-topbar">
-  <span class="wl-count">{{ wishlist_items|length }} ITEM{% if wishlist_items|length != 1 %}S{% endif %} SAVED</span>
-  <div class="wl-topbar-actions">
-    <button class="wl-topbar-btn" onclick="handleShare()">Share Wishlist</button>
-    <button class="wl-topbar-btn" onclick="handleClearAll()">Clear All</button>
+<!-- ══ WISHLIST SECTION ══ -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 sm:pb-16">
+
+  <!-- Controls row -->
+  <div class="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-3 xs:gap-0 mb-6 sm:mb-8 border-t border-gray-200/70 pt-4 sm:pt-6">
+    <span class="text-[11px] sm:text-xs font-medium text-[#4A3728] tracking-[0.2em]" id="wl-count-label">
+      {{ wishlist_items|length }} ITEM{% if wishlist_items|length != 1 %}S{% endif %} SAVED
+    </span>
+    <div class="flex items-center space-x-4 sm:space-x-6">
+      {% if wishlist_items %}
+      <button class="action-link text-[11px] sm:text-xs text-gray-500 font-normal"
+              onclick="openClearModal()" aria-label="Clear all">Clear All</button>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Product grid -->
+  {% if wishlist_items %}
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6"
+       id="wishlist-grid">
+
+    {% for item in wishlist_items %}
+    {% with variant=item.variant product=item.variant.product imgs=item.variant.product.images.all %}
+    <div class="product-card group relative{% if variant.stock == 0 %} is-oos{% endif %}"
+         id="wl-card-{{ item.id }}"
+         data-item-id="{{ item.id }}"
+         draggable="true">
+
+      <!-- ── Full-bleed image area ── -->
+      <div class="relative w-full" style="aspect-ratio:3/4;">
+
+        <!-- Images -->
+        {% if imgs %}
+          <img class="img-primary" src="{{ imgs.0.image.url }}" alt="{{ product.name }}" loading="lazy">
+          {% if imgs|length > 1 %}
+          <img class="img-secondary" src="{{ imgs.1.image.url }}" alt="{{ product.name }}" loading="lazy">
+          {% endif %}
+        {% else %}
+          <div class="absolute inset-0 bg-gradient-to-br from-[#f0ebe2] to-[#d4c4b0] flex items-center justify-center z-1">
+            <span class="font-cormorant text-7xl font-light text-[#4A3728]/15 select-none">{{ product.name|first|upper }}</span>
+          </div>
+        {% endif %}
+
+        <!-- OOS — just a frosted blur veil over the image (no text here) -->
+        {% if variant.stock == 0 %}
+        <div class="out-of-stock-overlay"></div>
+        {% endif %}
+
+        <!-- Transparent link to product detail -->
+        <a href="{% url 'product_detail_view' product.slug %}"
+           class="absolute inset-0 z-[3]"
+           aria-label="View {{ product.name }}"></a>
+
+        <!-- Remove × -->
+        <button class="remove-btn"
+                onclick="openRemoveModal({{ item.id }}, {{ variant.id }})"
+                aria-label="Remove {{ product.name }} from wishlist">
+          <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+
+        <!-- ── Gradient info panel ── -->
+        <div class="card-info-panel">
+
+          <!-- Name + price + OOS pill -->
+          <div class="flex items-start justify-between gap-2 mb-1.5">
+            <h3 class="font-cormorant text-white text-base sm:text-lg leading-tight line-clamp-2">{{ product.name }}</h3>
+            <div class="flex flex-col items-end gap-1 flex-shrink-0">
+              <span class="font-montserrat text-[11px] font-bold text-white/80">₹{{ variant.price }}</span>
+              {% if variant.stock == 0 %}
+              <span class="font-montserrat text-[7px] font-bold tracking-[0.18em] uppercase text-red-300 bg-red-900/60 backdrop-blur-sm px-2 py-0.5 rounded-full border border-red-400/30">Out of Stock</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Skin type -->
+          {% if product.skin_type %}
+          <p class="font-montserrat text-[9px] text-white/50 tracking-[0.12em] uppercase mb-3 truncate">{{ product.skin_type|truncatechars:28 }}</p>
+          {% endif %}
+
+          <!-- CTA -->
+          <div class="card-cta">
+            {% if variant.stock == 0 %}
+              <form method="POST" action="{% url 'notify_me' variant.id %}" id="notify-form-{{ item.id }}">
+                {% csrf_token %}
+                <button type="button"
+                        onclick="submitNotifyForm({{ item.id }}, '{{ product.name|escapejs }}')"
+                        class="w-full flex items-center justify-center gap-2 border border-white/50 text-white font-montserrat text-[9px] font-bold tracking-[0.2em] uppercase py-2.5 rounded-xl backdrop-blur-sm bg-white/10 hover:bg-white/20 transition-all">
+                  Notify Me
+                </button>
+              </form>
+            {% else %}
+              <form method="POST" action="{% url 'move_to_cart' variant.id %}" id="cart-form-{{ variant.id }}">
+                {% csrf_token %}
+                <button type="button"
+                        onclick="submitCartForm({{ variant.id }}, '{{ product.name|escapejs }}')"
+                        class="w-full flex items-center justify-center gap-2 bg-white text-[#3D2B1F] font-montserrat text-[9px] font-bold tracking-[0.2em] uppercase py-2.5 rounded-xl shadow-lg hover:bg-[#f5f0eb] active:scale-95 transition-all">
+                  <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                  Add to Cart
+                </button>
+              </form>
+            {% endif %}
+          </div>
+
+        </div><!-- /info panel -->
+
+        <!-- Hidden remove form -->
+        <form method="POST" action="{% url 'remove_from_wishlist' variant.id %}" id="remove-form-{{ item.id }}" style="display:none;">{% csrf_token %}</form>
+
+      </div><!-- /image area -->
+
+    </div><!-- /product-card -->
+    {% endwith %}
+    {% endfor %}
+
+  </div><!-- /grid -->
+
+  {% else %}
+  <!-- Empty state -->
+  <div class="text-center py-20 sm:py-28">
+    <div class="w-16 h-16 mx-auto mb-6 bg-[#F5F0EB] rounded-full flex items-center justify-center">
+      <svg class="w-7 h-7 text-[#4A3728]/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+      </svg>
+    </div>
+    <h2 class="font-cormorant text-2xl sm:text-3xl text-[#4A3728] font-normal mb-3">Your wishlist is empty</h2>
+    <p class="text-gray-400 text-sm mb-8 font-light">Explore our collection and save the products you love.</p>
+    <a href="{% url 'product_listing' %}"
+       class="inline-block bg-[#4A3728] text-white text-[10px] font-semibold px-10 py-3.5 rounded-sm tracking-[0.2em] hover:bg-[#3D2B1F] transition-colors focus:outline-none focus:ring-2 focus:ring-[#4A3728]/50">
+      SHOP NOW
+    </a>
+  </div>
+  {% endif %}
+
+</section>
+
+</div><!-- /full-width white wrapper -->
+
+
+<!-- ══ RECOMMENDED SECTION – CAROUSEL ══ -->
+{% if recommend_products %}
+<section class="bg-white py-10 sm:py-12 md:py-16 border-t border-gray-200/50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+    <!-- Header + arrows -->
+    <div class="flex items-center justify-between mb-8 sm:mb-10 md:mb-12">
+      <div class="flex-1"></div>
+      <h2 class="font-cormorant text-xl sm:text-2xl md:text-3xl text-[#4A3728] font-normal text-center">
+        Recommended For You
+      </h2>
+      <div class="flex-1 flex items-center justify-end space-x-2 sm:space-x-3">
+        <button id="rec-prev"
+                class="w-10 h-10 sm:w-11 sm:h-11 rounded-full border border-gray-300 flex items-center justify-center text-[#4A3728] hover:bg-[#4A3728] hover:text-white hover:border-[#4A3728] transition-all duration-300 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#4A3728]/30"
+                aria-label="Previous" disabled>
+          <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <button id="rec-next"
+                class="w-10 h-10 sm:w-11 sm:h-11 rounded-full border border-gray-300 flex items-center justify-center text-[#4A3728] hover:bg-[#4A3728] hover:text-white hover:border-[#4A3728] transition-all duration-300 active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[#4A3728]/30"
+                aria-label="Next">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Carousel viewport -->
+    <div class="relative overflow-hidden">
+      <div id="rec-carousel" class="flex gap-4 sm:gap-5 lg:gap-6">
+        {% for variant in recommend_products %}
+        {% with product=variant.product imgs=variant.product.images.all %}
+        <a href="{% url 'product_detail_view' product.slug %}"
+           class="recommended-card group flex-shrink-0 no-underline
+                  w-[calc(50%-8px)] sm:w-[calc(33.333%-14px)] lg:w-[calc(25%-18px)]">
+
+          <!-- Image -->
+          <div class="bg-gradient-to-br from-[#E8DED4] to-[#D4C4B5] rounded-xl overflow-hidden aspect-[4/5] mb-3 sm:mb-4 relative">
+            {% if imgs %}
+              <img class="rec-image w-full h-full object-cover absolute inset-0 img-primary"
+                   src="{{ imgs.0.image.url }}"
+                   alt="{{ product.name }}"
+                   loading="lazy"
+                   style="opacity:1;z-index:1;transition:opacity 0.6s ease;"/>
+              {% if imgs|length > 1 %}
+              <img class="rec-image w-full h-full object-cover absolute inset-0 img-secondary"
+                   src="{{ imgs.1.image.url }}"
+                   alt="{{ product.name }}"
+                   loading="lazy"
+                   style="opacity:0;z-index:2;transition:opacity 0.6s ease;"/>
+              {% endif %}
+            {% else %}
+              <div class="absolute inset-0 flex items-center justify-center">
+                <span class="font-cormorant text-6xl font-light text-[#4A3728]/20 select-none">
+                  {{ product.name|first|upper }}
+                </span>
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Info -->
+          <div class="mt-3 sm:mt-4">
+            <h3 class="font-cormorant text-sm sm:text-base md:text-lg text-[#4A3728] font-normal leading-tight truncate">
+              {{ product.name }}
+            </h3>
+            <p class="text-[#4A3728] font-medium text-xs sm:text-sm mt-1">${{ variant.price }}</p>
+          </div>
+        </a>
+        {% endwith %}
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endif %}
+
+
+<!-- ══ REMOVE CONFIRMATION MODAL ══ -->
+<div id="wl-remove-overlay" class="wl-modal-overlay" role="dialog" aria-modal="true" aria-label="Remove item confirmation">
+  <div class="wl-modal">
+    <div class="w-14 h-14 bg-[#FDF5F5] rounded-full flex items-center justify-center mb-5">
+      <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+      </svg>
+    </div>
+    <h3 class="font-cormorant text-2xl text-[#4A3728] font-normal mb-2">Remove this item?</h3>
+    <p class="text-gray-400 text-xs font-light mb-7 leading-relaxed max-w-[220px]">
+      This will remove the product from your wishlist. You can always add it back later.
+    </p>
+    <button onclick="confirmRemove()"
+            class="w-full bg-[#4A3728] text-white text-[10px] font-semibold py-3.5 rounded-sm tracking-[0.18em] mb-3 hover:bg-[#3D2B1F] transition-colors focus:outline-none focus:ring-2 focus:ring-[#4A3728]/50">
+      YES, REMOVE
+    </button>
+    <button onclick="closeRemoveModal()"
+            class="w-full border border-gray-200 text-[#4A3728] text-[10px] font-semibold py-3.5 rounded-sm tracking-[0.18em] hover:border-[#4A3728] hover:bg-[#F5F0EB] transition-all focus:outline-none focus:ring-2 focus:ring-[#4A3728]/30">
+      CANCEL
+    </button>
   </div>
 </div>
 
-<!-- ──────────── WISHLIST GRID ──────────── -->
-<section class="wl-section">
-  {% if wishlist_items %}
-    <div class="wl-grid" id="wishlist-grid">
-      {% for item in wishlist_items %}
-        {% with variant=item.variant product=item.variant.product %}
-        <div class="wl-card" id="wl-card-{{ item.id }}">
-
-          <!-- image -->
-          <div class="wl-card-img-wrap">
-            {% with primary_img=product.images.first %}
-              {% if primary_img %}
-                <img src="{{ primary_img.image.url }}" alt="{{ product.name }}" loading="lazy"/>
-              {% else %}
-                <img src="https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&q=80" alt="{{ product.name }}" loading="lazy"/>
-              {% endif %}
-            {% endwith %}
-
-            <!-- badge -->
-            {% if variant.stock == 0 %}
-              <span class="wl-badge wl-badge-oos">OUT OF STOCK</span>
-            {% elif forloop.first %}
-              <span class="wl-badge wl-badge-seller">BEST SELLER</span>
-            {% endif %}
-          </div>
-
-          <!-- remove button -->
-          <button class="wl-remove-btn" onclick="removeItem({{ item.id }})" title="Remove">
-            <svg width="10" height="10" viewBox="0 0 14 14" fill="none" stroke="#5a4f43" stroke-width="2" stroke-linecap="round">
-              <line x1="1" y1="1" x2="13" y2="13"/><line x1="13" y1="1" x2="1" y2="13"/>
-            </svg>
-          </button>
-
-          <!-- card body -->
-          <div class="wl-card-body">
-            <div class="wl-card-top">
-              <p class="wl-card-name">{{ product.name }}</p>
-              <span class="wl-card-price">${{ variant.price }}</span>
-            </div>
-            <p class="wl-card-sub">{{ product.skin_type|default:product.description|truncatechars:32 }}</p>
-
-            {% if variant.stock == 0 %}
-              <button class="wl-btn-notify" disabled>Notify Me</button>
-            {% else %}
-              <button class="wl-btn-cart" onclick="addToCart({{ variant.id }})">ADD TO CART</button>
-            {% endif %}
-          </div>
-        </div>
-        {% endwith %}
-      {% endfor %}
+<!-- ══ CLEAR ALL CONFIRMATION MODAL ══ -->
+<div id="wl-clear-overlay" class="wl-modal-overlay" role="dialog" aria-modal="true" aria-label="Clear wishlist confirmation">
+  <div class="wl-modal">
+    <div class="w-14 h-14 bg-[#FDF5F5] rounded-full flex items-center justify-center mb-5">
+      <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+      </svg>
     </div>
-
-  {% else %}
-    <!-- Empty state -->
-    <div class="wl-empty">
-      <p class="wl-empty-title">Your wishlist is empty</p>
-      <p class="wl-empty-sub">Explore our collection and save your favorites here.</p>
-      <a href="{% url 'product_listing' %}" class="wl-empty-link">Shop Now</a>
-    </div>
-  {% endif %}
-</section>
-
-<!-- ──────────── RECOMMENDED SECTION ──────────── -->
-<section class="wl-rec-section">
-  <h2 class="wl-rec-title">Recommended For You</h2>
-  <div class="wl-rec-grid">
-
-    <!-- Rec Card 1 -->
-    <div class="wl-rec-card">
-      <div class="wl-rec-img-wrap">
-        <img src="https://images.unsplash.com/photo-1599305090598-fe179d501227?w=400&q=80" alt="Purifying Clay Mask" loading="lazy"/>
-      </div>
-      <div class="wl-rec-body">
-        <p class="wl-rec-name">Purifying Clay Mask</p>
-        <p class="wl-rec-price">$38.00</p>
-      </div>
-    </div>
-
-    <!-- Rec Card 2 -->
-    <div class="wl-rec-card">
-      <div class="wl-rec-img-wrap">
-        <img src="https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=400&q=80" alt="Rose Water Toner" loading="lazy"/>
-      </div>
-      <div class="wl-rec-body">
-        <p class="wl-rec-name">Rose Water Toner</p>
-        <p class="wl-rec-price">$24.00</p>
-      </div>
-    </div>
-
-    <!-- Rec Card 3 -->
-    <div class="wl-rec-card">
-      <div class="wl-rec-img-wrap">
-        <img src="https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=400&q=80" alt="Mineral SPF 50" loading="lazy"/>
-      </div>
-      <div class="wl-rec-body">
-        <p class="wl-rec-name">Mineral SPF 50</p>
-        <p class="wl-rec-price">$34.00</p>
-      </div>
-    </div>
-
-    <!-- Rec Card 4 -->
-    <div class="wl-rec-card">
-      <div class="wl-rec-img-wrap">
-        <img src="https://images.unsplash.com/photo-1631729371254-42c2892f0e6e?w=400&q=80" alt="Brightening Eye Cream" loading="lazy"/>
-      </div>
-      <div class="wl-rec-body">
-        <p class="wl-rec-name">Brightening Eye Cream</p>
-        <p class="wl-rec-price">$45.00</p>
-      </div>
-    </div>
-
+    <h3 class="font-cormorant text-2xl text-[#4A3728] font-normal mb-2">Clear entire wishlist?</h3>
+    <p class="text-gray-400 text-xs font-light mb-7 leading-relaxed max-w-[220px]">
+      All {{ wishlist_items|length }} saved item{% if wishlist_items|length != 1 %}s{% endif %} will be permanently removed.
+    </p>
+    <form method="POST" action="{% url 'clear_wishlist' %}" style="width:100%;" class="mb-3">
+      {% csrf_token %}
+      <button type="submit"
+              class="w-full bg-[#4A3728] text-white text-[10px] font-semibold py-3.5 rounded-sm tracking-[0.18em] hover:bg-[#3D2B1F] transition-colors focus:outline-none focus:ring-2 focus:ring-[#4A3728]/50">
+        YES, CLEAR ALL
+      </button>
+    </form>
+    <button onclick="closeClearModal()"
+            class="w-full border border-gray-200 text-[#4A3728] text-[10px] font-semibold py-3.5 rounded-sm tracking-[0.18em] hover:border-[#4A3728] hover:bg-[#F5F0EB] transition-all focus:outline-none focus:ring-2 focus:ring-[#4A3728]/30">
+      CANCEL
+    </button>
   </div>
-</section>
+</div>
 
 {% endblock %}
 
 
 {% block extra_js %}
 <script>
-function removeItem(itemId) {
-  const card = document.getElementById('wl-card-' + itemId);
-  if (card) {
-    card.style.transition = 'opacity 0.3s, transform 0.3s';
-    card.style.opacity = '0';
-    card.style.transform = 'scale(0.95)';
-    setTimeout(() => {
-      card.remove();
-      // update count
-      const grid = document.getElementById('wishlist-grid');
-      const remaining = grid ? grid.querySelectorAll('.wl-card').length : 0;
-      const countEl = document.querySelector('.wl-count');
-      if (countEl) {
-        countEl.textContent = remaining + ' ITEM' + (remaining !== 1 ? 'S' : '') + ' SAVED';
-      }
-    }, 320);
-  }
-}
+/* ═══════════════════════════════════════════════
+   WISHLIST JS – Premium Frontend
+═══════════════════════════════════════════════ */
 
-function handleClearAll() {
-  const grid = document.getElementById('wishlist-grid');
-  if (!grid) return;
-  const cards = grid.querySelectorAll('.wl-card');
-  cards.forEach((card, i) => {
-    setTimeout(() => {
-      card.style.transition = 'opacity 0.3s, transform 0.3s';
-      card.style.opacity = '0';
-      card.style.transform = 'scale(0.95)';
-      setTimeout(() => card.remove(), 320);
-    }, i * 60);
+/* ── Image hover swap for wishlist cards ── */
+document.querySelectorAll('.product-card').forEach(card => {
+  const primary   = card.querySelector('.img-primary');
+  const secondary = card.querySelector('.img-secondary');
+  if (!primary || !secondary) return;
+  card.addEventListener('mouseenter', () => {
+    primary.style.opacity   = '0';
+    secondary.style.opacity = '1';
   });
-  setTimeout(() => {
-    const countEl = document.querySelector('.wl-count');
-    if (countEl) countEl.textContent = '0 ITEMS SAVED';
-  }, cards.length * 60 + 320);
-}
+  card.addEventListener('mouseleave', () => {
+    primary.style.opacity   = '1';
+    secondary.style.opacity = '0';
+  });
+});
 
+/* ── Image hover swap for recommended cards ── */
+document.querySelectorAll('.recommended-card').forEach(card => {
+  const primary   = card.querySelector('.img-primary');
+  const secondary = card.querySelector('.img-secondary');
+  if (!primary || !secondary) return;
+  card.addEventListener('mouseenter', () => {
+    primary.style.opacity   = '0';
+    secondary.style.opacity = '1';
+  });
+  card.addEventListener('mouseleave', () => {
+    primary.style.opacity   = '1';
+    secondary.style.opacity = '0';
+  });
+});
+
+/* ── Share Wishlist ── */
 function handleShare() {
   if (navigator.share) {
-    navigator.share({ title: 'My Glowé Wishlist', url: window.location.href });
+    navigator.share({ title: 'My Glowé Wishlist', url: window.location.href }).catch(() => {});
   } else if (navigator.clipboard) {
-    navigator.clipboard.writeText(window.location.href);
-    showToast('info', 'Link Copied!', 'Wishlist link copied to clipboard.');
+    navigator.clipboard.writeText(window.location.href)
+      .then(() => showToast('info', 'Link Copied!', 'Wishlist link copied to clipboard.'));
   }
 }
 
-function addToCart(variantId) {
-  // UI-only feedback; real cart logic handled by cart app
-  showToast('success', 'Added!', 'Item added to your cart.');
+/* ── Add to Cart ── */
+function submitCartForm(variantId, productName) {
+  const form = document.getElementById('cart-form-' + variantId);
+  if (!form) return;
+  showToast('success', 'Added to Cart!', '"' + productName + '" is in your cart.');
+  setTimeout(() => form.submit(), 700);
 }
+
+/* ── Notify Me ── */
+function submitNotifyForm(itemId, productName) {
+  const form = document.getElementById('notify-form-' + itemId);
+  if (!form) return;
+  showToast('info', 'Noted!', "We'll notify you when \"" + productName + "\" is back in stock.");
+  setTimeout(() => form.submit(), 700);
+}
+
+/* ══ REMOVE MODAL ══ */
+let _pendingRemoveItemId   = null;
+let _pendingRemoveVariantId = null;
+
+function openRemoveModal(itemId, variantId) {
+  _pendingRemoveItemId    = itemId;
+  _pendingRemoveVariantId = variantId;
+  document.getElementById('wl-remove-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeRemoveModal() {
+  document.getElementById('wl-remove-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+  _pendingRemoveItemId = null;
+}
+function confirmRemove() {
+  if (!_pendingRemoveItemId) return;
+  const form = document.getElementById('remove-form-' + _pendingRemoveItemId);
+  const card = document.getElementById('wl-card-' + _pendingRemoveItemId);
+  closeRemoveModal();
+  if (card) {
+    card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+    card.style.opacity    = '0';
+    card.style.transform  = 'scale(0.93)';
+    setTimeout(() => form && form.submit(), 350);
+  } else if (form) {
+    form.submit();
+  }
+}
+document.getElementById('wl-remove-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('wl-remove-overlay')) closeRemoveModal();
+});
+
+/* ══ CLEAR ALL MODAL ══ */
+function openClearModal() {
+  document.getElementById('wl-clear-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeClearModal() {
+  document.getElementById('wl-clear-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('wl-clear-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('wl-clear-overlay')) closeClearModal();
+});
+
+/* ══ KEYBOARD ESC ══ */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeRemoveModal(); closeClearModal(); closeAllTagMenus(); }
+});
+
+/* ══ TAG / LABEL SYSTEM (localStorage) ══ */
+const TAG_KEY = 'glowe_wl_tags';
+function getTags() { try { return JSON.parse(localStorage.getItem(TAG_KEY) || '{}'); } catch { return {}; } }
+function saveTags(tags) { localStorage.setItem(TAG_KEY, JSON.stringify(tags)); }
+
+function renderTags(itemId) {
+  const area = document.getElementById('tag-area-' + itemId);
+  if (!area) return;
+  const tags = getTags();
+  const itemTags = tags[itemId] || [];
+  area.innerHTML = '';
+  itemTags.forEach(tag => {
+    const el = document.createElement('span');
+    el.className = 'tag-badge';
+    el.innerHTML = tag + '<span class="tag-remove" onclick="removeTag(' + itemId + ',\'' + tag + '\')">&times;</span>';
+    area.appendChild(el);
+  });
+}
+
+function addTag(itemId, tag) {
+  const tags = getTags();
+  if (!tags[itemId]) tags[itemId] = [];
+  if (tags[itemId].includes(tag)) {
+    closeAllTagMenus();
+    return;
+  }
+  tags[itemId].push(tag);
+  saveTags(tags);
+  renderTags(itemId);
+  closeAllTagMenus();
+  showToast('success', 'Tag Added', '"' + tag + '" label applied.');
+}
+
+function removeTag(itemId, tag) {
+  const tags = getTags();
+  if (!tags[itemId]) return;
+  tags[itemId] = tags[itemId].filter(t => t !== tag);
+  if (tags[itemId].length === 0) delete tags[itemId];
+  saveTags(tags);
+  renderTags(itemId);
+}
+
+function toggleTagMenu(itemId) {
+  const menu = document.getElementById('tag-menu-' + itemId);
+  const isOpen = menu.classList.contains('open');
+  closeAllTagMenus();
+  if (!isOpen) menu.classList.add('open');
+}
+
+function closeAllTagMenus() {
+  document.querySelectorAll('.tag-menu').forEach(m => m.classList.remove('open'));
+}
+
+/* Close tag menus on outside click */
+document.addEventListener('click', e => {
+  if (!e.target.closest('[id^="tag-wrapper-"]')) closeAllTagMenus();
+});
+
+/* ══ DRAG & DROP REORDER ══ */
+let _dragSrc = null;
+function initDragDrop() {
+  const grid = document.getElementById('wishlist-grid');
+  if (!grid) return;
+  restoreOrder(grid);
+
+  grid.addEventListener('dragstart', e => {
+    const card = e.target.closest('[data-item-id]');
+    if (!card) return;
+    _dragSrc = card;
+    card.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', card.dataset.itemId);
+  });
+
+  grid.addEventListener('dragend', e => {
+    const card = e.target.closest('[data-item-id]');
+    if (card) card.classList.remove('dragging');
+    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    saveOrder(grid);
+  });
+
+  grid.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const target = e.target.closest('[data-item-id]');
+    document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    if (target && target !== _dragSrc) target.classList.add('drag-over');
+  });
+
+  grid.addEventListener('dragleave', e => {
+    const target = e.target.closest('[data-item-id]');
+    if (target) target.classList.remove('drag-over');
+  });
+
+  grid.addEventListener('drop', e => {
+    e.preventDefault();
+    const target = e.target.closest('[data-item-id]');
+    if (!target || target === _dragSrc) return;
+    target.classList.remove('drag-over');
+    const all = [...grid.querySelectorAll('[data-item-id]')];
+    if (all.indexOf(_dragSrc) < all.indexOf(target))
+      target.after(_dragSrc);
+    else
+      target.before(_dragSrc);
+    saveOrder(grid);
+    showToast('success', 'Reordered!', 'Your wishlist order has been saved.');
+  });
+}
+function saveOrder(grid) {
+  const ids = [...grid.querySelectorAll('[data-item-id]')].map(c => c.dataset.itemId);
+  localStorage.setItem('glowe_wl_order', JSON.stringify(ids));
+}
+function restoreOrder(grid) {
+  try {
+    const saved = JSON.parse(localStorage.getItem('glowe_wl_order') || '[]');
+    saved.forEach(id => {
+      const card = document.getElementById('wl-card-' + id);
+      if (card) grid.appendChild(card);
+    });
+  } catch {}
+}
+
+/* ══ RECOMMENDED CAROUSEL ══ */
+const carousel  = document.getElementById('rec-carousel');
+const prevBtn   = document.getElementById('rec-prev');
+const nextBtn   = document.getElementById('rec-next');
+let carouselOffset = 0;
+
+function recVisibleCount() {
+  if (window.innerWidth >= 1024) return 4;
+  if (window.innerWidth >= 640)  return 3;
+  return 2;
+}
+function recCardWidth() {
+  const card = carousel && carousel.querySelector('.recommended-card');
+  if (!card) return 0;
+  const gap = parseInt(window.getComputedStyle(carousel).gap) || 16;
+  return card.offsetWidth + gap;
+}
+function recTotalCards() {
+  return carousel ? carousel.querySelectorAll('.recommended-card').length : 0;
+}
+function recMaxOffset() {
+  const max = Math.max(0, recTotalCards() - recVisibleCount());
+  return max * recCardWidth();
+}
+function recUpdateBtns() {
+  if (!prevBtn || !nextBtn) return;
+  prevBtn.disabled = carouselOffset <= 0;
+  nextBtn.disabled = carouselOffset >= recMaxOffset();
+}
+function recSlide(dir) {
+  if (!carousel) return;
+  const step = recCardWidth();
+  const max  = recMaxOffset();
+  carouselOffset = dir === 'next'
+    ? Math.min(carouselOffset + step, max)
+    : Math.max(carouselOffset - step, 0);
+  carousel.style.transform = 'translateX(-' + carouselOffset + 'px)';
+  recUpdateBtns();
+}
+if (prevBtn) prevBtn.addEventListener('click', () => recSlide('prev'));
+if (nextBtn) nextBtn.addEventListener('click', () => recSlide('next'));
+
+/* Touch swipe on carousel */
+if (carousel) {
+  let tx = 0;
+  const viewport = carousel.closest('.relative');
+  if (viewport) {
+    viewport.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+    viewport.addEventListener('touchend', e => {
+      const dx = tx - e.changedTouches[0].clientX;
+      if (Math.abs(dx) > 50) recSlide(dx > 0 ? 'next' : 'prev');
+    }, { passive: true });
+  }
+}
+
+/* Resize reset */
+let _resizeT;
+window.addEventListener('resize', () => {
+  clearTimeout(_resizeT);
+  _resizeT = setTimeout(() => {
+    carouselOffset = 0;
+    if (carousel) carousel.style.transform = 'translateX(0)';
+    recUpdateBtns();
+  }, 150);
+});
+
+/* ══ INIT ══ */
+document.addEventListener('DOMContentLoaded', () => {
+  initDragDrop();
+  recUpdateBtns();
+
+  /* Restore tags for all cards */
+  document.querySelectorAll('[data-item-id]').forEach(card => {
+    renderTags(parseInt(card.dataset.itemId));
+  });
+});
 </script>
-{% endblock %} 
+{% endblock %}

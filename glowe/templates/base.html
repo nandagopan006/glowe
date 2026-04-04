@@ -169,6 +169,21 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
   display:flex; align-items:center; justify-content:center; margin-bottom:20px;
 }
 
+/* ── Wishlist badge animation ── */
+@keyframes wishPop  { 0%{transform:scale(1)} 50%{transform:scale(1.35)} 100%{transform:scale(1)} }
+@keyframes wishPulse { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.4)} 50%{box-shadow:0 0 0 6px rgba(239,68,68,0)} }
+.wish-badge {
+  position:absolute; background:#ef4444; color:#fff;
+  font-family:'Montserrat',sans-serif; font-weight:700;
+  border-radius:999px; display:flex; align-items:center; justify-content:center;
+  line-height:1; pointer-events:none;
+  animation:wishPop 0.4s ease;
+}
+.wish-badge.pulse { animation:wishPulse 1.5s ease infinite; }
+.wish-nav-icon { position:relative; display:flex; align-items:center; justify-content:center; text-decoration:none; }
+.wish-nav-icon svg { transition:transform 0.25s ease, fill 0.25s ease; }
+.wish-nav-icon:hover svg { transform:scale(1.12); }
+
 {% block extra_css %}{% endblock %}
 </style>
 </head>
@@ -293,6 +308,16 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
           </svg>
         </button>
 
+        <!-- ── Wishlist icon (mobile) ── -->
+        <a href="{% url 'wishlist' %}" aria-label="Wishlist" class="wish-nav-icon w-9 h-9 rounded-full hover:bg-[#f0ebe2] transition-colors">
+          <svg class="w-[17px] h-[17px]" viewBox="0 0 24 24" fill="{% if wishlist_count > 0 %}#ef4444{% else %}none{% endif %}" stroke="{% if wishlist_count > 0 %}#ef4444{% else %}#2a2018{% endif %}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+          {% if wishlist_count > 0 %}
+          <span class="wish-badge -top-0.5 -right-0.5 text-[7px] w-3.5 h-3.5">{% if wishlist_count > 7 %}7+{% else %}{{ wishlist_count }}{% endif %}</span>
+          {% endif %}
+        </a>
+
         <!-- ── Cart icon (mobile) ── -->
         <a href="{% url 'cart' %}" aria-label="Cart" class="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#f0ebe2] transition-colors no-underline">
           <svg class="w-[17px] h-[17px]" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
@@ -374,8 +399,11 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
         <svg class="w-5 h-5 cursor-pointer" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4.8-4.8"/></svg>
 
         <!-- Wishlist (desktop) -->
-        <a href="{% url 'wishlist' %}" aria-label="Wishlist" class="relative no-underline">
-          <svg class="w-5 h-5 cursor-pointer" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <a href="{% url 'wishlist' %}" aria-label="Wishlist" class="wish-nav-icon">
+          <svg class="w-5 h-5 cursor-pointer" viewBox="0 0 24 24" fill="{% if wishlist_count > 0 %}#ef4444{% else %}none{% endif %}" stroke="{% if wishlist_count > 0 %}#ef4444{% else %}#2a2018{% endif %}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          {% if wishlist_count > 0 %}
+          <span class="wish-badge -top-2 -right-2.5 text-[8px] w-4 h-4">{% if wishlist_count > 7 %}7+{% else %}{{ wishlist_count }}{% endif %}</span>
+          {% endif %}
         </a>
 
         <!-- ── Cart icon (desktop) ── -->
