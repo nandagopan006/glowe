@@ -100,3 +100,12 @@ class Payment(models.Model):
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
+    
+class OrderStatusHistory(models.Model):
+
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="status_history")
+    status = models.CharField(max_length=30)
+    updated_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.order.order_number} - {self.status}"
