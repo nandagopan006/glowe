@@ -76,11 +76,14 @@ body { background: var(--bg); }
 
 /* ── Qty badge ── */
 .qty-badge {
-  position: absolute; top: -5px; left: -5px;
-  width: 18px; height: 18px; background: var(--brown);
+  position: absolute; top: -4px; left: -4px;
+  width: 20px; height: 20px; background: var(--brown);
   color: #fff; font-family: 'Montserrat', sans-serif;
-  font-size: 8px; font-weight: 700; border-radius: 50%;
+  font-size: 8.5px; font-weight: 700; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
+  border: 2px solid var(--white);
+  box-shadow: 0 4px 12px rgba(44, 31, 20, 0.15);
+  z-index: 2;
 }
 
 /* ── Animated CTA button ── */
@@ -308,7 +311,7 @@ body { background: var(--bg); }
   <div class="flex flex-col lg:grid lg:grid-cols-12 gap-8 lg:gap-16 xl:gap-24 items-start">
 
     <!-- ════════════ LEFT COLUMN ════════════ -->
-    <div class="lg:col-span-7 order-1 space-y-8">
+    <div class="lg:col-span-7 order-2 lg:order-1 space-y-8">
 
       <!-- ── SHIPPING ADDRESS ── -->
       <div class="fade-up d1">
@@ -323,18 +326,22 @@ body { background: var(--bg); }
 
         {% if default_address %}
         <input type="hidden" name="selected_address_id" id="selected_address_id" value="{{ default_address.id }}">
-        <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:20px 24px; position:relative;">
-          <span id="display_addr_label" style="position:absolute; top:20px; right:24px; font-family:'Montserrat',sans-serif; font-size:9px; background:var(--bg); color:var(--brown); padding:4px 8px; border-radius:6px; font-weight:600; text-transform:uppercase;">{{ default_address.label }}</span>
-          <p id="display_addr_fullname" style="font-family:'Montserrat',sans-serif; font-size:13px; font-weight:600; color:var(--brown); margin:0 0 8px;">{{ default_address.full_name }}</p>
-          <p id="display_addr_details" style="font-family:'Montserrat',sans-serif; font-size:11.5px; color:var(--brown-lt); line-height:1.7; margin:0;">
+        <div style="background:var(--white); border:1px solid rgba(196,168,130,.25); border-radius:18px; padding:28px 32px; position:relative; box-shadow:0 8px 30px rgba(44,31,20,.04); transition: transform 0.3s ease, box-shadow 0.3s ease;" class="hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(44,31,20,.08)]">
+          <div class="flex items-start justify-between mb-3">
+            <p id="display_addr_fullname" style="font-family:'Montserrat',sans-serif; font-size:1.05rem; font-weight:700; color:var(--ink); margin:0;">{{ default_address.full_name }}</p>
+            <span id="display_addr_label" style="font-family:'Montserrat',sans-serif; font-size:.6rem; background:var(--cream); color:var(--brown-md); padding:6px 12px; border-radius:8px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; border:1px solid rgba(196,168,130,.15);">{{ default_address.label }}</span>
+          </div>
+          
+          <p id="display_addr_details" style="font-family:'Montserrat',sans-serif; font-size:.8rem; color:var(--brown-lt); line-height:1.8; margin:0 0 16px;">
             {{ default_address.street_address }}<br>
             {{ default_address.city }}, {{ default_address.district }}<br>
             {{ default_address.state }} — {{ default_address.pincode }}<br>
             {{ default_address.country }}
           </p>
-          <div class="flex items-center gap-1.5 mt-3">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="var(--brown-lt)" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
-            <span id="display_addr_phone" style="font-family:'Montserrat',sans-serif; font-size:11.5px; color:var(--brown-md); font-weight:500;">{{ default_address.phone_number }}</span>
+          
+          <div class="flex items-center gap-2" style="padding-top:16px; border-top:1px solid rgba(196,168,130,.15);">
+            <svg width="14" height="14" fill="none" stroke="var(--brown-lt)" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+            <span id="display_addr_phone" style="font-family:'Montserrat',sans-serif; font-size:.8rem; color:var(--brown-md); font-weight:600; letter-spacing:.05em;">{{ default_address.phone_number }}</span>
           </div>
         </div>
         {% else %}
@@ -351,42 +358,6 @@ body { background: var(--bg); }
           </button>
         </div>
         {% endif %}
-      </div>
-
-      <!-- ── SHIPPING METHOD ── -->
-      <div class="fade-up d2 order-3">
-        <h2 class="checkout-title text-[28px] sm:text-[32px] mb-4">Shipping Method</h2>
-        <div class="space-y-3">
-          <!-- Standard -->
-          <div class="option-card active" onclick="pickOption(this)">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <div class="radio-outer active"><div class="radio-inner"></div></div>
-                <div>
-                  <span style="font-family:'Montserrat',sans-serif; font-size:13px; font-weight:600; color:var(--brown);">Standard Delivery</span>
-                  <p style="font-family:'Montserrat',sans-serif; font-size:10px; color:var(--brown-lt); margin:2px 0 0;">5-7 Business Days</p>
-                </div>
-              </div>
-              <div class="flex items-center gap-3">
-                <span class="badge-rec hidden sm:inline-block">Recommended</span>
-                <span style="font-family:'Montserrat',sans-serif; font-size:13px; font-weight:700; color:var(--brown);">Free</span>
-              </div>
-            </div>
-          </div>
-          <!-- Express -->
-          <div class="option-card" onclick="pickOption(this)">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <div class="radio-outer"><div class="radio-inner"></div></div>
-                <div>
-                  <span style="font-family:'Montserrat',sans-serif; font-size:13px; font-weight:600; color:var(--brown);">Express Shipping</span>
-                  <p style="font-family:'Montserrat',sans-serif; font-size:10px; color:var(--brown-lt); margin:2px 0 0;">1-2 Business Days</p>
-                </div>
-              </div>
-              <span style="font-family:'Montserrat',sans-serif; font-size:13px; font-weight:700; color:var(--brown);">₹15.00</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- ── PAYMENT ── -->
@@ -455,7 +426,7 @@ body { background: var(--bg); }
     </div>
 
     <!-- ════════════ RIGHT COLUMN ════════════ -->
-    <div class="lg:col-span-5 order-2">
+    <div class="lg:col-span-5 order-1 lg:order-2 mb-8 lg:mb-0">
       <div class="summary-card fade-up d2 lg:sticky lg:top-24">
 
         <h2 class="checkout-title text-[26px] sm:text-[28px] mb-6">Your Selection</h2>
@@ -463,50 +434,33 @@ body { background: var(--bg); }
         <!-- Products -->
         <div class="space-y-5 mb-6 max-h-[320px] overflow-y-auto summary-scroll pr-1">
 
-          <!-- Item 1 -->
-          <div class="product-row flex items-center gap-4">
+          {% for entry in cart_items %}
+          <div class="product-row flex items-center gap-5 sm:gap-6 group">
             <div class="relative flex-shrink-0">
-              <div class="w-[76px] h-[76px] rounded-2xl overflow-hidden bg-[#f5f5f5] shadow-[0_2px_8px_rgba(44,31,20,0.06)]">
-                <img src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&q=80&w=200&h=200" alt="Cleanser" class="w-full h-full object-cover hover:scale-110 transition-transform duration-500">
+              <div class="w-[76px] h-[76px] rounded-[18px] overflow-hidden bg-[#f5f5f5] shadow-[0_4px_16px_rgba(44,31,20,0.06)] relative">
+                {% if entry.variant.product.images.first %}
+                  <img src="{{ entry.variant.product.images.first.image.url }}" alt="{{ entry.variant.product.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out">
+                {% else %}
+                  <div class="w-full h-full flex items-center justify-center text-[var(--accent)]">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.3" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  </div>
+                {% endif %}
               </div>
-              <span class="qty-badge">1</span>
+              <span class="qty-badge">{{ entry.quantity }}</span>
             </div>
-            <div class="flex-1 min-w-0">
-              <p style="font-family:'Montserrat',sans-serif; font-size:10.5px; font-weight:700; color:var(--brown); letter-spacing:0.08em; text-transform:uppercase; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Gentle Purifying Cleanser</p>
-              <p style="font-family:'Montserrat',sans-serif; font-size:9.5px; color:var(--brown-lt); margin:4px 0 0; letter-spacing:0.06em; text-transform:uppercase;">150ml / Normal Skin</p>
+            <div class="flex-1 min-w-0 py-1">
+              <p style="font-family:'Montserrat',sans-serif; font-size:11.5px; font-weight:700; color:var(--brown); letter-spacing:0.08em; text-transform:uppercase; margin:0 0 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ entry.variant.product.name }}</p>
+              {% if entry.variant.size or entry.variant.color %}
+              <p style="font-family:'Montserrat',sans-serif; font-size:10px; color:var(--brown-lt); margin:0; font-weight:500; letter-spacing:0.06em; text-transform:uppercase;">
+                {% if entry.variant.size %}{{ entry.variant.size }}{% endif %}
+                {% if entry.variant.size and entry.variant.color %} / {% endif %}
+                {% if entry.variant.color %}{{ entry.variant.color }}{% endif %}
+              </p>
+              {% endif %}
             </div>
-            <span style="font-family:'Montserrat',sans-serif; font-size:14px; font-weight:700; color:var(--brown); flex-shrink:0;">₹35.00</span>
+            <span style="font-family:'Montserrat',sans-serif; font-size:14px; font-weight:700; color:var(--brown); flex-shrink:0;">₹{{ entry.variant.price }}</span>
           </div>
-
-          <!-- Item 2 -->
-          <div class="product-row flex items-center gap-4">
-            <div class="relative flex-shrink-0">
-              <div class="w-[76px] h-[76px] rounded-2xl overflow-hidden bg-[#f5f5f5] shadow-[0_2px_8px_rgba(44,31,20,0.06)]">
-                <img src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&q=80&w=200&h=200" alt="Serum" class="w-full h-full object-cover hover:scale-110 transition-transform duration-500">
-              </div>
-              <span class="qty-badge">1</span>
-            </div>
-            <div class="flex-1 min-w-0">
-              <p style="font-family:'Montserrat',sans-serif; font-size:10.5px; font-weight:700; color:var(--brown); letter-spacing:0.08em; text-transform:uppercase; margin:0;">Radiance Vitamin C Serum</p>
-              <p style="font-family:'Montserrat',sans-serif; font-size:9.5px; color:var(--brown-lt); margin:4px 0 0; letter-spacing:0.06em; text-transform:uppercase;">30ml / All Skin Types</p>
-            </div>
-            <span style="font-family:'Montserrat',sans-serif; font-size:14px; font-weight:700; color:var(--brown); flex-shrink:0;">₹65.00</span>
-          </div>
-
-          <!-- Item 3 -->
-          <div class="product-row flex items-center gap-4">
-            <div class="relative flex-shrink-0">
-              <div class="w-[76px] h-[76px] rounded-2xl overflow-hidden bg-[#f5f5f5] shadow-[0_2px_8px_rgba(44,31,20,0.06)]">
-                <img src="https://images.unsplash.com/photo-1617897903246-719242758050?auto=format&fit=crop&q=80&w=200&h=200" alt="Cream" class="w-full h-full object-cover hover:scale-110 transition-transform duration-500">
-              </div>
-              <span class="qty-badge">1</span>
-            </div>
-            <div class="flex-1 min-w-0">
-              <p style="font-family:'Montserrat',sans-serif; font-size:10.5px; font-weight:700; color:var(--brown); letter-spacing:0.08em; text-transform:uppercase; margin:0;">Deep Hydration Cream</p>
-              <p style="font-family:'Montserrat',sans-serif; font-size:9.5px; color:var(--brown-lt); margin:4px 0 0; letter-spacing:0.06em; text-transform:uppercase;">50ml / Dry Skin</p>
-            </div>
-            <span style="font-family:'Montserrat',sans-serif; font-size:14px; font-weight:700; color:var(--brown); flex-shrink:0;">₹42.00</span>
-          </div>
+          {% endfor %}
 
         </div>
 
@@ -526,11 +480,11 @@ body { background: var(--bg); }
         <div class="space-y-2.5 mb-4">
           <div class="flex items-center justify-between">
             <span style="font-family:'Montserrat',sans-serif; font-size:12px; color:var(--brown-lt);">Subtotal</span>
-            <span style="font-family:'Montserrat',sans-serif; font-size:12px; font-weight:600; color:var(--brown);">₹142.00</span>
+            <span style="font-family:'Montserrat',sans-serif; font-size:12px; font-weight:600; color:var(--brown);">₹{{ subtotal }}</span>
           </div>
           <div class="flex items-center justify-between">
             <span style="font-family:'Montserrat',sans-serif; font-size:12px; color:var(--brown-lt);">Shipping</span>
-            <span style="font-family:'Montserrat',sans-serif; font-size:12px; font-weight:600; color:#1B9B7D;">Free</span>
+            <span style="font-family:'Montserrat',sans-serif; font-size:12px; font-weight:600; color:#1B9B7D;">{% if shipping == 0 %}Free{% else %}₹{{ shipping }}{% endif %}</span>
           </div>
         </div>
 
@@ -540,15 +494,15 @@ body { background: var(--bg); }
             <span style="font-family:'Montserrat',sans-serif; font-size:13px; color:var(--brown-lt); font-weight:500;">Total</span>
             <div style="text-align:right;">
               <span style="font-family:'Montserrat',sans-serif; font-size:9px; color:var(--brown-lt); letter-spacing:0.1em; text-transform:uppercase; display:block; margin-bottom:2px;">INR</span>
-              <span style="font-family:'Cormorant Garamond',serif; font-size:32px; font-weight:700; color:var(--brown); line-height:1;">₹142.00</span>
+              <span style="font-family:'Cormorant Garamond',serif; font-size:32px; font-weight:700; color:var(--brown); line-height:1;">₹{{ final_total }}</span>
             </div>
           </div>
         </div>
 
         <!-- CTA BUTTON -->
         <div class="space-y-4">
-          <button type="button" class="btn-checkout">
-            <span>Complete Order <span class="price-sep">•</span> ₹142.00</span>
+          <button type="submit" form="checkout-form" class="btn-checkout">
+            <span>Complete Order <span class="price-sep">•</span> ₹{{ final_total }}</span>
           </button>
           <div class="flex items-center justify-center gap-1.5">
             <svg class="w-2.5 h-2.5" fill="none" stroke="var(--brown-lt)" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
