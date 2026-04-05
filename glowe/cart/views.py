@@ -1,11 +1,11 @@
 
 from django.shortcuts import render, redirect, get_object_or_404
-from product.models import Variant,Product
+
 from .utils import get_user_cart
 from .models import CartItem,Cart
 from user.models import Address
 from django.contrib import messages
-from django.db.models import F
+from django.db import transaction
 
 
 def cart(request):
@@ -146,38 +146,40 @@ def checkout(request):
         
     subtotal=0
     
-    for item in cart_items :
-        variant=item.variant
-        product=variant.product
+    with transaction.atomic():
         
-        if not product.is_active:
-            messages.error(request,f"{product.name} is unavailable")
-            return redirect('cart')
+        for item in cart_items :
+            variant=item.variant
+            product=variant.product
+            
+            if not product.is_active:
+                messages.error(request,f"{product.name} is unavailable")
+                return redirect('cart')
 
-        if not variant:
-            messages.error(request,"Product not found")
-            return redirect('cart')
+            if not variant:
+                messages.error(request,"Product not found")
+                return redirect('cart')
+            
+            if not variant.is_active:
+                messages.error(request,f"{product.name} is not available")
+                return redirect('cart')
+            
+            if variant.stock == 0:
+                messages.error(request,f"{product.name} is out of stock")
+                return redirect('cart')
+            if item.quantity == 0:
+                messages.error(request,f"Only {variant.stock} left for {product.name}")
+                return redirect('cart')
+            
+            if item.quantity > variant.stock:
+                messages.error(request,f"{product.name} only {variant.stock} left")
+                return redirect('cart')
         
-        if not variant.is_active:
-            messages.error(request,f"{product.name} is not available")
-            return redirect('cart')
-        
-        if variant.stock == 0:
-            messages.error(request,f"{product.name} is out of stock")
-            return redirect('cart')
-        if item.quantity == 0:
-            messages.error(request,f"Only {variant.stock} left for {product.name}")
-            return redirect('cart')
-        
-        if item.quantity > variant.stock:
-            messages.error(request,f"{product.name} only {variant.stock} left")
-            return redirect('cart')
-        
-        item.item_total=item.quantity * variant.price 
-        subtotal+=item.item_total
-        
-    shipping = 0 if subtotal > 799 else 100
-    final_total=subtotal+shipping
+            item.item_total=item.quantity * variant.price 
+            subtotal+=item.item_total
+            
+        shipping = 0 if subtotal > 799 else 100
+        final_total=subtotal+shipping
     
     return render(request,"checkout.html", {
         "cart_items":cart_items,
