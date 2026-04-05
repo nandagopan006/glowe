@@ -415,6 +415,12 @@ def add_address(request):
             address.save()
 
             messages.success(request,"Address added successfully")
+            
+            # Follow 'next' parameter if present to remain in checkout context
+            next_url = request.GET.get('next')
+            if next_url:
+                return redirect(next_url)
+                
             return redirect('address')
 
     else:
@@ -451,7 +457,13 @@ def edit_address(request, id):
             updated.save()
 
             messages.success(request, "Updated successfully")
+            
+            next_url = request.GET.get('next')
+            if next_url:
+                return redirect(next_url)
+
             return redirect('address')
+            
         else:
             messages.error(request, "Please fix the errors  ")
 
@@ -487,4 +499,8 @@ def set_default_address(request, id):
     address.save()
 
     messages.success(request, "Default address updated")
+    next_url = request.GET.get('next')
+    if next_url:
+        return redirect(next_url)
+
     return redirect('address')

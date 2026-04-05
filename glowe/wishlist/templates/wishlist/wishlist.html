@@ -529,16 +529,18 @@ function handleShare() {
 function submitCartForm(variantId, productName) {
   const form = document.getElementById('cart-form-' + variantId);
   if (!form) return;
-  showToast('success', 'Added to Cart!', '"' + productName + '" is in your cart.');
-  setTimeout(() => form.submit(), 700);
+  const btn = form.querySelector('button');
+  if (btn) btn.disabled = true;
+  form.submit();
 }
 
 /* ── Notify Me ── */
 function submitNotifyForm(itemId, productName) {
   const form = document.getElementById('notify-form-' + itemId);
   if (!form) return;
-  showToast('info', 'Noted!', "We'll notify you when \"" + productName + "\" is back in stock.");
-  setTimeout(() => form.submit(), 700);
+  const btn = form.querySelector('button');
+  if (btn) btn.disabled = true;
+  form.submit();
 }
 
 /* ══ REMOVE MODAL ══ */

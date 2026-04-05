@@ -3,505 +3,733 @@
 
 {% block title %}Shopping Bag — Glowé{% endblock %}
 
+{% block extra_css %}
+/* ═══════════════════════════════════════
+   CART PAGE – PREMIUM REDESIGN
+═══════════════════════════════════════ */
+:root {
+  --ink:      #1A1208;
+  --brown:    #2C1F14;
+  --brown-md: #5C3D2E;
+  --brown-lt: #9C7A65;
+  --accent:   #C4A882;
+  --cream:    #F5F1EB;
+  --cream-dk: #EDE8DF;
+  --white:    #FDFAF5;
+  --border:   rgba(196,168,130,.22);
+  --red:      #C0392B;
+  --orange:   #D4760A;
+  --green:    #0F6E56;
+}
+
+body { background: var(--cream); }
+
+/* ── PAGE HEADER ── */
+.cart-page-header {
+  max-width: 1280px; margin: 0 auto;
+  padding: 36px 2rem 0;
+}
+
+/* ── BREADCRUMB ── */
+.cart-breadcrumb {
+  max-width: 1280px; margin: 0 auto; padding: 20px 2rem;
+  font-family: 'Montserrat', sans-serif; font-size: .68rem;
+  font-weight: 400; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--brown-lt);
+  display: flex; align-items: center; gap: 8px;
+}
+.cart-breadcrumb a { color: var(--brown-lt); text-decoration: none; transition: color .2s; }
+.cart-breadcrumb a:hover { color: var(--ink); }
+.cart-breadcrumb svg { opacity: .4; flex-shrink: 0; }
+
+/* ── LAYOUT ── */
+.cart-layout {
+  max-width: 1280px; margin: 0 auto; padding: 0 2rem 80px;
+  display: grid; grid-template-columns: minmax(0, 700px) 360px; justify-content: space-between; gap: 40px; align-items: start;
+}
+@media (max-width: 1024px) {
+  .cart-layout { grid-template-columns: 1fr; }
+}
+
+/* ── SECTION LABEL ── */
+.section-eyebrow {
+  font-family: 'Montserrat', sans-serif;
+  font-size: .56rem; font-weight: 600; letter-spacing: .28em; text-transform: uppercase;
+  color: var(--brown-lt); margin-bottom: 6px;
+}
+.section-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2rem; font-weight: 300; color: var(--ink);
+  line-height: 1; margin: 0 0 24px;
+}
+
+/* ── CART ITEM CARD ── */
+.cart-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 28px;
+  transition: transform .3s ease, box-shadow .3s ease;
+  position: relative;
+  overflow: hidden;
+}
+.cart-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0; transition: opacity .3s;
+}
+.cart-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(44,31,20,.1);
+}
+.cart-card:hover::before { opacity: 1; }
+
+/* ── PRODUCT IMAGE ── */
+.cart-img-wrap {
+  width: 100px; height: 100px; border-radius: 14px; overflow: hidden; flex-shrink: 0;
+  background: var(--cream-dk); position: relative;
+  box-shadow: 0 4px 16px rgba(44,31,20,.1);
+  display: block; text-decoration: none;
+}
+.cart-img-wrap img {
+  width: 100%; height: 100%; object-fit: cover;
+  transition: transform .5s cubic-bezier(.25,.46,.45,.94);
+}
+.cart-img-wrap:hover img { transform: scale(1.08); }
+.cart-img-ph {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent);
+}
+
+/* ── QTY CONTROL ── */
+.qty-wrap { display: flex; align-items: center; gap: 10px; }
+.qty-btn {
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 1.5px solid var(--border);
+  background: transparent; color: var(--brown);
+  font-size: 18px; line-height: 1; font-family: 'Montserrat', sans-serif;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; user-select: none;
+  transition: background .2s, color .2s, border-color .2s, transform .15s;
+}
+.qty-btn:hover:not(:disabled) {
+  background: var(--brown); color: var(--white);
+  border-color: var(--brown); transform: scale(1.1);
+}
+.qty-btn:disabled { opacity: .3; cursor: not-allowed; }
+.qty-display {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem; font-weight: 500; color: var(--ink);
+  min-width: 24px; text-align: center; line-height: 1;
+}
+.qty-spin {
+  width: 18px; height: 18px;
+  border: 2px solid var(--accent); border-top-color: var(--brown);
+  border-radius: 50%; animation: spin .6s linear infinite;
+  display: none;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── REMOVE BTN ── */
+.remove-btn {
+  font-family: 'Montserrat', sans-serif;
+  font-size: .6rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--brown-lt); background: none; border: none;
+  display: flex; align-items: center; gap: 5px; cursor: pointer;
+  padding: 6px 0; transition: color .2s;
+}
+.remove-btn:hover { color: var(--red); }
+
+/* ── STOCK INDICATORS ── */
+.stock-oos {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: 'Montserrat', sans-serif; font-size: .62rem;
+  font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--red); margin-top: 6px;
+}
+.stock-low {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: 'Montserrat', sans-serif; font-size: .62rem;
+  font-weight: 600; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--orange); margin-top: 6px;
+}
+.stock-pulse {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+.stock-oos .stock-pulse { background: var(--red); }
+.stock-low .stock-pulse { background: var(--orange); }
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .5; transform: scale(0.85); }
+}
+
+/* ── PRICE ── */
+.item-price {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.35rem; font-weight: 500; color: var(--ink);
+  white-space: nowrap;
+}
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  text-align: center; padding: 80px 20px;
+  background: var(--white); border-radius: 24px; border: 1px solid var(--border);
+}
+.empty-icon-wrap {
+  width: 80px; height: 80px; margin: 0 auto 24px;
+  background: var(--cream); border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border);
+}
+.empty-state h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.2rem; font-weight: 300; color: var(--ink); margin-bottom: 10px;
+}
+.empty-state p {
+  font-family: 'Montserrat', sans-serif;
+  font-size: .78rem; font-weight: 300; color: var(--brown-lt);
+  line-height: 1.8; margin-bottom: 32px; max-width: 300px; margin-left: auto; margin-right: auto;
+}
+.shop-btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  background: var(--ink); color: var(--white);
+  font-family: 'Montserrat', sans-serif; font-size: .68rem;
+  font-weight: 700; letter-spacing: .22em; text-transform: uppercase;
+  padding: 16px 40px; border-radius: 9999px;
+  text-decoration: none; transition: all .3s;
+  box-shadow: 0 4px 20px rgba(26,18,8,.2);
+}
+.shop-btn:hover {
+  background: var(--brown-md);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(26,18,8,.25);
+}
+
+/* ── ORDER SUMMARY CARD ── */
+.summary-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 24px; overflow: hidden;
+  position: sticky; top: 100px;
+}
+.summary-header {
+  background: linear-gradient(135deg, #2C1F14, #4A3520);
+  padding: 28px 28px 24px;
+  position: relative; overflow: hidden;
+}
+.summary-header::after {
+  content: '';
+  position: absolute; bottom: -30px; right: -30px;
+  width: 120px; height: 120px; border-radius: 50%;
+  background: rgba(196,168,130,.1);
+}
+.summary-header h2 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.7rem; font-weight: 300; color: #FDFAF5;
+  position: relative; z-index: 1; margin: 0 0 2px;
+}
+.summary-header p {
+  font-family: 'Montserrat', sans-serif;
+  font-size: .62rem; font-weight: 400; letter-spacing: .1em; text-transform: uppercase;
+  color: rgba(196,168,130,.7); margin: 0; position: relative; z-index: 1;
+}
+.summary-body { padding: 24px 28px; }
+.summary-row {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 20px;
+}
+.summary-row-label {
+  font-family: 'Montserrat', sans-serif;
+  font-size: .72rem; font-weight: 400; color: var(--brown-lt);
+}
+.summary-row-value {
+  font-family: 'Montserrat', sans-serif;
+  font-size: .72rem; font-weight: 600; color: var(--ink);
+}
+.summary-row-value.free { color: var(--green); }
+.summary-divider {
+  height: 1px; background: var(--border); margin: 22px 0;
+}
+.summary-total-label {
+  font-family: 'Montserrat', sans-serif;
+  font-size: .62rem; font-weight: 600; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--brown-lt);
+}
+.summary-total-value {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.6rem; font-weight: 500; color: var(--ink); line-height: 1;
+}
+.summary-currency {
+  font-family: 'Montserrat', sans-serif;
+  font-size: .58rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--brown-lt); display: block; margin-bottom: 4px;
+}
+
+/* ── CHECKOUT BUTTON ── */
+.checkout-btn {
+  width: 100%; padding: 14px 24px;
+  background: var(--ink); color: var(--white);
+  font-family: 'Montserrat', sans-serif; font-size: .62rem;
+  font-weight: 600; letter-spacing: .15em; text-transform: uppercase;
+  border: none; border-radius: 10px; cursor: pointer;
+  text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all .35s cubic-bezier(.16,1,.3,1);
+  box-shadow: 0 4px 16px rgba(26,18,8,.15);
+  position: relative; overflow: hidden;
+}
+.checkout-btn::after {
+  content: ''; position: absolute;
+  inset: 0; background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,.1) 50%, transparent 70%);
+  animation: shimmer 3s infinite;
+}
+@keyframes shimmer {
+  0% { transform: translateX(-100%) skewX(-12deg); }
+  60% { transform: translateX(250%) skewX(-12deg); }
+  100% { transform: translateX(250%) skewX(-12deg); }
+}
+.checkout-btn:hover:not(.disabled) {
+  background: var(--brown-md);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 32px rgba(26,18,8,.3);
+}
+.checkout-btn.disabled { opacity: .45; pointer-events: none; cursor: not-allowed; }
+.checkout-btn-arrow { transition: transform .3s ease; }
+.checkout-btn:hover .checkout-btn-arrow { transform: translateX(4px); }
+
+.secure-note {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  margin-top: 12px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: .58rem; font-weight: 500; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--brown-lt);
+}
+
+/* ── CONTINUE LINK ── */
+.continue-link {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: .62rem; font-weight: 500; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--brown-lt); text-decoration: none; margin-top: 14px;
+  transition: color .2s; padding: 8px;
+}
+.continue-link:hover { color: var(--ink); }
+
+/* ── TRUST ITEMS ── */
+.trust-bar {
+  display: flex; justify-content: space-around;
+  padding: 16px 0 0; border-top: 1px solid var(--border); margin-top: 4px;
+}
+.trust-item {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  font-family: 'Montserrat', sans-serif;
+  font-size: .54rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--brown-lt); opacity: .65; transition: opacity .2s;
+}
+.trust-item:hover { opacity: 1; }
+
+/* ── FLASH ANIMATION ── */
+@keyframes flashUpdate { 0% { opacity: .3; } 100% { opacity: 1; } }
+.flash { animation: flashUpdate .35s ease; }
+
+/* ── FADE UP ── */
+.fade-up {
+  opacity: 0; transform: translateY(20px);
+  animation: fadeUp .55s ease forwards;
+}
+.delay-1 { animation-delay: .06s; }
+.delay-2 { animation-delay: .12s; }
+.delay-3 { animation-delay: .18s; }
+@keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+/* ── REMOVE MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(26,18,8,.5); backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 9999; opacity: 0; pointer-events: none;
+  transition: opacity .3s ease;
+}
+.modal-overlay.active { opacity: 1; pointer-events: all; }
+.modal-box {
+  background: var(--white); border-radius: 24px;
+  padding: 36px 32px 28px; max-width: 400px; width: 92%;
+  text-align: center;
+  transform: translateY(20px) scale(.96);
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: 0 30px 80px rgba(26,18,8,.2);
+}
+.modal-overlay.active .modal-box { transform: translateY(0) scale(1); }
+.modal-icon-wrap {
+  width: 60px; height: 60px; margin: 0 auto 20px;
+  background: #fdf3f1; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.8rem; font-weight: 400; color: var(--ink); margin-bottom: 8px;
+}
+.modal-desc {
+  font-family: 'Montserrat', sans-serif;
+  font-size: .72rem; font-weight: 300; color: var(--brown-lt); line-height: 1.7;
+  margin-bottom: 0;
+}
+.modal-preview {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--cream); border-radius: 14px; padding: 14px;
+  margin: 20px 0 24px; text-align: left;
+}
+.modal-preview-img {
+  width: 52px; height: 52px; border-radius: 10px;
+  overflow: hidden; flex-shrink: 0; background: var(--cream-dk);
+}
+.modal-preview-img img { width: 100%; height: 100%; object-fit: cover; }
+.modal-preview-name {
+  font-family: 'Montserrat', sans-serif; font-size: .7rem; font-weight: 600; color: var(--ink);
+}
+.modal-preview-meta {
+  font-family: 'Montserrat', sans-serif; font-size: .62rem; font-weight: 300; color: var(--brown-lt); margin-top: 2px;
+}
+.modal-preview-price {
+  font-family: 'Cormorant Garamond', serif; font-size: 1.1rem; font-weight: 500; color: var(--ink); margin-top: 4px;
+}
+.modal-actions { display: flex; gap: 12px; }
+.modal-cancel-btn {
+  flex: 1; padding: 13px;
+  border: 1.5px solid var(--border); background: transparent;
+  border-radius: 12px; cursor: pointer;
+  font-family: 'Montserrat', sans-serif; font-size: .62rem;
+  font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--brown-md); transition: background .2s;
+}
+.modal-cancel-btn:hover { background: var(--cream); }
+.modal-confirm-btn {
+  flex: 1; padding: 13px;
+  background: var(--ink); border: none; border-radius: 12px; cursor: pointer;
+  font-family: 'Montserrat', sans-serif; font-size: .62rem;
+  font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--white); transition: all .2s;
+}
+.modal-confirm-btn:hover { background: var(--red); transform: scale(1.02); }
+
+/* ── COUNT BADGE ── */
+.count-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--accent); color: var(--ink);
+  font-family: 'Montserrat', sans-serif; font-size: .58rem; font-weight: 700;
+  width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+}
+
+/* ── MOBILE ── */
+@media (max-width: 640px) {
+  .cart-card { padding: 18px; }
+  .cart-img-wrap { width: 80px; height: 80px; }
+  .summary-body { padding: 20px; }
+}
+{% endblock %}
+
+
 {% block content %}
 
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap');
 
-  :root {
-    --cream:    #F5F0E8;
-    --beige:    #EDE8DC;
-    --brown:    #2C1F14;
-    --brown-md: #5C3D2E;
-    --brown-lt: #9C7A65;
-    --accent:   #C4A882;
-    --red:      #C0392B;
-    --orange:   #D4760A;
-    --white:    #FDFAF5;
-  }
+<!-- ══ BREADCRUMB ══ -->
+<nav class="cart-breadcrumb">
+  <a href="{% url 'home' %}">Home</a>
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+  <a href="{% url 'product_listing' %}">Shop</a>
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+  <span style="color:var(--ink); font-weight:500;">Bag</span>
+</nav>
 
-  body { background-color: var(--cream); }
-  .font-display { font-family: 'Cormorant Garamond', serif; }
-  .font-body    { font-family: 'Jost', sans-serif; }
-
-  /* fade-in */
-  .fade-up {
-    opacity: 0;
-    transform: translateY(18px);
-    animation: fadeUp 0.55s ease forwards;
-  }
-  @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
-  .delay-1 { animation-delay: 0.08s; }
-  .delay-2 { animation-delay: 0.16s; }
-
-  /* cart card */
-  .cart-card {
-    background: var(--white);
-    border-radius: 16px;
-    border: 1px solid rgba(196,168,130,.2);
-    transition: box-shadow .25s ease, transform .25s ease;
-  }
-  .cart-card:hover {
-    box-shadow: 0 8px 32px rgba(44,31,20,.09);
-    transform: translateY(-1px);
-  }
-
-  /* product image link */
-  .item-img-link { display: block; flex-shrink: 0; }
-  .item-img {
-    width: 96px; height: 96px;
-    object-fit: cover;
-    border-radius: 12px;
-    box-shadow: 0 4px 14px rgba(44,31,20,.10);
-    transition: transform .3s ease, box-shadow .3s ease;
-  }
-  .item-img-link:hover .item-img {
-    transform: scale(1.05);
-    box-shadow: 0 8px 22px rgba(44,31,20,.16);
-  }
-
-  /* qty */
-  .qty-btn {
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    border: 1.5px solid var(--accent);
-    background: transparent;
-    color: var(--brown);
-    font-size: 18px; line-height: 1;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    transition: background .2s, color .2s, transform .15s;
-    font-family: 'Jost', sans-serif;
-    user-select: none;
-  }
-  .qty-btn:hover:not(:disabled) {
-    background: var(--brown);
-    color: var(--white);
-    transform: scale(1.08);
-  }
-  .qty-btn:disabled { opacity: 0.32; cursor: not-allowed; }
-
-  /* qty loading spinner */
-  .qty-loading {
-    width: 16px; height: 16px;
-    border: 2px solid var(--accent);
-    border-top-color: var(--brown);
-    border-radius: 50%;
-    animation: spin .6s linear infinite;
-    display: none;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* remove btn */
-  .remove-btn {
-    font-family: 'Jost', sans-serif;
-    font-size: 11px; letter-spacing: .08em;
-    color: var(--brown-lt);
-    text-transform: uppercase;
-    display: flex; align-items: center; gap: 4px;
-    cursor: pointer;
-    background: none; border: none; padding: 0;
-    transition: color .2s, opacity .2s;
-    opacity: .75;
-  }
-  .remove-btn:hover { color: var(--red); opacity: 1; }
-
-  /* summary */
-  .summary-card {
-    background: var(--white);
-    border-radius: 16px;
-    border: 1px solid rgba(196,168,130,.2);
-    position: sticky;
-    top: 100px;
-  }
-
-  /* checkout */
-  .checkout-btn {
-    background: var(--brown);
-    color: var(--white);
-    font-family: 'Jost', sans-serif;
-    font-size: 12px; letter-spacing: .18em;
-    text-transform: uppercase;
-    border-radius: 9999px;
-    padding: 16px 28px;
-    width: 100%;
-    border: none; cursor: pointer;
-    text-align: center; display: block; text-decoration: none;
-    transition: background .22s, transform .18s, box-shadow .22s;
-  }
-  .checkout-btn:hover:not(.disabled) {
-    background: var(--brown-md);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(44,31,20,.22);
-  }
-  .checkout-btn.disabled { opacity: .45; pointer-events: none; cursor: not-allowed; }
-
-  /* continue link */
-  .continue-link {
-    font-family: 'Jost', sans-serif;
-    font-size: 11px; letter-spacing: .12em;
-    text-transform: uppercase;
-    color: var(--brown-lt);
-    text-decoration: none;
-    transition: color .2s;
-  }
-  .continue-link:hover { color: var(--brown); }
-
-  /* ── empty cart button ── */
-  .empty-shop-btn {
-    display: inline-block;
-    background: var(--brown);
-    color: var(--white);
-    font-family: 'Jost', sans-serif;
-    font-size: 12px;
-    letter-spacing: .18em;
-    text-transform: uppercase;
-    border-radius: 9999px;
-    padding: 15px 48px;
-    text-decoration: none;
-    transition: background .22s, transform .18s, box-shadow .22s;
-    white-space: nowrap;
-  }
-  .empty-shop-btn:hover {
-    background: var(--brown-md);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(44,31,20,.22);
-  }
-
-  /* divider / trust */
-  .divider { border-top: 1px solid rgba(196,168,130,.28); }
-  .trust-item {
-    display: flex; flex-direction: column; align-items: center; gap: 6px;
-    font-family: 'Jost', sans-serif;
-    font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
-    color: var(--brown-lt);
-  }
-
-  /* modal */
-  .modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(44,31,20,.45);
-    backdrop-filter: blur(4px);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 9999;
-    opacity: 0; pointer-events: none;
-    transition: opacity .25s ease;
-  }
-  .modal-overlay.active { opacity: 1; pointer-events: all; }
-  .modal-box {
-    background: var(--white);
-    border-radius: 20px;
-    padding: 36px 32px 28px;
-    max-width: 400px; width: 92%;
-    text-align: center;
-    transform: translateY(16px) scale(.97);
-    transition: transform .28s ease;
-    box-shadow: 0 24px 60px rgba(44,31,20,.18);
-  }
-  .modal-overlay.active .modal-box { transform: translateY(0) scale(1); }
-  .modal-cancel {
-    border: 1.5px solid var(--accent);
-    background: transparent; color: var(--brown-md);
-    font-family: 'Jost', sans-serif;
-    font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
-    border-radius: 9999px; padding: 11px 24px;
-    cursor: pointer; transition: background .2s;
-  }
-  .modal-cancel:hover { background: var(--beige); }
-  .modal-confirm {
-    background: var(--brown); color: var(--white);
-    font-family: 'Jost', sans-serif;
-    font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
-    border-radius: 9999px; padding: 11px 24px;
-    border: none; cursor: pointer;
-    transition: background .2s, transform .18s;
-  }
-  .modal-confirm:hover { background: var(--red); transform: scale(1.03); }
-
-  /* flash animation for totals */
-  @keyframes flashUpdate { 0% { opacity:.35; } 100% { opacity:1; } }
-  .flash { animation: flashUpdate .35s ease; }
-</style>
-
-<!-- ══ HEADER ══ -->
-<section class="pt-14 pb-8 text-center fade-up">
-  <h1 class="font-display text-5xl md:text-6xl font-light text-[var(--brown)] leading-tight">
+<!-- ══ PAGE TITLE ══ -->
+<div style="text-align:center; padding:48px 2rem 36px;" class="fade-up">
+  <h1 style="font-family:'Cormorant Garamond',serif; font-size:clamp(2.4rem,5vw,3.6rem); font-weight:400; color:var(--ink); line-height:1.1; margin:0 0 10px; letter-spacing:-.01em;">
     Shopping Bag
   </h1>
-  <p class="mt-2 font-body text-sm tracking-widest text-[var(--brown-lt)] uppercase">
+  <p style="font-family:'Montserrat',sans-serif; font-size:.72rem; font-weight:300; letter-spacing:.08em; color:var(--brown-lt); margin:0;">
     Your curated selection for radiant skin
   </p>
-</section>
+</div>
 
-<!-- ══ EMPTY CART ══ -->
-{% if is_empty %}
-<section class="flex flex-col items-center justify-center py-24 px-4 fade-up delay-1">
-  <svg width="56" height="56" viewBox="0 0 24 24" fill="none"
-       stroke="var(--accent)" stroke-width="1.2" class="mb-7 opacity-60">
-    <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
-    <line x1="3" y1="6" x2="21" y2="6"/>
-    <path d="M16 10a4 4 0 01-8 0"/>
-  </svg>
-  <p class="font-display text-4xl text-[var(--brown)] font-light mb-3">Your bag is empty</p>
-  <p class="font-body text-sm text-[var(--brown-lt)] mb-10 tracking-wide text-center max-w-xs">
-    Discover our collection of premium skincare crafted for radiant skin.
-  </p>
-  <a href="{% url 'product_listing' %}" class="empty-shop-btn">
-    Continue Shopping
-  </a>
-</section>
+<!-- ══ MAIN LAYOUT ══ -->
+<div class="cart-layout" style="padding-top:28px;">
 
-{% else %}
+  <!-- ══ LEFT: ITEMS ══ -->
+  <div>
 
-<!-- ══ MAIN GRID ══ -->
-<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pb-56">
-  <div class="flex flex-col lg:flex-row gap-8 items-start">
-
-    <!-- ── LEFT : CART ITEMS ── -->
-    <div class="w-full lg:w-[68%] flex flex-col gap-4 fade-up delay-1">
-
-      {% for entry in cart_items %}
-      <div class="cart-card p-5 sm:p-6"
-           data-item-id="{{ entry.item.id }}"
-           data-oos="{{ entry.is_out_of_stock|yesno:'true,false' }}"
-           data-price="{{ entry.price }}">
-
-        <div class="flex items-start gap-4 sm:gap-5">
-
-          <!-- ── clickable product image ── -->
-          <a href="{% url 'product_detail_view' entry.product.slug %}"
-             class="item-img-link" title="View {{ entry.product.name }}">
-            {% if entry.product.images.first %}
-              <img src="{{ entry.product.images.first.image.url }}"
-                   alt="{{ entry.product.name }}"
-                   class="item-img">
-            {% else %}
-              <div class="item-img bg-[var(--beige)] flex items-center justify-center">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
-                     stroke="var(--accent)" stroke-width="1.4">
-                  <rect x="3" y="3" width="18" height="18" rx="3"/>
-                  <circle cx="8.5" cy="8.5" r="1.5"/>
-                  <polyline points="21 15 16 10 5 21"/>
-                </svg>
-              </div>
-            {% endif %}
-          </a>
-
-          <!-- ── info block ── -->
-          <div class="flex-1 min-w-0">
-            <div class="flex items-start justify-between gap-2">
-              <div>
-                <a href="{% url 'product_detail_view' entry.product.slug %}"
-                   class="font-display text-lg sm:text-xl font-medium text-[var(--brown)]
-                          leading-tight hover:text-[var(--brown-md)] transition-colors"
-                   style="text-decoration:none;">
-                  {{ entry.product.name }}
-                </a>
-                <p class="font-body text-xs tracking-wide text-[var(--brown-lt)] mt-0.5">
-                  {% if entry.variant.size %}{{ entry.variant.size }}{% endif %}
-                  {% if entry.variant.size and entry.variant.color %} | {% endif %}
-                  {% if entry.variant.color %}{{ entry.variant.color }}{% endif %}
-                </p>
-              </div>
-              <span class="font-body font-medium text-[var(--brown)] whitespace-nowrap text-sm item-price">
-                ₹{{ entry.price }}
-              </span>
-            </div>
-
-            <!-- stock states -->
-            {% if entry.is_out_of_stock %}
-              <p class="mt-2 font-body text-xs font-medium tracking-wide text-[var(--red)]">
-                ● Out of Stock
-              </p>
-            {% elif entry.low_stock %}
-              <p class="mt-2 font-body text-xs font-medium tracking-wide text-[var(--orange)]">
-                ● Only {{ entry.stock }} left
-              </p>
-            {% endif %}
-
-            <!-- qty + remove row -->
-            <div class="mt-4 flex items-center justify-between">
-
-              <!-- QUANTITY CONTROL (AJAX — no reload) -->
-              <div class="flex items-center gap-3">
-                <button type="button" class="qty-btn dec-btn"
-                  data-item="{{ entry.item.id }}"
-                  data-stock="{{ entry.stock }}"
-                  {% if entry.is_out_of_stock or entry.quantity <= 1 %}disabled{% endif %}>
-                  −
-                </button>
-
-                <span class="font-body text-sm font-medium text-[var(--brown)] w-6 text-center qty-display"
-                      id="qty-display-{{ entry.item.id }}">
-                  {% if entry.is_out_of_stock %}0{% else %}{{ entry.quantity }}{% endif %}
-                </span>
-
-                <span class="qty-loading" id="qty-spin-{{ entry.item.id }}"></span>
-
-                <button type="button" class="qty-btn inc-btn"
-                  data-item="{{ entry.item.id }}"
-                  data-stock="{{ entry.stock }}"
-                  {% if entry.is_out_of_stock or entry.quantity >= entry.stock or entry.quantity >= 5 %}disabled{% endif %}>
-                  +
-                </button>
-              </div>
-
-              <!-- remove -->
-              <button type="button" class="remove-btn"
-                onclick="openRemoveModal(
-                  {{ entry.item.id }},
-                  '{{ entry.product.name|escapejs }}',
-                  '{{ entry.variant.size|default:''|escapejs }}',
-                  '{{ entry.price }}',
-                  '{% if entry.product.images.first %}{{ entry.product.images.first.image.url }}{% endif %}'
-                )">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="1.8">
-                  <polyline points="3 6 5 6 21 6"/>
-                  <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
-                  <path d="M10 11v6M14 11v6"/>
-                  <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
-                </svg>
-                Remove
-              </button>
-
-            </div>
-          </div>
-        </div>
+    <!-- Header row -->
+    <div class="flex items-center justify-between mb-6 fade-up">
+      <div>
+        <p class="section-eyebrow">Review &amp; Adjust</p>
+        <h2 class="section-title">Your Items</h2>
       </div>
-      {% endfor %}
+    </div>
 
-    </div><!-- end LEFT -->
+    {% if is_empty %}
+    <!-- ── EMPTY STATE ── -->
+    <div class="empty-state fade-up delay-1">
+      <div class="empty-icon-wrap">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 01-8 0"/>
+        </svg>
+      </div>
+      <h2>Your bag is empty</h2>
+      <p>Discover our collection of premium skincare crafted for radiant, glowing skin.</p>
+      <a href="{% url 'product_listing' %}" class="shop-btn">
+        Explore The Products
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+    </div>
 
-    <!-- ── RIGHT : ORDER SUMMARY ── -->
-    <div class="w-full lg:w-[32%] fade-up delay-2">
-      <div class="summary-card p-7">
-        <h2 class="font-display text-2xl font-medium text-[var(--brown)] mb-6">Order Summary</h2>
+    {% else %}
 
-        <div class="flex flex-col gap-3 mb-5">
-          <div class="flex justify-between items-center">
-            <span class="font-body text-sm text-[var(--brown-lt)]">Subtotal</span>
-            <span class="font-body text-sm text-[var(--brown)]" id="summary-subtotal">
-            ₹{{ total }}
-            </span>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="font-body text-sm text-[var(--brown-lt)] flex items-center gap-1">
-              Shipping
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-                   stroke="currentColor" stroke-width="1.8" class="opacity-40">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M12 16v-4M12 8h.01"/>
-              </svg>
-            </span>
-            <span class="font-body text-sm text-[var(--brown)]">TBD</span>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="font-body text-sm text-[var(--brown-lt)]">Estimated Tax</span>
-            <span class="font-body text-sm text-[var(--brown-lt)] italic">TBD</span>
-          </div>
-        </div>
+    <!-- ── CART ITEMS ── -->
+    {% for entry in cart_items %}
+    <div class="cart-card fade-up" style="animation-delay: {{ forloop.counter0 }}00ms;"
+         data-item-id="{{ entry.item.id }}"
+         data-oos="{{ entry.is_out_of_stock|yesno:'true,false' }}"
+         data-price="{{ entry.price }}">
 
-        <div class="divider my-5"></div>
+      <div class="flex items-start gap-5">
 
-        <div class="flex justify-between items-end mb-1">
-          <span class="font-body text-xs tracking-widest text-[var(--brown)] uppercase">Total</span>
-          <span class="font-display text-4xl font-medium text-[var(--brown)]"
-                id="summary-total">₹{{ total|add:0 }}</span>
-        </div>
-        <p class="font-body text-[10px] tracking-widest uppercase text-[var(--brown-lt)] text-right mb-6">
-          Price in INR
-        </p>
-
-        <a href=""
-           id="checkout-btn"
-           class="checkout-btn {% for entry in cart_items %}{% if entry.is_out_of_stock %}disabled{% endif %}{% endfor %}">
-          Proceed to Checkout →
+        <!-- Product image -->
+        <a href="{% url 'product_detail_view' entry.product.slug %}" class="cart-img-wrap">
+          {% if entry.product.images.first %}
+            <img src="{{ entry.product.images.first.image.url }}" alt="{{ entry.product.name }}" loading="lazy">
+          {% else %}
+            <div class="cart-img-ph">
+              <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.3" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            </div>
+          {% endif %}
         </a>
 
-        <div class="divider my-6"></div>
+        <!-- Info -->
+        <div class="flex-1 min-w-0">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex-1 min-w-0">
+              <a href="{% url 'product_detail_view' entry.product.slug %}"
+                 style="font-family:'Cormorant Garamond',serif; font-size:1.2rem; font-weight:500; color:var(--ink); text-decoration:none; display:block; line-height:1.25; transition:color .2s;"
+                 class="hover:text-[var(--brown-md)] leading-tight truncate">
+                {{ entry.product.name }}
+              </a>
+              {% if entry.variant.size or entry.variant.color %}
+              <p style="font-family:'Montserrat',sans-serif; font-size:.65rem; font-weight:400; letter-spacing:.08em; color:var(--brown-lt); margin-top:5px; text-transform:uppercase;">
+                {% if entry.variant.size %}{{ entry.variant.size }}{% endif %}
+                {% if entry.variant.size and entry.variant.color %}&nbsp;·&nbsp;{% endif %}
+                {% if entry.variant.color %}{{ entry.variant.color }}{% endif %}
+              </p>
+              {% endif %}
 
-        <div class="flex justify-between items-center mb-6">
-          <div class="trust-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                 stroke="var(--accent)" stroke-width="1.5">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-            Secure Payment
-          </div>
-          <div class="trust-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                 stroke="var(--accent)" stroke-width="1.5">
-              <rect x="1" y="3" width="15" height="13" rx="2"/>
-              <path d="M16 8h4l3 5v3h-7V8z"/>
-              <circle cx="5.5" cy="18.5" r="2.5"/>
-              <circle cx="18.5" cy="18.5" r="2.5"/>
-            </svg>
-            Global Delivery
-          </div>
-          <div class="trust-item">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                 stroke="var(--accent)" stroke-width="1.5">
-              <path d="M12 2a9 9 0 100 18A9 9 0 0012 2z"/>
-              <path d="M7 12l3 3 5-5"/>
-            </svg>
-            Pure Ingredients
-          </div>
-        </div>
+              <!-- Stock status -->
+              {% if entry.is_out_of_stock %}
+                <div class="stock-oos">
+                  <span class="stock-pulse"></span>Out of Stock
+                </div>
+              {% elif entry.low_stock %}
+                <div class="stock-low">
+                  <span class="stock-pulse"></span>Only {{ entry.stock }} left
+                </div>
+              {% endif %}
+            </div>
 
-        <div class="text-center">
-          <a href="{% url 'product_listing' %}" class="continue-link">Continue Shopping</a>
+            <!-- Price -->
+            <span class="item-price">₹{{ entry.price }}</span>
+          </div>
+
+          <!-- Qty + Remove -->
+          <div class="flex items-center justify-between mt-5">
+            <div class="qty-wrap">
+              <button type="button" class="qty-btn dec-btn"
+                data-item="{{ entry.item.id }}"
+                data-stock="{{ entry.stock }}"
+                {% if entry.is_out_of_stock or entry.quantity <= 1 %}disabled{% endif %}>
+                −
+              </button>
+
+              <span class="qty-display" id="qty-display-{{ entry.item.id }}">
+                {% if entry.is_out_of_stock %}0{% else %}{{ entry.quantity }}{% endif %}
+              </span>
+
+              <span class="qty-spin" id="qty-spin-{{ entry.item.id }}"></span>
+
+              <button type="button" class="qty-btn inc-btn"
+                data-item="{{ entry.item.id }}"
+                data-stock="{{ entry.stock }}"
+                {% if entry.is_out_of_stock or entry.quantity >= entry.stock or entry.quantity >= 5 %}disabled{% endif %}>
+                +
+              </button>
+            </div>
+
+            <button type="button" class="remove-btn"
+              onclick="openRemoveModal(
+                {{ entry.item.id }},
+                '{{ entry.product.name|escapejs }}',
+                '{{ entry.variant.size|default:''|escapejs }}',
+                '{{ entry.price }}',
+                '{% if entry.product.images.first %}{{ entry.product.images.first.image.url }}{% endif %}'
+              )">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+                <path d="M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+              </svg>
+              Remove
+            </button>
+          </div>
         </div>
       </div>
     </div>
+    {% endfor %}
 
+    <!-- ── CONTINUE SHOPPING ── -->
+    <div class="fade-up delay-3" style="margin-top:8px;">
+      <a href="{% url 'product_listing' %}" class="continue-link">
+        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        Continue Shopping
+      </a>
+    </div>
+
+    {% endif %}
   </div>
-</section>
-{% endif %}
 
-<!-- ══ DELETE CONFIRMATION MODAL ══ -->
+  <!-- ══ RIGHT: SUMMARY ══ -->
+  <div class="fade-up delay-2">
+    <div class="summary-card">
+
+      <!-- Header -->
+      <div class="summary-header">
+        <h2>Order Summary</h2>
+        <p>Your selection at a glance</p>
+      </div>
+
+      <!-- Body -->
+      <div class="summary-body" style="padding:28px 28px 24px;">
+
+        <!-- Rows -->
+        <div class="summary-row">
+          <span class="summary-row-label">Subtotal</span>
+          <span class="summary-row-value" id="summary-subtotal">₹{{ total }}</span>
+        </div>
+        <div class="summary-row">
+          <span class="summary-row-label" style="display:flex;align-items:center;gap:6px;">
+            Shipping
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="opacity:.4;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          </span>
+          <span class="summary-row-value">TBD at checkout</span>
+        </div>
+
+        <div class="summary-divider"></div>
+
+        <!-- Total -->
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <span class="summary-total-label">Total</span>
+          </div>
+          <div style="text-align:right; display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+            <span class="summary-total-value" id="summary-total" style="line-height:0.8;">₹{{ total|add:0 }}</span>
+            <span class="summary-currency" style="margin:0;">INR</span>
+          </div>
+        </div>
+
+        <!-- CTA -->
+        <a href="{% url 'checkout' %}"
+           id="checkout-btn"
+           class="checkout-btn {% for entry in cart_items %}{% if entry.is_out_of_stock %}disabled{% endif %}{% endfor %}">
+          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+          Proceed to Checkout
+          <svg class="checkout-btn-arrow" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+
+        <div class="secure-note">
+          <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Secure &amp; Encrypted Checkout
+        </div>
+
+        <div class="summary-divider" style="margin-top:18px;"></div>
+
+        <!-- Total items -->
+        <div style="text-align:center; margin-bottom:16px;">
+          <span style="font-family:'Montserrat',sans-serif; font-size:.62rem; font-weight:500; letter-spacing:.1em; text-transform:uppercase; color:var(--brown-lt);">
+            {% if is_empty %}0 items{% else %}{{ cart_count }} item{{ cart_count|pluralize }} in your bag{% endif %}
+          </span>
+        </div>
+
+        <!-- Trust bar -->
+        <div class="trust-bar">
+          <div class="trust-item">
+            <svg width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Secure
+          </div>
+          <div class="trust-item">
+            <svg width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="1.5" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            Delivery
+          </div>
+          <div class="trust-item">
+            <svg width="18" height="18" fill="none" stroke="var(--accent)" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 2a9 9 0 100 18A9 9 0 0012 2z"/><path d="M7 12l3 3 5-5"/></svg>
+            Pure
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ══ REMOVE MODAL ══ -->
 <div id="removeModal" class="modal-overlay" role="dialog" aria-modal="true">
   <div class="modal-box">
-    <div class="flex items-center justify-center w-12 h-12 rounded-full bg-red-50 mx-auto mb-5">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-           stroke="var(--red)" stroke-width="1.8">
+
+    <div class="modal-icon-wrap">
+      <svg width="24" height="24" fill="none" stroke="var(--red)" stroke-width="1.8" viewBox="0 0 24 24">
         <polyline points="3 6 5 6 21 6"/>
         <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
-        <path d="M10 11v6M14 11v6"/>
-        <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+        <path d="M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
       </svg>
     </div>
-    <h3 class="font-display text-2xl font-medium text-[var(--brown)] mb-2">Remove Item?</h3>
-    <p class="font-body text-sm text-[var(--brown-lt)]">
+
+    <h3 class="modal-title">Remove Item?</h3>
+    <p class="modal-desc">
       Are you sure you want to remove
-      <strong id="modalProductName" class="text-[var(--brown)]"></strong>
-      from your cart?
+      <strong id="modalProductName" style="color:var(--ink);"></strong> from your bag?
     </p>
-    <div class="flex items-center gap-3 bg-[var(--cream)] rounded-xl p-3 mt-5 mb-6 text-left">
-      <div class="w-12 h-12 rounded-lg bg-[var(--beige)] flex-shrink-0 overflow-hidden"
-           id="modalImgWrap"></div>
+
+    <div class="modal-preview">
+      <div class="modal-preview-img" id="modalImgWrap"></div>
       <div>
-        <p id="modalPreviewName" class="font-body text-xs font-medium text-[var(--brown)]"></p>
-        <p id="modalPreviewMeta" class="font-body text-[10px] text-[var(--brown-lt)]"></p>
-        <p id="modalPreviewPrice" class="font-body text-xs font-medium text-[var(--brown)] mt-0.5"></p>
+        <p id="modalPreviewName" class="modal-preview-name"></p>
+        <p id="modalPreviewMeta" class="modal-preview-meta"></p>
+        <p id="modalPreviewPrice" class="modal-preview-price"></p>
       </div>
     </div>
-    <div class="flex gap-3">
-      <button type="button" class="modal-cancel flex-1" onclick="closeRemoveModal()">Cancel</button>
-      <form id="removeForm" method="POST" action="" class="flex-1">
+
+    <div class="modal-actions">
+      <button type="button" class="modal-cancel-btn" onclick="closeRemoveModal()">Cancel</button>
+      <form id="removeForm" method="POST" action="" style="flex:1; display:flex;">
         {% csrf_token %}
-        <button type="submit" class="modal-confirm w-full">Yes, Remove</button>
+        <button type="submit" class="modal-confirm-btn" style="width:100%;">Yes, Remove</button>
       </form>
     </div>
+
   </div>
 </div>
 
-<!-- ══ JAVASCRIPT ══ -->
-<script>
-const CSRF  = '{{ csrf_token }}';
-const SHIPPING = 5;
+{% endblock %}
 
-/* ── AJAX quantity update ── */
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+
+/* ═══════════════════════════════════════
+   AJAX QUANTITY UPDATE
+═══════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', function () {
 
   document.querySelectorAll('.dec-btn, .inc-btn').forEach(function(btn) {
@@ -513,13 +741,11 @@ document.addEventListener('DOMContentLoaded', function () {
       const spinner = document.getElementById('qty-spin-'   + itemId);
       const card    = document.querySelector('[data-item-id="' + itemId + '"]');
 
-      let currentQty = parseInt(display.textContent) || 0;
+      let currentQty = parseInt(display.textContent.trim()) || 0;
       let newQty = isInc ? currentQty + 1 : currentQty - 1;
 
-      // bounds
       if (newQty < 1 || newQty > Math.min(stock, 5)) return;
 
-      // disable all qty buttons on this card, show spinner
       card.querySelectorAll('.qty-btn').forEach(b => b.disabled = true);
       display.style.visibility = 'hidden';
       spinner.style.display = 'inline-block';
@@ -530,22 +756,19 @@ document.addEventListener('DOMContentLoaded', function () {
       fd.append('csrfmiddlewaretoken', CSRF);
 
       fetch("{% url 'update_cart' %}", {
-        method: 'POST', 
+        method: 'POST',
         body: fd,
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
         redirect: 'manual'
       })
       .then(function() {
-        // update display
         display.textContent = newQty;
 
-        // re-evaluate button states
         const decBtn = card.querySelector('.dec-btn');
         const incBtn = card.querySelector('.inc-btn');
         decBtn.disabled = (newQty <= 1);
         incBtn.disabled = (newQty >= Math.min(stock, 5));
 
-        // update summary
         recalcSummary();
       })
       .catch(function(err) {
@@ -560,7 +783,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 });
 
-/* ── recalculate summary totals ── */
+/* ═══════════════════════════════════════
+   RECALCULATE TOTALS
+═══════════════════════════════════════ */
 function recalcSummary() {
   let subtotal = 0;
 
@@ -569,7 +794,7 @@ function recalcSummary() {
     const itemId  = card.dataset.itemId;
     const price   = parseFloat(card.dataset.price) || 0;
     const qtyEl   = document.getElementById('qty-display-' + itemId);
-    const qty     = parseInt(qtyEl ? qtyEl.textContent : 0) || 0;
+    const qty     = parseInt(qtyEl ? qtyEl.textContent.trim() : 0) || 0;
     subtotal += price * qty;
   });
 
@@ -581,18 +806,20 @@ function recalcSummary() {
     triggerFlash(subEl);
   }
   if (totalEl) {
-    totalEl.textContent = '₹' + (subtotal + SHIPPING).toFixed(2);
+    totalEl.textContent = '₹' + subtotal.toFixed(2);
     triggerFlash(totalEl);
   }
 }
 
 function triggerFlash(el) {
   el.classList.remove('flash');
-  void el.offsetWidth;          // force reflow
+  void el.offsetWidth;
   el.classList.add('flash');
 }
 
-/* ── remove modal ── */
+/* ═══════════════════════════════════════
+   REMOVE MODAL
+═══════════════════════════════════════ */
 function openRemoveModal(itemId, productName, variantSize, price, imgUrl) {
   document.getElementById('removeForm').action = '/cart/remove/' + itemId + '/';
   document.getElementById('modalProductName').textContent  = productName;
@@ -602,7 +829,7 @@ function openRemoveModal(itemId, productName, variantSize, price, imgUrl) {
 
   const wrap = document.getElementById('modalImgWrap');
   wrap.innerHTML = imgUrl
-    ? '<img src="' + imgUrl + '" alt="' + productName + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px">'
+    ? '<img src="' + imgUrl + '" alt="' + productName + '" style="width:100%;height:100%;object-fit:cover;border-radius:10px">'
     : '';
 
   document.getElementById('removeModal').classList.add('active');
@@ -621,5 +848,4 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeRemoveModal();
 });
 </script>
-
 {% endblock %}

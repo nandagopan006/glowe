@@ -171,18 +171,27 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
 
 /* ── Wishlist badge animation ── */
 @keyframes wishPop  { 0%{transform:scale(1)} 50%{transform:scale(1.35)} 100%{transform:scale(1)} }
-@keyframes wishPulse { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.4)} 50%{box-shadow:0 0 0 6px rgba(239,68,68,0)} }
 .wish-badge {
-  position:absolute; background:#ef4444; color:#fff;
+  position:absolute; background:#1a1208; color:#fff;
   font-family:'Montserrat',sans-serif; font-weight:700;
   border-radius:999px; display:flex; align-items:center; justify-content:center;
   line-height:1; pointer-events:none;
-  animation:wishPop 0.4s ease;
+  animation:wishPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
-.wish-badge.pulse { animation:wishPulse 1.5s ease infinite; }
 .wish-nav-icon { position:relative; display:flex; align-items:center; justify-content:center; text-decoration:none; }
-.wish-nav-icon svg { transition:transform 0.25s ease, fill 0.25s ease; }
-.wish-nav-icon:hover svg { transform:scale(1.12); }
+.wish-nav-icon svg { transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1), filter 0.3s ease; }
+.wish-nav-icon:hover svg { transform:scale(1.15) translateY(-1px); filter:drop-shadow(0 4px 6px rgba(184, 58, 58, 0.25)); }
+
+.is-filled {
+  filter: drop-shadow(0 2px 8px rgba(184, 58, 58, 0.4));
+}
+
+.cart-is-filled {
+  filter: drop-shadow(0 3px 5px rgba(194, 154, 107, 0.3));
+}
+.cart-nav-icon { position:relative; display:flex; align-items:center; justify-content:center; text-decoration:none; }
+.cart-nav-icon svg { transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1), filter 0.3s ease; transform-origin: top center; }
+.cart-nav-icon:hover svg { transform:scale(1.1) translateY(1px); filter:drop-shadow(0 4px 6px rgba(42, 32, 24, 0.15)); }
 
 /* ── Nav link underline animation ── */
 .gl-nav-link {
@@ -205,9 +214,30 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
 </style>
 </head>
 <body class="bg-[#f0ebe2] font-montserrat text-[#1a1208] overflow-x-hidden">
+<svg width="0" height="0" style="position:absolute; width:0; height:0; pointer-events:none;">
+  <defs>
+    <linearGradient id="wishlist-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF5C5C" />
+      <stop offset="100%" stop-color="#C72C2C" />
+    </linearGradient>
+    <linearGradient id="cart-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EAD6B9" />
+      <stop offset="100%" stop-color="#C2A478" />
+    </linearGradient>
+  </defs>
+</svg>
+
 
 {% if welcome %}
   <span id="django-welcome" class="hidden">{{ welcome }}</span>
+{% endif %}
+
+{% if messages %}
+  <div id="django-messages-container" class="hidden">
+    {% for message in messages %}
+      <span class="django-message" data-type="{{ message.tags }}">{{ message }}</span>
+    {% endfor %}
+  </div>
 {% endif %}
 
 <!-- MOBILE SIDEBAR -->
@@ -327,7 +357,7 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
 
         <!-- ── Wishlist icon (mobile) ── -->
         <a href="{% url 'wishlist' %}" aria-label="Wishlist" class="wish-nav-icon w-9 h-9 rounded-full hover:bg-[#f0ebe2] transition-colors">
-          <svg class="w-[17px] h-[17px]" viewBox="0 0 24 24" fill="{% if wishlist_count > 0 %}#ef4444{% else %}none{% endif %}" stroke="{% if wishlist_count > 0 %}#ef4444{% else %}#2a2018{% endif %}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <svg class="w-[17px] h-[17px] {% if wishlist_count > 0 %}is-filled{% endif %}" viewBox="0 0 24 24" fill="{% if wishlist_count > 0 %}url(#wishlist-grad){% else %}none{% endif %}" stroke="{% if wishlist_count > 0 %}none{% else %}#2a2018{% endif %}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
           </svg>
           {% if wishlist_count > 0 %}
@@ -336,9 +366,9 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
         </a>
 
         <!-- ── Cart icon (mobile) ── -->
-        <a href="{% url 'cart' %}" aria-label="Cart" class="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#f0ebe2] transition-colors no-underline">
-          <svg class="w-[17px] h-[17px]" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+        <a href="{% url 'cart' %}" aria-label="Cart" class="relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#f0ebe2] transition-colors no-underline cart-nav-icon">
+          <svg class="w-[17px] h-[17px] {% if cart_count and cart_count > 0 %}cart-is-filled{% endif %}" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" fill="{% if cart_count and cart_count > 0 %}url(#cart-grad){% else %}none{% endif %}"/>
             <line x1="3" y1="6" x2="21" y2="6"/>
             <path d="M16 10a4 4 0 0 1-8 0"/>
           </svg>
@@ -417,23 +447,21 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
 
         <!-- Wishlist (desktop) -->
         <a href="{% url 'wishlist' %}" aria-label="Wishlist" class="wish-nav-icon">
-          <svg class="w-5 h-5 cursor-pointer" viewBox="0 0 24 24" fill="{% if wishlist_count > 0 %}#ef4444{% else %}none{% endif %}" stroke="{% if wishlist_count > 0 %}#ef4444{% else %}#2a2018{% endif %}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <svg class="w-5 h-5 cursor-pointer {% if wishlist_count > 0 %}is-filled{% endif %}" viewBox="0 0 24 24" fill="{% if wishlist_count > 0 %}url(#wishlist-grad){% else %}none{% endif %}" stroke="{% if wishlist_count > 0 %}none{% else %}#2a2018{% endif %}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
           {% if wishlist_count > 0 %}
           <span class="wish-badge -top-2 -right-2.5 text-[8px] w-4 h-4">{% if wishlist_count > 7 %}7+{% else %}{{ wishlist_count }}{% endif %}</span>
           {% endif %}
         </a>
 
         <!-- ── Cart icon (desktop) ── -->
-        <a href="{% url 'cart' %}" aria-label="Cart" class="relative no-underline">
-          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+        <a href="{% url 'cart' %}" aria-label="Cart" class="relative no-underline cart-nav-icon">
+          <svg class="w-5 h-5 {% if cart_count and cart_count > 0 %}cart-is-filled{% endif %}" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" fill="{% if cart_count and cart_count > 0 %}url(#cart-grad){% else %}none{% endif %}"/>
             <line x1="3" y1="6" x2="21" y2="6"/>
             <path d="M16 10a4 4 0 0 1-8 0"/>
           </svg>
           {% if cart_count and cart_count > 0 %}
           <span class="absolute -top-2 -right-2.5 bg-[#1a1208] text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{{ cart_count }}</span>
-          {% else %}
-          <span class="absolute -top-2 -right-2.5 bg-[#1a1208] text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center">2</span>
           {% endif %}
         </a>
 
@@ -600,7 +628,7 @@ const _TCFG={success:{icon:'✓',blobs:['#3aaa72','#1a6644','#0d4a30'],bg:'#1e3d
 function _bsvg(c){return `<svg viewBox="0 0 50 70" xmlns="http://www.w3.org/2000/svg"><ellipse cx="12" cy="12" rx="20" ry="16" fill="${c[0]}" opacity="0.45"/><ellipse cx="40" cy="52" rx="16" ry="14" fill="${c[1]}" opacity="0.35"/><ellipse cx="24" cy="34" rx="11" ry="9" fill="${c[2]}" opacity="0.3"/><ellipse cx="6" cy="56" rx="10" ry="8" fill="${c[0]}" opacity="0.22"/></svg>`;}
 function _dismissT(t){if(!t||t._d)return;t._d=true;clearTimeout(t._tm);t.style.animation='toastOut 0.35s cubic-bezier(0.4,0,1,1) forwards';setTimeout(()=>t.remove(),350);}
 function showToast(type,title,message){const c=_TCFG[type]||_TCFG.info;const t=document.createElement('div');t.style.cssText=`pointer-events:all;display:flex;align-items:center;width:300px;border-radius:14px;overflow:hidden;position:relative;background:${c.bg};box-shadow:0 10px 32px rgba(42,31,20,0.2);animation:toastIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards;transform:translateY(-80px);opacity:0;`;t.innerHTML=`<div style="width:54px;min-width:54px;align-self:stretch;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:${c.blobBg};">${_bsvg(c.blobs)}<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;z-index:2;position:relative;background:${c.iconBg};flex-shrink:0;">${c.icon}</div></div><div style="flex:1;padding:10px 6px 10px 10px;"><p style="font-family:'Montserrat',sans-serif;font-size:7px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 2px;color:${c.label};opacity:0.85;">${type}</p><p style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;line-height:1.2;margin:0 0 2px;color:${c.title};">${title}</p><p style="font-family:'Montserrat',sans-serif;font-size:9px;line-height:1.5;margin:0;color:${c.msg};opacity:0.85;">${message}</p></div><button onclick="_dismissT(this.parentElement)" style="background:none;border:none;cursor:pointer;font-size:10px;padding:6px 10px 0 0;align-self:flex-start;color:#fff;opacity:0.4;">✕</button><div style="position:absolute;bottom:0;left:0;height:2px;background:${c.progress};animation:toastProg 3s linear forwards;"></div>`;_tc.appendChild(t);t._tm=setTimeout(()=>_dismissT(t),3000);}
-document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementById('django-welcome');if(el)showToast('success','Welcome Back!',el.textContent.trim());});
+document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementById('django-welcome');if(el)showToast('success','Welcome Back!',el.textContent.trim());document.querySelectorAll('.django-message').forEach(m=>{let t=m.dataset.type||'info';let type='info';if(t.includes('success'))type='success';else if(t.includes('error'))type='error';else if(t.includes('warning'))type='warning';showToast(type,type.charAt(0).toUpperCase()+type.slice(1),m.textContent.trim());});});
 
 /* ── SIDEBAR ── */
 function openSidebar(){document.getElementById('mob-sidebar').classList.add('open');document.getElementById('mob-sidebar-overlay').classList.add('open');document.body.style.overflow='hidden';}
