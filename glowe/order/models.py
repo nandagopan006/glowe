@@ -57,3 +57,18 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.variant} - {self.quantity}"
+
+class ShippingAddress(models.Model):
+
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name="shipping_address")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+
+    full_name = models.CharField(max_length=100)
+    phone = models.CharField(max_length=10)
+
+    address_line1 = models.TextField()
+    city = models.CharField(max_length=100)
+    district = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    country = models.CharField(max_length=100, default="India")
+    pincode = models.CharField(max_length=6)
