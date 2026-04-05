@@ -139,10 +139,6 @@ def checkout(request):
         messages.error(request, "Your cart is empty")
         return redirect('cart')
     
-    if not addresses.exists():
-        messages.warning(request, "Add an address first")
-        return redirect('add_address')
-    
     default_address =addresses.filter(is_default=True).first()
     
     if not default_address:

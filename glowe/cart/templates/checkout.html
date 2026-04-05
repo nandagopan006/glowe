@@ -1,0 +1,944 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Checkout — Glowé{% endblock %}
+
+{% block extra_css %}
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --bg: #F5F0E8;
+  --white: #FFFFFF;
+  --brown: #2C1F14;
+  --brown-md: #5C3D2E;
+  --brown-lt: #9C7A65;
+  --border: #E8E2DA;
+  --accent: #C4A882;
+}
+body { background: var(--bg); }
+
+/* ── Section titles – Cormorant Garamond ── */
+.checkout-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--brown);
+}
+
+/* ── Radio ── */
+.radio-outer {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2px solid #bbb; display: flex;
+  align-items: center; justify-content: center;
+  flex-shrink: 0; transition: border-color 0.2s;
+}
+.radio-outer.active { border-color: var(--brown); }
+.radio-inner {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--brown); transform: scale(0);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.radio-outer.active .radio-inner { transform: scale(1); }
+
+/* ── Option card ── */
+.option-card {
+  border: 1.5px solid var(--border); border-radius: 14px;
+  padding: 16px 20px; cursor: pointer; background: var(--white);
+  transition: all 0.25s ease;
+}
+.option-card:hover { border-color: #ccc; }
+.option-card.active {
+  border-color: var(--brown);
+  background: var(--white);
+}
+
+/* ── Wallet check ── */
+.wallet-check {
+  width: 22px; height: 22px; border-radius: 6px;
+  background: #1B9B7D; display: flex; align-items: center;
+  justify-content: center; flex-shrink: 0;
+}
+
+/* ── Summary card ── */
+.summary-card {
+  background: var(--white); border-radius: 16px;
+  border: 1px solid var(--border);
+  padding: 28px 24px;
+}
+
+/* ── Badge ── */
+.badge-rec {
+  background: var(--brown); color: #F5F0E8;
+  font-family: 'Montserrat', sans-serif; font-size: 7px;
+  font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 6px;
+}
+
+/* ── Qty badge ── */
+.qty-badge {
+  position: absolute; top: -5px; left: -5px;
+  width: 18px; height: 18px; background: var(--brown);
+  color: #fff; font-family: 'Montserrat', sans-serif;
+  font-size: 8px; font-weight: 700; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── Animated CTA button ── */
+.btn-checkout {
+  position: relative; width: 100%; padding: 14px 28px; border: none;
+  border-radius: 9999px; background: var(--brown); color: #fff;
+  cursor: pointer; overflow: hidden; display: flex; align-items: center;
+  justify-content: center; gap: 8px; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 15px rgba(44, 31, 20, 0.12);
+}
+.btn-checkout span {
+  font-family: 'Montserrat', sans-serif; font-size: 11.5px;
+  font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  z-index: 2; position: relative;
+}
+.btn-checkout .price-sep { opacity: 0.4; margin: 0 4px; font-weight: 400; }
+.btn-checkout::after {
+  content: ""; position: absolute; top: -50%; left: -60%; width: 50%; height: 200%;
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.18), transparent);
+  transform: rotate(30deg); animation: shimmer 3.5s infinite; z-index: 1;
+}
+@keyframes shimmer {
+  0% { transform: translateX(-100%) rotate(30deg); }
+  60% { transform: translateX(250%) rotate(30deg); }
+  100% { transform: translateX(250%) rotate(30deg); }
+}
+.btn-checkout:hover {
+  background: #1e150e; transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 8px 25px rgba(44, 31, 20, 0.25);
+}
+.btn-checkout:active { transform: translateY(0) scale(0.97); }
+
+/* ── Coupon ── */
+.coupon-wrap {
+  display: flex; align-items: center; border: 1.5px solid var(--border);
+  border-radius: 12px; overflow: hidden; background: var(--white);
+}
+.coupon-wrap input {
+  flex: 1; border: none; outline: none; padding: 12px 16px;
+  font-family: 'Montserrat', sans-serif; font-size: 12px;
+  color: var(--brown); background: transparent;
+}
+.coupon-wrap input::placeholder { color: #b5aa9e; }
+.coupon-wrap button {
+  padding: 10px 18px; background: var(--brown); color: #fff;
+  border: none; font-family: 'Montserrat', sans-serif;
+  font-size: 9px; font-weight: 700; letter-spacing: 0.14em;
+  text-transform: uppercase; cursor: pointer; margin: 4px;
+  border-radius: 8px; transition: background 0.2s;
+}
+.coupon-wrap button:hover { background: #3D2B1F; }
+
+/* ── Side Drawer ── */
+.drawer-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(43, 33, 26, 0.35); backdrop-filter: blur(8px);
+  opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
+}
+.drawer-overlay.open { opacity: 1; pointer-events: all; }
+.drawer {
+  position: fixed; right: 0; top: 0; bottom: 0;
+  width: 100%; max-width: 480px; background: #fff;
+  border-radius: 24px 0 0 24px;
+  box-shadow: -20px 0 60px rgba(43, 33, 26, 0.12);
+  transform: translateX(100%); transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex; flex-direction: column;
+}
+@media (max-width: 480px) {
+  .drawer { max-width: 100%; border-radius: 0; }
+}
+.drawer-overlay.open .drawer { transform: translateX(0); }
+.drawer-header {
+  padding: 24px 36px; border-bottom: 1px solid #EBE6E0;
+  display: flex; align-items: center; justify-content: space-between;
+}
+@media (max-width: 480px) {
+  .drawer-header { padding: 20px 24px; }
+}
+.drawer-body { padding: 32px 36px; overflow-y: auto; flex: 1; }
+@media (max-width: 480px) {
+  .drawer-body { padding: 24px 24px; }
+}
+
+/* ── Dropdown Menus ── */
+.addr-dropdown {
+  display: none; position: absolute; right: 0; top: 100%; margin-top: 4px;
+  background: white; border: 1px solid var(--border); border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05); z-index: 50; width: 100px; overflow: hidden;
+}
+.addr-dropdown.show { display: block; animation: popIn 0.2s ease; }
+@keyframes popIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── Centered Modals (Add / Edit) ── */
+.auth-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(43, 33, 26, 0.4); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s ease; padding: 1rem;
+}
+.auth-overlay.open { opacity: 1; pointer-events: all; }
+.auth-modal {
+  background: var(--white); border-radius: 16px; padding: 32px 36px;
+  width: 100%; max-width: 650px; max-height: 90vh; overflow-y: auto;
+  transform: scale(0.95) translateY(15px); opacity: 0; 
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+}
+.auth-overlay.open .auth-modal { transform: scale(1) translateY(0); opacity: 1; }
+
+/* Modern Address Form Fields */
+.form-group { margin-bottom: 20px; }
+.form-label {
+  display: block; font-family: 'Montserrat', sans-serif; font-size: 10px;
+  font-weight: 700; color: var(--brown-md); margin-bottom: 8px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+}
+.form-label.req::after { content: " *"; color: #D65A47; }
+.form-input {
+  width: 100%; background: #FDFCFB; border: 1px solid #EBE6E0; border-radius: 8px;
+  padding: 14px 16px; font-family: 'Montserrat', sans-serif; font-size: 13px;
+  color: var(--brown); outline: none; transition: all 0.2s ease;
+}
+.form-input:focus { border-color: var(--brown); box-shadow: 0 0 0 3px rgba(43,33,26,0.05); }
+
+/* ── Modern Back Button ── */
+.btn-back-drawer {
+  background: #F8F6F3; border: none; width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  color: var(--brown);
+}
+.btn-back-drawer:hover {
+  background: #EEEBE6;
+  transform: translateX(-3px) scale(1.08);
+  box-shadow: 0 4px 12px rgba(43,33,26,0.08);
+}
+.btn-back-drawer svg { transition: transform 0.3s ease; }
+.btn-back-drawer:active { transform: translateX(-1px) scale(0.95); }
+
+/* ── Modern Button Loading ── */
+.btn-loading-state {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+.btn-loading-state.loading {
+  color: transparent !important;
+  pointer-events: none;
+}
+.btn-loading-state .btn-spinner {
+  position: absolute;
+  left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  animation: btn-spin 0.6s linear infinite;
+}
+.btn-loading-state.loading .btn-spinner {
+  opacity: 1;
+}
+@keyframes btn-spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+/* Label Radio Buttons */
+.label-radio-group { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+@media (max-width: 380px) { .label-radio-group { grid-template-columns: 1fr; } }
+.label-radio { display: none; }
+.label-radio-btn {
+  text-align: center; padding: 12px; border: 1px solid #EBE6E0; border-radius: 8px;
+  background: #FDFCFB; cursor: pointer; transition: all 0.2s;
+  font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 600; color: var(--brown-md);
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.label-radio:checked + .label-radio-btn {
+  background: var(--brown); color: white; border-color: var(--brown);
+}
+
+.drawer-address-card {
+  border: 1.5px solid #EBE6E0; border-radius: 16px; padding: 20px;
+  cursor: pointer; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); margin-bottom: 16px;
+  background: #FDFCFB;
+}
+.drawer-address-card:hover { border-color: var(--brown-lt); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(43,33,26,0.04); }
+.drawer-address-card.active {
+  border-color: var(--brown); background: #FFF;
+  box-shadow: 0 8px 24px rgba(43,33,26,0.06);
+}
+
+/* ── Animations ── */
+.fade-up { opacity:0; transform:translateY(16px); animation:fadeUp 0.5s ease forwards; }
+@keyframes fadeUp { to { opacity:1; transform:translateY(0); } }
+.d1 { animation-delay:0.05s; } .d2 { animation-delay:0.1s; }
+.d3 { animation-delay:0.15s; } .d4 { animation-delay:0.2s; }
+.d5 { animation-delay:0.25s; }
+
+/* ── Product row hover ── */
+.product-row { transition: transform 0.2s ease; }
+.product-row:hover { transform: translateX(2px); }
+
+/* ── Scrollbar ── */
+.summary-scroll::-webkit-scrollbar { width: 3px; }
+.summary-scroll::-webkit-scrollbar-thumb { background: #d4c4b0; border-radius: 3px; }
+{% endblock %}
+
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2">
+  <nav class="flex items-center gap-1.5" style="font-family:'Montserrat',sans-serif; font-size:11px; color:var(--brown-lt);">
+    <a href="" class="hover:text-[var(--brown)] transition-colors" style="text-decoration:none; color:var(--brown-lt);">Cart</a>
+    <span style="margin:0 2px;">/</span>
+    <span style="color:var(--brown); font-weight:500;">Checkout</span>
+  </nav>
+</div>
+
+<!-- Main grid -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 pb-16">
+  <div class="flex flex-col lg:grid lg:grid-cols-12 gap-8 lg:gap-16 xl:gap-24 items-start">
+
+    <!-- ════════════ LEFT COLUMN ════════════ -->
+    <div class="lg:col-span-7 order-1 space-y-8">
+
+      <!-- ── SHIPPING ADDRESS ── -->
+      <div class="fade-up d1">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="checkout-title text-[28px] sm:text-[32px]">Shipping Address</h2>
+          {% if default_address %}
+          <div class="flex items-center gap-4">
+            <button type="button" onclick="openDrawer()" style="background:none; border:none; cursor:pointer; font-family:'Montserrat',sans-serif; font-size:12px; font-weight:500; color:var(--brown); text-decoration:none;" class="hover:text-[var(--accent)] transition-colors">Change</button>
+          </div>
+          {% endif %}
+        </div>
+
+        {% if default_address %}
+        <input type="hidden" name="selected_address_id" id="selected_address_id" value="{{ default_address.id }}">
+        <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:20px 24px; position:relative;">
+          <span id="display_addr_label" style="position:absolute; top:20px; right:24px; font-family:'Montserrat',sans-serif; font-size:9px; background:var(--bg); color:var(--brown); padding:4px 8px; border-radius:6px; font-weight:600; text-transform:uppercase;">{{ default_address.label }}</span>
+          <p id="display_addr_fullname" style="font-family:'Montserrat',sans-serif; font-size:13px; font-weight:600; color:var(--brown); margin:0 0 8px;">{{ default_address.full_name }}</p>
+          <p id="display_addr_details" style="font-family:'Montserrat',sans-serif; font-size:11.5px; color:var(--brown-lt); line-height:1.7; margin:0;">
+            {{ default_address.street_address }}<br>
+            {{ default_address.city }}, {{ default_address.district }}<br>
+            {{ default_address.state }} — {{ default_address.pincode }}<br>
+            {{ default_address.country }}
+          </p>
+          <div class="flex items-center gap-1.5 mt-3">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="var(--brown-lt)" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+            <span id="display_addr_phone" style="font-family:'Montserrat',sans-serif; font-size:11.5px; color:var(--brown-md); font-weight:500;">{{ default_address.phone_number }}</span>
+          </div>
+        </div>
+        {% else %}
+        <!-- EMPTY ADDRESS STATE -->
+        <div style="background:var(--white); border:1.5px dashed var(--border); border-radius:14px; padding:32px 24px; text-align:center;">
+          <div style="width:48px; height:48px; background:var(--bg); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px;">
+            <svg class="w-5 h-5" fill="none" stroke="var(--brown-lt)" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </div>
+          <p style="font-family:'Montserrat',sans-serif; font-size:13px; font-weight:600; color:var(--brown); margin:0 0 6px;">No Address Provided</p>
+          <p style="font-family:'Montserrat',sans-serif; font-size:11px; color:var(--brown-lt); margin:0 0 20px;">Please add a delivery address to proceed.</p>
+          <button type="button" onclick="openAddAddressDrawer()" style="display:inline-flex; align-items:center; gap:8px; border:none; cursor:pointer; padding:12px 24px; background:var(--brown); color:#fff; text-decoration:none; border-radius:10px; font-family:'Montserrat',sans-serif; font-size:10px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase;" class="hover:bg-[#3D2B1F] transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+            Add Address
+          </button>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- ── SHIPPING METHOD ── -->
+      <div class="fade-up d2 order-3">
+        <h2 class="checkout-title text-[28px] sm:text-[32px] mb-4">Shipping Method</h2>
+        <div class="space-y-3">
+          <!-- Standard -->
+          <div class="option-card active" onclick="pickOption(this)">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="radio-outer active"><div class="radio-inner"></div></div>
+                <div>
+                  <span style="font-family:'Montserrat',sans-serif; font-size:13px; font-weight:600; color:var(--brown);">Standard Delivery</span>
+                  <p style="font-family:'Montserrat',sans-serif; font-size:10px; color:var(--brown-lt); margin:2px 0 0;">5-7 Business Days</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="badge-rec hidden sm:inline-block">Recommended</span>
+                <span style="font-family:'Montserrat',sans-serif; font-size:13px; font-weight:700; color:var(--brown);">Free</span>
+              </div>
+            </div>
+          </div>
+          <!-- Express -->
+          <div class="option-card" onclick="pickOption(this)">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="radio-outer"><div class="radio-inner"></div></div>
+                <div>
+                  <span style="font-family:'Montserrat',sans-serif; font-size:13px; font-weight:600; color:var(--brown);">Express Shipping</span>
+                  <p style="font-family:'Montserrat',sans-serif; font-size:10px; color:var(--brown-lt); margin:2px 0 0;">1-2 Business Days</p>
+                </div>
+              </div>
+              <span style="font-family:'Montserrat',sans-serif; font-size:13px; font-weight:700; color:var(--brown);">₹15.00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PAYMENT ── -->
+      <div class="fade-up d3 order-4">
+        <h2 class="checkout-title text-[28px] sm:text-[32px] mb-4">Payment</h2>
+        <div class="space-y-3">
+
+          <!-- Wallet -->
+          <div style="background:var(--white); border:1px solid var(--border); border-radius:14px; padding:18px 20px; opacity: 0.55; pointer-events: none;">
+            <div class="flex items-center gap-3">
+              <div class="wallet-check">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="#fff" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              </div>
+              <div class="flex items-center gap-1.5 flex-wrap flex-1">
+                <span style="font-family:'Montserrat',sans-serif; font-size:12.5px; font-weight:600; color:var(--brown);">Use Wallet Balance</span>
+                <span style="font-family:'Montserrat',sans-serif; font-size:11px; color:var(--brown-lt);">(Available Balance: ₹150.00)</span>
+              </div>
+              <span style="font-family:'Montserrat',sans-serif; font-size:8px; font-weight:700; background:#f0ebe2; color:var(--brown-md); padding:3px 6px; border-radius:4px; text-transform:uppercase;">Coming Soon</span>
+            </div>
+            <div class="flex items-center justify-between mt-3 ml-[34px]">
+              <div>
+                <p style="font-family:'Montserrat',sans-serif; font-size:10px; color:var(--brown-lt); margin:0;">Wallet Applied:</p>
+                <p style="font-family:'Montserrat',sans-serif; font-size:10px; color:var(--brown-lt); margin:2px 0 0; font-weight:600;">Remaining Payable:</p>
+              </div>
+              <div style="text-align:right;">
+                <p style="font-family:'Montserrat',sans-serif; font-size:11px; font-weight:600; color:var(--brown); margin:0;">₹60.00</p>
+                <p style="font-family:'Montserrat',sans-serif; font-size:11px; font-weight:700; color:var(--brown); margin:2px 0 0;">₹82.00</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Razorpay -->
+          <div class="option-card" style="opacity: 0.55; pointer-events: none;">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="radio-outer"><div class="radio-inner"></div></div>
+                <div class="w-8 h-8 rounded-lg bg-[#E8F0FE] flex items-center justify-center flex-shrink-0">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="#1A73E8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                </div>
+                <div>
+                  <span style="font-family:'Montserrat',sans-serif; font-size:12.5px; font-weight:600; color:var(--brown);">Razorpay</span>
+                  <p style="font-family:'Montserrat',sans-serif; font-size:9.5px; color:var(--brown-lt); margin:1px 0 0;">UPI, Netbanking</p>
+                </div>
+              </div>
+              <span style="font-family:'Montserrat',sans-serif; font-size:8px; font-weight:700; background:#f0ebe2; color:var(--brown-md); padding:3px 6px; border-radius:4px; text-transform:uppercase;">Coming Soon</span>
+            </div>
+          </div>
+
+          <!-- COD -->
+          <div class="option-card active" onclick="pickPayment(this)">
+            <div class="flex items-center gap-3">
+              <div class="radio-outer active"><div class="radio-inner"></div></div>
+              <div class="w-8 h-8 rounded-lg bg-[#F0EBE2] flex items-center justify-center flex-shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="var(--brown)" viewBox="0 0 24 24" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+              </div>
+              <div>
+                <span style="font-family:'Montserrat',sans-serif; font-size:12.5px; font-weight:600; color:var(--brown);">Cash on Delivery</span>
+                <p style="font-family:'Montserrat',sans-serif; font-size:9.5px; color:var(--brown-lt); margin:1px 0 0;">Pay when you receive</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ════════════ RIGHT COLUMN ════════════ -->
+    <div class="lg:col-span-5 order-2">
+      <div class="summary-card fade-up d2 lg:sticky lg:top-24">
+
+        <h2 class="checkout-title text-[26px] sm:text-[28px] mb-6">Your Selection</h2>
+
+        <!-- Products -->
+        <div class="space-y-5 mb-6 max-h-[320px] overflow-y-auto summary-scroll pr-1">
+
+          <!-- Item 1 -->
+          <div class="product-row flex items-center gap-4">
+            <div class="relative flex-shrink-0">
+              <div class="w-[76px] h-[76px] rounded-2xl overflow-hidden bg-[#f5f5f5] shadow-[0_2px_8px_rgba(44,31,20,0.06)]">
+                <img src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&q=80&w=200&h=200" alt="Cleanser" class="w-full h-full object-cover hover:scale-110 transition-transform duration-500">
+              </div>
+              <span class="qty-badge">1</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p style="font-family:'Montserrat',sans-serif; font-size:10.5px; font-weight:700; color:var(--brown); letter-spacing:0.08em; text-transform:uppercase; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Gentle Purifying Cleanser</p>
+              <p style="font-family:'Montserrat',sans-serif; font-size:9.5px; color:var(--brown-lt); margin:4px 0 0; letter-spacing:0.06em; text-transform:uppercase;">150ml / Normal Skin</p>
+            </div>
+            <span style="font-family:'Montserrat',sans-serif; font-size:14px; font-weight:700; color:var(--brown); flex-shrink:0;">₹35.00</span>
+          </div>
+
+          <!-- Item 2 -->
+          <div class="product-row flex items-center gap-4">
+            <div class="relative flex-shrink-0">
+              <div class="w-[76px] h-[76px] rounded-2xl overflow-hidden bg-[#f5f5f5] shadow-[0_2px_8px_rgba(44,31,20,0.06)]">
+                <img src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&q=80&w=200&h=200" alt="Serum" class="w-full h-full object-cover hover:scale-110 transition-transform duration-500">
+              </div>
+              <span class="qty-badge">1</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p style="font-family:'Montserrat',sans-serif; font-size:10.5px; font-weight:700; color:var(--brown); letter-spacing:0.08em; text-transform:uppercase; margin:0;">Radiance Vitamin C Serum</p>
+              <p style="font-family:'Montserrat',sans-serif; font-size:9.5px; color:var(--brown-lt); margin:4px 0 0; letter-spacing:0.06em; text-transform:uppercase;">30ml / All Skin Types</p>
+            </div>
+            <span style="font-family:'Montserrat',sans-serif; font-size:14px; font-weight:700; color:var(--brown); flex-shrink:0;">₹65.00</span>
+          </div>
+
+          <!-- Item 3 -->
+          <div class="product-row flex items-center gap-4">
+            <div class="relative flex-shrink-0">
+              <div class="w-[76px] h-[76px] rounded-2xl overflow-hidden bg-[#f5f5f5] shadow-[0_2px_8px_rgba(44,31,20,0.06)]">
+                <img src="https://images.unsplash.com/photo-1617897903246-719242758050?auto=format&fit=crop&q=80&w=200&h=200" alt="Cream" class="w-full h-full object-cover hover:scale-110 transition-transform duration-500">
+              </div>
+              <span class="qty-badge">1</span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <p style="font-family:'Montserrat',sans-serif; font-size:10.5px; font-weight:700; color:var(--brown); letter-spacing:0.08em; text-transform:uppercase; margin:0;">Deep Hydration Cream</p>
+              <p style="font-family:'Montserrat',sans-serif; font-size:9.5px; color:var(--brown-lt); margin:4px 0 0; letter-spacing:0.06em; text-transform:uppercase;">50ml / Dry Skin</p>
+            </div>
+            <span style="font-family:'Montserrat',sans-serif; font-size:14px; font-weight:700; color:var(--brown); flex-shrink:0;">₹42.00</span>
+          </div>
+
+        </div>
+
+        <!-- Coupon -->
+        <div class="mb-5">
+          <div class="coupon-wrap">
+            <input type="text" placeholder="Coupons or discount code">
+            <button>Apply</button>
+          </div>
+          <button class="flex items-center gap-1.5 mt-2.5 group" style="background:none; border:none; cursor:pointer; padding:0;">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="var(--accent)" viewBox="0 0 24 24" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/></svg>
+            <span style="font-family:'Montserrat',sans-serif; font-size:10.5px; color:var(--accent); font-weight:500;" class="group-hover:text-[var(--brown)] transition-colors">View all available coupons</span>
+          </button>
+        </div>
+
+        <!-- Price breakdown -->
+        <div class="space-y-2.5 mb-4">
+          <div class="flex items-center justify-between">
+            <span style="font-family:'Montserrat',sans-serif; font-size:12px; color:var(--brown-lt);">Subtotal</span>
+            <span style="font-family:'Montserrat',sans-serif; font-size:12px; font-weight:600; color:var(--brown);">₹142.00</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span style="font-family:'Montserrat',sans-serif; font-size:12px; color:var(--brown-lt);">Shipping</span>
+            <span style="font-family:'Montserrat',sans-serif; font-size:12px; font-weight:600; color:#1B9B7D;">Free</span>
+          </div>
+        </div>
+
+        <!-- Total -->
+        <div style="border-top:1px solid var(--border); padding-top:16px; margin-bottom:20px;">
+          <div class="flex items-end justify-between">
+            <span style="font-family:'Montserrat',sans-serif; font-size:13px; color:var(--brown-lt); font-weight:500;">Total</span>
+            <div style="text-align:right;">
+              <span style="font-family:'Montserrat',sans-serif; font-size:9px; color:var(--brown-lt); letter-spacing:0.1em; text-transform:uppercase; display:block; margin-bottom:2px;">INR</span>
+              <span style="font-family:'Cormorant Garamond',serif; font-size:32px; font-weight:700; color:var(--brown); line-height:1;">₹142.00</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CTA BUTTON -->
+        <div class="space-y-4">
+          <button type="button" class="btn-checkout">
+            <span>Complete Order <span class="price-sep">•</span> ₹142.00</span>
+          </button>
+          <div class="flex items-center justify-center gap-1.5">
+            <svg class="w-2.5 h-2.5" fill="none" stroke="var(--brown-lt)" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            <span style="font-family:'Montserrat',sans-serif; font-size:8.5px; color:#A89E94; letter-spacing:0.12em; text-transform:uppercase; font-weight:500;">Secure Encrypted Checkout</span>
+          </div>
+        </div>
+
+        <!-- Trust badges -->
+        <div class="flex items-center justify-around" style="border-top:0.5px solid #F0EBE2; padding-top:14px; margin-top:18px;">
+          <div class="text-center opacity-60 hover:opacity-100 transition-opacity">
+            <div class="w-6 h-6 mx-auto mb-1 flex items-center justify-center">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="var(--brown-lt)" viewBox="0 0 24 24" stroke-width="1.2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            </div>
+            <span style="font-family:'Montserrat',sans-serif; font-size:7.5px; font-weight:600; color:var(--brown-lt); letter-spacing:0.08em; text-transform:uppercase;">Cruelty Free</span>
+          </div>
+          <div class="text-center opacity-60 hover:opacity-100 transition-opacity">
+            <div class="w-6 h-6 mx-auto mb-1 flex items-center justify-center">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="var(--brown-lt)" viewBox="0 0 24 24" stroke-width="1.2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            </div>
+            <span style="font-family:'Montserrat',sans-serif; font-size:7.5px; font-weight:600; color:var(--brown-lt); letter-spacing:0.08em; text-transform:uppercase;">Vegan</span>
+          </div>
+          <div class="text-center opacity-60 hover:opacity-100 transition-opacity">
+            <div class="w-6 h-6 mx-auto mb-1 flex items-center justify-center">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="var(--brown-lt)" viewBox="0 0 24 24" stroke-width="1.2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+            </div>
+            <span style="font-family:'Montserrat',sans-serif; font-size:7.5px; font-weight:600; color:var(--brown-lt); letter-spacing:0.08em; text-transform:uppercase;">Lab Tested</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── SIDE DRAWER FOR ADDRESS ── -->
+<div class="drawer-overlay" id="address-drawer" onclick="if(event.target===this)closeDrawer()">
+  <div class="drawer">
+    <div class="drawer-header">
+      <h3 style="font-family:'Montserrat',sans-serif; font-size:16px; font-weight:600; color:var(--brown); margin:0;">Select Delivery Address</h3>
+      <button onclick="closeDrawer()" style="background:none; border:none; cursor:pointer;" class="hover:opacity-60 transition-opacity">
+        <svg class="w-6 h-6" fill="none" stroke="var(--brown)" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="drawer-body summary-scroll">
+      <div class="flex items-center justify-between mb-6">
+        <span style="font-family:'Montserrat',sans-serif; font-size:13px; font-weight:600; color:var(--brown-lt);">Saved Addresses</span>
+        <button type="button" onclick="openAddAddressDrawer(); closeDrawer();" class="flex items-center gap-1.5 px-4 py-2 bg-[var(--brown)] text-white rounded-full font-Montserrat text-[10px] font-bold uppercase tracking-wide hover:bg-[#3D2B1F] transition-all shadow-[0_4px_12px_rgba(43,33,26,0.15)]">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          Add New
+        </button>
+      </div>
+
+      {% for addr in addresses %}
+      <div class="drawer-address-card {% if addr.id == default_address.id %}active{% endif %}" onclick="selectDrawerAddress(this, '{{ addr.id }}', '{{ addr.label }}', '{{ addr.full_name }}', '{{ addr.phone_number }}', '{{ addr.street_address }}<br>{{ addr.city }}, {{ addr.district }}<br>{{ addr.state }} — {{ addr.pincode }}<br>{{ addr.country }}')">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="var(--brown-md)" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            <span style="font-family:'Montserrat',sans-serif; font-size:12.5px; font-weight:700; color:var(--brown);">{{ addr.label }}</span>
+            <span class="selection-badge {% if addr.id != default_address.id %}hidden{% endif %}" style="margin-left:6px; font-family:'Montserrat',sans-serif; font-size:9px; background:#D0EBE3; color:#1B9B7D; padding:3px 8px; border-radius:12px; font-weight:700; letter-spacing:0.02em;">Currently selected</span>
+          </div>
+          <div>
+            <button type="button" onclick="event.stopPropagation(); openEditAddressModal('{{ addr.id }}'); closeDrawer();" class="text-[10px] font-bold uppercase tracking-wider text-[var(--brown-md)] hover:text-[var(--brown)] transition-colors underline decoration-2 decoration-[#EBE6E0] underline-offset-4">
+              Edit
+            </button>
+          </div>
+        </div>
+        <p style="font-family:'Montserrat',sans-serif; font-size:11px; color:var(--brown-lt); line-height:1.6; margin:6px 0 0;">
+          <span style="color:var(--brown); font-weight:500;">{{ addr.full_name }}</span> - {{ addr.street_address }}, {{ addr.city }}, {{ addr.state }} {{ addr.pincode }}
+        </p>
+      </div>
+      {% endfor %}
+
+    </div>
+  </div>
+</div>
+
+<!-- ── SIDE DRAWER FOR ADDING NEW ADDRESS ── -->
+<div class="drawer-overlay" id="add-address-drawer" onclick="if(event.target===this)closeAddAddressDrawer()">
+  <div class="drawer">
+    <div class="drawer-header" style="justify-content: flex-start; gap: 14px; padding: 20px 36px;">
+      <button type="button" onclick="backToSelection('add-address-drawer')" class="btn-back-drawer" title="Back">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+      </button>
+      <h3 style="font-family:'Montserrat',sans-serif; font-size:15px; font-weight:700; color:var(--brown); margin:0; letter-spacing:-0.01em;">Add New Address</h3>
+      <button type="button" onclick="closeAddAddressDrawer()" style="background:none; border:none; cursor:pointer; margin-left: auto;" class="hover:opacity-60 transition-opacity">
+        <svg class="w-6 h-6" fill="none" stroke="var(--brown)" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="drawer-body summary-scroll">
+      <form action="{% url 'add_address' %}?next={% url 'checkout' %}" method="POST">
+        {% csrf_token %}
+        
+        <div class="form-group">
+          <label class="form-label req">Address Label</label>
+          <div class="label-radio-group">
+            <label>
+              <input type="radio" name="label" value="HOME" class="label-radio" checked>
+              <div class="label-radio-btn">🏠 Home</div>
+            </label>
+            <label>
+              <input type="radio" name="label" value="OFFICE" class="label-radio">
+              <div class="label-radio-btn">💼 Office</div>
+            </label>
+            <label>
+              <input type="radio" name="label" value="OTHER" class="label-radio">
+              <div class="label-radio-btn">📍 Other</div>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label req">Full Name</label>
+          <input type="text" name="full_name" required class="form-input" placeholder="e.g. Rahul Sharma">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label req">Street Address</label>
+          <input type="text" name="street_address" required class="form-input" placeholder="House/Flat No., Building, Street, Area">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 form-group">
+          <div>
+            <label class="form-label req">Pincode</label>
+            <input type="text" name="pincode" required class="form-input" placeholder="e.g. 673001">
+          </div>
+          <div>
+            <label class="form-label req">City / Locality</label>
+            <input type="text" name="city" required class="form-input" placeholder="Enter city or locality">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 form-group">
+          <div>
+            <label class="form-label req">District</label>
+            <input type="text" name="district" required class="form-input" placeholder="Type district name">
+          </div>
+          <div>
+            <label class="form-label req">State</label>
+            <input type="text" name="state" required class="form-input" placeholder="Type to search state">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 form-group">
+          <div>
+            <label class="form-label req">Phone Number</label>
+            <div style="position:relative; display:flex;">
+              <div style="background:#F3F0EC; border:1px solid #EBE6E0; border-right:none; border-radius:8px 0 0 8px; padding:12px 14px; font-family:'Montserrat',sans-serif; font-size:11px; font-weight:700; color:var(--brown); display:flex; align-items:center;">IN +91</div>
+              <input type="text" name="phone_number" required class="form-input text-xs" style="border-radius:0 8px 8px 0; padding-left:12px;" placeholder="98765 43210">
+            </div>
+          </div>
+          <div>
+            <label class="form-label">Country</label>
+            <div style="width:100%; background:#F3F0EC; border:1px solid #EBE6E0; border-radius:8px; padding:12px 16px; font-family:'Montserrat',sans-serif; font-size:12px; color:var(--brown-lt); user-select:none; display:flex; align-items:center;">
+               <span style="font-size:9px; font-weight:700; margin-right:6px;">IN</span> India
+            </div>
+            <input type="hidden" name="country" value="India">
+          </div>
+        </div>
+
+        <div class="form-group pt-2 pb-6">
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" name="is_default" value="True" checked style="accent-color:var(--brown); width:18px; height:18px; border-radius:4px; border:2px solid var(--border);">
+            <span style="font-family:'Montserrat',sans-serif; font-size:12px; font-weight:600; color:var(--brown);">Set as default address</span>
+          </label>
+        </div>
+
+        <div class="flex items-center justify-between mt-auto" style="border-top:1px solid var(--border); padding-top:24px;">
+          <button type="button" onclick="closeAddAddressDrawer()" style="background:none; border:none; font-family:'Montserrat',sans-serif; font-size:12px; font-weight:600; color:var(--brown-lt); cursor:pointer;" class="hover:text-[var(--brown)] transition-colors">Cancel</button>
+          <button type="submit" onclick="this.classList.add('loading')" class="btn-loading-state h-[46px] hover:bg-[#3D2B1F] transition-colors" style="background:var(--brown); color:#fff; border:none; padding:12px 32px; border-radius:10px; font-family:'Montserrat',sans-serif; font-size:12px; font-weight:600; cursor:pointer;">
+            <span class="btn-text">Save Address</span>
+            <svg class="w-3.5 h-3.5 btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            <div class="btn-spinner"></div>
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ── SIDE DRAWERS FOR EDITING ADDRESSES ── -->
+{% for addr in addresses %}
+<div class="drawer-overlay" id="edit-address-modal-{{ addr.id }}" onclick="if(event.target===this)closeEditAddressModal('{{ addr.id }}')">
+  <div class="drawer">
+    <div class="drawer-header" style="justify-content: flex-start; gap: 14px; padding: 20px 36px;">
+      <button type="button" onclick="backToSelection('edit-address-modal-{{ addr.id }}')" class="btn-back-drawer" title="Back">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+      </button>
+      <h3 style="font-family:'Montserrat',sans-serif; font-size:15px; font-weight:700; color:var(--brown); margin:0; letter-spacing:-0.01em;">Edit Address</h3>
+      <button type="button" onclick="closeEditAddressModal('{{ addr.id }}')" style="background:none; border:none; cursor:pointer; margin-left: auto;" class="hover:opacity-60 transition-opacity">
+        <svg class="w-6 h-6" fill="none" stroke="var(--brown)" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="drawer-body summary-scroll">
+      <form action="{% url 'edit_address' addr.id %}?next={% url 'checkout' %}" method="POST">
+        {% csrf_token %}
+        
+        <div class="form-group">
+          <label class="form-label req">Address Label</label>
+          <div class="label-radio-group">
+            <label>
+              <input type="radio" name="label" value="HOME" class="label-radio" {% if addr.label == 'HOME' %}checked{% endif %}>
+              <div class="label-radio-btn">🏠 Home</div>
+            </label>
+            <label>
+              <input type="radio" name="label" value="OFFICE" class="label-radio" {% if addr.label == 'OFFICE' %}checked{% endif %}>
+              <div class="label-radio-btn">💼 Office</div>
+            </label>
+            <label>
+              <input type="radio" name="label" value="OTHER" class="label-radio" {% if addr.label == 'OTHER' %}checked{% endif %}>
+              <div class="label-radio-btn">📍 Other</div>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label req">Full Name</label>
+          <input type="text" name="full_name" value="{{ addr.full_name }}" required class="form-input">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label req">Street Address</label>
+          <input type="text" name="street_address" value="{{ addr.street_address }}" required class="form-input">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 form-group">
+          <div>
+            <label class="form-label req">Pincode</label>
+            <input type="text" name="pincode" value="{{ addr.pincode }}" required class="form-input">
+          </div>
+          <div>
+            <label class="form-label req">City / Locality</label>
+            <input type="text" name="city" value="{{ addr.city }}" required class="form-input">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 form-group">
+          <div>
+            <label class="form-label req">District</label>
+            <input type="text" name="district" value="{{ addr.district }}" required class="form-input">
+          </div>
+          <div>
+            <label class="form-label req">State</label>
+            <input type="text" name="state" value="{{ addr.state }}" required class="form-input">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 form-group">
+          <div>
+            <label class="form-label req">Phone Number</label>
+            <div style="position:relative; display:flex;">
+              <div style="background:#F3F0EC; border:1px solid #EBE6E0; border-right:none; border-radius:8px 0 0 8px; padding:12px 14px; font-family:'Montserrat',sans-serif; font-size:11px; font-weight:700; color:var(--brown); display:flex; align-items:center;">IN +91</div>
+              <input type="text" name="phone_number" value="{{ addr.phone_number }}" required class="form-input text-xs" style="border-radius:0 8px 8px 0; padding-left:12px;">
+            </div>
+          </div>
+          <div>
+            <label class="form-label">Country</label>
+            <div style="width:100%; background:#F3F0EC; border:1px solid #EBE6E0; border-radius:8px; padding:12px 16px; font-family:'Montserrat',sans-serif; font-size:12px; color:var(--brown-lt); user-select:none; display:flex; align-items:center;">
+               <span style="font-size:9px; font-weight:700; margin-right:6px;">IN</span> India
+            </div>
+            <input type="hidden" name="country" value="India">
+          </div>
+        </div>
+
+        <div class="form-group pt-2 pb-6">
+          <label class="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" name="is_default" value="True" {% if addr.is_default %}checked{% endif %} style="accent-color:var(--brown); width:18px; height:18px; border-radius:4px; border:2px solid var(--border);">
+            <span style="font-family:'Montserrat',sans-serif; font-size:12px; font-weight:600; color:var(--brown);">Set as default</span>
+            {% if addr.is_default %}
+               <span style="font-family:'Montserrat',sans-serif; font-size:9.5px; font-weight:600; color:#1B9B7D; margin-left:6px; display:inline-flex; align-items:center; gap:3px;"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Current default</span>
+            {% endif %}
+          </label>
+        </div>
+
+        <div class="flex items-center justify-between" style="border-top:1px solid var(--border); padding-top:24px; margin-top:20px;">
+          <div>
+             <a href="{% url 'delete_address' addr.id %}?next={% url 'checkout' %}" style="display:inline-flex; align-items:center; gap:6px; padding:10px 14px; border:1px solid #F0C4BA; background:#FFF7F5; color:#D65A47; border-radius:10px; font-family:'Montserrat',sans-serif; font-size:10.5px; font-weight:600; text-decoration:none;" class="hover:bg-[#FCEAE6] transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                Delete
+             </a>
+          </div>
+          <div class="flex items-center gap-4">
+             <button type="button" onclick="closeEditAddressModal('{{ addr.id }}')" style="background:none; border:none; font-family:'Montserrat',sans-serif; font-size:11.5px; font-weight:600; color:var(--brown-lt); cursor:pointer;" class="hover:text-[var(--brown)] transition-colors">Cancel</button>
+             <button type="submit" onclick="this.classList.add('loading')" class="btn-loading-state h-[42px] hover:bg-[#3D2B1F] transition-colors" style="background:var(--brown); color:#fff; border:none; padding:10px 24px; border-radius:10px; font-family:'Montserrat',sans-serif; font-size:11px; font-weight:600; cursor:pointer;">
+               <span class="btn-text">Update</span>
+               <svg class="w-3.5 h-3.5 btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+               <div class="btn-spinner"></div>
+             </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+function openDrawer() {
+  document.getElementById('address-drawer').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeDrawer() {
+  document.getElementById('address-drawer').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function openAddAddressDrawer() {
+  document.getElementById('add-address-drawer').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeAddAddressDrawer() {
+  document.getElementById('add-address-drawer').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function openEditAddressModal(id) {
+  document.getElementById('edit-address-modal-' + id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeEditAddressModal(id) {
+  document.getElementById('edit-address-modal-' + id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function backToSelection(currentDrawerId) {
+  document.getElementById(currentDrawerId).classList.remove('open');
+  openDrawer();
+}
+
+let activeMenuNode = null;
+function toggleAddressMenu(id) {
+  const menu = document.getElementById('menu-' + id);
+  if (activeMenuNode && activeMenuNode !== menu) { activeMenuNode.classList.remove('show'); }
+  if (menu.classList.contains('show')) {
+    menu.classList.remove('show');
+    activeMenuNode = null;
+  } else {
+    menu.classList.add('show');
+    activeMenuNode = menu;
+  }
+}
+document.addEventListener('click', function() {
+  if (activeMenuNode) { activeMenuNode.classList.remove('show'); activeMenuNode = null; }
+});
+
+function selectDrawerAddress(card, id, label, fullname, phone, details) {
+  // Update visually active card
+  document.querySelectorAll('.drawer-address-card').forEach(c => {
+    c.classList.remove('active');
+    const badge = c.querySelector('.selection-badge');
+    if (badge) badge.classList.add('hidden');
+  });
+  card.classList.add('active');
+  const activeBadge = card.querySelector('.selection-badge');
+  if (activeBadge) activeBadge.classList.remove('hidden');
+  
+  // Update main UI card
+  document.getElementById('selected_address_id').value = id;
+  document.getElementById('display_addr_label').innerText = label;
+  document.getElementById('display_addr_fullname').innerText = fullname;
+  document.getElementById('display_addr_phone').innerText = phone;
+  document.getElementById('display_addr_details').innerHTML = details;
+  
+  closeDrawer();
+}
+
+function pickOption(card) {
+  const group = card.closest('.space-y-3');
+  group.querySelectorAll('.option-card').forEach(c => {
+    c.classList.remove('active');
+    c.querySelector('.radio-outer').classList.remove('active');
+  });
+  card.classList.add('active');
+  card.querySelector('.radio-outer').classList.add('active');
+}
+function pickPayment(card) {
+  const group = card.closest('.space-y-3');
+  group.querySelectorAll('.option-card').forEach(c => {
+    c.classList.remove('active');
+    const r = c.querySelector('.radio-outer');
+    if (r) r.classList.remove('active');
+  });
+  card.classList.add('active');
+  card.querySelector('.radio-outer').classList.add('active');
+}
+</script>
+{% endblock %}
