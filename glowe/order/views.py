@@ -5,7 +5,7 @@ from django.utils.crypto import get_random_string
 from product.models import Variant
 from cart.models import Cart
 from user.models import Address
-from models import Order, OrderItem, ShippingAddress, Payment, OrderStatusHistory
+from .models import Order,OrderItem, ShippingAddress,Payment,OrderStatusHistory
 
 
 
@@ -121,3 +121,5 @@ def place_order(request):
     messages.success(request,"Order placed successfully!")
     return redirect("order_success",order_id=order.id)
     
+def order_success(request):
+    return render(request,'order_success.html')
