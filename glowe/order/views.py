@@ -250,4 +250,41 @@ def order_listing(request):
     })
     
         
+@login_required
+def order_detial(request,order_id):
+    order=get_object_or_404(Order,id=order_id,user=request.user)
+    order_items =order.items.select_related('variant__product')
+    
+    order.delivery_start=order.created_at + timedelta(days=3)
+    order.delivery_end = order.created_at + timedelta(days=7)
 
+    # Tracking history
+    history =order.status_history.all().order_by('-updated_at')
+
+    #cancel not in this
+    can_cancel=order.order_status in [
+        Order.Status.PENDING,
+        Order.Status.CONFIRMED,
+        Order.Status.PROCESSING,
+    ]
+    #return allowed
+    can_return = order.order_status == Order.Status.DELIVERED
+    
+    # payment
+    payment = getattr(order,'payment',None)
+    
+    total_count=order_items.count()
+    
+    
+    return render(request,'user/order_detail.html', {
+        'order':order,
+        'order_items':order_items,
+        'history':history,
+        'delivery_start':order.delivery_start,
+        'delivery_end':order.delivery_end,
+        'can_cancel':can_cancel,
+        'can_return':can_return,
+        'payment':payment,
+        'total_count':total_count
+        
+    })

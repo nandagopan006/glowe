@@ -43,55 +43,56 @@ class OrderItem(models.Model):
         DELIVERED= "DELIVERED","Delivered"
         CANCELLED="CANCELLED","Cancelled"
 
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
-    variant = models.ForeignKey(Variant, on_delete=models.CASCADE)
+    order=models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
+    variant=models.ForeignKey(Variant, on_delete=models.CASCADE)
 
-    price_at_time = models.DecimalField(max_digits=10, decimal_places=2)
-    quantity = models.PositiveIntegerField()
+    price_at_time=models.DecimalField(max_digits=10, decimal_places=2)
+    quantity= models.PositiveIntegerField()
 
-    item_status = models.CharField(
+    item_status=models.CharField(
         max_length=20,
         choices=Status.choices,
         default=Status.PENDING
     )
+    cancel_reason=models.TextField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.variant} - {self.quantity}"
 
 class ShippingAddress(models.Model):
 
-    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name="shipping_address")
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    order=models.OneToOneField(Order, on_delete=models.CASCADE, related_name="shipping_address")
+    user=models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
-    full_name = models.CharField(max_length=100)
-    phone = models.CharField(max_length=10)
+    full_name=models.CharField(max_length=100)
+    phone=models.CharField(max_length=10)
 
-    address_line1 = models.TextField()
-    city = models.CharField(max_length=100)
-    district = models.CharField(max_length=100)
-    state = models.CharField(max_length=100)
-    country = models.CharField(max_length=100, default="India")
-    pincode = models.CharField(max_length=6)
+    address_line1=models.TextField()
+    city=models.CharField(max_length=100)
+    district=models.CharField(max_length=100)
+    state=models.CharField(max_length=100)
+    country=models.CharField(max_length=100, default="India")
+    pincode=models.CharField(max_length=6)
     
 class Payment(models.Model):
 
     class Method(models.TextChoices):
-        COD = "COD", "Cash on Delivery"
+        COD ="COD", "Cash on Delivery"
     class Status(models.TextChoices):
-        PENDING = "PENDING", "Pending"
-        SUCCESS = "SUCCESS", "Success"
-        FAILED = "FAILED", "Failed"
+        PENDING="PENDING","Pending"
+        SUCCESS="SUCCESS", "Success"
+        FAILED ="FAILED", "Failed"
 
     order = models.OneToOneField(Order, on_delete=models.CASCADE)
 
-    payment_method = models.CharField(
+    payment_method=models.CharField(
         max_length=20,
         choices=Method.choices,
         default=Method.COD
     )
 
-    transaction_id = models.CharField(max_length=100, blank=True, null=True)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    transaction_id=models.CharField(max_length=100, blank=True, null=True)
+    amount=models.DecimalField(max_digits=10, decimal_places=2)
 
     payment_status = models.CharField(
         max_length=20,
