@@ -232,15 +232,21 @@ def order_listing(request):
         orders=orders.filter(created_at__gte=now- timedelta(days=180))
     elif filter_by == '1y':
         orders=orders.filter(created_at__gte=now- timedelta(days=364))
+    
+    for order in orders :
+        order.delivery_start =order.created_at +timedelta(days=3)
+        order.delivery_end =order.created_at +timedelta(days=7)
         
+    total_orders=orders.count()
     paginator=Paginator(orders,5)
-    page=request.GEET.get('page')
+    page=request.GET.get('page')
     orders=paginator.get_page(page)    
         
     return render(request,'user/order_listing.html',{
         'orders':orders,
         'search':search,
         'filter_by':filter_by,
+        'total_orders':total_orders,
     })
     
         
