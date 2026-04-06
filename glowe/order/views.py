@@ -231,7 +231,7 @@ def order_listing(request):
     elif filter_by == '6m':
         orders=orders.filter(created_at__gte=now- timedelta(days=180))
     elif filter_by == '1y':
-        orders=orders.filter(created_at__gte=now- timedelta(days=364))
+        orders=orders.filter(created_at__gte=now- timedelta(days=365))
     
     for order in orders :
         order.delivery_start =order.created_at +timedelta(days=3)
