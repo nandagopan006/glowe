@@ -8,8 +8,12 @@ from cart.models import Cart
 from user.models import Address
 from django.contrib.auth.decorators import login_required
 from datetime import date, timedelta
+from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
+from django.db.models import Q
+from django.core.paginator import Paginator
+
 
 
 
@@ -203,3 +207,41 @@ def order_success(request,order_id):
         "payment":payment,
     })
     
+@login_required 
+def order_listing(request):
+    orders=Order.objects.filter(user=request.user).prefetch_related('items__variant__product__images')
+    
+    orders=orders.order_by('-created_at')
+    
+    search=request.GET.get('search','').strip()
+    if search :
+        orders=orders.filter( Q(order_number__icontains=search) |
+         Q(items__variant__product__name__icontains=search)).distinct()
+    
+    filter_by=request.GET.get('filter','6m')
+    
+    now =timezone.now()
+    
+    if filter_by =='1w':
+        orders=orders.filter(created_at__gte=now -timedelta(weeks=1))
+    elif filter_by =='1m' :
+        orders=orders.filter(created_at__gte=now -timedelta(days=30))
+    elif filter_by == '3m':
+        orders=orders.filter(created_at__gte=now-timedelta(days=90))
+    elif filter_by == '6m':
+        orders=orders.filter(created_at__gte=now- timedelta(days=180))
+    elif filter_by == '1y':
+        orders=orders.filter(created_at__gte=now- timedelta(days=364))
+        
+    paginator=Paginator(orders,5)
+    page=request.GEET.get('page')
+    orders=paginator.get_page(page)    
+        
+    return render(request,'user/order_listing.html',{
+        'orders':orders,
+        'search':search,
+        'filter_by':filter_by,
+    })
+    
+        
+
