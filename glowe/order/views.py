@@ -146,7 +146,7 @@ def order_success(request,order_id):
     delivery_start=order_date + timedelta(days=3)
     delivery_end=order_date + timedelta(days=7)
     
-    return render(request,'order_success.html',{
+    return render(request,'user/order_success.html',{
         "order":order,
         "order_items":order_items,
         "delivery_start":delivery_start,
