@@ -317,18 +317,40 @@ def cancel_order(request,order_id):
         variant.stock +=item.quantity
         variant.save()
         
+        #reduce sub totlt
+        order.subtotal-= item.price_at_time * item.quantity
+        
         item.item_status=OrderItem.Status.CANCELLED
         item.cancel_reason=reason 
         item.save()
         
         #updte ordr
+    order.total_amount-= order.subtotal + order.delivery_charge
     order.order_status=Order.Status.CANCELLED
     order.save()
+    
     #histy
     OrderStatusHistory.objects.create(
             order=order,
             status=Order.Status.CANCELLED
         )
+    send_mail(
+        subject="Order Cancelled ❌",
+        message=f"""
+Hi {request.user.full_name},
+
+Your order has been cancelled successfully.
+
+Order ID: {order.order_number}
+
+If payment was made, refund will be processed shortly.
+
+Thank you ❤️
+""",
+        from_email=settings.EMAIL_HOST_USER,
+        recipient_list=[request.user.email],
+        fail_silently=True,
+    )
     
     messages.success(request,"Order cancelled successfully")
     return redirect('order_detail', order_id=order.id)
@@ -360,8 +382,10 @@ def cancel_order_item(request,item_id):
     
     #restore stk
     variant=item.variant
-    variant.stock = max(0, variant.stock + item.quantity)
+    variant.stock+= item.quantity
     variant.save()
+    
+    order.sub_total-= item.price_at_time * item.quantity
     
     #upte itm
     item.item_status=OrderItem.Status.CANCELLED
@@ -369,7 +393,7 @@ def cancel_order_item(request,item_id):
     item.save()
     
     # update order total
-    order.total_amount -=item.price_at_time * item.quantity
+    order.total_amount -=order.sub_total + order.delivery_charge
     order.save()
     
     OrderStatusHistory.objects.create(order=order,status='ITEM_CANCELLED')
@@ -384,6 +408,24 @@ def cancel_order_item(request,item_id):
     if all_cancelled :
         order.order_status = Order.Status.CANCELLED
         order.save()
+    
+    send_mail(
+        subject="Item Cancelled ❌",
+        message=f"""
+Hi {request.user.username},
+
+One item from your order has been cancelled.
+
+Order ID: {order.order_number}
+
+Refund will be processed shortly.
+
+Thank you ❤️
+""",
+        from_email=settings.EMAIL_HOST_USER,
+        recipient_list=[request.user.email],
+        fail_silently=True,
+    )
         
     messages.success(request,"Item cancelled succussfully")
     return redirect('order_detail',order.id)
