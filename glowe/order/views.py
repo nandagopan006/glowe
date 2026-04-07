@@ -717,3 +717,67 @@ def  admin_order_detail(request,order_id):
         'total_items':total_items,
         'can_update':can_update,
     })
+
+@login_required
+def update_order_status(request,order_id):
+    
+    if request.method != "POST":
+        return redirect('admin_order_detail',order_id=order_id)
+    order=get_object_or_404(Order,id =order_id)
+    
+    new_status=request.POST.get('status')
+    
+    if order.order_status == Order.Status.CANCELLED :
+        messages.error(request,"Cancelled order cannot be updated")
+        return redirect('admin_order_detail',order.id)
+    #not allow
+    if order.order_status == Order.Status.DELIVERED :
+        messages.error(request,"Delivered order cannot be updated")
+        return redirect('admin_order_detail',order.id)
+    
+    #pending to confirmed 
+    if order.order_status == Order.Status.PENDING:
+        if new_status != Order.Status.CONFIRMED:
+            messages.error(request,"Only can move to CONFIRMED")
+            return redirect('admin_order_detail', order.id)
+
+    # confirmed to proccessing
+    elif order.order_status == Order.Status.CONFIRMED:
+        if new_status != Order.Status.PROCESSING:
+            messages.error(request,"Only can move to PROCESSING")
+            return redirect('admin_order_detail', order.id)
+
+    #proccessing to shipped
+    elif order.order_status ==Order.Status.PROCESSING:
+        if new_status != Order.Status.SHIPPED:
+            messages.error(request,"Only can move to SHIPPED")
+            return redirect('admin_order_detail',order.id)
+
+    #shipped to out off delvery
+    elif order.order_status==Order.Status.SHIPPED:
+        if new_status != Order.Status.OUT_FOR_DELIVERY:
+            messages.error(request,"Only can move to OUT FOR DELIVERY")
+            return redirect('admin_order_detail',order.id)
+
+    # Oout of delvery to delvered
+    elif order.order_status ==Order.Status.OUT_FOR_DELIVERY:
+        if new_status != Order.Status.DELIVERED:
+            messages.error(request,"Only can move to DELIVERED")
+            return redirect('admin_order_detail',order.id)
+        
+    # update status
+    order.order_status =new_status
+    
+     # set delivered date
+    if new_status ==Order.Status.DELIVERED:
+        order.delivered_date =timezone.now()
+    
+    order.save()
+    
+    OrderStatusHistory.objects.create(
+        order=order,
+        status=new_status
+    )
+    
+    messages.success(request, f"Order moved to {new_status}")
+    return redirect('admin_order_detail',order.id)
