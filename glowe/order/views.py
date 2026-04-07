@@ -7,7 +7,7 @@ from product.models import Variant
 from cart.models import Cart
 from user.models import Address
 from django.contrib.auth.decorators import login_required
-from datetime import date, timedelta
+from datetime import timedelta
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.conf import settings
@@ -19,6 +19,7 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Spacer, Par
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 import io
+from collections import defaultdict
 
 
 
@@ -530,20 +531,20 @@ def order_cancelled_success(request, order_id):
 
 @login_required
 def download_invoice(request, order_id):
-    order=get_object_or_404(Order, id=order_id, user=request.user)
-    addr=order.shipping_address
-    pay=getattr(order, 'payment', None)
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+    addr = order.shipping_address
+    pay = getattr(order, 'payment', None)
 
     styles = getSampleStyleSheet()
-    B=lambda t: Paragraph(f"<b>{t}</b>", styles["Normal"])
-    N =lambda t: Paragraph(str(t), styles["Normal"])
-    INR=lambda v: f"Rs.{v:,.2f}"
+    B = lambda t: Paragraph(f"<b>{t}</b>", styles["Normal"])
+    N = lambda t: Paragraph(str(t), styles["Normal"])
+    INR = lambda v: f"Rs.{v:,.2f}"
 
     buf = io.BytesIO()
-    doc = SimpleDocTemplate(buf,pagesize=A4,topMargin=30,bottomMargin=30)
+    doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=30, bottomMargin=30)
 
     meta = Table([[B("Glowe"), B(f"INVOICE # {order.order_number}")]], colWidths=[270, 270])
-    meta.setStyle(TableStyle([("ALIGN", (1,0), (1,0), "RIGHT")]))
+    meta.setStyle(TableStyle([("ALIGN", (1, 0), (1, 0), "RIGHT")]))
 
     info = Table([
         [B("Bill To"),                    B("Ship To"),          B("Payment")],
@@ -553,42 +554,60 @@ def download_invoice(request, order_id):
         ["",                              N(addr.country),       ""],
     ], colWidths=[180, 180, 180])
     info.setStyle(TableStyle([
-        ("FONTNAME",(0,0), (-1,0), "Helvetica-Bold"),
-        ("LINEBELOW",(0,0), (-1,0), 0.5, colors.black),
-        ("FONTSIZE",(0,0), (-1,-1), 9),
-        ("VALIGN", (0,0), (-1,-1), "TOP"),
+        ("FONTNAME",  (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("LINEBELOW", (0, 0), (-1, 0), 0.5, colors.black),
+        ("FONTSIZE",  (0, 0), (-1, -1), 9),
+        ("VALIGN",    (0, 0), (-1, -1), "TOP"),
     ]))
 
-    rows = [["Product", "Qty", "Unit Price", "Amount"]]
+    # Group items by variant
+    grouped = defaultdict(lambda: {"name": "", "qty": 0, "price": 0})
     for item in order.items.all():
+        key = item.variant.id
+        grouped[key]["name"]  = item.variant.product.name[:50]
+        grouped[key]["price"] = item.price_at_time
+        grouped[key]["qty"]  += item.quantity
+
+    # Build item rows
+    rows = [["Product", "Qty", "Unit Price", "Amount"]]
+    for g in grouped.values():
+        qty = g["qty"]
+        price = g["price"]
         rows.append([
-            item.variant.product.name[:50],
-            item.quantity,
-            INR(item.price_at_time),
-            INR(item.quantity * item.price_at_time),
+            g["name"],
+            qty,
+            INR(price),
+            INR(qty * price),
         ])
+
+    # Compute totals from actual line items (not stale order fields)
+    computed_subtotal = sum(g["qty"] * g["price"] for g in grouped.values())
+    computed_total = computed_subtotal + order.delivery_charge
+
     rows += [
-        ["", "", "Subtotal", INR(order.subtotal)],
+        ["", "", "Subtotal", INR(computed_subtotal)],
         ["", "", "Shipping", INR(order.delivery_charge)],
-        ["", "", B("Total"), B(INR(order.total_amount))],
+        ["", "", B("Total"), B(INR(computed_total))],
     ]
 
     table = Table(rows, colWidths=[300, 60, 80, 100])
     table.setStyle(TableStyle([
-        ("FONTNAME",(0,0),(-1,0),  "Helvetica-Bold"),
-        ("BACKGROUND",(0,0),(-1,0),  colors.black),
-        ("TEXTCOLOR", (0,0),(-1,0),  colors.white),
-        ("ALIGN",(1,0),(-1,-1),"RIGHT"),
-        ("ROWBACKGROUNDS",(0,1),(-1,-1), [colors.whitesmoke, colors.white]),
-        ("LINEABOVE",(0,-3), (-1,-3), 0.5, colors.grey),
-        ("FONTSIZE",(0,0),  (-1,-1), 9),
+        ("FONTNAME",       (0, 0),  (-1, 0),  "Helvetica-Bold"),
+        ("BACKGROUND",     (0, 0),  (-1, 0),  colors.black),
+        ("TEXTCOLOR",      (0, 0),  (-1, 0),  colors.white),
+        ("ALIGN",          (1, 0),  (-1, -1), "RIGHT"),
+        ("ROWBACKGROUNDS", (0, 1),  (-1, -1), [colors.whitesmoke, colors.white]),
+        ("LINEABOVE",      (0, -3), (-1, -3), 0.5, colors.grey),
+        ("FONTSIZE",       (0, 0),  (-1, -1), 9),
     ]))
 
-    doc.build([meta, Spacer(1,8), info, Spacer(1,16), table])
+    doc.build([meta, Spacer(1, 8), info, Spacer(1, 16), table])
     buf.seek(0)
     res = HttpResponse(buf, content_type="application/pdf")
-    res["Content-Disposition"] =f'attachment; filename="invoice_{order.order_number}.pdf"'
+    res["Content-Disposition"] = f'attachment; filename="invoice_{order.order_number}.pdf"'
     return res
+
+
 
 
 
