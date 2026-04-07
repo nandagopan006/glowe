@@ -192,11 +192,11 @@ body { background:#F5F1EC !important; }
     <div class="sheet-nav-icon" style="background:#F5F1EC;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1a1208" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
     <div><div class="sheet-nav-label">Overview</div><div class="sheet-nav-sub">Account summary</div></div>
   </a>
-  <a href="" class="sheet-nav-item">
+  <a href="{% url 'order_listing' %}" class="sheet-nav-item">
     <div class="sheet-nav-icon" style="background:#f0f8f4;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>
     <div><div class="sheet-nav-label">My Orders</div><div class="sheet-nav-sub">Track &amp; manage</div></div>
   </a>
-  <a href="#" class="sheet-nav-item">
+  <a href="{% url 'wishlist' %}" class="sheet-nav-item">
     <div class="sheet-nav-icon" style="background:#fdf0f4;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#993556" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
     <div><div class="sheet-nav-label">Wishlist</div><div class="sheet-nav-sub">Saved items</div></div>
   </a>
@@ -253,11 +253,11 @@ body { background:#F5F1EC !important; }
             <svg class="w-4 h-4 text-[#8C7F77]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
             <span class="font-montserrat text-[12px] font-medium text-[#8C7F77]">Overview</span>
           </a>
-          <a href="" class="flex items-center gap-3 px-5 py-4 border-l-2 border-transparent hover:bg-[#F5F1EC] hover:border-[#E7DDD6] transition-all no-underline">
+          <a href="{% url 'order_listing' %}" class="flex items-center gap-3 px-5 py-4 border-l-2 border-transparent hover:bg-[#F5F1EC] hover:border-[#E7DDD6] transition-all no-underline">
             <svg class="w-4 h-4 text-[#8C7F77]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
             <span class="font-montserrat text-[12px] font-medium text-[#8C7F77]">Orders</span>
           </a>
-          <a href="#" class="flex items-center gap-3 px-5 py-4 border-l-2 border-transparent hover:bg-[#F5F1EC] hover:border-[#E7DDD6] transition-all no-underline">
+          <a href="{% url 'wishlist' %}" class="flex items-center gap-3 px-5 py-4 border-l-2 border-transparent hover:bg-[#F5F1EC] hover:border-[#E7DDD6] transition-all no-underline">
             <svg class="w-4 h-4 text-[#8C7F77]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
             <span class="font-montserrat text-[12px] font-medium text-[#8C7F77]">Wishlist</span>
           </a>

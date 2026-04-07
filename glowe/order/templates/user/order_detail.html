@@ -685,35 +685,22 @@
     }
   }
 
-  // Premium Submit Handler with satisfying feedback
+  // Premium Submit Handler
   function handlePremiumSubmit(formId, btn) {
-    const originalText = btn.innerHTML;
-    // 1. Show Spinner instantly
+    if (btn.classList.contains('btn-processing')) return;
+
+    // Show Spinner instantly
     btn.classList.add('btn-processing');
     btn.innerHTML = `
-      <svg class="loader-icon" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+      <svg class="animate-spin" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="10" opacity="0.25"></circle>
         <path d="M12 2 a10 10 0 0 1 10 10" stroke-linecap="round"></path>
       </svg>
-      <span>Processing</span>
+      <span>Processing...</span>
     `;
 
-    // 2. High-speed Satisfaction delay (500ms)
-    setTimeout(() => {
-      btn.classList.remove('btn-processing');
-      btn.classList.add('btn-confirmed');
-      btn.innerHTML = `
-        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
-          <polyline points="20 6 9 17 4 12"></polyline>
-        </svg>
-        <span>Success</span>
-      `;
-      
-      // 3. Final submission after visual "Success" (Fast 250ms delay)
-      setTimeout(() => {
-        document.getElementById(formId).submit();
-      }, 250);
-    }, 500);
+    // Submit form (redirects natively)
+    document.getElementById(formId).submit();
   }
 
   function openModal(id) {

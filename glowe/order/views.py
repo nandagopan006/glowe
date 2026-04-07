@@ -615,3 +615,77 @@ def download_invoice(request, order_id):
 
 
 
+
+
+#-------- end user side ---- -- -- - - - - - ok
+
+
+#--start ---admin side---- - - - - - -------
+
+
+@login_required
+def admin_order_list(request):
+    
+    order=Order.objects.select_related('user').all()
+    order=order.order_by('-created_at')
+    
+    search =request.GET.get('search','').strip()
+    
+    if search :
+        orders=orders.filter(Q (order_number__icontains=search) | 
+                             Q (user__full_name__icontains=search))
+        
+        
+    status =request.GET.get('status','')
+    if status :
+        orders =orders.filter(order_status=status)
+    
+    filter_by =request.GET.get('filter','all')
+    
+    if filter_by == 'pending':
+        orders=orders.filter(order_status=Order.Status.PENDING)
+        
+    elif filter_by == 'confirmed':
+        orders =orders.filter(order_status=Order.Status.CONFIRMED)
+    
+    elif filter_by == 'processing':
+        orders =orders.filter(order_status=Order.Status.PROCESSING)    
+        
+    elif filter_by == 'shipped':
+        orders=orders.filter(order_status=Order.Status.SHIPPED)
+    
+    elif filter_by == 'out of delivery':
+        orders=orders.filter(order_status=Order.Status.OUT_FOR_DELIVERY)
+    
+    elif filter_by == 'delivered':
+        orders =orders.filter(order_status=Order.Status.DELIVERED)
+        
+    elif filter_by == 'cancelled':
+        orders=orders.filter(order_status=Order.Status.CANCELLED)
+    
+    payment =request.GET.get('payment')
+    if payment :
+        orders=orders.filter(payment__payment_method=payment)
+    
+        
+    paginator=Paginator(orders,5)
+    page=request.GET.get('page')
+    orders=paginator.get_page(page)
+    
+     
+    total_orders = Order.objects.count()
+    pending_orders = Order.objects.filter(order_status=Order.Status.PENDING).count()
+    completed_orders = Order.objects.filter(order_status=Order.Status.DELIVERED).count()
+    
+    return render(request,'admin/order_list.html',{
+        'orders': orders,
+        'status': status,
+        'search':search,
+        'filter_by':filter_by,
+        'payment':payment,
+        'total_orders':total_orders,
+        'pending_orders':pending_orders,
+        'completed_orders':completed_orders,
+        
+    })
+
