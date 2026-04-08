@@ -1,0 +1,1088 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Order History – Glowé{% endblock %}
+
+{% block extra_css %}
+/* =============================================================
+   ORDER HISTORY — Glowé  |  Clean logic + premium animations
+   Context: orders, search, filter_by, total_orders
+============================================================= */
+
+/* ── KEYFRAMES ── */
+@keyframes fadeUp    { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+@keyframes fadeIn    { from{opacity:0} to{opacity:1} }
+@keyframes dotBreathe{ 0%,100%{transform:scale(1)} 50%{transform:scale(0.85)} }
+@keyframes dotRing   { 0%{transform:scale(0.8);opacity:0.6} 80%{transform:scale(3.2);opacity:0} 100%{transform:scale(3.2);opacity:0} }
+@keyframes shimmerBar{ 0%{background-position:-200% center} 100%{background-position:200% center} }
+@keyframes badgeShine{ 0%{left:-100%;opacity:0} 20%{opacity:.4} 100%{left:200%;opacity:0} }
+@keyframes floatIcon { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+@keyframes cfDrop    { from{opacity:0;transform:translateY(-6px) scale(.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+@keyframes ripple    { 0%{transform:scale(0);opacity:.4} 100%{transform:scale(2.5);opacity:0} }
+
+/* ── PAGE ── */
+.ol-page { animation:fadeUp .55s cubic-bezier(.16,1,.3,1) both; }
+
+/* ── SIDEBAR ── */
+.accs-sidebar { width:210px; min-width:210px; flex-shrink:0; }
+
+.accs-nav-item {
+  display:flex; align-items:center; gap:12px;
+  padding:11px 14px; border-radius:10px;
+  font-family:'Montserrat',sans-serif; font-size:11.5px; font-weight:500;
+  color:#6b5f56; text-decoration:none; position:relative; overflow:hidden;
+  transition:background .2s, color .2s, transform .2s;
+}
+.accs-nav-item::before {
+  content:''; position:absolute; left:0; top:18%; bottom:18%;
+  width:2.5px; border-radius:0 3px 3px 0; background:#1a1208;
+  transform:scaleY(0); transition:transform .22s cubic-bezier(.34,1.56,.64,1);
+}
+.accs-nav-item:hover { background:#f0ebe2; color:#1a1208; transform:translateX(2px); }
+.accs-nav-item.active { color:#1a1208; font-weight:700; background:rgba(26,18,8,0.05); }
+.accs-nav-item.active::before { transform:scaleY(1); }
+.accs-nav-item svg { opacity:.55; flex-shrink:0; transition:opacity .2s; }
+.accs-nav-item.active svg, .accs-nav-item:hover svg { opacity:1; }
+
+/* ── SEARCH BAR ── */
+.ol-search-wrap { position:relative; }
+.ol-search-input {
+  width:100%; padding:12px 38px 12px 42px;
+  border-radius:999px; border:1.5px solid rgba(26,18,8,0.09);
+  background:#fff; font-family:'Montserrat',sans-serif;
+  font-size:12px; color:#1a1208;
+  box-shadow:0 2px 10px rgba(26,18,8,0.05);
+  outline:none;
+  transition:border-color .22s, box-shadow .22s, transform .22s;
+}
+.ol-search-input::placeholder { color:#c0b0a0; }
+.ol-search-input:focus {
+  border-color:#c8a96e;
+  box-shadow:0 0 0 3px rgba(200,169,110,.13), 0 4px 16px rgba(26,18,8,0.07);
+  transform:translateY(-1px);
+}
+.ol-search-icon {
+  position:absolute; left:16px; top:50%; transform:translateY(-50%);
+  pointer-events:none; color:#c0b0a0; transition:color .22s;
+}
+.ol-search-wrap:focus-within .ol-search-icon { color:#c8a96e; }
+
+/* Clear Search Button */
+.ol-search-clear {
+  position:absolute; right:12px; top:50%; transform:translateY(-50%) scale(0.8);
+  color:#a09488; cursor:pointer; opacity:0; pointer-events:none;
+  transition:opacity .2s, transform .2s cubic-bezier(.34,1.56,.64,1), color .2s, background .2s;
+  background:transparent; border:none; padding:5px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+}
+.ol-search-clear:hover { color:#1a1208; background:rgba(26,18,8,0.06); transform:translateY(-50%) scale(0.9); }
+.ol-search-wrap.has-val .ol-search-clear { opacity:1; pointer-events:auto; transform:translateY(-50%) scale(1); }
+
+/* ── CUSTOM FILTER DROPDOWN ── */
+.cf-wrap { position:relative; flex-shrink:0; }
+
+.cf-trigger {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:10px 14px 10px 18px; border-radius:999px;
+  border:1.5px solid rgba(26,18,8,0.10); background:#fff;
+  font-family:'Montserrat',sans-serif; font-size:11.5px; font-weight:600;
+  color:#1a1208; cursor:pointer; user-select:none; white-space:nowrap;
+  box-shadow:0 2px 10px rgba(26,18,8,0.06);
+  transition:border-color .22s, box-shadow .22s, transform .22s;
+  min-width:146px; justify-content:space-between;
+}
+.cf-trigger:hover {
+  border-color:rgba(26,18,8,0.22);
+  box-shadow:0 4px 18px rgba(26,18,8,0.09);
+  transform:translateY(-1px);
+}
+.cf-trigger.open {
+  border-color:#c8a96e;
+  box-shadow:0 0 0 3px rgba(200,169,110,.13);
+}
+.cf-trigger-label { flex:1; text-align:left; }
+.cf-chevron {
+  opacity:.5; flex-shrink:0;
+  transition:transform .28s cubic-bezier(.34,1.56,.64,1), opacity .2s;
+}
+.cf-trigger.open .cf-chevron { transform:rotate(180deg); opacity:.9; }
+
+.cf-menu {
+  position:absolute; top:calc(100% + 8px); right:0;
+  min-width:196px; background:#fff;
+  border:1px solid rgba(26,18,8,0.08); border-radius:18px;
+  box-shadow:0 20px 60px rgba(26,18,8,0.13), 0 4px 12px rgba(26,18,8,0.06);
+  overflow:hidden; z-index:300; display:none;
+  animation:cfDrop .22s cubic-bezier(.16,1,.3,1) forwards;
+}
+.cf-menu.open { display:block; }
+
+.cf-menu-head {
+  padding:11px 16px 8px;
+  font-family:'Montserrat',sans-serif; font-size:8.5px;
+  font-weight:700; letter-spacing:.18em; text-transform:uppercase;
+  color:#b0a498; border-bottom:1px solid rgba(26,18,8,0.05);
+}
+.cf-option {
+  display:flex; align-items:center; gap:10px; padding:11px 16px;
+  font-family:'Montserrat',sans-serif; font-size:12px; font-weight:500;
+  color:#4a3e34; text-decoration:none; cursor:pointer;
+  transition:background .15s, color .15s;
+  border-bottom:1px solid rgba(26,18,8,0.04);
+}
+.cf-option:last-child { border-bottom:none; }
+.cf-option:hover { background:#f5f1eb; color:#1a1208; }
+.cf-option.active { background:#f5f1eb; color:#1a1208; font-weight:700; }
+.cf-opt-icon {
+  width:28px; height:28px; border-radius:50%;
+  background:rgba(26,18,8,0.05);
+  display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  transition:background .18s;
+}
+.cf-option:hover .cf-opt-icon,
+.cf-option.active .cf-opt-icon { background:rgba(200,169,110,.18); }
+.cf-opt-text { display:flex; flex-direction:column; flex:1; }
+.cf-opt-title { font-size:12px; font-weight:600; line-height:1.2; }
+.cf-opt-sub   { font-size:9.5px; font-weight:400; color:#9a8e84; margin-top:1px; }
+.cf-tick { margin-left:auto; flex-shrink:0; opacity:0; transition:opacity .18s; }
+.cf-option.active .cf-tick { opacity:1; }
+
+/* ── ORDER CARD ── */
+.ol-card {
+  background:#fff;
+  border-radius:18px;
+  border:1px solid rgba(26,18,8,0.07);
+  box-shadow:0 2px 12px rgba(26,18,8,0.05), 0 1px 3px rgba(26,18,8,0.04);
+  opacity:0;
+  animation:fadeUp .5s cubic-bezier(.16,1,.3,1) both;
+  transition:transform .28s cubic-bezier(.34,1.56,.64,1), box-shadow .28s ease;
+  position:relative;
+}
+/* Stagger cards */
+.ol-card:nth-child(1){animation-delay:.05s}
+.ol-card:nth-child(2){animation-delay:.12s}
+.ol-card:nth-child(3){animation-delay:.19s}
+.ol-card:nth-child(4){animation-delay:.26s}
+.ol-card:nth-child(5){animation-delay:.33s}
+
+.ol-card:hover {
+  transform:translateY(-4px);
+  box-shadow:0 12px 40px rgba(26,18,8,0.10), 0 4px 12px rgba(26,18,8,0.06);
+}
+
+/* Gold shimmer on hover */
+.ol-card-shimmer {
+  position:absolute; inset:0;
+  border-radius:inherit;
+  pointer-events:none; overflow:hidden;
+  opacity:0; transition:opacity .3s; z-index:1;
+}
+.ol-card-shimmer::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg, transparent 0%, #c8a96e 30%, #f0d88a 50%, #c8a96e 70%, transparent 100%);
+  background-size:200% 100%;
+}
+.ol-card:hover .ol-card-shimmer { opacity:1; }
+.ol-card:hover .ol-card-shimmer::before { animation:shimmerBar 1.6s linear infinite; }
+
+/* Card meta labels */
+.card-meta-label {
+  font-family:'Montserrat',sans-serif; font-size:8.5px; font-weight:600;
+  letter-spacing:.15em; text-transform:uppercase; color:#b0a498; margin-bottom:5px;
+}
+.card-meta-val {
+  font-family:'Montserrat',sans-serif; font-size:13px; font-weight:600; color:#1a1208; line-height:1.3;
+}
+
+/* ── STATUS BADGES ── */
+.badge {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:5px 12px; border-radius:999px;
+  font-family:'Montserrat',sans-serif; font-size:9px;
+  font-weight:700; letter-spacing:.10em; text-transform:uppercase; white-space:nowrap;
+  position:relative; overflow:hidden;
+}
+/* Glass shine animation for active badges */
+.badge::after {
+  content:''; position:absolute; top:0; bottom:0; left:-100%; width:40%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
+  transform:skewX(-20deg);
+  animation:badgeShine 4.5s cubic-bezier(0.19,1,0.22,1) infinite;
+}
+.badge-delivered::after, .badge-cancelled::after { display:none; animation:none; }
+
+.badge-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; position:relative; z-index:2; }
+
+/* Active dot animations */
+.badge-active .badge-dot { animation:dotBreathe 2.2s ease-in-out infinite; }
+.badge-active .badge-dot::before {
+  content:''; position:absolute; inset:0; border-radius:50%; background:inherit; z-index:-1;
+  animation:dotRing 2.2s cubic-bezier(0.215,0.61,0.355,1) infinite;
+}
+
+.badge-pending    { background:rgba(200,169,110,.14); color:#8a6315; border:1px solid rgba(200,169,110,.20); }
+.badge-pending .badge-dot    { background:#c8a96e; }
+.badge-confirmed  { background:rgba(212,150,26,.12); color:#7a5a10;  border:1px solid rgba(212,150,26,.18); }
+.badge-confirmed .badge-dot  { background:#d4961a; }
+.badge-processing { background:rgba(59,130,246,.10); color:#1d4ed8;  border:1px solid rgba(59,130,246,.16); }
+.badge-processing .badge-dot { background:#3b82f6; }
+.badge-shipped    { background:rgba(139,92,246,.10); color:#6d28d9;  border:1px solid rgba(139,92,246,.16); }
+.badge-shipped .badge-dot    { background:#8b5cf6; }
+.badge-out        { background:rgba(249,115,22,.10); color:#c2410c;  border:1px solid rgba(249,115,22,.16); }
+.badge-out .badge-dot        { background:#f97316; }
+.badge-delivered  { background:rgba(43,103,71,.12);  color:#166534;  border:1px solid rgba(43,103,71,.18); }
+.badge-delivered .badge-dot  { background:#2B6747; }
+.badge-cancelled  { background:rgba(239,68,68,.09);  color:#b91c1c;  border:1px solid rgba(239,68,68,.14); }
+.badge-cancelled .badge-dot  { background:#ef4444; }
+
+/* ── PRODUCT AREA ── */
+.card-product-area {
+  background:#faf8f5;
+  border-top:1px solid rgba(26,18,8,0.055);
+  border-radius:0 0 18px 18px;
+}
+
+/* ── IMAGE GROUP ── */
+.img-group { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+
+.img-slot {
+  border-radius:14px; overflow:hidden;
+  background:linear-gradient(145deg, #f0ebe2, #e6e0d5);
+  box-shadow:0 3px 14px rgba(26,18,8,0.10), inset 0 1px 0 rgba(255,255,255,0.6);
+  flex-shrink:0; position:relative;
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1), box-shadow .3s;
+}
+.img-slot img {
+  width:100%; height:100%; object-fit:cover; display:block;
+  transition:transform .35s ease;
+}
+.img-slot:hover { transform:scale(1.05) translateY(-2px); box-shadow:0 8px 24px rgba(26,18,8,0.15); }
+.img-slot:hover img { transform:scale(1.06); }
+
+/* "+N more" overlay on last slot */
+.img-more-overlay {
+  position:absolute; inset:0;
+  background:rgba(26,18,8,0.50);
+  display:flex; align-items:center; justify-content:center;
+  border-radius:inherit;
+}
+.img-more-overlay span {
+  font-family:'Montserrat',sans-serif; font-size:13px;
+  font-weight:800; color:#fff; letter-spacing:.02em;
+}
+
+/* Sizes by count */
+.img-slot.size-single { width:120px; height:120px; }
+.img-slot.size-two    { width:94px;  height:112px; }
+.img-slot.size-multi  { width:82px;  height:100px; }
+
+/* ── BUTTONS ── */
+.btn-primary {
+  display:inline-flex; align-items:center; justify-content:center; gap:7px;
+  padding:11px 22px; border-radius:999px;
+  background:#1a1208; color:#fff;
+  font-family:'Montserrat',sans-serif; font-size:10px;
+  font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+  text-decoration:none; border:none; cursor:pointer; white-space:nowrap;
+  box-shadow:0 3px 14px rgba(26,18,8,0.20);
+  position:relative; overflow:hidden;
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1), box-shadow .22s, background .2s;
+}
+.btn-primary:hover {
+  transform:translateY(-2px) scale(1.03);
+  box-shadow:0 10px 28px rgba(26,18,8,0.28);
+  background:#2d1f0e; color:#fff;
+}
+.btn-primary:active { transform:scale(.97); }
+
+.btn-ghost {
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  padding:10px 22px; border-radius:999px;
+  background:transparent; color:#1a1208;
+  font-family:'Montserrat',sans-serif; font-size:10px;
+  font-weight:600; letter-spacing:.12em; text-transform:uppercase;
+  text-decoration:none; cursor:pointer; white-space:nowrap;
+  border:1.5px solid rgba(26,18,8,0.16);
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1), background .2s, color .2s, border-color .2s, box-shadow .22s;
+}
+.btn-ghost:hover {
+  transform:translateY(-2px) scale(1.03);
+  background:#1a1208; color:#fff; border-color:#1a1208;
+  box-shadow:0 8px 22px rgba(26,18,8,0.20);
+}
+.btn-ghost:active { transform:scale(.97); }
+
+/* ── PAGINATION ── */
+.pg-btn {
+  display:flex; align-items:center; justify-content:center;
+  width:40px; height:40px; border-radius:12px;
+  font-family:'Montserrat',sans-serif; font-size:12px; font-weight:600;
+  color:#1a1208; text-decoration:none;
+  border:1.5px solid rgba(26,18,8,0.10); background:#fff;
+  box-shadow:0 1px 5px rgba(26,18,8,0.04);
+  transition:all .25s cubic-bezier(.34,1.56,.64,1);
+}
+.pg-btn:hover {
+  background:#1a1208; color:#fff; border-color:#1a1208;
+  transform:translateY(-2px); box-shadow:0 8px 20px rgba(26,18,8,0.22);
+}
+.pg-btn.active { background:#1a1208; color:#fff; border-color:#1a1208; pointer-events:none; box-shadow:0 4px 14px rgba(26,18,8,0.25); }
+.pg-btn.disabled { opacity:.28; pointer-events:none; }
+
+/* ── MOBILE TABS ── */
+.mob-accs-tab {
+  display:flex; align-items:center; gap:7px; padding:9px 16px;
+  border-radius:999px; font-family:'Montserrat',sans-serif;
+  font-size:10.5px; font-weight:600; letter-spacing:.04em;
+  color:#6b5f56; text-decoration:none; border:1.5px solid transparent;
+  transition:all .18s;
+}
+.mob-accs-tab.active { background:#1a1208; color:#fff; box-shadow:0 4px 12px rgba(26,18,8,0.20); }
+.mob-accs-tab:not(.active):hover { background:#f0ebe2; color:#1a1208; }
+
+/* ── EMPTY STATE ── */
+.empty-icon { animation:floatIcon 3.5s ease-in-out infinite; }
+
+/* ── BUTTON POPOVER (formerly modal) ── */
+.om-popover-wrap { position:relative; width:100%; }
+
+.om-popover {
+  position:absolute; bottom:calc(100% + 14px); right:-6px;
+  width:340px; max-width:calc(100vw - 32px);
+  background:#fff; border-radius:24px;
+  padding:20px 20px 20px 24px;
+  box-shadow:0 18px 50px rgba(26,18,8,0.14), 0 4px 14px rgba(26,18,8,0.06), inset 0 0 0 1px rgba(26,18,8,0.05);
+  z-index:900;
+  opacity:0; pointer-events:none;
+  transform:translateY(12px) scale(0.96); transform-origin:bottom right;
+  transition:opacity .25s, transform .25s cubic-bezier(.34,1.56,.64,1);
+}
+/* Mobile tweak to center it if small screen */
+@media (max-width: 640px) {
+  .om-popover { right: 0; width: 320px; transform-origin:bottom; }
+}
+
+.om-popover.active {
+  opacity:1; pointer-events:auto;
+  transform:translateY(0) scale(1);
+}
+
+.om-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding-right:4px; }
+.om-title { font-family:'Cormorant Garamond',serif; font-size:22px; font-weight:600; color:#1a1208; margin-bottom:2px; line-height:1; }
+.om-subtitle { font-family:'Montserrat',sans-serif; font-size:10.5px; font-weight:500; color:#8a7e72; }
+.om-close {
+  width:32px; height:32px; border-radius:50%; background:#f0ebe2; color:#1a1208;
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  transition:background .2s, transform .2s; border:none; outline:none; flex-shrink:0;
+}
+.om-close:hover { background:#e6e0d8; transform:scale(1.05); }
+
+.om-product-list {
+  max-height:300px; overflow-y:auto; padding-right:8px; 
+  display:flex; flex-direction:column; gap:12px;
+}
+.om-product-list::-webkit-scrollbar { width:4px; }
+.om-product-list::-webkit-scrollbar-thumb { background:#d8d2ca; border-radius:4px; }
+
+.om-item {
+  display:flex; gap:14px; padding:12px; border-radius:14px;
+  border:1px solid rgba(26,18,8,0.05); background:#faf8f5;
+  text-decoration:none; transition:transform .2s, box-shadow .2s, border-color .2s;
+}
+.om-item:hover {
+  transform:translateY(-2px); box-shadow:0 8px 20px rgba(26,18,8,0.06);
+  border-color:rgba(200,169,110,.3);
+}
+.om-item-img {
+  width:60px; height:60px; border-radius:10px; background:#f0ebe2;
+  flex-shrink:0; overflow:hidden;
+}
+.om-item-img img { width:100%; height:100%; object-fit:cover; transition:transform .4s ease; }
+.om-item:hover .om-item-img img { transform:scale(1.08); }
+
+.om-item-info { flex:1; display:flex; flex-direction:column; justify-content:center; min-width:0; }
+.om-item-name { 
+  font-family:'Montserrat',sans-serif; font-size:12.5px; font-weight:700; 
+  color:#1a1208; margin-bottom:3px; line-height:1.2;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+.om-item-meta { font-family:'Montserrat',sans-serif; font-size:10px; color:#8a7e72; }
+.om-item-price { font-family:'Montserrat',sans-serif; font-size:12px; font-weight:700; color:#1a1208; text-align:right; margin-top:auto; white-space:nowrap; }
+
+{% endblock %}
+
+{% block content %}
+
+<div class="min-h-screen bg-[#f5f1eb]">
+  <div class="max-w-[1440px] mx-auto px-5 md:px-8 lg:px-12 py-10 lg:py-16 ol-page">
+
+    <!-- ── Mobile tabs ── -->
+    <div class="flex md:hidden items-center gap-2 mb-6 overflow-x-auto pb-1" style="scrollbar-width:none;">
+      <a href="{% url 'order_listing' %}" class="mob-accs-tab active whitespace-nowrap">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        My Orders
+      </a>
+      <a href="{% url 'wishlist' %}" class="mob-accs-tab whitespace-nowrap">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        Wishlist
+      </a>
+      <a href="#" class="mob-accs-tab whitespace-nowrap">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        Addresses
+      </a>
+    </div>
+
+    <div class="flex gap-10 lg:gap-16 items-start">
+
+      <!-- ══════════════════════════
+           SIDEBAR (desktop)
+      ══════════════════════════ -->
+      <aside class="accs-sidebar hidden md:flex flex-col gap-1 self-start sticky top-[84px]">
+        <!-- User info -->
+        <div class="flex items-center gap-3 px-2 mb-5">
+          <div class="w-10 h-10 rounded-full bg-[#e6e0d8] border border-[#d8d2ca] flex-shrink-0 overflow-hidden flex items-center justify-center">
+            {% if user.profile_image %}
+              <img src="{{ user.profile_image.url }}" alt="{{ user.full_name }}" class="w-full h-full object-cover">
+            {% else %}
+              <span class="font-montserrat font-semibold text-[13px] text-[#1a1208]">{{ user.full_name|first|upper }}</span>
+            {% endif %}
+          </div>
+          <div class="min-w-0">
+            <p class="font-montserrat font-semibold text-[12px] text-[#1a1208] truncate leading-tight">{{ user.get_full_name|default:user.full_name }}</p>
+            <p class="font-montserrat font-light text-[10px] text-[#8a7e72] truncate leading-tight mt-0.5">{{ user.email }}</p>
+          </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="h-px bg-[rgba(26,18,8,0.07)] mx-2 mb-3"></div>
+
+        <!-- Nav links -->
+        <a href="{% url 'order_listing' %}" class="accs-nav-item active">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          My Orders
+          {% if total_orders %}<span class="ml-auto font-montserrat text-[9px] font-bold bg-[#1a1208] text-white px-2 py-0.5 rounded-full">{{ total_orders }}</span>{% endif %}
+        </a>
+        <a href="{% url 'wishlist' %}" class="accs-nav-item">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          Wishlist
+        </a>
+        <a href="{% url 'address' %}" class="accs-nav-item">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Addresses
+        </a>
+      </aside>
+
+      <!-- ══════════════════════════
+           MAIN CONTENT
+      ══════════════════════════ -->
+      <main class="flex-1 min-w-0">
+
+        <!-- Page header + search + filter -->
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-5 mb-7">
+          <!-- Title -->
+          <div>
+            <h1 class="font-cormorant text-[34px] sm:text-[40px] font-semibold text-[#1a1208] leading-tight tracking-[-0.01em]">Order History</h1>
+            <p class="font-montserrat text-[11px] font-light text-[#8a7e72] mt-1.5">Manage your recent orders &amp; tracking information</p>
+          </div>
+
+          <!-- Search + custom filter -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:flex-shrink-0">
+
+            <!-- Search -->
+            <form method="get" action="" class="relative ol-search-wrap sm:w-[210px]">
+              <input type="hidden" name="filter" value="{{ filter_by }}">
+              <svg class="ol-search-icon" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4.8-4.8"/></svg>
+              <input id="order-search-input" type="text" name="search"
+                     value="{{ search }}" placeholder="Search orders..."
+                     class="ol-search-input" autocomplete="off">
+              <button type="button" id="search-clear-btn" class="ol-search-clear" aria-label="Clear search">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </form>
+
+            <!-- Custom dropdown -->
+            <div class="cf-wrap" id="cf-wrap">
+              <button type="button" class="cf-trigger" id="cf-trigger" aria-haspopup="listbox" aria-expanded="false">
+                <span class="cf-trigger-label">
+                  {% if filter_by == '1w' %}Last Week
+                  {% elif filter_by == '1m' %}Last Month
+                  {% elif filter_by == '3m' %}Last 3 Months
+                  {% elif filter_by == '1y' %}Last Year
+                  {% else %}Last 6 Months{% endif %}
+                </span>
+                <svg class="cf-chevron" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+              </button>
+
+              <div class="cf-menu" id="cf-menu" role="listbox">
+                <div class="cf-menu-head">Time Period</div>
+
+                <a href="?filter=1w&search={{ search|urlencode }}" role="option" class="cf-option {% if filter_by == '1w' %}active{% endif %}">
+                  <span class="cf-opt-icon"><svg width="13" height="13" fill="none" stroke="#8a6315" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg></span>
+                  <span class="cf-opt-text"><span class="cf-opt-title">Last Week</span><span class="cf-opt-sub">Past 7 days</span></span>
+                  <svg class="cf-tick" width="14" height="14" fill="none" stroke="#1a1208" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                </a>
+
+                <a href="?filter=1m&search={{ search|urlencode }}" role="option" class="cf-option {% if filter_by == '1m' %}active{% endif %}">
+                  <span class="cf-opt-icon"><svg width="13" height="13" fill="none" stroke="#8a6315" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+                  <span class="cf-opt-text"><span class="cf-opt-title">Last Month</span><span class="cf-opt-sub">Past 30 days</span></span>
+                  <svg class="cf-tick" width="14" height="14" fill="none" stroke="#1a1208" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                </a>
+
+                <a href="?filter=3m&search={{ search|urlencode }}" role="option" class="cf-option {% if filter_by == '3m' %}active{% endif %}">
+                  <span class="cf-opt-icon"><svg width="13" height="13" fill="none" stroke="#8a6315" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+                  <span class="cf-opt-text"><span class="cf-opt-title">Last 3 Months</span><span class="cf-opt-sub">Past 90 days</span></span>
+                  <svg class="cf-tick" width="14" height="14" fill="none" stroke="#1a1208" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                </a>
+
+                <a href="?filter=6m&search={{ search|urlencode }}" role="option" class="cf-option {% if filter_by == '6m' or not filter_by %}active{% endif %}">
+                  <span class="cf-opt-icon"><svg width="13" height="13" fill="none" stroke="#8a6315" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 1 0 20"/><polyline points="12 6 12 12 8 14"/></svg></span>
+                  <span class="cf-opt-text"><span class="cf-opt-title">Last 6 Months</span><span class="cf-opt-sub">Past 180 days</span></span>
+                  <svg class="cf-tick" width="14" height="14" fill="none" stroke="#1a1208" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                </a>
+
+                <a href="?filter=1y&search={{ search|urlencode }}" role="option" class="cf-option {% if filter_by == '1y' %}active{% endif %}">
+                  <span class="cf-opt-icon"><svg width="13" height="13" fill="none" stroke="#8a6315" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg></span>
+                  <span class="cf-opt-text"><span class="cf-opt-title">Last Year</span><span class="cf-opt-sub">Past 365 days</span></span>
+                  <svg class="cf-tick" width="14" height="14" fill="none" stroke="#1a1208" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                </a>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Active search label -->
+        {% if search %}
+        <div class="flex items-center gap-3 mb-5" style="animation:fadeIn .3s ease both;">
+          <p class="font-montserrat text-[11px] text-[#8a7e72]">
+            Results for <span class="font-semibold text-[#1a1208]">"{{ search }}"</span>
+          </p>
+          <a href="?filter={{ filter_by }}"
+             class="font-montserrat text-[9px] font-semibold text-[#8a7e72] hover:text-[#1a1208] border border-[rgba(26,18,8,0.12)] rounded-full px-3 py-1 bg-white transition-colors">
+            Clear ✕
+          </a>
+        </div>
+        {% endif %}
+
+        <!-- ══════════════════════════
+             ORDER CARDS
+             Context vars per order:
+               order.order_number, order.created_at, order.total_amount
+               order.order_status, order.delivery_start, order.delivery_end
+               order.items – queryset of OrderItem
+             Per item:
+               item.variant.product.name, item.variant.product.slug
+               item.variant.product.images (reverse FK, .first gives first image)
+               item.variant.size, item.variant.color
+               item.quantity, item.price_at_time
+        ══════════════════════════ -->
+        {% if orders %}
+        <div class="flex flex-col gap-5">
+          {% for order in orders %}
+
+          {# Cache all items for this order once #}
+          {% with all_items=order.display_items|default:order.items.all %}
+          {% with item_count=all_items|length %}
+
+          <article class="ol-card" role="article" aria-label="Order {{ order.order_number }}">
+
+            <!-- hover shimmer bar -->
+            <div class="ol-card-shimmer"></div>
+
+            <!-- ── CARD HEADER ── -->
+            <div class="px-6 sm:px-8 pt-5 pb-4 flex flex-wrap items-center gap-4 justify-between border-b border-[rgba(26,18,8,0.06)]">
+
+              <!-- Left meta: date / total / order# -->
+              <div class="flex flex-wrap gap-6 sm:gap-9">
+                <div>
+                  <p class="card-meta-label">Order Placed</p>
+                  <!-- order.created_at from model DateTimeField(auto_now_add=True) -->
+                  <p class="card-meta-val">{{ order.created_at|date:"d M Y" }}</p>
+                </div>
+                <div>
+                  <p class="card-meta-label">Total</p>
+                  <!-- order.total_amount = subtotal + delivery_charge - discount_amount -->
+                  <p class="card-meta-val font-bold">₹{{ order.total_amount }}</p>
+                </div>
+                <div>
+                  <p class="card-meta-label">Order #</p>
+                  <!-- order.order_number = 'ORD-'+10 random chars -->
+                  <p class="card-meta-val tracking-wide text-[12px]">{{ order.order_number }}</p>
+                </div>
+              </div>
+
+              <!-- Right: status badge -->
+              <!-- order.order_status choices: PENDING CONFIRMED PROCESSING SHIPPED OUT_FOR_DELIVERY DELIVERED CANCELLED -->
+              {% if order.order_status == 'PENDING' %}
+                <span class="badge badge-active badge-pending"><span class="badge-dot"></span>Pending</span>
+              {% elif order.order_status == 'CONFIRMED' %}
+                <span class="badge badge-active badge-confirmed"><span class="badge-dot"></span>Confirmed</span>
+              {% elif order.order_status == 'PROCESSING' %}
+                <span class="badge badge-active badge-processing"><span class="badge-dot"></span>Processing</span>
+              {% elif order.order_status == 'SHIPPED' %}
+                <span class="badge badge-active badge-shipped"><span class="badge-dot"></span>Shipped</span>
+              {% elif order.order_status == 'OUT_FOR_DELIVERY' %}
+                <span class="badge badge-active badge-out"><span class="badge-dot"></span>Out for Delivery</span>
+              {% elif order.order_status == 'DELIVERED' %}
+                <span class="badge badge-delivered"><span class="badge-dot"></span>Delivered</span>
+              {% elif order.order_status == 'CANCELLED' %}
+                <span class="badge badge-cancelled"><span class="badge-dot"></span>Cancelled</span>
+              {% endif %}
+
+            </div>
+            <!-- /CARD HEADER -->
+
+            <!-- ── PRODUCT BODY (one per order) ── -->
+            <div class="card-product-area px-6 sm:px-8 py-6">
+              <div class="flex flex-col sm:flex-row gap-5 sm:gap-7 items-start sm:items-center">
+
+                <!-- LEFT: grouped images (up to 2 full + count chip) -->
+                <div class="img-group flex-shrink-0">
+
+                  {# SLOT 1: always show first item image #}
+                  {% with first_item=all_items|first %}
+                  {% if first_item %}
+                  <div class="img-slot {% if item_count == 1 %}size-single{% else %}size-two{% endif %}">
+                    {% if first_item.variant.product.images.first %}
+                      <img src="{{ first_item.variant.product.images.first.image.url }}"
+                           alt="{{ first_item.variant.product.name }}" loading="lazy">
+                    {% else %}
+                      <div class="w-full h-full flex items-center justify-center">
+                        <svg width="24" height="24" fill="none" stroke="rgba(26,18,8,0.18)" stroke-width="1.4" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      </div>
+                    {% endif %}
+                  </div>
+                  {% endif %}
+                  {% endwith %}
+
+                  {# SLOT 2: show second item (with optional +N overlay) only if item_count >= 2 #}
+                  {% if item_count >= 2 %}
+                    {% for item in all_items %}
+                      {% if forloop.counter == 2 %}
+                      <div class="img-slot size-two" style="position:relative;">
+                        {% if item.variant.product.images.first %}
+                          <img src="{{ item.variant.product.images.first.image.url }}"
+                               alt="{{ item.variant.product.name }}" loading="lazy">
+                        {% else %}
+                          <div class="w-full h-full flex items-center justify-center">
+                            <svg width="22" height="22" fill="none" stroke="rgba(26,18,8,0.18)" stroke-width="1.4" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                          </div>
+                        {% endif %}
+                        {# If there are more than 2 items, overlay "+N" on the 2nd slot #}
+                        {% if item_count > 2 %}
+                        <div class="img-more-overlay">
+                          <span>+{{ item_count|add:"-2" }}</span>
+                        </div>
+                        {% endif %}
+                      </div>
+                      {% endif %}
+                    {% endfor %}
+                  {% endif %}
+
+                </div>
+                <!-- /IMAGE GROUP -->
+
+                <!-- CENTER: order summary text -->
+                {% with first_item=all_items|first total_items=all_items|length %}
+                <div class="flex-1 min-w-0">
+
+                  <!-- Primary product name — Cormorant serif for elegance -->
+                  <a href="{% url 'order_detail' order.id %}"
+                     class="font-cormorant text-[22px] sm:text-[26px] font-semibold text-[#1a1208] leading-tight hover:text-[#c8a96e] transition-colors no-underline block"
+                     style="letter-spacing:-0.01em;">
+                    {{ first_item.variant.product.name }}
+                    {% if first_item.display_quantity|default:first_item.quantity > 1 %}
+                      <span class="font-montserrat text-[14px] font-normal text-[#b0a498]"> ×{{ first_item.display_quantity|default:first_item.quantity }}</span>
+                    {% endif %}
+                  </a>
+
+                  <!-- Extra items summary -->
+                  {% if total_items > 1 %}
+                  <p class="font-montserrat text-[11px] text-[#8a7e72] mt-0.5">
+                    + {{ total_items|add:"-1" }} more item{% if total_items > 2 %}s{% endif %} in this order
+                  </p>
+                  {% endif %}
+
+                  <!-- Variant info: size · color -->
+                  {% if first_item.variant.size or first_item.variant.color %}
+                  <p class="font-montserrat text-[11px] font-medium text-[#8a7e72] mt-2">
+                    {% if first_item.variant.size %}SIZE: {{ first_item.variant.size }}{% endif %}
+                    {% if first_item.variant.size and first_item.variant.color %}&nbsp;•&nbsp;{% endif %}
+                    {% if first_item.variant.color %}{{ first_item.variant.color }}{% endif %}
+                  </p>
+                  {% endif %}
+
+                  <!-- Delivery estimate -->
+                  <!-- order.delivery_start and order.delivery_end set in view loop (created_at + 3/7 days) -->
+                  <p class="font-montserrat text-[11px] font-light text-[#8a7e72] mt-2.5 flex items-center gap-1.5">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                    {% if order.order_status == 'DELIVERED' %}
+                      Delivered successfully
+                    {% elif order.order_status == 'CANCELLED' %}
+                      Order cancelled
+                    {% else %}
+                      Est. delivery: {{ order.delivery_start|date:"M d" }} – {{ order.delivery_end|date:"M d" }}
+                    {% endif %}
+                  </p>
+
+                </div>
+                {% endwith %}
+                <!-- /CENTER -->
+
+                <!-- RIGHT: Action buttons — per ORDER (not per item) -->
+                {% with first_item=all_items|first %}
+                <div class="flex sm:flex-col gap-2.5 flex-shrink-0 sm:min-w-[150px] w-full sm:w-auto">
+
+                  {% if order.order_status == 'DELIVERED' %}
+                    <!-- Delivered: Buy Again + View Detail -->
+                    <a href="{% url 'cart' %}"
+                       class="btn-primary w-full" id="buy-again-order-{{ order.id }}">
+                      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.41"/></svg>
+                      Buy Again
+                    </a>
+                    
+                    <a href="{% url 'order_detail' order.id %}" class="btn-ghost w-full" id="view-order-details-{{ order.id }}">
+                      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                      Order Details
+                    </a>
+
+                  {% elif order.order_status == 'CANCELLED' %}
+                    <!-- Cancelled: Order Details AND View Details Popover -->
+                    <a href="{% url 'order_detail' order.id %}" class="btn-ghost w-full" id="view-order-details-{{ order.id }}">
+                      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                      Order Details
+                    </a>
+
+                    {% if item_count > 1 %}
+                      <div class="om-popover-wrap mt-2.5">
+                        <button type="button" class="btn-ghost w-full !border-[rgba(26,18,8,0.06)] hover:!border-[#1a1208]" onclick="toggleOrderPopover(event, 'cancelled-{{ order.id }}')">
+                          View Items
+                        </button>
+                        <!-- Popover -->
+                        <div class="om-popover" id="popover-cancelled-{{ order.id }}" role="dialog">
+                          <div class="om-header">
+                            <div>
+                              <h3 class="om-title">Cancelled Items</h3>
+                              <p class="om-subtitle">Order #{{ order.order_number }}</p>
+                            </div>
+                            <button type="button" class="om-close" onclick="closeOrderPopover('cancelled-{{ order.id }}')" aria-label="Close">
+                              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            </button>
+                          </div>
+                          <div class="om-product-list">
+                            {% for item in all_items %}
+                            <a href="{% url 'product_detail_view' item.variant.product.slug %}" class="om-item">
+                              <div class="om-item-img">
+                                {% if item.variant.product.images.first %}
+                                  <img src="{{ item.variant.product.images.first.image.url }}" alt="{{ item.variant.product.name }}">
+                                {% else %}
+                                  <div class="w-full h-full flex items-center justify-center">
+                                    <svg width="24" height="24" fill="none" stroke="rgba(26,18,8,0.18)" stroke-width="1.4" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                  </div>
+                                {% endif %}
+                              </div>
+                              <div class="om-item-info">
+                                <p class="om-item-name">{{ item.variant.product.name }}</p>
+                                <p class="om-item-meta">
+                                  {% if item.variant.size %}{{ item.variant.size }}{% endif %}
+                                  {% if item.variant.size and item.variant.color %} | {% endif %}
+                                  {% if item.variant.color %}{{ item.variant.color }}{% endif %}
+                                  • Qty: {{ item.display_quantity|default:item.quantity }}
+                                </p>
+                              </div>
+                              <div class="om-item-price flex items-center">
+                                ₹{{ item.price_at_time }}
+                              </div>
+                            </a>
+                            {% endfor %}
+                          </div>
+                        </div>
+                      </div>
+                    {% endif %}
+
+                  {% else %}
+                    <!-- Active order: Track + View Detail -->
+                    <a href="{% url 'order_detail' order.id%}"
+                       class="btn-primary w-full" id="track-order-{{ order.id }}">
+                      <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                      Track Order
+                    </a>
+                    
+                    {% if item_count > 1 %}
+                      <div class="om-popover-wrap">
+                        <button type="button" class="btn-ghost w-full" onclick="toggleOrderPopover(event, 'active-{{ order.id }}')">
+                          View Details
+                        </button>
+                        <!-- Popover -->
+                        <div class="om-popover" id="popover-active-{{ order.id }}" role="dialog">
+                          <div class="om-header">
+                            <div>
+                              <h3 class="om-title">Order Items</h3>
+                              <p class="om-subtitle">Order #{{ order.order_number }}</p>
+                            </div>
+                            <button type="button" class="om-close" onclick="closeOrderPopover('active-{{ order.id }}')" aria-label="Close">
+                              <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            </button>
+                          </div>
+                          <div class="om-product-list">
+                            {% for item in all_items %}
+                            <a href="{% url 'product_detail_view' item.variant.product.slug %}" class="om-item">
+                              <div class="om-item-img">
+                                {% if item.variant.product.images.first %}
+                                  <img src="{{ item.variant.product.images.first.image.url }}" alt="{{ item.variant.product.name }}">
+                                {% else %}
+                                  <div class="w-full h-full flex items-center justify-center">
+                                    <svg width="24" height="24" fill="none" stroke="rgba(26,18,8,0.18)" stroke-width="1.4" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                                  </div>
+                                {% endif %}
+                              </div>
+                              <div class="om-item-info">
+                                <p class="om-item-name">{{ item.variant.product.name }}</p>
+                                <p class="om-item-meta">
+                                  {% if item.variant.size %}{{ item.variant.size }}{% endif %}
+                                  {% if item.variant.size and item.variant.color %} | {% endif %}
+                                  {% if item.variant.color %}{{ item.variant.color }}{% endif %}
+                                  • Qty: {{ item.quantity }}
+                                </p>
+                              </div>
+                              <div class="om-item-price flex items-center">
+                                ₹{{ item.price_at_time }}
+                              </div>
+                            </a>
+                            {% endfor %}
+                          </div>
+                        </div>
+                      </div>
+                    {% else %}
+                      <a href="{% url 'product_detail_view' first_item.variant.product.slug %}"
+                         class="btn-ghost w-full" id="view-detail-order-{{ order.id }}">
+                        View Detail
+                      </a>
+                    {% endif %}
+                  {% endif %}
+
+                </div>
+                {% endwith %}
+                <!-- /RIGHT -->
+
+              </div>
+            </div>
+            <!-- /PRODUCT BODY -->
+
+          </article>
+
+          {% endwith %}{# end with item_count #}
+          {% endwith %}{# end with all_items #}
+          {% endfor %}
+        </div>
+
+        <!-- ── PAGINATION ── -->
+        <!-- orders is a Page object from Paginator(orders, 5) -->
+        {% if orders.paginator.num_pages > 1 %}
+        <nav class="flex items-center justify-center gap-2 mt-12" aria-label="Order pages">
+
+          {% if orders.has_previous %}
+            <a href="?page={{ orders.previous_page_number }}&search={{ search|urlencode }}&filter={{ filter_by }}"
+               class="pg-btn" aria-label="Previous">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+            </a>
+          {% else %}
+            <span class="pg-btn disabled"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></span>
+          {% endif %}
+
+          {% for i in orders.paginator.page_range %}
+            {% if orders.number == i %}
+              <span class="pg-btn active" aria-current="page">{{ i }}</span>
+            {% elif i >= orders.number|add:"-2" and i <= orders.number|add:"2" %}
+              <a href="?page={{ i }}&search={{ search|urlencode }}&filter={{ filter_by }}" class="pg-btn">{{ i }}</a>
+            {% endif %}
+          {% endfor %}
+
+          {% if orders.has_next %}
+            <a href="?page={{ orders.next_page_number }}&search={{ search|urlencode }}&filter={{ filter_by }}"
+               class="pg-btn" aria-label="Next">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+            </a>
+          {% else %}
+            <span class="pg-btn disabled"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></span>
+          {% endif %}
+
+        </nav>
+        {% endif %}
+
+        {% else %}
+
+        <!-- ── EMPTY STATE ── -->
+        <div class="flex flex-col items-center justify-center py-28 text-center" style="animation:fadeUp .5s ease both;">
+          <div class="empty-icon mb-8">
+            <div class="w-24 h-24 rounded-full bg-[#f0ebe2] flex items-center justify-center mx-auto shadow-inner">
+              <svg width="34" height="34" fill="none" stroke="rgba(26,18,8,0.22)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <path d="M16 10a4 4 0 0 1-8 0"/>
+              </svg>
+            </div>
+          </div>
+          <h2 class="font-cormorant text-[30px] font-semibold text-[#1a1208] mb-2">
+            {% if search %}No orders found{% else %}No orders yet{% endif %}
+          </h2>
+          <p class="font-montserrat text-[12px] font-light text-[#8a7e72] max-w-[270px] leading-relaxed mb-8">
+            {% if search %}
+              No orders match "{{ search }}". Try a different search.
+            {% else %}
+              Your order history will appear here once you place your first order.
+            {% endif %}
+          </p>
+          {% if search %}
+            <a href="?filter={{ filter_by }}" class="btn-ghost" id="clear-search-btn">Clear search</a>
+          {% else %}
+            <a href="{% url 'product_listing' %}" class="btn-primary" id="start-shopping-btn">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+              Start Shopping
+            </a>
+          {% endif %}
+        </div>
+
+        {% endif %}
+
+      </main>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  /* ── Search: Enter key submits & Clear Icon Logic ── */
+  const searchInput = document.getElementById('order-search-input');
+  const searchWrap  = document.querySelector('.ol-search-wrap');
+  const clearBtn    = document.getElementById('search-clear-btn');
+  
+  if (searchInput && searchWrap && clearBtn) {
+    // Toggle the 'X' button visibility based on input length
+    const toggleClearBtn = () => {
+      if (searchInput.value.length > 0) searchWrap.classList.add('has-val');
+      else searchWrap.classList.remove('has-val');
+    };
+    toggleClearBtn(); // Run on init
+    
+    // Listen for typing
+    searchInput.addEventListener('input', toggleClearBtn);
+    
+    // Listen for 'X' click
+    clearBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      searchInput.value = '';
+      toggleClearBtn();
+      searchInput.focus();
+      
+      // If the URL currently has a search parameter, auto-submit empty to clear results feed
+      if (window.location.search.includes('search=')) {
+        searchInput.closest('form').submit();
+      }
+    });
+
+    // Enter to submit
+    searchInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { 
+        e.preventDefault(); 
+        this.closest('form').submit(); 
+      }
+    });
+  }
+
+  /* ── Custom filter dropdown ── */
+  const trigger = document.getElementById('cf-trigger');
+  const menu    = document.getElementById('cf-menu');
+  const wrap    = document.getElementById('cf-wrap');
+  if (trigger && menu) {
+    function openMenu()  { menu.classList.add('open'); trigger.classList.add('open'); trigger.setAttribute('aria-expanded','true'); }
+    function closeMenu() { menu.classList.remove('open'); trigger.classList.remove('open'); trigger.setAttribute('aria-expanded','false'); }
+    function toggle()    { menu.classList.contains('open') ? closeMenu() : openMenu(); }
+
+    trigger.addEventListener('click', function(e){ e.stopPropagation(); toggle(); });
+    document.addEventListener('click', function(e){ if (!wrap.contains(e.target)) closeMenu(); });
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeMenu(); });
+  }
+
+  /* ── Scroll-reveal cards (IntersectionObserver) ── */
+  const cards = document.querySelectorAll('.ol-card');
+  if ('IntersectionObserver' in window) {
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.animationPlayState = 'running';
+          obs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08 });
+    cards.forEach((card, i) => {
+      card.style.animationDelay = (0.05 + i * 0.09) + 's';
+      card.style.animationPlayState = 'paused';
+      obs.observe(card);
+    });
+  }
+
+  /* ── Card 3-D tilt on mouse move (desktop only) ── */
+  if (window.matchMedia('(pointer:fine)').matches) {
+    cards.forEach(card => {
+      card.addEventListener('mousemove', function(e) {
+        const r    = this.getBoundingClientRect();
+        const dx   = (e.clientX - r.left  - r.width  / 2) / r.width;
+        const dy   = (e.clientY - r.top   - r.height / 2) / r.height;
+        this.style.transform = `translateY(-4px) perspective(900px) rotateX(${dy * -3}deg) rotateY(${dx * 3}deg)`;
+      });
+      card.addEventListener('mouseleave', function() {
+        this.style.transform = '';
+        this.style.transition = 'transform .5s cubic-bezier(.34,1.56,.64,1), box-shadow .28s ease';
+      });
+      card.addEventListener('mouseenter', function() {
+        this.style.transition = 'box-shadow .28s ease';
+      });
+    });
+  }
+
+  /* ── Popover Logic ── */
+  window.toggleOrderPopover = function(e, orderId) {
+    e.stopPropagation();
+    
+    // Close any other open popovers first
+    document.querySelectorAll('.om-popover.active').forEach(pop => {
+      if (pop.id !== 'popover-' + orderId) pop.classList.remove('active');
+    });
+
+    const popover = document.getElementById('popover-' + orderId);
+    if(popover) {
+      popover.classList.toggle('active');
+    }
+  }
+
+  window.closeOrderPopover = function(orderId) {
+    const popover = document.getElementById('popover-' + orderId);
+    if(popover) popover.classList.remove('active');
+  }
+
+  // Close popover when clicking anywhere outside
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.om-popover') && !e.target.closest('.btn-ghost')) {
+      document.querySelectorAll('.om-popover.active').forEach(pop => {
+        pop.classList.remove('active');
+      });
+    }
+  });
+
+  // Close on Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.om-popover.active').forEach(pop => {
+        pop.classList.remove('active');
+      });
+    }
+  });
+
+});
+</script>
+{% endblock %}

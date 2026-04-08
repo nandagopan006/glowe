@@ -76,13 +76,12 @@ body { background: var(--bg); }
 
 /* ── Qty badge ── */
 .qty-badge {
-  position: absolute; top: -4px; left: -4px;
-  width: 20px; height: 20px; background: var(--brown);
+  position: absolute; top: 0; right: 0;
+  width: 28px; height: 28px; background: var(--brown);
   color: #fff; font-family: 'Montserrat', sans-serif;
-  font-size: 8.5px; font-weight: 700; border-radius: 50%;
+  font-size: 11.5px; font-weight: 500;
+  border-radius: 0 20px 0 14px;
   display: flex; align-items: center; justify-content: center;
-  border: 2px solid var(--white);
-  box-shadow: 0 4px 12px rgba(44, 31, 20, 0.15);
   z-index: 2;
 }
 
@@ -298,23 +297,21 @@ body { background: var(--bg); }
 {% block content %}
 
 <!-- Breadcrumb -->
-<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2">
   <nav class="flex items-center gap-1.5" style="font-family:'Montserrat',sans-serif; font-size:11px; color:var(--brown-lt);">
-    <a href="" class="hover:text-[var(--brown)] transition-colors" style="text-decoration:none; color:var(--brown-lt);">Cart</a>
+    <a href="{% url 'cart' %}" class="hover:text-[var(--brown)] transition-colors" style="text-decoration:none; color:var(--brown-lt);">Cart</a>
     <span style="margin:0 2px;">/</span>
     <span style="color:var(--brown); font-weight:500;">Checkout</span>
   </nav>
 </div>
 
 <!-- Main grid -->
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 pb-16">
-  <div class="flex flex-col lg:grid lg:grid-cols-12 gap-8 lg:gap-16 xl:gap-24 items-start">
-
-    <!-- ════════════ LEFT COLUMN ════════════ -->
-    <div class="lg:col-span-7 order-2 lg:order-1 space-y-8">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 pb-20">
+  <form action="{% url 'place_order' %}" method="POST" class="grid grid-cols-1 lg:grid-cols-12 gap-y-12 lg:gap-x-16 xl:gap-x-24 items-start">
+    {% csrf_token %}
 
       <!-- ── SHIPPING ADDRESS ── -->
-      <div class="fade-up d1">
+      <div class="lg:col-span-7 lg:col-start-1 lg:row-start-1 order-1 fade-up d1 w-full">
         <div class="flex items-center justify-between mb-4">
           <h2 class="checkout-title text-[28px] sm:text-[32px]">Shipping Address</h2>
           {% if default_address %}
@@ -323,9 +320,9 @@ body { background: var(--bg); }
           </div>
           {% endif %}
         </div>
-
+        
         {% if default_address %}
-        <input type="hidden" name="selected_address_id" id="selected_address_id" value="{{ default_address.id }}">
+        <input type="hidden" name="address_id" id="selected_address_id" value="{{ default_address.id }}">
         <div style="background:var(--white); border:1px solid rgba(196,168,130,.25); border-radius:18px; padding:28px 32px; position:relative; box-shadow:0 8px 30px rgba(44,31,20,.04); transition: transform 0.3s ease, box-shadow 0.3s ease;" class="hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(44,31,20,.08)]">
           <div class="flex items-start justify-between mb-3">
             <p id="display_addr_fullname" style="font-family:'Montserrat',sans-serif; font-size:1.05rem; font-weight:700; color:var(--ink); margin:0;">{{ default_address.full_name }}</p>
@@ -361,7 +358,7 @@ body { background: var(--bg); }
       </div>
 
       <!-- ── PAYMENT ── -->
-      <div class="fade-up d3 order-4">
+      <div class="lg:col-span-7 lg:col-start-1 lg:row-start-2 order-3 fade-up d3 w-full mt-4 lg:mt-0">
         <h2 class="checkout-title text-[28px] sm:text-[32px] mb-4">Payment</h2>
         <div class="space-y-3">
 
@@ -423,10 +420,8 @@ body { background: var(--bg); }
         </div>
       </div>
 
-    </div>
-
     <!-- ════════════ RIGHT COLUMN ════════════ -->
-    <div class="lg:col-span-5 order-1 lg:order-2 mb-8 lg:mb-0">
+    <div class="lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:row-span-3 order-2 w-full">
       <div class="summary-card fade-up d2 lg:sticky lg:top-24">
 
         <h2 class="checkout-title text-[26px] sm:text-[28px] mb-6">Your Selection</h2>
@@ -437,7 +432,7 @@ body { background: var(--bg); }
           {% for entry in cart_items %}
           <div class="product-row flex items-center gap-5 sm:gap-6 group">
             <div class="relative flex-shrink-0">
-              <div class="w-[76px] h-[76px] rounded-[18px] overflow-hidden bg-[#f5f5f5] shadow-[0_4px_16px_rgba(44,31,20,0.06)] relative">
+              <div class="w-[96px] h-[96px] sm:w-[105px] sm:h-[105px] rounded-[20px] overflow-hidden bg-[#f5f5f5] shadow-[0_4px_16px_rgba(44,31,20,0.06)] relative">
                 {% if entry.variant.product.images.first %}
                   <img src="{{ entry.variant.product.images.first.image.url }}" alt="{{ entry.variant.product.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out">
                 {% else %}
@@ -499,9 +494,9 @@ body { background: var(--bg); }
           </div>
         </div>
 
-        <!-- CTA BUTTON -->
-        <div class="space-y-4">
-          <button type="submit" form="checkout-form" class="btn-checkout">
+        <!-- CTA BUTTON (DESKTOP) -->
+        <div class="hidden lg:block space-y-4">
+          <button type="submit" class="btn-checkout">
             <span>Complete Order <span class="price-sep">•</span> ₹{{ final_total }}</span>
           </button>
           <div class="flex items-center justify-center gap-1.5">
@@ -535,7 +530,20 @@ body { background: var(--bg); }
       </div>
     </div>
 
-  </div>
+    <!-- ── MOBILE CTA BUTTON ── -->
+    <div class="lg:hidden order-4 w-full fade-up d4 mt-4 mb-8">
+      <div class="space-y-4">
+        <button type="submit" class="btn-checkout py-[16px] w-full text-center" style="font-size:12.5px; border-radius:12px;">
+          <span>Complete Order <span class="price-sep">•</span> ₹{{ final_total }}</span>
+        </button>
+        <div class="flex items-center justify-center gap-1.5">
+          <svg class="w-2.5 h-2.5" fill="none" stroke="var(--brown-lt)" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          <span style="font-family:'Montserrat',sans-serif; font-size:8.5px; color:#A89E94; letter-spacing:0.12em; text-transform:uppercase; font-weight:500;">Secure Encrypted Checkout</span>
+        </div>
+      </div>
+    </div>
+
+  </form>
 </div>
 
 <!-- ── SIDE DRAWER FOR ADDRESS ── -->

@@ -15,11 +15,11 @@ def notify_user_when_in_stock(sender,instance,**kwargs) :
             variant=instance,is_notified=False
         )
         for n in notifications:
-            user=n.user
-        
-        subject = "Your Wishlist Item is Back in Stock! 🎉"
+            user = n.user
+            
+            subject = "Your Wishlist Item is Back in Stock! 🎉"
 
-        message = (
+            message = (
                 f"Hi {user.full_name},\n\n"
                 f"Good news! The product \"{instance.product.name}\" is now back in stock.\n\n"
                 f"You can now add it to your cart and purchase it.\n\n"
@@ -27,14 +27,14 @@ def notify_user_when_in_stock(sender,instance,**kwargs) :
                 f"Thank you for Visiting with us.\n"
             )
 
-        send_mail(
+            send_mail(
                 subject,
                 message,
                 settings.EMAIL_HOST_USER,
                 [user.email],
                 fail_silently=False,
             )
-        
-        #Mark as notified prevent duplicate emails
-        n.is_notified = True
-        n.save()
+            
+            # Mark as notified to prevent duplicate emails
+            n.is_notified = True
+            n.save()

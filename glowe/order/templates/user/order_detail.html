@@ -1,0 +1,727 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Order #{{ order.order_number }} – Glowé{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Smooth fade-in on load */
+.fade-in-up {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes fadeInUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+.delay-100 { animation-delay: 0.1s; }
+.delay-200 { animation-delay: 0.2s; }
+.delay-300 { animation-delay: 0.3s; }
+
+/* Modal overlay transitions */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 999;
+  background: rgba(26,18,8,0.4); 
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+.modal-content {
+  background: #fff; width: 100%; max-width: 380px; margin: 16px;
+  border-radius: 20px; padding: 24px;
+  box-shadow: 0 20px 48px rgba(26,18,8,0.12), 0 4px 12px rgba(26,18,8,0.04);
+  transform: translateY(16px) scale(0.98);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.modal-overlay.active .modal-content { transform: translateY(0) scale(1); }
+
+@keyframes growDown {
+  0% { transform: scaleY(0); opacity: 0; box-shadow: 0 0 12px rgba(62,50,39,0.8); }
+  15% { opacity: 1; box-shadow: 0 0 8px rgba(62,50,39,0.5); }
+  100% { transform: scaleY(1); opacity: 1; box-shadow: 0 0 0 rgba(62,50,39,0); }
+}
+
+@keyframes floatAntigravity {
+  0% { transform: translateY(0); box-shadow: 0 4px 16px rgba(26,18,8,0.06), 0 2px 4px rgba(26,18,8,0.02); }
+  50% { transform: translateY(-4px); box-shadow: 0 16px 32px rgba(26,18,8,0.1), 0 4px 8px rgba(26,18,8,0.04); }
+  100% { transform: translateY(0); box-shadow: 0 4px 16px rgba(26,18,8,0.06), 0 2px 4px rgba(26,18,8,0.02); }
+}
+
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 0 0 rgba(222, 211, 203, 0.8);}
+  70% { box-shadow: 0 0 0 15px rgba(222, 211, 203, 0);}
+  100% { box-shadow: 0 0 0 0 rgba(222, 211, 203, 0);}
+}
+
+.antigravity-active {
+  animation: floatAntigravity 3.5s ease-in-out infinite, pulseGlow 2.5s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Standard Container matching your base -->
+<div class="px-6 sm:px-12 md:px-20 lg:px-32 py-10 fade-in-up pb-32">
+  
+  <!-- Breadcrumbs -->
+  <div class="flex items-center gap-2 text-xs text-[#8a7e72] font-montserrat uppercase tracking-wider mb-8">
+    <a href="{% url 'order_listing' %}" class="hover:text-[#1a1208] transition-colors">Order History</a>
+    <span>/</span>
+    <span class="font-semibold text-[#1a1208]">Order Tracking</span>
+  </div>
+
+  <!-- Hero Header -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 lg:mb-16 gap-8 delay-100 fade-in-up">
+    <div class="flex-1 max-w-2xl">
+      <div class="flex flex-wrap items-center gap-3 sm:gap-4 mb-5">
+        <span class="bg-[#1a1208] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-md">Order #{{ order.order_number }}</span>
+        <span class="text-[#8a7e72] text-[13px] font-medium font-montserrat">Placed on {{ order.created_at|date:"M d, Y" }}</span>
+      </div>
+      
+      <h1 class="text-5xl md:text-6xl text-[#1a1208] mb-4 tracking-tight" style="font-family:'Cormorant Garamond',serif;">
+        {{ order_items.0.variant.product.name|default:"Your Order" }}{% if order_items|length > 1 %} <span class="text-3xl text-[#8a7e72] font-semibold italic"> & {{ order_items|length|add:"-1" }} other item{{ order_items|length|add:"-1"|pluralize }}</span>{% endif %}
+      </h1>
+      
+      <p class="text-[#5c544a] text-[15px] font-montserrat leading-relaxed m-0">
+        {% if order.order_status == 'PENDING' %}
+          Your order has been safely received by Glowé and is currently awaiting admin verification.
+        {% elif order.order_status == 'CONFIRMED' %}
+          Your order has been verified and is approved. We will begin preparing your items shortly.
+        {% elif order.order_status == 'PROCESSING' %}
+          We are carefully inspecting and packaging your luxury items. They will be dispatched soon.
+        {% elif order.order_status == 'SHIPPED' %}
+          Your package has left our central facility and is currently moving safely through our logistics network.
+        {% elif order.order_status == 'OUT_FOR_DELIVERY' %}
+          Your package is out for delivery today! Keep an eye out for our courier companion at your address.
+        {% elif order.order_status == 'DELIVERED' %}
+          Your order has been successfully delivered. We hope you deeply enjoy your new Glowé products!
+        {% elif order.order_status == 'CANCELLED' %}
+          This order has been cancelled. If you have any further questions, please contact our support team.
+        {% endif %}
+      </p>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex flex-wrap gap-3 shrink-0 list-none">
+      {% if can_return %}
+        <a href="#" class="px-6 py-3 border border-[#1a1208] text-[#1a1208] text-[10px] font-bold uppercase tracking-widest hover:bg-[#1a1208] hover:text-white transition-all duration-300 rounded-md">Return Order</a>
+      {% endif %}
+      
+      {% if can_cancel %}
+        <button type="button" onclick="openModal('cancelOrderModal')" class="px-6 py-3 border border-[#1a1208] text-[#1a1208] text-[10px] font-bold uppercase tracking-widest hover:bg-[#1a1208] hover:text-white transition-all duration-300 rounded-md">Cancel Order</button>
+      {% endif %}
+      
+      <a href="{% url 'download_invoice' order.id %}" class="px-6 py-3 bg-[#1a1208] border border-[#1a1208] text-white text-[10px] font-bold uppercase tracking-widest hover:bg-[#2a1d0d] transition-all duration-300 rounded-md shadow-sm hover:shadow-md">Download Invoice</a>
+    </div>
+  </div>
+
+  <!-- Two Column Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 xl:gap-20">
+    
+    <!-- LEFT: Tracking & Shipping -->
+    <div class="lg:col-span-7 flex flex-col gap-16 order-2 lg:order-1 delay-200 fade-in-up">
+      
+      <!-- Tracking History -->
+      <!-- Tracking History -->
+      <div class="mb-12">
+        <h2 class="text-[26px] text-[#3e3227] pb-4 mb-8 border-b border-[#e6e0d8]/60" style="font-family:'Cormorant Garamond',serif;">Tracking History</h2>
+        
+        <div class="relative pl-1 sm:pl-4">
+          <!-- Continuous background line starting from the top node down to the bottom -->
+          <div class="absolute left-[19px] sm:left-[31px] top-[14px] bottom-[20px] w-[1px] bg-[#e6e0d8] z-0 overflow-hidden">
+             <!-- Light beam runner drops through the timeline continuously -->
+             <div class="light-beam-runner"></div>
+          </div>
+          
+          <div class="flex flex-col gap-10 relative z-10">
+
+            {% for h in history reversed %}
+            <div class="flex items-stretch gap-6 sm:gap-7 group relative z-10" style="opacity:0; animation: fadeInUp 0.5s ease {{ forloop.counter0|add:1 }}00ms forwards;">
+              
+              <!-- Left Column: Node and Line -->
+              <div class="flex flex-col items-center relative z-20">
+                
+                {% if h.status == order.order_status and order.order_status != 'DELIVERED' and order.order_status != 'CANCELLED' %}
+                  <!-- ACTIVE NODE ('antigravity' float) -->
+                  <div class="w-8 h-8 rounded-full bg-[#faf8f5] flex items-center justify-center shrink-0 relative z-20 bg-white">
+                    <div class="w-6 h-6 rounded-full bg-[#f3ece6] flex items-center justify-center shadow-sm antigravity-active border border-[#e6e0d8]/50">
+                      <div class="w-2 h-2 rounded-full bg-[#3e3227] heartbeat-dot"></div>
+                    </div>
+                  </div>
+                {% else %}
+                  <!-- COMPLETED PAST NODE -->
+                  <div class="w-8 h-8 rounded-full bg-[#faf8f5] border-[1.5px] {% if 'cancel' in h.status|lower %}border-red-200 text-red-500 bg-red-50{% else %}border-[#e6e0d8]/80 text-[#a09486]{% endif %} flex items-center justify-center shrink-0 relative z-20 transition-all duration-500 group-hover:-translate-y-1 group-hover:shadow-[0_4px_16px_rgba(200,169,110,0.15)] group-hover:border-[#c8a96e] group-hover:text-[#c8a96e] cursor-default">
+                     {% if 'cancel' in h.status|lower %}
+                       <!-- Cancelled / Error Icon -->
+                       <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                         <circle cx="12" cy="12" r="10"></circle>
+                         <line x1="15" y1="9" x2="9" y2="15"></line>
+                         <line x1="9" y1="9" x2="15" y2="15"></line>
+                       </svg>
+                     {% elif 'ship' in h.status|lower or 'transit' in h.status|lower or 'depart' in h.status|lower or 'out' in h.status|lower %}
+                       <!-- Truck Icon -->
+                       <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                         <path d="M5 18H3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2"></path>
+                         <path d="M19 18h2a2 2 0 0 0 2-2v-4l-3-4h-5v10"></path>
+                         <circle cx="8" cy="18" r="3"></circle>
+                         <circle cx="16" cy="18" r="3"></circle>
+                       </svg>
+                     {% else %}
+                       <!-- Box / Document Icon -->
+                       <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                         <line x1="16" y1="4" x2="16" y2="20"></line>
+                         <line x1="8" y1="4" x2="8" y2="20"></line>
+                         <rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect>
+                       </svg>
+                     {% endif %}
+                  </div>
+                {% endif %}
+                
+                <!-- Animated connecting line down to the next node -->
+                {% if not forloop.last or order.order_status == 'DELIVERED' %}
+                  <div class="w-[1px] grow min-h-[40px] mt-[-4px] mb-[-4px] relative bg-[#e6e0d8] z-10">
+                     <div class="absolute top-0 bottom-0 left-0 right-0 bg-[#3e3227] opacity-0" style="transform-origin: top; animation: growDown 0.8s cubic-bezier(0.16,1,0.3,1) {{ forloop.counter0|add:2 }}00ms forwards;"></div>
+                  </div>
+                {% else %}
+                  <!-- Faded connecting line pointing to future steps if applicable -->
+                  <div class="w-[1px] grow min-h-[50px] mt-[-4px] mb-[-4px] bg-[#e6e0d8] opacity-50 z-10"></div>
+                {% endif %}
+              </div>
+              
+              <!-- Right Column: Content -->
+              <div class="flex-1 pb-10 w-full pt-[2px]">
+                <div class="flex flex-col sm:flex-row sm:justify-between items-start gap-1 sm:gap-4 lg:pr-4">
+                  <span class="inline-block relative {% if h.status == order.order_status and order.order_status != 'DELIVERED' %}shimmer-text{% endif %}">
+                    <p class="text-[19px] sm:text-[21px] m-0 leading-none {% if h.status == order.order_status and order.order_status != 'DELIVERED' %}text-[#4a3d31] font-bold{% else %}text-[#4a3d31] font-semibold{% endif %}" style="font-family:'Cormorant Garamond',serif;">
+                       {% if h.status == 'PENDING' %}Order Received
+                       {% elif h.status == 'ITEM_CANCELLED' %}Item Cancelled
+                       {% elif h.status == 'OUT_FOR_DELIVERY' %}Out for Delivery
+                       {% else %}{{ h.status|title }}{% endif %}
+                    </p>
+                  </span>
+                  <p class="font-montserrat text-[10.5px] text-[#9a8f82] m-0 font-semibold tracking-widest uppercase mt-0.5 shrink-0">
+                     {{ h.updated_at|date:"M d, Y - g:i A" }}
+                  </p>
+                </div>
+                {% if h.description %}
+                  <p class="font-montserrat text-[13.5px] text-[#8a7e72] m-0 mt-3 leading-[1.6] max-w-[90%]">{{ h.description }}</p>
+                {% else %}
+                  {% if 'Order Received' in h.status or h.status == 'PENDING' %}
+                    <p class="font-montserrat text-[13.5px] text-[#8a7e72] m-0 mt-3 leading-[1.6]">Glowé HQ has received your order details and is currently processing them.</p>
+                  {% elif 'Depart' in h.status or 'Ship' in h.status %}
+                    <p class="font-montserrat text-[13.5px] text-[#8a7e72] m-0 mt-3 leading-[1.6]">Your package has departed from the sorting facility and is on its way.</p>
+                  {% elif 'cancel' in h.status|lower %}
+                    <p class="font-montserrat text-[13.5px] text-[#8a7e72] m-0 mt-3 leading-[1.6]">A request was processed and an item has been successfully removed from this order.</p>
+                  {% endif %}
+                {% endif %}
+              </div>
+            </div>
+            {% empty %}
+               <div class="opacity-50 pt-2 pl-4 text-[#8a7e72] font-montserrat text-[13px]">No tracking data available yet.</div>
+            {% endfor %}
+
+            <!-- FUTURE STEPS SECTION -->
+            {% if order.order_status != 'DELIVERED' and order.order_status != 'CANCELLED' %}
+              
+              <!-- FUTURE: CONFIRMED -->
+              {% if order.order_status == 'PENDING' %}
+                <div class="flex items-stretch gap-6 sm:gap-7 relative z-0 opacity-40 mix-blend-multiply mt-[-4px]">
+                  <div class="flex flex-col items-center">
+                    <div class="w-8 h-8 rounded-full bg-transparent border-[1.5px] border-[#e6e0d8] flex items-center justify-center shrink-0 relative z-20">
+                      <div class="w-[5px] h-[5px] rounded-full bg-[#d8d2ca]"></div>
+                    </div>
+                    <div class="w-[1px] grow min-h-[50px] mt-[-4px] mb-[-4px] bg-[#e6e0d8]"></div>
+                  </div>
+                  <div class="flex-1 pb-10 pt-[2px]">
+                     <p class="text-[19px] sm:text-[21px] m-0 leading-none text-[#4a3d31] font-medium" style="font-family:'Cormorant Garamond',serif;">Confirmed</p>
+                     <p class="font-montserrat text-[13.5px] text-[#8a7e72] m-0 mt-3 leading-[1.6]">Glowé processing center is verifying your order details.</p>
+                  </div>
+                </div>
+              {% endif %}
+
+              <!-- FUTURE: PROCESSING -->
+              {% if order.order_status == 'PENDING' or order.order_status == 'CONFIRMED' %}
+                <div class="flex items-stretch gap-6 sm:gap-7 relative z-0 opacity-40 mix-blend-multiply mt-[-4px]">
+                  <div class="flex flex-col items-center">
+                    <div class="w-8 h-8 rounded-full bg-transparent border-[1.5px] border-[#e6e0d8] flex items-center justify-center shrink-0 relative z-20">
+                      <div class="w-[5px] h-[5px] rounded-full bg-[#d8d2ca]"></div>
+                    </div>
+                    <div class="w-[1px] grow min-h-[50px] mt-[-4px] mb-[-4px] bg-[#e6e0d8]"></div>
+                  </div>
+                  <div class="flex-1 pb-10 pt-[2px]">
+                     <p class="text-[19px] sm:text-[21px] m-0 leading-none text-[#4a3d31] font-medium" style="font-family:'Cormorant Garamond',serif;">Processing</p>
+                     <p class="font-montserrat text-[13.5px] text-[#8a7e72] m-0 mt-3 leading-[1.6]">Your luxury items are being carefully prepared and packaged.</p>
+                  </div>
+                </div>
+              {% endif %}
+
+              <!-- FUTURE: SHIPPED -->
+              {% if order.order_status == 'PENDING' or order.order_status == 'CONFIRMED' or order.order_status == 'PROCESSING' %}
+                <div class="flex items-stretch gap-6 sm:gap-7 relative z-0 opacity-40 mix-blend-multiply mt-[-4px]">
+                  <div class="flex flex-col items-center">
+                    <div class="w-8 h-8 rounded-full bg-transparent border-[1.5px] border-[#e6e0d8] flex items-center justify-center shrink-0 relative z-20">
+                      <div class="w-[5px] h-[5px] rounded-full bg-[#d8d2ca]"></div>
+                    </div>
+                    <div class="w-[1px] grow min-h-[50px] mt-[-4px] mb-[-4px] bg-[#e6e0d8]"></div>
+                  </div>
+                  <div class="flex-1 pb-10 pt-[2px]">
+                    <p class="text-[19px] sm:text-[21px] m-0 leading-none text-[#4a3d31] font-medium" style="font-family:'Cormorant Garamond',serif;">Shipped</p>
+                    <p class="font-montserrat text-[13.5px] text-[#8a7e72] m-0 mt-3 leading-[1.6]">Your package has been dispatched from our central facility.</p>
+                  </div>
+                </div>
+              {% endif %}
+
+              <!-- FUTURE: OUT FOR DELIVERY -->
+              {% if order.order_status == 'PENDING' or order.order_status == 'CONFIRMED' or order.order_status == 'PROCESSING' or order.order_status == 'SHIPPED' %}
+                <div class="flex items-stretch gap-6 sm:gap-7 relative z-0 opacity-40 mix-blend-multiply mt-[-4px]">
+                  <div class="flex flex-col items-center">
+                    <div class="w-8 h-8 rounded-full bg-transparent border-[1.5px] border-[#e6e0d8] flex items-center justify-center shrink-0 relative z-20">
+                      <div class="w-[5px] h-[5px] rounded-full bg-[#d8d2ca]"></div>
+                    </div>
+                    <div class="w-[1px] grow min-h-[50px] mt-[-4px] mb-[-4px] bg-[#e6e0d8]"></div>
+                  </div>
+                  <div class="flex-1 pb-10 pt-[2px]">
+                    <p class="text-[19px] sm:text-[21px] m-0 leading-none text-[#4a3d31] font-medium" style="font-family:'Cormorant Garamond',serif;">Out for Delivery</p>
+                    <p class="font-montserrat text-[13.5px] text-[#8a7e72] m-0 mt-3 leading-[1.6]">Your package is on its way to your final destination.</p>
+                  </div>
+                </div>
+              {% endif %}
+
+              <!-- FUTURE: DELIVERED -->
+              <div class="flex items-stretch gap-6 sm:gap-7 relative z-0 opacity-40 mix-blend-multiply mt-[-4px]">
+                <div class="flex flex-col items-center">
+                  <div class="w-8 h-8 rounded-full bg-transparent border-[1.5px] border-[#e6e0d8] flex items-center justify-center shrink-0 relative z-20">
+                    <div class="w-[5px] h-[5px] rounded-full bg-[#d8d2ca]"></div>
+                  </div>
+                </div>
+                <div class="flex-1 pt-[2px]">
+                  <p class="text-[19px] sm:text-[21px] m-0 leading-none text-[#4a3d31] font-medium" style="font-family:'Cormorant Garamond',serif;">Delivered</p>
+                  <p class="font-montserrat text-[13.5px] text-[#8a7e72] m-0 mt-3 leading-[1.6]">Your order has been arrived at your doorstep safely.</p>
+                </div>
+              </div>
+
+            {% endif %}
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Shipping Details -->
+      <div class="mt-8">
+        <h2 class="text-[26px] text-[#1a1208] mb-6" style="font-family:'Cormorant Garamond',serif;">Shipping Destination</h2>
+        
+        <div class="inline-flex bg-[#faf8f5] rounded-[24px] p-6 lg:p-8 items-start gap-5 relative z-10 group border border-[#1a1208]/[0.04] pr-12 lg:pr-16">
+          <!-- Icon Box -->
+          <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center shrink-0 border border-[#e6e0d8] shadow-sm group-hover:bg-[#1a1208] group-hover:border-[#1a1208] transition-all duration-500 group-hover:-translate-y-1">
+            <svg class="text-[#c8a96e] group-hover:text-white transition-colors duration-500" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+          </div>
+          
+          <!-- Address Content -->
+          <div class="flex-1 pt-0.5 min-w-0 pr-4">
+            <div class="flex items-center gap-4 mb-4">
+              <p class="text-[22px] text-[#1a1208] leading-none m-0 whitespace-nowrap" style="font-family:'Cormorant Garamond',serif;">{{ order.shipping_address.full_name|default:request.user.get_full_name }}</p>
+              <span class="bg-white px-3 py-1 rounded-full border border-[#e6e0d8] shadow-sm text-[9px] font-montserrat font-bold text-[#8a7e72] uppercase tracking-widest hidden sm:inline-block">Delivery</span>
+            </div>
+            
+            <div class="flex flex-col gap-1.5 mb-6 pl-0.5">
+              <p class="font-montserrat text-[14px] text-[#5c544a] m-0">{{ order.shipping_address.address_line1 }}</p>
+              {% if order.shipping_address.address_line2 %}
+              <p class="font-montserrat text-[14px] text-[#5c544a] m-0">{{ order.shipping_address.address_line2 }}</p>
+              {% endif %}
+              <p class="font-montserrat text-[14px] text-[#5c544a] m-0">{{ order.shipping_address.city }}, {{ order.shipping_address.state }} {{ order.shipping_address.pincode }}</p>
+              <p class="font-montserrat text-[14px] text-[#5c544a] m-0">{{ order.shipping_address.country|default:"India" }}</p>
+            </div>
+            
+            <!-- Contact row -->
+            <div class="flex items-center gap-3 pl-0.5 opacity-80 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+              <svg class="text-[#c8a96e]" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+              <p class="font-montserrat text-[13px] font-medium text-[#1a1208] m-0 tracking-wide">{{ order.shipping_address.phone }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: Order Summary Card -->
+    <div class="lg:col-span-5 order-1 lg:order-2 delay-300 fade-in-up">
+
+      <!-- ── Main Order Summary ── -->
+      <div class="bg-[#faf8f5] rounded-[24px] p-7 md:p-9 hover:-translate-y-1 transition-transform duration-500 shadow-[0_16px_40px_rgba(26,18,8,0.03)] border border-[#1a1208]/[0.04]">
+        
+        <div class="flex justify-between items-center mb-8 pb-5 border-b border-[#1a1208]/10">
+          <h2 class="text-[26px] text-[#1a1208] m-0" style="font-family:'Cormorant Garamond',serif;">Order Summary</h2>
+          <span class="bg-white text-[#8a7e72] shadow-sm rounded-full px-4 py-1.5 text-[11px] font-montserrat font-semibold border border-[#1a1208]/5">
+            {{ total_count }} Item{{ total_count|pluralize }}
+            {% if all_cancelled %}<span class="text-red-400"> &middot; Cancelled</span>{% endif %}
+          </span>
+        </div>
+        
+        <!-- Products -->
+        <div class="flex flex-col gap-6 mb-8 pb-8 border-b border-[#1a1208]/10">
+
+          {% if all_cancelled %}
+            <!-- ALL items cancelled → show cancelled items inside summary -->
+            {% for item in cancelled_items %}
+            <div class="flex gap-5 group items-start opacity-75">
+              <div class="w-20 h-20 bg-white rounded-xl overflow-hidden shrink-0 shadow-sm border border-red-100/60 relative">
+                {% if item.variant.product.images.first %}
+                <img src="{{ item.variant.product.images.first.image.url }}" class="w-full h-full object-cover grayscale-[30%]">
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center bg-[#f0ebe2]"></div>
+                {% endif %}
+                <!-- Strikethrough overlay -->
+                <div class="absolute inset-0 bg-red-50/30 rounded-xl"></div>
+              </div>
+              <div class="flex flex-col flex-1 py-0.5 min-h-[5rem] justify-between">
+                <div>
+                  <div class="flex justify-between items-start gap-4 mb-2">
+                    <p class="text-[17px] text-[#8a7e72] line-through leading-tight m-0" style="font-family:'Cormorant Garamond',serif;">{{ item.variant.product.name }}</p>
+                    <p class="font-montserrat font-bold text-[13px] text-[#8a7e72] line-through shrink-0 m-0">₹{{ item.price_at_time }}</p>
+                  </div>
+                  <p class="font-montserrat text-[10px] text-[#8a7e72] font-semibold uppercase tracking-wider m-0">
+                    {{ item.variant.size|default:"" }}{% if item.variant.size and item.variant.color %} / {% endif %}{{ item.variant.color|default:"" }}
+                  </p>
+                </div>
+                <div class="flex justify-between items-center mt-3">
+                  <p class="font-montserrat text-[11px] text-[#8a7e72] font-medium m-0">Qty: {{ item.quantity }}</p>
+                  <span class="text-[9px] text-[#e11d48] font-montserrat font-bold uppercase tracking-wider bg-[#ffe4e6] px-2 py-0.5 rounded">Cancelled</span>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+
+          {% else %}
+            <!-- ACTIVE items only -->
+            {% for item in active_items %}
+            <div class="flex gap-5 group items-start">
+              <div class="w-20 h-20 bg-white rounded-xl overflow-hidden shrink-0 shadow-sm transition-transform duration-500 group-hover:scale-105 border border-[#1a1208]/5">
+                {% if item.variant.product.images.first %}
+                <img src="{{ item.variant.product.images.first.image.url }}" class="w-full h-full object-cover">
+                {% else %}
+                <div class="w-full h-full flex items-center justify-center bg-[#f0ebe2]"></div>
+                {% endif %}
+              </div>
+              <div class="flex flex-col flex-1 py-0.5 min-h-[5rem] justify-between">
+                <div>
+                  <div class="flex justify-between items-start gap-4 mb-2">
+                    <p class="text-[17px] text-[#1a1208] leading-tight m-0" style="font-family:'Cormorant Garamond',serif;">{{ item.variant.product.name }}</p>
+                    <p class="font-montserrat font-bold text-[13px] text-[#1a1208] shrink-0 m-0">₹{{ item.price_at_time }}</p>
+                  </div>
+                  <p class="font-montserrat text-[10px] text-[#8a7e72] font-semibold uppercase tracking-wider m-0">
+                    {{ item.variant.size|default:"" }}{% if item.variant.size and item.variant.color %} / {% endif %}{{ item.variant.color|default:"" }}
+                  </p>
+                </div>
+                <div class="flex justify-between items-center mt-3">
+                  <p class="font-montserrat text-[11px] text-[#8a7e72] font-medium m-0">Qty: {{ item.quantity }}</p>
+                  {% if can_cancel %}
+                  <button type="button" onclick="openCancelItemModal('{{ item.id }}', '{{ item.quantity }}', '{{ item.variant.product.name|escapejs }}', '{% if item.variant.product.images.first %}{{ item.variant.product.images.first.image.url }}{% endif %}')" class="text-[10px] text-[#cd9042] hover:text-[#1a1208] font-montserrat font-bold uppercase tracking-wider transition-colors bg-transparent border-none p-0 cursor-pointer text-right">Cancel Item</button>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          {% endif %}
+
+        </div>
+        
+        <!-- Totals -->
+        <div class="flex flex-col gap-4 font-montserrat text-[14px] text-[#5c544a] pb-6 mb-6 border-b border-[#1a1208]/10">
+          <div class="flex justify-between items-center">
+            <span>Subtotal</span>
+            <span class="font-medium text-[#1a1208]">₹{{ order.subtotal|default:"0.00" }}</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span>Shipping</span>
+            <span class="font-medium text-[#1a1208]">₹{{ order.delivery_charge|default:"0.00" }}</span>
+          </div>
+        </div>
+        
+        <div class="flex justify-between items-center mb-10">
+          <span class="text-[28px] text-[#1a1208]" style="font-family:'Cormorant Garamond',serif;">Total</span>
+          <span class="text-[28px] font-medium text-[#1a1208]" style="font-family:'Cormorant Garamond',serif;">₹{{ order.total_amount }}</span>
+        </div>
+        
+        <p class="font-montserrat text-[10px] text-center text-[#8a7e72] font-bold uppercase tracking-widest cursor-pointer hover:text-[#1a1208] transition-colors mb-0">Need help with this order?</p>
+      </div>
+
+      <!-- ── Cancelled Items Section (only when order is partially cancelled) ── -->
+      {% if not all_cancelled and cancelled_items %}
+      <div class="mt-5 rounded-[24px] p-6 md:p-8 border border-red-100 bg-red-50/40 shadow-[0_8px_24px_rgba(225,29,72,0.04)]">
+
+        <div class="flex justify-between items-center mb-6 pb-4 border-b border-red-100">
+          <div class="flex items-center gap-2.5">
+            <!-- Red X icon -->
+            <div class="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+              <svg width="12" height="12" fill="none" stroke="#e11d48" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </div>
+            <h3 class="text-[18px] text-[#1a1208] m-0" style="font-family:'Cormorant Garamond',serif;">Cancelled Items</h3>
+          </div>
+          <span class="bg-white text-red-400 shadow-sm rounded-full px-3 py-1 text-[10px] font-montserrat font-bold border border-red-100 uppercase tracking-wider">
+            {{ cancelled_items|length }} Item{{ cancelled_items|length|pluralize }}
+          </span>
+        </div>
+
+        <div class="flex flex-col gap-5">
+          {% for item in cancelled_items %}
+          <div class="flex gap-4 items-start group">
+            <!-- Image -->
+            <div class="w-16 h-16 bg-white rounded-xl overflow-hidden shrink-0 border border-red-100/60 relative">
+              {% if item.variant.product.images.first %}
+              <img src="{{ item.variant.product.images.first.image.url }}" class="w-full h-full object-cover grayscale-[20%] opacity-70">
+              {% else %}
+              <div class="w-full h-full bg-red-50/60 flex items-center justify-center">
+                <svg width="16" height="16" fill="none" stroke="#e11d48" opacity="0.4" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+              </div>
+              {% endif %}
+              <div class="absolute inset-0 bg-red-50/20 rounded-xl"></div>
+            </div>
+
+            <!-- Details -->
+            <div class="flex-1 py-0.5">
+              <div class="flex justify-between items-start gap-3 mb-1.5">
+                <p class="text-[15px] text-[#5c544a] line-through leading-tight m-0" style="font-family:'Cormorant Garamond',serif;">{{ item.variant.product.name }}</p>
+                <p class="font-montserrat font-semibold text-[12px] text-[#8a7e72] line-through shrink-0 m-0">₹{{ item.price_at_time }}</p>
+              </div>
+              {% if item.variant.size or item.variant.color %}
+              <p class="font-montserrat text-[9.5px] text-[#8a7e72] uppercase tracking-wider font-semibold m-0 mb-2">
+                {{ item.variant.size|default:"" }}{% if item.variant.size and item.variant.color %} / {% endif %}{{ item.variant.color|default:"" }}
+              </p>
+              {% endif %}
+              <div class="flex items-center justify-between">
+                <p class="font-montserrat text-[10.5px] text-[#8a7e72] m-0">Qty: <span class="font-semibold text-[#5c544a]">{{ item.quantity }}</span></p>
+                <span class="text-[8.5px] text-[#e11d48] font-montserrat font-bold uppercase tracking-wider bg-red-100/60 px-2 py-0.5 rounded-full border border-red-100">Cancelled</span>
+              </div>
+              {% if item.cancel_reason %}
+              <p class="font-montserrat text-[10px] text-[#8a7e72] italic m-0 mt-1.5 leading-relaxed">"{{ item.cancel_reason }}"</p>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+      </div>
+      {% endif %}
+
+    </div>
+    
+  </div>
+</div>
+
+<!-- ── MODALS ── -->
+
+<!-- Order Cancel Modal -->
+<div class="modal-overlay" id="cancelOrderModal">
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-[26px] text-[#1a1208] leading-none m-0" style="font-family:'Cormorant Garamond',serif;">Cancel Order</h3>
+      <button type="button" onclick="closeModal('cancelOrderModal')" class="w-8 h-8 rounded-full bg-[#f0ebe2] hover:bg-[#e6e0d8] text-[#1a1208] flex items-center justify-center transition-colors border-none cursor-pointer">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <form method="POST" id="cancelOrderForm" action="{% url 'cancel_order' order.id %}" class="flex flex-col m-0">
+      {% csrf_token %}
+    <div class="flex flex-col gap-5">
+      <p class="text-[14px] font-montserrat text-[#5c544a] leading-relaxed m-0 px-1">Are you sure you want to cancel the entire order #{{ order.order_number }}? This action cannot be undone.</p>
+      
+      <div class="flex flex-col gap-3">
+        <label class="text-[11px] font-montserrat font-bold text-[#8a7e72] uppercase tracking-wider">Reason for Cancellation</label>
+        
+        <div class="flex flex-wrap gap-1.5">
+          <button type="button" onclick="setReason('cancelOrderReason', 'Changed my mind')" class="px-3 py-1.5 rounded-lg border border-[#e6e0d8] bg-white text-[#5c544a] text-[10px] font-montserrat font-medium hover:border-[#1a1208] hover:text-[#1a1208] transition-all cursor-pointer">Changed my mind</button>
+          <button type="button" onclick="setReason('cancelOrderReason', 'Ordered by mistake')" class="px-3 py-1.5 rounded-lg border border-[#e6e0d8] bg-white text-[#5c544a] text-[10px] font-montserrat font-medium hover:border-[#1a1208] hover:text-[#1a1208] transition-all cursor-pointer">Ordered by mistake</button>
+          <button type="button" onclick="setReason('cancelOrderReason', 'Found a better price')" class="px-3 py-1.5 rounded-lg border border-[#e6e0d8] bg-white text-[#5c544a] text-[10px] font-montserrat font-medium hover:border-[#1a1208] hover:text-[#1a1208] transition-all cursor-pointer">Better price</button>
+          <button type="button" onclick="setReason('cancelOrderReason', 'Delivery is too slow')" class="px-3 py-1.5 rounded-lg border border-[#e6e0d8] bg-white text-[#5c544a] text-[10px] font-montserrat font-medium hover:border-[#1a1208] hover:text-[#1a1208] transition-all cursor-pointer">Slow delivery</button>
+          <button type="button" onclick="setReason('cancelOrderReason', 'Wrong item selected')" class="px-3 py-1.5 rounded-lg border border-[#e6e0d8] bg-white text-[#5c544a] text-[10px] font-montserrat font-medium hover:border-[#1a1208] hover:text-[#1a1208] transition-all cursor-pointer">Wrong item</button>
+        </div>
+
+        <textarea id="cancelOrderReason" name="reason" rows="2" placeholder="Add a note (optional)..." class="w-full bg-[#faf8f5] border border-[#e6e0d8] rounded-xl p-3 font-montserrat text-[12px] text-[#1a1208] outline-none focus:border-[#c8a96e] transition-all resize-none"></textarea>
+      </div>
+      
+      <div class="flex gap-3 pt-2">
+        <button type="button" onclick="closeModal('cancelOrderModal')" class="flex-1 py-3 bg-[#faf8f5] text-[#8a7e72] text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-[#f0ebe2] transition-all cursor-pointer border-none">Keep Order</button>
+        <button type="button" id="confirmOrderBtn" onclick="handlePremiumSubmit('cancelOrderForm', this)" class="flex-1 py-3 bg-[#1a1208] text-white text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-black transition-all cursor-pointer border-none shadow-sm flex items-center justify-center gap-2">
+          <span>Confirm</span>
+        </button>
+      </div>
+    </div>
+    </form>
+  </div>
+</div>
+
+<!-- Item Cancel Modal Template -->
+<div class="modal-overlay" id="cancelItemModal">
+  <div class="modal-content" role="dialog" aria-modal="true">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-[26px] text-[#1a1208] leading-none m-0" style="font-family:'Cormorant Garamond',serif;">Cancel Item</h3>
+      <button type="button" onclick="closeModal('cancelItemModal')" class="w-8 h-8 rounded-full bg-[#f0ebe2] hover:bg-[#e6e0d8] text-[#1a1208] flex items-center justify-center transition-colors border-none cursor-pointer">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <form method="POST" id="cancelItemForm" action="{% url 'cancel_order_item' order.id %}" class="flex flex-col m-0">
+      {% csrf_token %}
+    <div class="flex flex-col gap-5">
+      <!-- Minimal Header -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg overflow-hidden bg-[#faf8f5] border border-[#e6e0d8]/50 shrink-0">
+          <img id="cancelItemThumb" src="" class="w-full h-full object-cover">
+        </div>
+        <div class="flex-1 min-w-0">
+          <p id="cancelItemName" class="text-[17px] text-[#1a1208] leading-tight m-0 truncate font-semibold" style="font-family:'Cormorant Garamond',serif;"></p>
+          <p class="text-[10px] font-montserrat font-bold text-[#8a7e72]/70 uppercase tracking-widest">Cancel Item</p>
+        </div>
+      </div>
+
+      <!-- Compact Scrubber -->
+      <div class="flex items-center justify-between bg-[#faf8f5] p-1.5 rounded-xl border border-[#e6e0d8]/60">
+        <button type="button" onclick="adjustModalQty(-1)" class="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-[#1a1208] hover:bg-[#1a1208] hover:text-white transition-all shadow-sm cursor-pointer border-none">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        
+        <div class="flex items-center gap-2">
+          <input type="number" id="cancelItemQty" name="quantity" value="1" min="1" class="w-8 bg-transparent border-none text-center font-montserrat text-lg font-bold text-[#1a1208] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+          <span class="text-[10px] font-montserrat font-bold text-[#8a7e72] uppercase tracking-tighter">/ <span id="maxQtyLabel">1</span></span>
+        </div>
+
+        <button type="button" onclick="adjustModalQty(1)" class="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-[#1a1208] hover:bg-[#1a1208] hover:text-white transition-all shadow-sm cursor-pointer border-none">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
+
+      <!-- Reason Section -->
+      <div class="flex flex-col gap-3">
+        <label class="text-[11px] font-montserrat font-bold text-[#8a7e72] uppercase tracking-wider">Reason for Cancellation</label>
+        
+        <div class="flex flex-wrap gap-1.5">
+          <button type="button" onclick="setReason('cancelItemReason', 'Changed my mind')" class="px-3 py-1.5 rounded-lg border border-[#e6e0d8] bg-white text-[#5c544a] text-[10px] font-montserrat font-medium hover:border-[#1a1208] hover:text-[#1a1208] transition-all cursor-pointer">Changed my mind</button>
+          <button type="button" onclick="setReason('cancelItemReason', 'Ordered by mistake')" class="px-3 py-1.5 rounded-lg border border-[#e6e0d8] bg-white text-[#5c544a] text-[10px] font-montserrat font-medium hover:border-[#1a1208] hover:text-[#1a1208] transition-all cursor-pointer">Ordered by mistake</button>
+          <button type="button" onclick="setReason('cancelItemReason', 'Wrong item selected')" class="px-3 py-1.5 rounded-lg border border-[#e6e0d8] bg-white text-[#5c544a] text-[10px] font-montserrat font-medium hover:border-[#1a1208] hover:text-[#1a1208] transition-all cursor-pointer">Wrong item</button>
+           <button type="button" onclick="setReason('cancelItemReason', 'Found a better price')" class="px-3 py-1.5 rounded-lg border border-[#e6e0d8] bg-white text-[#5c544a] text-[10px] font-montserrat font-medium hover:border-[#1a1208] hover:text-[#1a1208] transition-all cursor-pointer">Found better price</button>
+        </div>
+
+        <input type="text" id="cancelItemReason" name="reason" placeholder="Add a note (optional)..." class="w-full bg-[#faf8f5] border border-[#e6e0d8] rounded-xl p-3 font-montserrat text-[12px] text-[#1a1208] outline-none focus:border-[#c8a96e] transition-all">
+      </div>
+      
+      <div class="flex gap-3 pt-2">
+        <button type="button" onclick="closeModal('cancelItemModal')" class="flex-1 py-3 bg-[#faf8f5] text-[#8a7e72] text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-[#f0ebe2] transition-all cursor-pointer border-none">Keep</button>
+        <button type="button" id="confirmItemBtn" onclick="handlePremiumSubmit('cancelItemForm', this)" class="flex-1 py-3 bg-[#1a1208] text-white text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-black transition-all cursor-pointer border-none shadow-sm flex items-center justify-center gap-2">
+          <span>Confirm</span>
+        </button>
+      </div>
+    </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function openModal(id) {
+    const modal = document.getElementById(id);
+    if(modal) {
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function closeModal(id) {
+    const modal = document.getElementById(id);
+    if(modal) {
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  }
+
+  function openCancelItemModal(itemId, maxQty, itemName, itemImage) {
+    const form = document.getElementById('cancelItemForm');
+    form.action = `/order-detail/item/${itemId}/cancel/`; 
+    
+    // Set text and image
+    document.getElementById('cancelItemName').innerText = itemName;
+    document.getElementById('cancelItemThumb').src = itemImage || '';
+    
+    // Set max quantity constraints
+    const qtyInput = document.getElementById('cancelItemQty');
+    const qtyLabel = document.getElementById('maxQtyLabel');
+    if (qtyInput) {
+      qtyInput.max = maxQty;
+      qtyInput.value = 1; // Default to 1 for safer partial cancellation
+    }
+    if (qtyLabel) {
+      qtyLabel.innerText = maxQty;
+    }
+
+    openModal('cancelItemModal');
+  }
+
+  function adjustModalQty(change) {
+    const qtyInput = document.getElementById('cancelItemQty');
+    if (qtyInput) {
+      let newVal = parseInt(qtyInput.value) + change;
+      let min = parseInt(qtyInput.min) || 1;
+      let max = parseInt(qtyInput.max) || 100;
+      
+      if (newVal >= min && newVal <= max) {
+        qtyInput.value = newVal;
+      }
+    }
+  }
+
+  function setReason(inputId, text) {
+    const inputElement = document.getElementById(inputId);
+    if (inputElement) {
+      inputElement.value = text;
+      inputElement.focus();
+    }
+  }
+
+  // Premium Submit Handler
+  function handlePremiumSubmit(formId, btn) {
+    if (btn.classList.contains('btn-processing')) return;
+
+    // Show Spinner instantly
+    btn.classList.add('btn-processing');
+    btn.innerHTML = `
+      <svg class="animate-spin" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" opacity="0.25"></circle>
+        <path d="M12 2 a10 10 0 0 1 10 10" stroke-linecap="round"></path>
+      </svg>
+      <span>Processing...</span>
+    `;
+
+    // Submit form (redirects natively)
+    document.getElementById(formId).submit();
+  }
+
+  function openModal(id) {
+    const overlay = document.getElementById(id);
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal(id) {
+    const overlay = document.getElementById(id);
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  // Close modals on clicking outside boundaries
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', function(e) {
+      if (e.target === this) {
+        closeModal(this.id);
+      }
+    });
+  });
+</script>
+{% endblock %}

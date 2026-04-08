@@ -1,0 +1,717 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Order Confirmed – Glowé{% endblock %}
+
+{% block extra_css %}
+
+/* ======================================================
+   ORDER SUCCESS PAGE — Glowé
+   Tokens → bg:#f0ebe2  ink:#1a1208  gold:#c8a96e  green:#2B6747
+====================================================== */
+
+.os-page {
+  min-height: calc(100vh - 64px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px 100px;
+  background: #f0ebe2;
+  position: relative;
+}
+
+/* ── radial glow behind content ── */
+.os-glow {
+  position: fixed;
+  top: -220px; left: 50%;
+  transform: translateX(-50%);
+  width: 860px; height: 640px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 30%,
+    rgba(200,169,110,0.10) 0%,
+    rgba(43,103,71,0.055) 40%,
+    transparent 70%);
+  pointer-events: none; z-index: 0;
+}
+
+.os-col {
+  max-width: 540px; width: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; text-align: center;
+  gap: 0;
+  position: relative; z-index: 1;
+}
+
+/* ======================================================
+   HERO — TICK + TEXT
+====================================================== */
+.os-hero {
+  display: flex; flex-direction: column;
+  align-items: center; margin-bottom: 44px;
+}
+
+/* ── tick wrapper ── */
+.tick-outer {
+  width: 140px; height: 140px;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 20px;
+}
+
+/* pulse rings (animated rounded borders) */
+.t-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1.5px solid #2B6747;
+  opacity: 0;
+}
+.t-ring-1 {
+  inset: 10px;
+  animation: ring-pulse 2s cubic-bezier(0.2,0.8,0.2,1) 1.6s infinite;
+}
+.t-ring-2 {
+  inset: 10px;
+  animation: ring-pulse 2s cubic-bezier(0.2,0.8,0.2,1) 2.6s infinite;
+}
+@keyframes ring-pulse {
+  0%   { opacity: 0.6; transform: scale(0.9); }
+  100% { opacity: 0; transform: scale(1.6); }
+}
+
+/* Glow burst */
+.t-glow {
+  position: absolute;
+  inset: 15px;
+  background: radial-gradient(circle, rgba(43,103,71,0.18) 0%, transparent 60%);
+  border-radius: 50%;
+  opacity: 0;
+  transform: scale(0);
+  /* syncs with the heartbeat bump */
+  animation: glow-pulse 2s ease-out 1.6s infinite;
+  pointer-events: none;
+}
+@keyframes glow-pulse {
+  0%   { opacity: 0; transform: scale(0.8); }
+  15%  { opacity: 1; transform: scale(1.3); }
+  50%  { opacity: 0; transform: scale(1.4); }
+  100% { opacity: 0; transform: scale(0.8); }
+}
+
+/* SVG Container - Slow fade in, then bumping */
+.tick-svg {
+  position: relative; z-index: 2;
+  width: 100%; height: 100%; overflow: visible;
+  opacity: 0;
+  transform-origin: center;
+  animation: 
+    fade-up 0.8s ease-out forwards,
+    heartbeat 2s ease-in-out 1.6s infinite;
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(15px) scale(0.9); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes heartbeat {
+  0%   { transform: scale(1); }
+  10%  { transform: scale(1.12); }
+  22%  { transform: scale(0.95); }
+  34%  { transform: scale(1.04); }
+  46%  { transform: scale(1); }
+  100% { transform: scale(1); }
+}
+
+/* circle trace - VERY slow */
+.tc-c {
+  fill: none; stroke: #2B6747;
+  stroke-width: 2.5; stroke-linecap: round;
+  stroke-dasharray: 255; stroke-dashoffset: 255;
+  transform-origin: 50% 50%; transform: rotate(-90deg);
+  animation: draw-c 1.2s cubic-bezier(0.4, 0, 0.2, 1) 0.1s forwards;
+}
+@keyframes draw-c { to { stroke-dashoffset: 0; } }
+
+/* extra long breakout tick - VERY slow */
+.tc-k {
+  fill: none; stroke: #2B6747;
+  stroke-width: 6; stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 100; stroke-dashoffset: 100;
+  animation: draw-k 1s cubic-bezier(0.4, 0, 0.2, 1) 0.6s forwards;
+  filter: drop-shadow(0 6px 12px rgba(43,103,71,0.35));
+}
+@keyframes draw-k { to { stroke-dashoffset: 0; } }
+
+/* ── headline text ── */
+.ht-b {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(28px, 5.5vw, 40px);
+  font-weight: 500; color: #1a1208;
+  letter-spacing: -0.02em; line-height: 1.25;
+  margin-bottom: 8px;
+  opacity: 0; transform: translateY(16px);
+  animation: txt-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.6s forwards;
+}
+.ht-b em { font-style: italic; font-weight: 400; }
+
+@keyframes txt-up { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+/* subtext */
+.os-sub {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12px; color: #8a7e72;
+  line-height: 1.85; font-weight: 400;
+  max-width: 340px;
+  opacity: 0;
+  animation: txt-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.7s forwards;
+}
+
+/* status pill */
+.os-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: rgba(43,103,71,0.065);
+  border: 1px solid rgba(43,103,71,0.17);
+  border-radius: 999px; padding: 6px 16px 6px 11px;
+  margin-top: 18px;
+  opacity: 0;
+  animation: txt-up 0.5s cubic-bezier(0.16,1,0.3,1) 0.8s forwards;
+}
+.pill-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #2B6747;
+  animation: dot-blink 2s ease-in-out 1.2s infinite;
+}
+@keyframes dot-blink { 0%,100%{opacity:1;} 50%{opacity:0.18;} }
+.pill-txt {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9px; font-weight: 700;
+  color: #2B6747; letter-spacing: 0.13em; text-transform: uppercase;
+}
+
+/* ======================================================
+   CARD
+====================================================== */
+.os-card {
+  width: 100%;
+  background: #fff;
+  border-radius: 22px;
+  border: 1px solid rgba(26,18,8,0.07);
+  box-shadow:
+    0 2px 4px rgba(26,18,8,0.025),
+    0 12px 44px rgba(26,18,8,0.065);
+  overflow: hidden;
+  opacity: 0;
+  animation: card-up 0.6s cubic-bezier(0.16,1,0.3,1) 0.9s forwards;
+}
+@keyframes card-up {
+  from { opacity:0; transform:translateY(26px) scale(0.99); }
+  to   { opacity:1; transform:translateY(0)     scale(1); }
+}
+
+/* shimmer accent line */
+.card-bar {
+  height: 2.5px;
+  background: linear-gradient(90deg,
+    #c8a96e 0%, #e8d6aa 20%,
+    #2B6747 42%, #5aac7c 60%,
+    #c8a96e 80%, #e8d6aa 100%);
+  background-size: 260% 100%;
+  animation: bar-shimmer 3.6s linear infinite;
+}
+@keyframes bar-shimmer {
+  0%  { background-position: 260% 0; }
+  100%{ background-position: -260% 0; }
+}
+
+/* ── meta row (order# + est. delivery) ── */
+.card-meta {
+  padding: 24px 28px 22px;
+  display: flex; justify-content: space-between;
+  align-items: flex-start; gap: 12px; flex-wrap: wrap;
+  border-bottom: 1px solid rgba(26,18,8,0.065);
+}
+.m-lbl {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 8px; font-weight: 700;
+  color: #b0a498; letter-spacing: 0.2em;
+  text-transform: uppercase; margin-bottom: 5px;
+}
+.m-val {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 15.5px; font-weight: 800;
+  color: #1a1208; letter-spacing: -0.02em;
+}
+.m-val-sm {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 12.5px; font-weight: 500; color: #1a1208;
+}
+
+/* ── 4-step delivery tracker ── */
+.card-track {
+  padding: 22px 28px;
+  border-bottom: 1px solid rgba(26,18,8,0.065);
+}
+.track-bar-bg {
+  height: 2px;
+  background: rgba(26,18,8,0.07);
+  border-radius: 10px;
+  position: relative;
+}
+.track-bar-fill {
+  position: absolute; top: 0; left: 0;
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, #2B6747, rgba(43,103,71,0.35));
+  border-radius: 10px;
+  transition: width 1s cubic-bezier(0.4,0,0.2,1) 1.2s;
+}
+.track-nodes {
+  display: flex; justify-content: space-between;
+  position: absolute; top: 50%; left: 0; right: 0;
+  transform: translateY(-50%); pointer-events: none;
+}
+.t-node {
+  width: 13px; height: 13px; border-radius: 50%;
+  background: #e6e0d8; border: 2px solid #e6e0d8;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.45s;
+}
+.t-node.done {
+  background: #2B6747; border-color: #2B6747;
+}
+.t-node.done::after {
+  content: '';
+  display: block;
+  width: 4px; height: 2.5px;
+  border-left:  1.5px solid #fff;
+  border-bottom:1.5px solid #fff;
+  transform: rotate(-45deg) translateY(-0.5px);
+}
+.t-node.curr {
+  background: #fff;
+  border-color: #2B6747;
+  box-shadow: 0 0 0 3px rgba(43,103,71,0.12);
+}
+.t-node-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: #2B6747;
+  animation: node-breathe 2s ease-in-out infinite;
+}
+@keyframes node-breathe {
+  0%,100%{ transform:scale(1); opacity:1; }
+  50%    { transform:scale(0.4); opacity:0.3; }
+}
+.track-lbls {
+  display: flex; justify-content: space-between;
+  margin-top: 9px;
+}
+.tr-lbl {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 7.5px; font-weight: 600;
+  color: #b0a498; letter-spacing: 0.08em;
+  text-transform: uppercase; flex: 1; text-align: center;
+}
+.tr-lbl:first-child { text-align: left; }
+.tr-lbl:last-child  { text-align: right; }
+.tr-lbl.done   { color: rgba(43,103,71,0.45); }
+.tr-lbl.active { color: #2B6747; font-weight: 700; }
+
+/* ── minimal item list ── */
+.card-items { padding: 8px 28px 4px; }
+.item-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 40px;
+  padding: 22px 0;
+  border-bottom: 1px solid rgba(26,18,8,0.05);
+  opacity: 0;
+  animation: txt-up 0.4s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+.item-row:last-child { border-bottom: none; }
+{% comment %}stagger delays set via inline style{% endcomment %}
+
+.item-thumb {
+  display: block;
+  width: 68px; height: 88px;
+  border-radius: 12px; overflow: hidden;
+  flex-shrink: 0; background: #f0ebe2;
+  box-shadow: 0 4px 12px rgba(26,18,8,0.04);
+}
+.item-thumb img {
+  width: 100%; height: 100%; object-fit: cover;
+  display: block;
+}
+.item-thumb-ph {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+}
+.item-info { flex: 1; min-width: 0; text-align: left; }
+.item-nm {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11.5px; font-weight: 600; color: #1a1208;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  text-decoration: none; display: block; transition: color 0.2s;
+}
+.item-nm:hover { color: #2B6747; }
+.item-var {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9.5px; color: #b0a498; margin-top: 3px;
+}
+.item-pr {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13.5px; font-weight: 700; color: #1a1208;
+  white-space: nowrap; flex-shrink: 0;
+}
+
+/* ── summary + payment ── */
+.card-summary {
+  padding: 18px 28px 26px;
+  background: #faf8f5;
+  border-top: 1px solid rgba(26,18,8,0.065);
+}
+.sum-row {
+  display: flex; justify-content: space-between;
+  align-items: center; padding: 4.5px 0;
+}
+.s-lbl {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11.5px; font-weight: 400; color: #8a7e72;
+}
+.s-val {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11.5px; font-weight: 600; color: #1a1208;
+}
+.s-val.green { color: #2B6747; }
+.s-val.red   { color: #c0392b; }
+
+.sum-divider {
+  height: 1px;
+  background: rgba(26,18,8,0.07);
+  margin: 14px 0;
+}
+
+/* total row */
+.sum-total {
+  display: flex; justify-content: space-between;
+  align-items: baseline; margin-bottom: 4px;
+}
+.sum-total-lbl {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 11px; font-weight: 700;
+  color: #1a1208; letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.sum-total-val {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 34px; font-weight: 600;
+  color: #1a1208; letter-spacing: -0.025em; line-height: 1;
+}
+
+/* payment method text */
+.pay-line-txt {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 9px; font-weight: 600;
+  color: #b0a498; letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ======================================================
+   BUTTONS
+====================================================== */
+.os-btns {
+  margin-top: 28px;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 11px; width: 100%;
+  opacity: 0;
+  animation: txt-up 0.6s cubic-bezier(0.16,1,0.3,1) 1.3s forwards;
+}
+@media(min-width:500px){
+  .os-btns { flex-direction: row; justify-content: center; }
+}
+
+.btn-main {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: #1a1208; color: #fff;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  border-radius: 999px; padding: 15px 34px;
+  text-decoration: none; border: none; cursor: pointer;
+  position: relative; overflow: hidden;
+  transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s;
+  width: 100%;
+}
+@media(min-width:500px){ .btn-main { width: auto; } }
+.btn-main::after {
+  content: '';
+  position: absolute; top: 0; left: -55%;
+  width: 38%; height: 100%;
+  background: linear-gradient(90deg,transparent,rgba(255,255,255,0.11),transparent);
+  transform: skewX(-18deg);
+  animation: sh-btn 3.5s ease-in-out 4.5s infinite;
+}
+@keyframes sh-btn { 0%{left:-55%;} 100%{left:150%;} }
+.btn-main:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 14px 36px rgba(26,18,8,0.22);
+}
+.btn-arrow { display:flex; align-items:center; transition:transform 0.28s; }
+.btn-main:hover .btn-arrow { transform: translateX(4px); }
+
+.btn-ghost {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  text-decoration: none;
+  background: transparent; color: #1a1208;
+  border: 1.5px solid rgba(26,18,8,0.17);
+  border-radius: 999px; padding: 15px 34px; cursor: pointer;
+  transition: all 0.28s; width: 100%;
+}
+@media(min-width:500px){ .btn-ghost { width: auto; } }
+.btn-ghost:hover {
+  background: #1a1208; color: #fff;
+  border-color: #1a1208;
+  transform: translateY(-3px);
+  box-shadow: 0 12px 30px rgba(26,18,8,0.15);
+}
+
+/* ======================================================
+   CONFETTI
+====================================================== */
+.cf-wrap {
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 999; overflow: hidden;
+}
+.cf { position: absolute; top: -14px; opacity: 0; will-change: transform, opacity; }
+@keyframes cf-drop {
+  0%  { opacity: 1; }
+  80% { opacity: 1; }
+  100%{ opacity: 0; transform: translateY(110vh) rotate(var(--re)); }
+}
+@keyframes cf-sway {
+  0%,100%{ margin-left: 0; }
+  50%    { margin-left: var(--sw); }
+}
+
+{% endblock %}
+
+{% block content %}
+
+<div class="os-glow"></div>
+<div class="cf-wrap" id="cfWrap"></div>
+
+<div class="os-page">
+  <div class="os-col">
+
+    <!-- ══════ HERO ══════ -->
+    <div class="os-hero">
+
+      <!-- animated tick -->
+      <div class="tick-outer">
+        <div class="t-glow"></div>
+        <div class="t-ring t-ring-1"></div>
+        <div class="t-ring t-ring-2"></div>
+        <svg class="tick-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+          <circle class="tc-c" cx="50" cy="50" r="40"/>
+          <polyline class="tc-k" points="26,53 41,68 88,14"/>
+        </svg>
+      </div>
+
+      <!-- headline swap -->
+      <p class="ht-b">Thank you <em>for&nbsp;ordering.</em></p>
+
+      <p class="os-sub">
+        Your order has been placed and we're preparing it with care.<br>
+        A confirmation has been sent to your email.
+      </p>
+
+      <!-- live status pill -->
+      <div class="os-pill">
+        <span class="pill-dot"></span>
+        <span class="pill-txt">Order Confirmed</span>
+      </div>
+
+    </div><!-- /hero -->
+
+    <!-- ══════ CARD ══════ -->
+    <div class="os-card">
+
+      <!-- shimmer bar -->
+      <div class="card-bar"></div>
+
+      <!-- order # + delivery estimate -->
+      <div class="card-meta">
+        <div>
+          <p class="m-lbl">Order Number</p>
+          <p class="m-val">#{{ order.order_number }}</p>
+        </div>
+        <div style="text-align:right">
+          <p class="m-lbl">Est. Delivery</p>
+          <p class="m-val-sm">{{ delivery_start|date:"M d" }} – {{ delivery_end|date:"M d, Y" }}</p>
+        </div>
+      </div>
+
+      <!-- 4-step delivery tracker -->
+      <div class="card-track">
+        <div class="track-bar-bg">
+          <div class="track-bar-fill" id="trackFill"></div>
+          <div class="track-nodes">
+            <div class="t-node done"></div>
+            <div class="t-node curr"><div class="t-node-dot"></div></div>
+            <div class="t-node"></div>
+            <div class="t-node"></div>
+          </div>
+        </div>
+        <div class="track-lbls">
+          <span class="tr-lbl done">Confirmed</span>
+          <span class="tr-lbl active">Processing</span>
+          <span class="tr-lbl">Shipped</span>
+          <span class="tr-lbl">Delivered</span>
+        </div>
+      </div>
+
+      <!-- items — minimal list -->
+      <div class="card-items">
+        {% for item in order_items %}
+        <div class="item-row" style="animation-delay: calc(1.1s + {{ forloop.counter0 }}*0.1s);">
+          <a href="{% url 'product_detail_view' item.variant.product.slug %}" class="item-thumb">
+            {% if item.variant.product.images.first %}
+              <img src="{{ item.variant.product.images.first.image.url }}"
+                   alt="{{ item.variant.product.name }}" loading="lazy">
+            {% else %}
+              <div class="item-thumb-ph">
+                <svg width="20" height="20" fill="none" stroke="rgba(26,18,8,0.18)"
+                     stroke-width="1.4" viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="18" height="18" rx="3"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+              </div>
+            {% endif %}
+          </a>
+          <div class="item-info">
+            <a href="{% url 'product_detail_view' item.variant.product.slug %}" class="item-nm">
+              {{ item.variant.product.name }}
+              {% if item.quantity > 1 %}&nbsp;<span style="font-weight:400;color:#b0a498;">×{{ item.quantity }}</span>{% endif %}
+            </a>
+            <p class="item-var">
+              {% if item.variant.size %}{{ item.variant.size }}{% endif %}
+              {% if item.variant.size and item.variant.color %}&nbsp;·&nbsp;{% endif %}
+              {% if item.variant.color %}{{ item.variant.color }}{% endif %}
+            </p>
+          </div>
+          <p class="item-pr">₹{{ item.price_at_time }}</p>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- pricing summary + payment -->
+      <div class="card-summary">
+
+        <!-- line items -->
+        <div class="sum-row">
+          <span class="s-lbl">Subtotal</span>
+          <span class="s-val">₹{{ order.subtotal }}</span>
+        </div>
+        {% if order.discount_amount and order.discount_amount > 0 %}
+        <div class="sum-row">
+          <span class="s-lbl">Discount</span>
+          <span class="s-val red">−₹{{ order.discount_amount }}</span>
+        </div>
+        {% endif %}
+        <div class="sum-row">
+          <span class="s-lbl">Shipping</span>
+          {% if order.delivery_charge == 0 %}
+            <span class="s-val green">Free</span>
+          {% else %}
+            <span class="s-val">₹{{ order.delivery_charge }}</span>
+          {% endif %}
+        </div>
+
+        <div class="sum-divider"></div>
+
+        <!-- total & payment -->
+        <div class="sum-total">
+          <span class="sum-total-lbl">Total Paid</span>
+          <div style="text-align: right;">
+            <div class="sum-total-val">₹{{ order.total_amount }}</div>
+            {% if payment %}
+            <div class="pay-line-txt" style="margin-top: 5px;">
+              {% if payment.payment_method == 'COD' %}Cash on Delivery{% else %}{{ payment.get_payment_method_display }}{% endif %}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+      </div><!-- /card-summary -->
+
+    </div><!-- /card -->
+
+    <!-- ══════ BUTTONS ══════ -->
+    <div class="os-btns">
+      <a href="{% url 'home' %}" class="btn-main">
+        Continue Shopping
+        <span class="btn-arrow">
+          <svg width="14" height="14" fill="none" stroke="currentColor"
+               stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"
+               viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </span>
+      </a>
+      <a href="{% url 'profile_overview' %}" class="btn-ghost">View My Orders</a>
+    </div>
+
+  </div><!-- /os-col -->
+</div><!-- /os-page -->
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+  /* progress bar fill after card animates in */
+  setTimeout(function(){
+    var f = document.getElementById('trackFill');
+    if(f) f.style.width = '18%';
+  }, 1200);
+
+  /* ── 90-piece confetti ── */
+  var PAL = ['#c8a96e','#f0ebe2','#1a1208','#2B6747','#e8d5aa','#5aac7c','#d8ccb4','#8ab89a'];
+  var wrap = document.getElementById('cfWrap');
+
+  function rnd(a,b){ return Math.random()*(b-a)+a; }
+
+  function spawn(){
+    var el = document.createElement('div');
+    el.className = 'cf';
+    var t = Math.random(), w, h, r;
+    if(t < 0.28)     { w = h = rnd(5,10); r = '3px'; }
+    else if(t < 0.54){ w = h = rnd(4,8);  r = '50%'; }
+    else if(t < 0.77){ w = rnd(10,18); h = rnd(3,6);  r = '2px'; }
+    else             { w = rnd(3,6);   h = rnd(10,18); r = '2px'; }
+
+    var dur   = rnd(2.0, 3.8);
+    var delay = rnd(0, 0.5);
+
+    el.style.cssText = [
+      'left:'   + rnd(0, 100) + 'vw',
+      'width:'  + w + 'px',
+      'height:' + h + 'px',
+      'background:' + PAL[Math.floor(Math.random() * PAL.length)],
+      'border-radius:' + r,
+      '--sw:'   + ((Math.random() - 0.5) * 130) + 'px',
+      '--re:'   + rnd(-460, 460) + 'deg',
+      'animation: cf-drop ' + dur + 's ease-in ' + delay + 's forwards,' +
+                 'cf-sway '  + dur + 's ease-in-out ' + delay + 's infinite'
+    ].join(';');
+
+    wrap.appendChild(el);
+    setTimeout(function(){
+      if(el.parentNode) el.parentNode.removeChild(el);
+    }, (dur + delay + 0.4) * 1000);
+  }
+
+  /* fire confetti 700ms after load */
+  setTimeout(function(){
+    for(var i = 0; i < 90; i++) spawn();
+  }, 300);
+
+})();
+</script>
+{% endblock %}

@@ -427,7 +427,50 @@ body { background: var(--cream); }
 @media (max-width: 640px) {
   .cart-card { padding: 18px; }
   .cart-img-wrap { width: 80px; height: 80px; }
-  .summary-body { padding: 20px; }
+}
+
+/* ── TOOLTIP ── */
+.tooltip-wrapper {
+  position: relative;
+  display: flex; align-items: center; gap: 6px;
+  cursor: help;
+}
+.info-icon {
+  opacity: 0.4; transition: opacity 0.2s;
+}
+.tooltip-wrapper:hover .info-icon { opacity: 0.9; }
+
+.modern-tooltip {
+  position: absolute;
+  top: calc(100% + 12px); 
+  left: -15px; transform: translateY(6px);
+  width: 220px; padding: 14px 16px;
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 12px 34px rgba(44,31,20,0.1);
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+  z-index: 100;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.modern-tooltip::before {
+  content: ''; position: absolute;
+  top: -6px; left: 35px; transform: rotate(45deg);
+  width: 12px; height: 12px; background: var(--white);
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
+  border-radius: 2px 0 0 0;
+}
+.tooltip-wrapper:hover .modern-tooltip {
+  opacity: 1; visibility: visible; transform: translateY(0);
+}
+.tt-header {
+  font-family: 'Cormorant Garamond', serif; font-size: 1.15rem; font-weight: 600;
+  color: var(--ink); line-height: 1.2; letter-spacing: 0; text-transform: none;
+}
+.tt-body {
+  font-family: 'Montserrat', sans-serif; font-size: 0.65rem; font-weight: 400;
+  color: var(--brown-lt); line-height: 1.55;
 }
 {% endblock %}
 
@@ -616,9 +659,13 @@ body { background: var(--cream); }
           <span class="summary-row-value" id="summary-subtotal">₹{{ total }}</span>
         </div>
         <div class="summary-row">
-          <span class="summary-row-label" style="display:flex;align-items:center;gap:6px;">
+          <span class="summary-row-label tooltip-wrapper">
             Shipping
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="opacity:.4;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            <svg class="info-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            <div class="modern-tooltip">
+              <span class="tt-header">Delivery Estimate</span>
+              <span class="tt-body">Orders are typically delivered within <strong style="color:var(--ink);font-weight:600;">3 to 7 business days</strong>.</span>
+            </div>
           </span>
           <span class="summary-row-value">TBD at checkout</span>
         </div>

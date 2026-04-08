@@ -110,14 +110,17 @@ a,button{transition:all .18s cubic-bezier(.4,0,.2,1)}
 .badge-archived{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:999px;background:#fffbeb;color:#b45309;border:1px solid #fde68a}
 
 /* ─── Pagination ─── */
-.pag-btn{
-  width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-size:13px;font-weight:600;color:#6b7280;text-decoration:none;
-  transition:all .14s ease;
+.pg-btn {
+  display:flex; align-items:center; justify-content:center;
+  width:40px; height:40px; border-radius:12px;
+  font-size:12px; font-weight:700; color:#1a1208;
+  border:1px solid rgba(26,18,8,0.08); background:#fff;
+  transition:all .25s ease;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.02); text-decoration:none;
 }
-.pag-btn:hover{background:#f1f3f1;color:#111827;transform:scale(1.08)}
-.pag-btn.active{background:#2a542b;color:#fff;box-shadow:0 2px 8px rgba(42,84,43,.28)}
-.pag-btn.disabled{color:#d1d5db;cursor:not-allowed}
+.pg-btn:hover { background:#1a1208; color:#fff; border-color:#1a1208; transform:translateY(-2px); box-shadow: 0 8px 20px rgba(26,18,8,0.15); }
+.pg-btn.active { background:#1a1208; color:#fff; border-color:#1a1208; pointer-events:none; box-shadow: 0 6px 15px rgba(26,18,8,0.2); }
+.pg-btn.disabled { opacity:.3; pointer-events:none; }
 
 /* ─── Modals ─── */
 .modal-wrap{
@@ -499,40 +502,41 @@ a,button{transition:all .18s cubic-bezier(.4,0,.2,1)}
       </div>
       {% endif %}
 
-      <!-- Pagination -->
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 20px;border-top:1px solid #f3f4f3;gap:10px;flex-wrap:wrap">
-        <p style="font-size:12.5px;color:#9ca3af;margin:0">
-          Showing <strong style="color:#374151">{{ categories.start_index }}–{{ categories.end_index }}</strong>
-          of <strong style="color:#374151">{{ categories.paginator.count }}</strong>
-        </p>
-        <div style="display:flex;align-items:center;gap:3px">
-          {% if categories.has_previous %}
-          <a href="?status={{ status }}&q={{ query }}&active_status={{ active_status }}&page={{ categories.previous_page_number }}" class="pag-btn">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>
-          </a>
-          {% else %}
-          <span class="pag-btn disabled"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg></span>
-          {% endif %}
-
-          {% for num in categories.paginator.page_range %}
-            {% if categories.number == num %}
-              <span class="pag-btn active">{{ num }}</span>
-            {% elif num > categories.number|add:'-3' and num < categories.number|add:'3' %}
-              <a href="?status={{ status }}&q={{ query }}&active_status={{ active_status }}&page={{ num }}" class="pag-btn">{{ num }}</a>
-            {% endif %}
-          {% endfor %}
-
-          {% if categories.has_next %}
-          <a href="?status={{ status }}&q={{ query }}&active_status={{ active_status }}&page={{ categories.next_page_number }}" class="pag-btn">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M9 5l7 7-7 7"/></svg>
-          </a>
-          {% else %}
-          <span class="pag-btn disabled"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M9 5l7 7-7 7"/></svg></span>
-          {% endif %}
-        </div>
-      </div>
-
     </div>
+
+    <!-- Pagination -->
+    {% if categories.paginator.num_pages > 1 %}
+    <div class="mt-8 flex items-center justify-center gap-2 pb-6">
+      {% if categories.has_previous %}
+        <a href="?status={{ status }}&q={{ query }}&active_status={{ active_status }}&page={{ categories.previous_page_number }}" class="pg-btn">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 18l-6-6 6-6"/></svg>
+        </a>
+      {% else %}
+        <span class="pg-btn disabled">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 18l-6-6 6-6"/></svg>
+        </span>
+      {% endif %}
+
+      {% for num in categories.paginator.page_range %}
+        {% if categories.number == num %}
+          <span class="pg-btn active">{{ num }}</span>
+        {% elif num >= categories.number|add:"-2" and num <= categories.number|add:"2" %}
+          <a href="?status={{ status }}&q={{ query }}&active_status={{ active_status }}&page={{ num }}" class="pg-btn">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+
+      {% if categories.has_next %}
+        <a href="?status={{ status }}&q={{ query }}&active_status={{ active_status }}&page={{ categories.next_page_number }}" class="pg-btn">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 18l6-6-6-6"/></svg>
+        </a>
+      {% else %}
+        <span class="pg-btn disabled">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 18l6-6-6-6"/></svg>
+        </span>
+      {% endif %}
+    </div>
+    {% endif %}
+
   </main>
 </div>
 

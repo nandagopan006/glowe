@@ -29,6 +29,19 @@
   <style>
     *{ font-family:'DM Sans',sans-serif; }
 
+    /* ── PAGINATION ── */
+    .pg-btn {
+      display:flex; align-items:center; justify-content:center;
+      width:40px; height:40px; border-radius:12px;
+      font-size:12px; font-weight:700; color:#1a1208;
+      border:1px solid rgba(26,18,8,0.08); background:#fff;
+      transition:all .25s ease;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+    }
+    .pg-btn:hover { background:#1a1208; color:#fff; border-color:#1a1208; transform:translateY(-2px); box-shadow: 0 8px 20px rgba(26,18,8,0.15); }
+    .pg-btn.active { background:#1a1208; color:#fff; border-color:#1a1208; pointer-events:none; box-shadow: 0 6px 15px rgba(26,18,8,0.2); }
+    .pg-btn.disabled { opacity:.3; pointer-events:none; }
+
     /* Toggle */
     .toggle-wrap{ display:inline-flex; align-items:center; cursor:pointer; }
     .toggle-track{ width:36px; height:20px; border-radius:9999px; position:relative; transition:background .22s ease; }
@@ -374,57 +387,41 @@
         </table>
       </div>
 
-      <!-- Pagination -->
-      {% if products.paginator.num_pages > 1 %}
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-4 border-t border-gray-100">
-
-        <p class="text-xs text-gray-400 font-medium">
-          Showing {{ products.start_index }}–{{ products.end_index }} of {{ products.paginator.count }} product{{ products.paginator.count|pluralize }}
-        </p>
-
-        <div class="flex items-center gap-1">
-
-          {% if products.has_previous %}
-          <a href="?q={{ query }}&category={{ selected_category }}&status={{ status }}&active_status={{ active_status }}&page={{ products.previous_page_number }}"
-             class="flex items-center gap-1 px-3 h-8 text-xs font-medium rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300 transition-all duration-150">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>Prev
-          </a>
-          {% else %}
-          <span class="flex items-center gap-1 px-3 h-8 text-xs font-medium rounded-lg border border-gray-100 text-gray-300 cursor-not-allowed">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>Prev
-          </span>
-          {% endif %}
-
-          {% for num in products.paginator.page_range %}
-            {% if products.number == num %}
-              <span class="w-8 h-8 flex items-center justify-center text-xs font-semibold rounded-lg bg-sage-600 text-white shadow-sm">{{ num }}</span>
-            {% elif num == 1 or num == products.paginator.num_pages %}
-              <a href="?q={{ query }}&category={{ selected_category }}&status={{ status }}&active_status={{ active_status }}&page={{ num }}"
-                 class="w-8 h-8 flex items-center justify-center text-xs font-semibold rounded-lg text-gray-500 hover:bg-sage-50 hover:text-sage-700 border border-transparent hover:border-sage-100 transition-all duration-150">{{ num }}</a>
-            {% elif num >= products.number|add:"-1" and num <= products.number|add:"1" %}
-              <a href="?q={{ query }}&category={{ selected_category }}&status={{ status }}&active_status={{ active_status }}&page={{ num }}"
-                 class="w-8 h-8 flex items-center justify-center text-xs font-semibold rounded-lg text-gray-500 hover:bg-sage-50 hover:text-sage-700 border border-transparent hover:border-sage-100 transition-all duration-150">{{ num }}</a>
-            {% elif num == products.number|add:"-2" or num == products.number|add:"2" %}
-              <span class="w-7 h-8 flex items-center justify-center text-xs text-gray-300 select-none">…</span>
-            {% endif %}
-          {% endfor %}
-
-          {% if products.has_next %}
-          <a href="?q={{ query }}&category={{ selected_category }}&status={{ status }}&active_status={{ active_status }}&page={{ products.next_page_number }}"
-             class="flex items-center gap-1 px-3 h-8 text-xs font-medium rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300 transition-all duration-150">
-            Next<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M9 5l7 7-7 7"/></svg>
-          </a>
-          {% else %}
-          <span class="flex items-center gap-1 px-3 h-8 text-xs font-medium rounded-lg border border-gray-100 text-gray-300 cursor-not-allowed">
-            Next<svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M9 5l7 7-7 7"/></svg>
-          </span>
-          {% endif %}
-
-        </div>
-      </div>
-      {% endif %}
-
     </div>
+
+    <!-- Pagination -->
+    {% if products.paginator.num_pages > 1 %}
+    <div class="mt-8 flex items-center justify-center gap-2 pb-6">
+      {% if products.has_previous %}
+        <a href="?q={{ query }}&category={{ selected_category }}&status={{ status }}&active_status={{ active_status }}&page={{ products.previous_page_number }}" class="pg-btn">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 18l-6-6 6-6"/></svg>
+        </a>
+      {% else %}
+        <span class="pg-btn disabled">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 18l-6-6 6-6"/></svg>
+        </span>
+      {% endif %}
+      
+      {% for idx in products.paginator.page_range %}
+        {% if products.number == idx %}
+          <span class="pg-btn active">{{ idx }}</span>
+        {% elif idx >= products.number|add:"-2" and idx <= products.number|add:"2" %}
+          <a href="?q={{ query }}&category={{ selected_category }}&status={{ status }}&active_status={{ active_status }}&page={{ idx }}" class="pg-btn">{{ idx }}</a>
+        {% endif %}
+      {% endfor %}
+
+      {% if products.has_next %}
+        <a href="?q={{ query }}&category={{ selected_category }}&status={{ status }}&active_status={{ active_status }}&page={{ products.next_page_number }}" class="pg-btn">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 18l6-6-6-6"/></svg>
+        </a>
+      {% else %}
+        <span class="pg-btn disabled">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 18l6-6-6-6"/></svg>
+        </span>
+      {% endif %}
+    </div>
+    {% endif %}
+
   </main>
 </div>
 

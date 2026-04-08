@@ -25,6 +25,18 @@
         .toggle-checkbox:checked { right: 0; border-color: #2F5233; }
         .toggle-checkbox:checked + .toggle-label { background-color: #2F5233; }
         .toggle-checkbox:checked + .toggle-label:after { transform: translateX(100%); border-color: white; }
+
+        .pg-btn {
+            display:flex; align-items:center; justify-content:center;
+            width:40px; height:40px; border-radius:12px;
+            font-size:12px; font-weight:700; color:#1a1208;
+            border:1px solid rgba(26,18,8,0.08); background:#fff;
+            transition:all .25s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02); text-decoration:none;
+        }
+        .pg-btn:hover { background:#1a1208; color:#fff; border-color:#1a1208; transform:translateY(-2px); box-shadow: 0 8px 20px rgba(26,18,8,0.15); }
+        .pg-btn.active { background:#1a1208; color:#fff; border-color:#1a1208; pointer-events:none; box-shadow: 0 6px 15px rgba(26,18,8,0.2); }
+        .pg-btn.disabled { opacity:.3; pointer-events:none; }
         
         /* Hide native number arrows */
         input[type=number]::-webkit-inner-spin-button, 
@@ -397,47 +409,40 @@
                         </table>
                     </div>
 
-                    <div class="px-6 py-4 flex flex-col sm:flex-row items-center justify-between border-t border-gray-100 bg-white w-full gap-4 relative z-0">
-                        <span class="text-sm text-[#8c94a3]">
-                            Showing <span class="font-bold text-[#4a5568]">{{ variants.start_index|default:"0" }}–{{ variants.end_index|default:"0" }}</span> of <span class="font-bold text-[#4a5568]">{{ variants.paginator.count|default:"0" }}</span> variants
-                        </span>
-                        
-                        <div class="flex items-center gap-1">
-                            {% if variants.has_previous %}
-                                <a href="?page={{ variants.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-[#2F5233] transition-colors">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                                </a>
-                            {% else %}
-                                <span class="w-8 h-8 flex items-center justify-center text-gray-200">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                                </span>
-                            {% endif %}
-                            
-                            <div class="flex gap-1">
-                                {% for num in variants.paginator.page_range %}
-                                    {% if variants.number == num %}
-                                        <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-[#386641] text-white font-bold text-sm shadow-sm">{{ num }}</span>
-                                    {% else %}
-                                        <a href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-600 font-medium text-sm transition-colors">{{ num }}</a>
-                                    {% endif %}
-                                {% endfor %}
-                                {% if not variants.paginator.page_range %}
-                                    <span class="w-8 h-8 flex items-center justify-center rounded-lg bg-[#386641] text-white font-bold text-sm shadow-sm">1</span>
-                                {% endif %}
-                            </div>
-
-                            {% if variants.has_next %}
-                                <a href="?page={{ variants.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-[#2F5233] transition-colors">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                                </a>
-                            {% else %}
-                                <span class="w-8 h-8 flex items-center justify-center text-gray-200">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                                </span>
-                            {% endif %}
-                        </div>
-                    </div>
                 </div>
+
+                <!-- Pagination -->
+                {% if variants.paginator.num_pages > 1 %}
+                <div class="mt-8 flex items-center justify-center gap-2 pb-6">
+                    {% if variants.has_previous %}
+                    <a href="?page={{ variants.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="pg-btn">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 18l-6-6 6-6"/></svg>
+                    </a>
+                    {% else %}
+                    <span class="pg-btn disabled">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 18l-6-6 6-6"/></svg>
+                    </span>
+                    {% endif %}
+
+                    {% for num in variants.paginator.page_range %}
+                    {% if variants.number == num %}
+                        <span class="pg-btn active">{{ num }}</span>
+                    {% elif num >= variants.number|add:"-2" and num <= variants.number|add:"2" %}
+                        <a href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="pg-btn">{{ num }}</a>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if variants.has_next %}
+                    <a href="?page={{ variants.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="pg-btn">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 18l6-6-6-6"/></svg>
+                    </a>
+                    {% else %}
+                    <span class="pg-btn disabled">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 18l6-6-6-6"/></svg>
+                    </span>
+                    {% endif %}
+                </div>
+                {% endif %}
             </div>
         </main>
     </div>

@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-[85vh] flex items-center justify-center bg-[#fafaf9] py-16 px-4 font-montserrat">
+    <div class="max-w-md w-full mx-auto text-center fade-in-up">
+        
+        <!-- Animated Minimal Cross Icon -->
+        <div class="mb-8 flex justify-center relative">
+            <div class="absolute w-16 h-16 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-red-100/40 rounded-full aura-pulse"></div>
+            
+            <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center relative z-10 shadow-sm border border-red-50 icon-container scale-0">
+                <svg class="cross-icon" width="24" height="24" fill="none" stroke="#e11d48" stroke-width="2.5" stroke-linecap="round" viewBox="0 0 24 24">
+                    <line class="cross-line cross-line-1" x1="17" y1="7" x2="7" y2="17"></line>
+                    <line class="cross-line cross-line-2" x1="7" y1="7" x2="17" y2="17"></line>
+                </svg>
+            </div>
+        </div>
+
+        <h1 class="text-3xl lg:text-4xl text-[#1a1208] mb-3 tracking-tight" style="font-family:'Cormorant Garamond',serif;">
+            {% if cancelled_items|length == order.items.count %}Order Cancelled{% else %}Item Cancelled{% endif %}
+        </h1>
+        
+        <p class="text-[#5c544a] text-[13px] font-montserrat leading-relaxed mb-4 max-w-[280px] mx-auto">
+            {% if cancelled_items|length == order.items.count %}
+                Order <span class="font-bold text-[#1a1208]">#{{ order.order_number }}</span> has been cancelled.
+            {% else %}
+                Selected items from order <span class="font-bold text-[#1a1208]">#{{ order.order_number }}</span> have been removed.
+            {% endif %}
+        </p>
+        
+        {% if payment and payment.payment_method != 'COD' %}
+        <p class="text-[#1a1208] text-[11px] bg-[#faf8f5] py-2 px-4 rounded-lg border border-[#e6e0d8] max-w-[250px] mx-auto mb-6 font-medium">
+            Refund initiated to original payment method.
+        </p>
+        {% endif %}
+
+        <p class="text-[9px] font-bold text-[#8a7e72] uppercase tracking-[0.2em] mb-10">
+            ID: <span class="text-[#1a1208]">{{ cancellation_id }}</span>
+        </p>
+
+        <!-- Minimal Items Section -->
+        <div class="text-left mb-10 transform translate-y-4 opacity-0 slide-up-card delay-200">
+            <div class="flex justify-between items-end mb-4 pb-2 border-b border-[#e6e0d8]/50">
+                <h2 class="text-[18px] text-[#1a1208] m-0" style="font-family:'Cormorant Garamond',serif;">Cancelled Details</h2>
+                <p class="text-[9px] font-medium text-[#8a7e72] uppercase tracking-widest m-0">{{ order.created_at|date:"M d, Y" }}</p>
+            </div>
+
+            <div class="flex flex-col gap-5 {% if payment and payment.payment_method != 'COD' %}mb-6 pb-6 border-b border-[#e6e0d8]/50{% else %}mb-2{% endif %}">
+                {% for item in cancelled_items %}
+                <div class="flex gap-4 items-center group">
+                    <div class="w-12 h-16 bg-[#faf8f5] rounded-md overflow-hidden shrink-0 border border-[#e6e0d8]/50">
+                        {% if item.variant.product.images.first %}
+                        <!-- Removed grayscale to keep original image colors -->
+                        <img src="{{ item.variant.product.images.first.image.url }}" class="w-full h-full object-cover">
+                        {% else %}
+                        <div class="w-full h-full flex items-center justify-center bg-[#f0ebe2]"></div>
+                        {% endif %}
+                    </div>
+                    <div class="flex-1 py-1">
+                        <div class="flex justify-between items-center mb-1">
+                            <p class="text-[15px] text-[#1a1208] leading-tight m-0 pr-2" style="font-family:'Cormorant Garamond',serif;">{{ item.variant.product.name }}</p>
+                            <p class="text-[12px] font-bold font-montserrat text-[#1a1208] m-0 shrink-0">₹{{ item.price_at_time }}</p>
+                        </div>
+                        <p class="text-[9px] font-medium text-[#8a7e72] uppercase tracking-wider mb-1 font-montserrat">
+                            {{ item.variant.size|default:"" }}{% if item.variant.size and item.variant.color %} / {% endif %}{{ item.variant.color|default:"" }}
+                        </p>
+                        <div class="flex items-center gap-3">
+                           <p class="text-[10px] text-[#5c544a] m-0 font-montserrat">Qty: {{ item.quantity }}</p>
+                           <span class="text-[8px] text-[#e11d48] font-semibold uppercase tracking-wider bg-red-50/50 px-1.5 py-0.5 rounded">Cancelled</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if payment and payment.payment_method != 'COD' %}
+            <div class="flex justify-between items-center">
+                <p class="text-[9px] font-medium text-[#8a7e72] uppercase tracking-widest font-montserrat m-0">Payment Option</p>
+                <div class="flex items-center gap-2">
+                    <svg width="12" height="12" fill="none" stroke="#8a7e72" stroke-width="1.5" viewBox="0 0 24 24">
+                        <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    <p class="text-[10px] font-semibold font-montserrat text-[#1a1208] m-0 uppercase tracking-widest">
+                        {{ payment.payment_method }} Refund
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Actions Minimal -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-3 transform translate-y-4 opacity-0 slide-up-card delay-300">
+            <a href="{% url 'product_listing' %}" class="w-full sm:w-auto px-8 py-3 bg-[#1a1208] text-white text-[9px] font-bold font-montserrat uppercase tracking-[0.2em] rounded-lg hover:bg-black transition-all whitespace-nowrap">
+                Back to Shop
+            </a>
+            <a href="{% url 'order_listing' %}" class="w-full sm:w-auto group flex items-center justify-center gap-2 px-6 py-3 text-[9px] font-bold font-montserrat text-[#1a1208] bg-transparent border border-[#1a1208] rounded-lg uppercase tracking-[0.2em] hover:bg-[#1a1208] hover:text-white transition-all whitespace-nowrap">
+                View Orders
+            </a>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .fade-in-up {
+        opacity: 0;
+        transform: translateY(16px);
+        animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes fadeInUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .slide-up-card {
+        animation: slideUpCard 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes slideUpCard {
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .delay-200 { animation-delay: 0.15s; }
+    .delay-300 { animation-delay: 0.25s; }
+
+    /* Animated Break-Out Cross Icon Minimal */
+    .icon-container {
+        animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        animation-delay: 0.1s;
+    }
+    
+    @keyframes popIn {
+        0% { transform: scale(0); opacity: 0; }
+        60% { transform: scale(1.1); }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
+    .aura-pulse {
+        opacity: 0;
+        animation: pulseAura 2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+        animation-delay: 0.4s;
+    }
+    
+    @keyframes pulseAura {
+        0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.6; }
+        100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+    }
+
+    .cross-line {
+        stroke-dasharray: 24;
+        stroke-dashoffset: 24;
+    }
+    .cross-line-1 { animation: drawCross 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards; }
+    .cross-line-2 { animation: drawCross 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.45s forwards; }
+
+    @keyframes drawCross {
+        to { stroke-dashoffset: 0; }
+    }
+</style>
+{% endblock %}

@@ -1,11 +1,11 @@
 
 from django.shortcuts import render, redirect, get_object_or_404
-from product.models import Variant,Product
+
 from .utils import get_user_cart
 from .models import CartItem,Cart
 from user.models import Address
 from django.contrib import messages
-from django.db.models import F
+
 
 
 def cart(request):
@@ -124,6 +124,8 @@ def remove_from_cart(request,item_id):
 
 
 def checkout(request):
+
+
     
     try :
         cart =request.user.cart
@@ -146,6 +148,8 @@ def checkout(request):
         
     subtotal=0
     
+    
+        
     for item in cart_items :
         variant=item.variant
         product=variant.product
@@ -172,11 +176,11 @@ def checkout(request):
         if item.quantity > variant.stock:
             messages.error(request,f"{product.name} only {variant.stock} left")
             return redirect('cart')
-        
+    
         item.item_total=item.quantity * variant.price 
         subtotal+=item.item_total
         
-    shipping = 0 if subtotal > 799 else 100
+    shipping = 0 if subtotal > 999 else 100
     final_total=subtotal+shipping
     
     return render(request,"checkout.html", {

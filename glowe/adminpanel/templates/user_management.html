@@ -62,10 +62,17 @@ tailwind.config = {
   .icon-btn { width:30px; height:30px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; border:none; background:transparent; cursor:pointer; transition:background .15s; }
   .icon-btn:hover { background:#f0f5f0; }
 
-  .page-btn { width:32px; height:32px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; font-size:.82rem; font-weight:600; border:none; background:transparent; color:#4a5e4a; transition:background .15s,color .15s; text-decoration:none; cursor:pointer; }
-  .page-btn:hover:not(.active) { background:#f0f5f0; }
-  .page-btn.active { background:#4a9050; color:#fff; pointer-events:none; }
-  .page-btn:disabled { color:#ccd8cc; cursor:default; }
+  .pg-btn {
+    display:flex; align-items:center; justify-content:center;
+    width:40px; height:40px; border-radius:12px;
+    font-size:12px; font-weight:700; color:#1a1208;
+    border:1px solid rgba(26,18,8,0.08); background:#fff;
+    transition:all .25s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.02); text-decoration:none;
+  }
+  .pg-btn:hover { background:#1a1208; color:#fff; border-color:#1a1208; transform:translateY(-2px); box-shadow: 0 8px 20px rgba(26,18,8,0.15); }
+  .pg-btn.active { background:#1a1208; color:#fff; border-color:#1a1208; pointer-events:none; box-shadow: 0 6px 15px rgba(26,18,8,0.2); }
+  .pg-btn.disabled { opacity:.3; pointer-events:none; }
 
   /* BLOCK MODAL */
   .modal-back { position:fixed; inset:0; z-index:400; display:flex; align-items:center; justify-content:center; background:rgba(15,20,15,.55); backdrop-filter:blur(4px); opacity:0; pointer-events:none; transition:opacity .2s ease; }
@@ -344,35 +351,41 @@ tailwind.config = {
         </table>
       </div>
 
-      <!-- Pagination -->
-      <div class="flex items-center justify-between flex-wrap gap-3 px-5 py-4 border-t border-gray-50">
-        <span class="text-xs text-gray-400">
-          Showing <strong class="text-gray-700">{{ page_obj.start_index }}–{{ page_obj.end_index }}</strong>
-          of <strong class="text-gray-700">{{ page_obj.paginator.count }}</strong> users
-        </span>
-        <div class="flex items-center gap-1">
-          {% if page_obj.has_previous %}
-            <a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&status={{ status }}" class="page-btn">
-              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>
-            </a>
-          {% else %}
-            <button class="page-btn" disabled><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg></button>
-          {% endif %}
-          {% for num in page_obj.paginator.page_range %}
-            {% if page_obj.number == num %}<button class="page-btn active">{{ num }}</button>
-            {% elif num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}<a href="?page={{ num }}&q={{ q }}&status={{ status }}" class="page-btn">{{ num }}</a>{% endif %}
-          {% endfor %}
-          {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}&q={{ q }}&status={{ status }}" class="page-btn">
-              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M9 5l7 7-7 7"/></svg>
-            </a>
-          {% else %}
-            <button class="page-btn" disabled><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M9 5l7 7-7 7"/></svg></button>
-          {% endif %}
-        </div>
-      </div>
-
     </div>
+
+    <!-- Pagination -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="mt-8 flex items-center justify-center gap-2 pb-6">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="pg-btn">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 18l-6-6 6-6"/></svg>
+        </a>
+      {% else %}
+        <span class="pg-btn disabled">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 18l-6-6 6-6"/></svg>
+        </span>
+      {% endif %}
+      
+      {% for idx in page_obj.paginator.page_range %}
+        {% if page_obj.number == idx %}
+          <span class="pg-btn active">{{ idx }}</span>
+        {% elif idx >= page_obj.number|add:"-2" and idx <= page_obj.number|add:"2" %}
+          <a href="?page={{ idx }}{% if q %}&q={{ q }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="pg-btn">{{ idx }}</a>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if status %}&status={{ status }}{% endif %}" class="pg-btn">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 18l6-6-6-6"/></svg>
+        </a>
+      {% else %}
+        <span class="pg-btn disabled">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 18l6-6-6-6"/></svg>
+        </span>
+      {% endif %}
+    </div>
+    {% endif %}
+
   </div>
 </div>
 

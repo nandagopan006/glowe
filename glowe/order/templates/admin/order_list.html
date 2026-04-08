@@ -1,0 +1,507 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Glowé Admin — Order Management</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600;700&family=Montserrat:wght@600&display=swap" rel="stylesheet"/>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['DM Sans', 'sans-serif'],
+            serif: ['Playfair Display', 'serif'],
+            montserrat: ['Montserrat', 'sans-serif'],
+          },
+          colors: {
+            sage: {
+              50: '#f2f7f2', 100: '#e2f0e2', 200: '#c3dfc3',
+              300: '#94c494', 400: '#64a864', 500: '#4a9050',
+              600: '#3a7a3e', 700: '#2f6232', 800: '#264f29', 900: '#1e3e20',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style>
+    * { font-family: 'DM Sans', sans-serif; box-sizing: border-box; }
+    body { background: #fdfdfd; margin: 0; overflow-x: hidden; color: #1a1a1a; }
+    
+    /* Sidebar Transition */
+    .admin-main-content { margin-left:0; transition:margin-left .3s ease-in-out; }
+    @media(min-width:1024px){ .admin-main-content { margin-left:240px; } }
+
+    /* ── PAGINATION ── */
+    .pg-btn {
+      display:flex; align-items:center; justify-content:center;
+      width:40px; height:40px; border-radius:12px;
+      font-size:12px; font-weight:700; color:#1a1208;
+      border:1px solid rgba(26,18,8,0.08); background:#fff;
+      transition:all .25s ease;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+    }
+    .pg-btn:hover { background:#1a1208; color:#fff; border-color:#1a1208; transform:translateY(-2px); box-shadow: 0 8px 20px rgba(26,18,8,0.15); }
+    .pg-btn.active { background:#1a1208; color:#fff; border-color:#1a1208; pointer-events:none; box-shadow: 0 6px 15px rgba(26,18,8,0.2); }
+    .pg-btn.disabled { opacity:.3; pointer-events:none; }
+
+    /* Custom Scrollbar for popovers */
+    .custom-scrollbar::-webkit-scrollbar { width:4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background:transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background:#e2e8f0; border-radius:10px; }
+
+    /* Status Badges */
+    .badge {
+      display:inline-flex; align-items:center; gap:6px;
+      padding:4px 12px; border-radius:999px; font-size:11px; font-weight:600;
+    }
+    .badge-dot { width:5px; height:5px; border-radius:50%; }
+    .badge-pending { background:#fef08a; color:#854d0e; } .badge-pending .badge-dot { background:#eab308; }
+    .badge-confirmed { background:#f3f4f6; color:#374151; } .badge-confirmed .badge-dot { background:#6b7280; }
+    .badge-processing { background:#dbeafe; color:#1e40af; } .badge-processing .badge-dot { background:#3b82f6; }
+    .badge-shipped { background:#e0e7ff; color:#3730a3; } .badge-shipped .badge-dot { background:#4f46e5; }
+    .badge-out_for_delivery { background:#ffedd5; color:#c2410c; } .badge-out_for_delivery .badge-dot { background:#f97316; }
+    .badge-delivered { background:#dcfce3; color:#166534; } .badge-delivered .badge-dot { background:#22c55e; }
+    .badge-cancelled { background:#fee2e2; color:#991b1b; } .badge-cancelled .badge-dot { background:#ef4444; }
+
+    /* Popover */
+    .product-popover-container { position:relative; }
+    .product-popover {
+      position:absolute; top:calc(100% + 5px); left:0;
+      width:260px; background:#fff; border:1px solid #f1f5f9;
+      border-radius:12px; shadow:0 10px 25px -5px rgba(0,0,0,0.1);
+      z-index:50; padding:8px; opacity:0; visibility:hidden;
+      transform:translateY(8px); transition:all .2s ease;
+    }
+    .product-popover.show { opacity:1; visibility:visible; transform:translateY(0); }
+    .popover-item { display:flex; align-items:center; gap:8px; padding:6px; border-radius:8px; transition:bg 0.2s; }
+    .popover-item:hover { background:#f8fafc; }
+
+    /* Toast */
+    @keyframes toastIn { from { opacity:0; transform:translateY(-16px); } to { opacity:1; transform:translateY(0); } }
+    .toast { animation: toastIn 0.3s ease-out forwards; }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar Inclusion -->
+  {% include 'admin_sidebar.html' %}
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] flex flex-col items-center gap-3 pointer-events-none"></div>
+
+  <!-- Main Content Wrapper -->
+  <div class="admin-main-content min-h-screen">
+    
+    <!-- Top Header mimicking admin_base.html -->
+    <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center px-4 lg:px-8 h-16">
+      <button onclick="toggleAdminSidebar()" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-50 mr-4">
+        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+      <div class="hidden sm:block text-sm font-medium text-gray-500">
+        Orders / <span class="text-gray-900">Management</span>
+      </div>
+
+      <div class="flex-1"></div>
+
+      <!-- Profile Dropdown -->
+      <div class="relative">
+        <button onclick="toggleProfileDropdown()" id="profileDropdownBtn" class="flex items-center gap-2 p-1 rounded-full hover:bg-gray-50 transition-colors">
+          <div class="w-8 h-8 rounded-full bg-sage-100 flex items-center justify-center overflow-hidden border border-sage-200">
+            {% if user.profile_image and user.profile_image.name != 'profile/default.png' %}
+              <img src="{{ user.profile_image.url }}" class="w-full h-full object-cover"/>
+            {% else %}
+              <span class="text-sage-700 font-bold text-xs">{{ user.username|first|upper }}</span>
+            {% endif %}
+          </div>
+        </button>
+        <div id="profileDropdownMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50">
+          <div class="px-4 py-2 border-b border-gray-50">
+            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Admin</p>
+            <p class="text-sm font-semibold text-gray-900 truncate">{{ user.username }}</p>
+          </div>
+          <a href="{% url 'profile_overview' %}" class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Profile</a>
+          <button onclick="openSignoutModal()" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Sign Out</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Page Content -->
+    <main class="p-4 lg:p-8 max-w-[1400px] mx-auto">
+      
+      <!-- Stats Summary -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Total Orders</p>
+          <p class="text-2xl font-bold text-gray-900">{{ total_orders }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Pending</p>
+          <p class="text-2xl font-bold text-gray-900 text-orange-600">{{ pending_orders }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Completed</p>
+          <p class="text-2xl font-bold text-gray-900 text-green-600">{{ completed_orders }}</p>
+        </div>
+      </div>
+
+      <!-- Action Card (Search + Table) -->
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col pt-2">
+        
+        <!-- Toolbar -->
+        <div class="px-6 py-4 border-b border-gray-50 flex flex-col md:flex-row md:items-center justify-end gap-3">
+          <div class="flex items-center gap-3 w-full md:w-auto">
+            <form id="searchForm" method="GET" class="relative w-full md:w-[280px]">
+              {% if filter_by and filter_by != 'all' %}
+              <input type="hidden" name="filter" value="{{ filter_by }}">
+              {% endif %}
+              <svg class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 z-10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <input type="text" id="searchInput" name="search" value="{{ search }}" placeholder="Search orders..." class="w-full pl-10 pr-10 py-2.5 rounded-xl bg-[#f8fafc] border border-gray-100 text-sm font-medium text-gray-700 focus:bg-white focus:border-sage-300 focus:ring-4 focus:ring-sage-50 transition-all outline-none placeholder:text-gray-400 shadow-sm"/>
+              
+              <button type="button" id="clearSearchBtn" onclick="clearSearch()" class="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-gray-200 text-gray-500 hover:bg-gray-300 hover:text-gray-700 flex items-center justify-center transition-all {% if not search %}hidden{% endif %}">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </form>
+            
+            <div class="relative">
+              <button type="button" onclick="toggleFilterDropdown(event)" class="px-5 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 text-sm font-bold hover:bg-gray-50 hover:border-gray-300 flex items-center gap-2 transition-all shadow-sm focus:ring-4 focus:ring-gray-100 outline-none flex-shrink-0">
+                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+                {% if filter_by == 'pending' %}
+                  Pending
+                {% elif filter_by == 'confirmed' %}
+                  Confirmed
+                {% elif filter_by == 'processing' %}
+                  Processing
+                {% elif filter_by == 'shipped' %}
+                  Shipped
+                {% elif filter_by == 'out_of_delivery' %}
+                  Out for Delivery
+                {% elif filter_by == 'delivered' %}
+                  Delivered
+                {% elif filter_by == 'cancelled' %}
+                  Cancelled
+                {% elif filter_by == 'all' or not filter_by %}
+                  All Orders
+                {% else %}
+                  Filters
+                {% endif %}
+              </button>
+
+              <div id="filterDropdownMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-50">
+                <div class="px-4 py-2 border-b border-gray-50 mb-1">
+                  <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Filter By Status</p>
+                </div>
+                <a href="?filter=all{% if search %}&search={{ search }}{% endif %}" class="block px-4 py-2 text-sm {% if filter_by == 'all' or not filter_by %}font-bold text-sage-600 bg-sage-50{% else %}text-gray-600 hover:bg-gray-50{% endif %}">All Orders</a>
+                <a href="?filter=pending{% if search %}&search={{ search }}{% endif %}" class="block px-4 py-2 text-sm {% if filter_by == 'pending' %}font-bold text-sage-600 bg-sage-50{% else %}text-gray-600 hover:bg-gray-50{% endif %}">Pending</a>
+                <a href="?filter=confirmed{% if search %}&search={{ search }}{% endif %}" class="block px-4 py-2 text-sm {% if filter_by == 'confirmed' %}font-bold text-sage-600 bg-sage-50{% else %}text-gray-600 hover:bg-gray-50{% endif %}">Confirmed</a>
+                <a href="?filter=processing{% if search %}&search={{ search }}{% endif %}" class="block px-4 py-2 text-sm {% if filter_by == 'processing' %}font-bold text-sage-600 bg-sage-50{% else %}text-gray-600 hover:bg-gray-50{% endif %}">Processing</a>
+                <a href="?filter=shipped{% if search %}&search={{ search }}{% endif %}" class="block px-4 py-2 text-sm {% if filter_by == 'shipped' %}font-bold text-sage-600 bg-sage-50{% else %}text-gray-600 hover:bg-gray-50{% endif %}">Shipped</a>
+                <a href="?filter=out_of_delivery{% if search %}&search={{ search }}{% endif %}" class="block px-4 py-2 text-sm {% if filter_by == 'out_of_delivery' %}font-bold text-sage-600 bg-sage-50{% else %}text-gray-600 hover:bg-gray-50{% endif %}">Out for Delivery</a>
+                <a href="?filter=delivered{% if search %}&search={{ search }}{% endif %}" class="block px-4 py-2 text-sm {% if filter_by == 'delivered' %}font-bold text-sage-600 bg-sage-50{% else %}text-gray-600 hover:bg-gray-50{% endif %}">Delivered</a>
+                <a href="?filter=cancelled{% if search %}&search={{ search }}{% endif %}" class="block px-4 py-2 text-sm {% if filter_by == 'cancelled' %}font-bold text-sage-600 bg-sage-50{% else %}text-gray-600 hover:bg-gray-50{% endif %}">Cancelled</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desktop Table Content (No restricted height) -->
+        <div class="hidden lg:block">
+          <table class="w-full text-left order-table">
+            <thead>
+              <tr class="bg-gray-50/50 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                <th class="py-4 px-6">ID</th>
+                <th class="py-4 px-6">Customer</th>
+                <th class="py-4 px-6">Products</th>
+                <th class="py-4 px-6">Date</th>
+                <th class="py-4 px-6 text-right">Amount</th>
+                <th class="py-4 px-6">Payment</th>
+                <th class="py-4 px-6">Status</th>
+                <th class="py-4 px-6 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+              {% for order in orders %}
+              <tr class="hover:bg-gray-50/50 transition-colors">
+                <td class="py-4 px-6 text-xs font-bold text-gray-900">#{{ order.order_number }}</td>
+                <td class="py-4 px-6">
+                  <a href="{% url 'user_detail' order.user.id %}" class="flex items-center gap-3 group">
+                    <div class="w-8 h-8 rounded-full bg-sage-50 flex items-center justify-center text-[10px] font-bold text-sage-600 overflow-hidden border border-gray-100 group-hover:border-sage-300 group-hover:scale-105 group-hover:shadow-[0_4px_12px_rgba(74,144,80,0.15)] transition-all duration-300">
+                      {% if order.user.profile_image and order.user.profile_image.name != 'profile/default.png' %}
+                        <img src="{{ order.user.profile_image.url }}" class="w-full h-full object-cover">
+                      {% else %}
+                        {% if order.user.first_name %}{{ order.user.first_name|first|upper }}{{ order.user.last_name|first|upper }}{% else %}{{ order.user.username|first|upper }}{% endif %}
+                      {% endif %}
+                    </div>
+                    <span class="text-xs font-semibold text-gray-700 group-hover:text-sage-600 transition-colors">{{ order.user.full_name|default:order.user.username }}</span>
+                  </a>
+                </td>
+                <td class="py-4 px-6">
+                  <div class="product-popover-container">
+                    {% with first_item=order.display_items|first %}
+                    {% if order.display_items|length == 1 %}
+                      <a href="{% url 'product_detail' first_item.product_id %}" class="flex items-center gap-2 group">
+                        <div class="w-8 h-8 rounded-lg bg-gray-100 overflow-hidden border border-gray-100 group-hover:border-sage-300">
+                          {% if first_item.image %}<img src="{{ first_item.image }}" class="w-full h-full object-cover">{% endif %}
+                        </div>
+                        <span class="text-xs text-gray-600 group-hover:text-sage-600 transition-colors">{{ first_item.name|truncatechars:18 }}</span>
+                      </a>
+                    {% else %}
+                      <div onclick="toggleProductPopover(event, 'popover-{{ order.id }}')" class="flex items-center gap-2 cursor-pointer group">
+                        <div class="w-8 h-8 rounded-lg bg-gray-100 overflow-hidden border border-gray-100 group-hover:border-sage-300">
+                          {% if first_item.image %}<img src="{{ first_item.image }}" class="w-full h-full object-cover">{% endif %}
+                        </div>
+                        <span class="text-[10px] font-bold text-sage-600 bg-sage-50 px-2 py-0.5 rounded-full">+{{ order.display_items|length|add:'-1' }} more</span>
+                      </div>
+                      <div id="popover-{{ order.id }}" class="product-popover custom-scrollbar max-h-60 overflow-y-auto">
+                        {% for item in order.display_items %}
+                        <a href="{% url 'product_detail' item.product_id %}" class="popover-item">
+                          <div class="w-8 h-8 rounded-lg bg-gray-50 overflow-hidden border border-gray-100">
+                            {% if item.image %}<img src="{{ item.image }}" class="w-full h-full object-cover">{% endif %}
+                          </div>
+                          <div class="min-w-0">
+                            <p class="text-[11px] font-semibold text-gray-900 truncate">{{ item.name }}</p>
+                            <p class="text-[9px] text-gray-500">Qty: {{ item.quantity }} • ₹{{ item.price }}</p>
+                          </div>
+                        </a>
+                        {% endfor %}
+                      </div>
+                    {% endif %}
+                    {% endwith %}
+                  </div>
+                </td>
+                <td class="py-4 px-6 text-[11px] text-gray-500">{{ order.created_at|date:"M d, Y" }}</td>
+                <td class="py-4 px-6 text-right text-xs font-bold text-gray-900">₹{{ order.total_amount }}</td>
+                <td class="py-4 px-6 text-[11px] font-semibold text-gray-700">
+                  {% if order.payment %}{{ order.payment.payment_method }}{% else %}-{% endif %}
+                </td>
+                <td class="py-4 px-6">
+                  <span class="badge badge-{{ order.order_status|lower }}"><span class="badge-dot"></span> {{ order.get_order_status_display }}</span>
+                </td>
+                <td class="py-4 px-6 text-right">
+                  <a href="{% url 'admin_order_detail' order.id %}" class="inline-flex items-center justify-center w-8 h-8 rounded-full text-sage-600 hover:bg-sage-50 hover:scale-110 transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                  </a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="7" class="py-16 text-center border-b-0">
+                  <div class="flex flex-col items-center justify-center">
+                    <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-3 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]">
+                      <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+                    </div>
+                    <p class="text-[13px] font-bold text-gray-900">No orders found</p>
+                    <p class="text-xs text-gray-500 mt-1">{% if search or filter_by and filter_by != 'all' %}Try adjusting your search or filters.{% else %}It looks like there are no orders yet.{% endif %}</p>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Mobile View (Cards) -->
+        <div class="lg:hidden divide-y divide-gray-50">
+          {% for order in orders %}
+          <div class="p-4 space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-gray-900">#{{ order.order_number }}</span>
+              <span class="text-[10px] text-gray-400">{{ order.created_at|date:"M d" }}</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <a href="{% url 'user_detail' order.user.id %}" class="flex items-center gap-2 group">
+                <div class="w-7 h-7 rounded-full bg-sage-50 flex items-center justify-center text-[9px] font-bold text-sage-600 overflow-hidden border border-gray-100 group-hover:border-sage-300 group-hover:scale-105 group-hover:shadow-[0_4px_12px_rgba(74,144,80,0.15)] transition-all duration-300">
+                  {% if order.user.profile_image and order.user.profile_image.name != 'profile/default.png' %}
+                    <img src="{{ order.user.profile_image.url }}" class="w-full h-full object-cover">
+                  {% else %}
+                    {% if order.user.first_name %}{{ order.user.first_name|first|upper }}{{ order.user.last_name|first|upper }}{% else %}{{ order.user.username|first|upper }}{% endif %}
+                  {% endif %}
+                </div>
+                <span class="text-[11px] font-semibold text-gray-700 group-hover:text-sage-600 transition-colors">{{ order.user.full_name|default:order.user.username }}</span>
+              </a>
+              <span class="text-xs font-bold text-gray-900">₹{{ order.total_amount }}</span>
+            </div>
+            <div class="flex items-center justify-between border-t border-gray-50 pt-3 mt-1">
+               <div class="flex items-center gap-2">
+                 <span class="badge badge-{{ order.order_status|lower }} px-2 py-0.5"><span class="badge-dot"></span> {{ order.get_order_status_display }}</span>
+                 {% if order.payment %}
+                   <span class="text-[9px] font-bold text-gray-400 uppercase">• {{ order.payment.payment_method }}</span>
+                 {% endif %}
+               </div>
+               <a href="{% url 'admin_order_detail' order.id %}" class="text-[11px] font-bold text-sage-600 uppercase tracking-wider pl-2">Details &rarr;</a>
+            </div>
+          </div>
+          {% empty %}
+          <div class="p-12 text-center border-none">
+            <div class="flex flex-col items-center justify-center">
+              <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-3 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]">
+                <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+              </div>
+              <p class="text-[13px] font-bold text-gray-900">No orders found</p>
+              <p class="text-xs text-gray-500 mt-1">{% if search or filter_by and filter_by != 'all' %}Try adjusting your search or filters.{% else %}It looks like there are no orders yet.{% endif %}</p>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+      </div>
+
+      <!-- Pagination -->
+      {% if orders.paginator.num_pages > 1 %}
+      <div class="mt-8 flex items-center justify-center gap-2">
+        {% if orders.has_previous %}
+          <a href="?page={{ orders.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if filter_by and filter_by != 'all' %}&filter={{ filter_by }}{% endif %}" class="pg-btn">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 18l-6-6 6-6"/></svg>
+          </a>
+        {% else %}
+          <span class="pg-btn disabled">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 18l-6-6 6-6"/></svg>
+          </span>
+        {% endif %}
+        
+        {% for i in orders.paginator.page_range %}
+          {% if orders.number == i %}
+            <span class="pg-btn active">{{ i }}</span>
+          {% elif i >= orders.number|add:"-2" and i <= orders.number|add:"2" %}
+            <a href="?page={{ i }}{% if search %}&search={{ search }}{% endif %}{% if filter_by and filter_by != 'all' %}&filter={{ filter_by }}{% endif %}" class="pg-btn">{{ i }}</a>
+          {% endif %}
+        {% endfor %}
+
+        {% if orders.has_next %}
+          <a href="?page={{ orders.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if filter_by and filter_by != 'all' %}&filter={{ filter_by }}{% endif %}" class="pg-btn">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 18l6-6-6-6"/></svg>
+          </a>
+        {% else %}
+          <span class="pg-btn disabled">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 18l6-6-6-6"/></svg>
+          </span>
+        {% endif %}
+      </div>
+      {% endif %}
+
+    </main>
+  </div>
+
+  <!-- Signout Modal Overlay -->
+  <div id="signoutModal" class="hidden fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl scale-95 transition-transform duration-300">
+      <div class="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center mb-6 mx-auto">
+        <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" d="M17 16l4-4m0 0l-4-4m4 4H7"/></svg>
+      </div>
+      <h3 class="text-xl font-bold text-gray-900 text-center mb-2">Sign Out</h3>
+      <p class="text-sm text-gray-500 text-center mb-8">Are you sure you want to end your current session?</p>
+      <div class="flex gap-3">
+        <button onclick="closeSignoutModal()" class="flex-1 py-3 border border-gray-100 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-50 transition-colors">Cancel</button>
+        <form action="{% url 'admin_signout' %}" method="POST" class="flex-1">
+          {% csrf_token %}
+          <button type="submit" class="w-full py-3 bg-red-500 rounded-xl text-sm font-bold text-white shadow-lg shadow-red-200 hover:bg-red-600 transition-colors">Sign Out</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Sidebar Toggle
+    function toggleAdminSidebar() {
+      const sidebar = document.getElementById('adminSidebar');
+      const container = document.querySelector('.admin-main-content');
+      const isMobile = window.innerWidth < 1024;
+      
+      if (isMobile) {
+        sidebar.classList.toggle('-translate-x-full');
+      } else {
+        // Handle desktop layout if needed, though usually sidebar is fixed
+      }
+    }
+
+    // Profile Dropdown
+    function toggleProfileDropdown() {
+      const menu = document.getElementById('profileDropdownMenu');
+      menu.classList.toggle('hidden');
+    }
+
+    // Signout Modal
+    function openSignoutModal() {
+      document.getElementById('signoutModal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('signoutModal').querySelector('div').classList.remove('scale-95'), 10);
+    }
+    function closeSignoutModal() {
+      document.getElementById('signoutModal').classList.add('hidden');
+      document.getElementById('signoutModal').querySelector('div').classList.add('scale-95');
+    }
+
+    // Popover Toggle
+    function toggleProductPopover(event, id) {
+      event.stopPropagation();
+      const popovers = document.querySelectorAll('.product-popover');
+      const target = document.getElementById(id);
+      popovers.forEach(p => { if (p.id !== id) p.classList.remove('show'); });
+      target.classList.toggle('show');
+    }
+
+    // Helper: Close everything on outside click
+    document.addEventListener('click', () => {
+      document.getElementById('profileDropdownMenu').classList.add('hidden');
+      if (document.getElementById('filterDropdownMenu')) {
+        document.getElementById('filterDropdownMenu').classList.add('hidden');
+      }
+      document.querySelectorAll('.product-popover').forEach(p => p.classList.remove('show'));
+    });
+
+    // Filter Dropdown
+    function toggleFilterDropdown(event) {
+      if(event) event.stopPropagation();
+      const menu = document.getElementById('filterDropdownMenu');
+      menu.classList.toggle('hidden');
+    }
+
+    // Toasts Logic (Minimal copy from base)
+    function showToast(msg, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast flex items-center gap-3 px-6 py-4 rounded-2xl bg-white shadow-xl border border-gray-50 min-w-[300px] pointer-events-auto`;
+      toast.innerHTML = `<span class="text-sm font-semibold text-gray-700">${msg}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // Run on load
+    {% if messages %}
+      {% for message in messages %}
+        showToast("{{ message }}");
+      {% endfor %}
+    {% endif %}
+
+    // Search Bar Interactive Logic
+    const searchInput = document.getElementById('searchInput');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    const searchForm = document.getElementById('searchForm');
+
+    if (searchInput && clearSearchBtn) {
+      searchInput.addEventListener('input', function() {
+        if (this.value.trim().length > 0) {
+          clearSearchBtn.classList.remove('hidden');
+        } else {
+          clearSearchBtn.classList.add('hidden');
+        }
+      });
+    }
+
+    function clearSearch() {
+      if (searchInput) {
+        searchInput.value = '';
+        clearSearchBtn.classList.add('hidden');
+        if (searchForm) searchForm.submit(); // Clear search and reload
+      }
+    }
+  </script>
+
+</body>
+</html>
