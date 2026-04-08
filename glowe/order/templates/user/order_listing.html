@@ -234,6 +234,8 @@
 .badge-delivered .badge-dot  { background:#2B6747; }
 .badge-cancelled  { background:rgba(239,68,68,.09);  color:#b91c1c;  border:1px solid rgba(239,68,68,.14); }
 .badge-cancelled .badge-dot  { background:#ef4444; }
+.badge-return     { background:rgba(200,169,110,.14); color:#6d5622; border:1px solid rgba(200,169,110,.22); }
+.badge-return .badge-dot     { background:#c8a96e; }
 
 /* ── PRODUCT AREA ── */
 .card-product-area {
@@ -612,22 +614,27 @@
               </div>
 
               <!-- Right: status badge -->
-              <!-- order.order_status choices: PENDING CONFIRMED PROCESSING SHIPPED OUT_FOR_DELIVERY DELIVERED CANCELLED -->
-              {% if order.order_status == 'PENDING' %}
-                <span class="badge badge-active badge-pending"><span class="badge-dot"></span>Pending</span>
-              {% elif order.order_status == 'CONFIRMED' %}
-                <span class="badge badge-active badge-confirmed"><span class="badge-dot"></span>Confirmed</span>
-              {% elif order.order_status == 'PROCESSING' %}
-                <span class="badge badge-active badge-processing"><span class="badge-dot"></span>Processing</span>
-              {% elif order.order_status == 'SHIPPED' %}
-                <span class="badge badge-active badge-shipped"><span class="badge-dot"></span>Shipped</span>
-              {% elif order.order_status == 'OUT_FOR_DELIVERY' %}
-                <span class="badge badge-active badge-out"><span class="badge-dot"></span>Out for Delivery</span>
-              {% elif order.order_status == 'DELIVERED' %}
-                <span class="badge badge-delivered"><span class="badge-dot"></span>Delivered</span>
-              {% elif order.order_status == 'CANCELLED' %}
-                <span class="badge badge-cancelled"><span class="badge-dot"></span>Cancelled</span>
-              {% endif %}
+              <div class="flex flex-col sm:flex-row items-end sm:items-center gap-2">
+                {% if order.has_returns %}
+                  <span class="badge badge-active badge-return"><span class="badge-dot"></span>Return Active</span>
+                {% endif %}
+                <!-- order.order_status choices: PENDING CONFIRMED PROCESSING SHIPPED OUT_FOR_DELIVERY DELIVERED CANCELLED -->
+                {% if order.order_status == 'PENDING' %}
+                  <span class="badge badge-active badge-pending"><span class="badge-dot"></span>Pending</span>
+                {% elif order.order_status == 'CONFIRMED' %}
+                  <span class="badge badge-active badge-confirmed"><span class="badge-dot"></span>Confirmed</span>
+                {% elif order.order_status == 'PROCESSING' %}
+                  <span class="badge badge-active badge-processing"><span class="badge-dot"></span>Processing</span>
+                {% elif order.order_status == 'SHIPPED' %}
+                  <span class="badge badge-active badge-shipped"><span class="badge-dot"></span>Shipped</span>
+                {% elif order.order_status == 'OUT_FOR_DELIVERY' %}
+                  <span class="badge badge-active badge-out"><span class="badge-dot"></span>Out for Delivery</span>
+                {% elif order.order_status == 'DELIVERED' %}
+                  <span class="badge badge-delivered"><span class="badge-dot"></span>Delivered</span>
+                {% elif order.order_status == 'CANCELLED' %}
+                  <span class="badge badge-cancelled"><span class="badge-dot"></span>Cancelled</span>
+                {% endif %}
+              </div>
 
             </div>
             <!-- /CARD HEADER -->

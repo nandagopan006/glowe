@@ -20,6 +20,8 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 import io
 from collections import defaultdict
+from django.apps import apps
+
 
 
 @login_required
@@ -243,6 +245,7 @@ def order_listing(request):
     elif filter_by == "1y":
         orders = orders.filter(created_at__gte=now - timedelta(days=365))
 
+    ReturnRequest = apps.get_model('return', 'ReturnRequest')
     for order in orders:
         order.delivery_start = order.created_at + timedelta(days=3)
         order.delivery_end = order.created_at + timedelta(days=7)
@@ -250,6 +253,8 @@ def order_listing(request):
         # cancelled items  the item count or create duplicate images
         active = [item for item in order.items.all() if item.item_status != "CANCELLED"]
         order.display_items = active if active else list(order.items.all())
+        
+        order.has_returns = ReturnRequest.objects.filter(order_item__order=order).exists()
 
     total_orders = orders.count()
     paginator = Paginator(orders, 5)
@@ -325,21 +330,26 @@ def order_detial(request, order_id):
     else:
         total_count = active_items.count()
 
+    ReturnRequest = apps.get_model('return', 'ReturnRequest')
+    returns = ReturnRequest.objects.filter(order_item__order=order).prefetch_related('images', 'order_item__variant__product__images').order_by('-created_at')
+
     return render(
         request,
         "user/order_detail.html",
         {
-            "order": order,
-            "active_items": active_items,
-            "cancelled_items": cancelled_items,
-            "all_cancelled": all_cancelled,
-            "history": history,
-            "delivery_start": order.delivery_start,
-            "delivery_end": order.delivery_end,
-            "can_cancel": can_cancel,
-            "can_return": can_return,
-            "payment": payment,
-            "total_count": total_count,
+            "order":order,
+            "active_items":active_items,
+            "cancelled_items":cancelled_items,
+            "all_cancelled":all_cancelled,
+            "history":history,
+            "delivery_start":order.delivery_start,
+            "delivery_end":order.delivery_end,
+            "can_cancel":can_cancel,
+            "can_return":can_return,
+            "payment":payment,
+            "total_count":total_count,
+            "returns":returns,
+            "returned_item_ids": [r.order_item.id for r in returns],
         },
     )
 

@@ -15,6 +15,7 @@ class ReturnRequest(models.Model):
 
     order_item=models.ForeignKey(OrderItem,on_delete=models.CASCADE)
     user=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE)
+    quantity=models.PositiveIntegerField(default=1)
 
     reason=models.CharField(max_length=255)
     description=models.TextField(blank=True)
