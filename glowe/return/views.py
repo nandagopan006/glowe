@@ -182,7 +182,7 @@ def should_restock(reason, condition):
     return True
 
 
-@login_required
+
 def admin_return_detail(request, return_id):
 
     return_request = get_object_or_404(
@@ -194,3 +194,39 @@ def admin_return_detail(request, return_id):
         'item': return_request.order_item,
         'images': return_request.images.all()
     })
+    
+
+
+def approve_return(request, return_id):
+
+    r = get_object_or_404(ReturnRequest, id=return_id)
+
+    if r.return_status != ReturnRequest.Status.REQUESTED:
+        messages.error(request, "Invalid action")
+        return redirect('admin_return_detail', return_id)
+
+    r.return_status = ReturnRequest.Status.APPROVED
+    r.save()
+
+    messages.success(request, "Return approved")
+    return redirect('admin_return_detail', return_id)
+
+
+
+from django.utils import timezone
+
+
+def schedule_pickup(request, return_id):
+
+    r = get_object_or_404(ReturnRequest, id=return_id)
+
+    if r.return_status != ReturnRequest.Status.APPROVED:
+        messages.error(request, "Cannot schedule pickup")
+        return redirect('admin_return_detail', return_id)
+
+    r.return_status = ReturnRequest.Status.PICKUP_SCHEDULED
+    r.pickup_date = timezone.now() + timedelta(days=1)
+    r.save()
+
+    messages.success(request, "Pickup scheduled")
+    return redirect('admin_return_detail', return_id)
