@@ -51,15 +51,41 @@
         <span>Dashboard</span>
       </a>
 
-      <!-- Orders -->
-      <a href="{% url 'admin_order_list' %}"
-         class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150
-                {% if request.resolver_match.url_name in 'admin_order_list,admin_order_detail' %}bg-sage-50 text-sage-700{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %}">
-        <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-        </svg>
-        <span>Orders</span>
-      </a>
+      <!-- Orders dropdown -->
+      <div>
+        <button type="button" id="orders-toggle" onclick="toggleOrdersMenu()"
+                class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150
+                       {% if request.resolver_match.url_name in 'admin_order_list,admin_order_detail,admin_return_list,admin_return_detail' %}bg-sage-50 text-sage-700{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %}">
+          <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+          <span class="flex-1 text-left">Orders</span>
+          <svg id="orders-chevron" class="w-3.5 h-3.5 transition-transform duration-200 flex-shrink-0"
+               fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/>
+          </svg>
+        </button>
+        <div id="orders-dropdown" class="overflow-hidden transition-all duration-250 ease-in-out" style="max-height:0;">
+          <div class="pl-[38px] pt-0.5 pb-1 flex flex-col gap-0.5">
+            <a href="{% url 'admin_order_list' %}"
+               class="flex items-center gap-2 px-3 py-[7px] rounded-lg text-[13px] transition-all duration-150
+                      {% if request.resolver_match.url_name in 'admin_order_list,admin_order_detail' %}bg-sage-50 text-sage-700 font-medium{% else %}text-gray-500 hover:bg-gray-50 hover:text-gray-800{% endif %}">
+              <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+              </svg>
+              Order Management
+            </a>
+            <a href="{% url 'admin_return_list' %}"
+               class="flex items-center gap-2 px-3 py-[7px] rounded-lg text-[13px] transition-all duration-150
+                      {% if request.resolver_match.url_name in 'admin_return_list,admin_return_detail' %}bg-sage-50 text-sage-700 font-medium{% else %}text-gray-500 hover:bg-gray-50 hover:text-gray-800{% endif %}">
+              <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" d="M9 14 4 9l5-5"/><path stroke-linecap="round" d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>
+              </svg>
+              Return Management
+            </a>
+          </div>
+        </div>
+      </div>
 
       <!-- Products dropdown -->
       <div>
@@ -254,6 +280,20 @@ function toggleAdminSidebar() {
   }
 }
 
+/* ── Orders dropdown ── */
+function toggleOrdersMenu() {
+  const dropdown = document.getElementById('orders-dropdown');
+  const chevron  = document.getElementById('orders-chevron');
+  const isOpen   = dropdown.style.maxHeight && dropdown.style.maxHeight !== '0px';
+  if (isOpen) {
+    dropdown.style.maxHeight = '0px';
+    chevron.style.transform  = 'rotate(0deg)';
+  } else {
+    dropdown.style.maxHeight = dropdown.scrollHeight + 'px';
+    chevron.style.transform  = 'rotate(90deg)';
+  }
+}
+
 /* ── Products dropdown ── */
 function toggleProductsMenu() {
   const dropdown = document.getElementById('products-dropdown');
@@ -287,6 +327,19 @@ document.addEventListener('DOMContentLoaded', function() {
   (function() {
     const dd = document.getElementById('products-dropdown');
     const ch = document.getElementById('products-chevron');
+    if (dd && ch) {
+      setTimeout(() => {
+        dd.style.maxHeight = dd.scrollHeight + 'px';
+        ch.style.transform = 'rotate(90deg)';
+      }, 80);
+    }
+  })();
+  {% endif %}
+
+  {% if request.resolver_match.url_name in 'admin_order_list,admin_order_detail,admin_return_list,admin_return_detail' %}
+  (function() {
+    const dd = document.getElementById('orders-dropdown');
+    const ch = document.getElementById('orders-chevron');
     if (dd && ch) {
       setTimeout(() => {
         dd.style.maxHeight = dd.scrollHeight + 'px';
