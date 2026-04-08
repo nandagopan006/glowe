@@ -4,6 +4,8 @@ from order.models import Order,OrderItem,OrderStatusHistory
 from django.contrib import messages
 from datetime import timedelta
 from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+
 
 def request_return(request,item_id):
     item = get_object_or_404(OrderItem,id=item_id,order__user=request.user)
@@ -93,4 +95,17 @@ def request_return(request,item_id):
                                                    'RETURN_REASONS': RETURN_REASONS,
                                                     'ITEM_CONDITIONS': ITEM_CONDITIONS})
 
+@login_required
+def return_success(request, return_id):
+
+    return_request =get_object_or_404(
+        ReturnRequest,
+        id=return_id,
+        user=request.user
+    )
+
+    return render(request, 'user/return_success.html', {
+        'return_request':return_request,
+        'order':return_request.order_item.order
+    })
 
