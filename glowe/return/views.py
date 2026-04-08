@@ -264,3 +264,19 @@ def complete_return(request, return_id):
 
     messages.success(request, "Return completed")
     return redirect('admin_return_detail', return_id)
+
+
+
+def reject_return(request, return_id):
+
+    r = get_object_or_404(ReturnRequest, id=return_id)
+
+    if r.return_status != ReturnRequest.Status.REQUESTED:
+        messages.error(request, "Invalid action")
+        return redirect('admin_return_detail', return_id)
+
+    r.return_status = ReturnRequest.Status.REJECTED
+    r.save()
+
+    messages.success(request, "Return rejected")
+    return redirect('admin_return_detail', return_id)
