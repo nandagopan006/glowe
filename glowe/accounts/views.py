@@ -4,11 +4,11 @@ from .forms import SignupForm
 from django.utils import timezone
 from datetime import timedelta
 import random 
-from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib import messages
 from .models import ProfileUser,OTPVerification
-from django.contrib.auth import authenticate,login,logout
+from .email_utils import send_otp_email, send_password_reset_email
+from django.contrib.auth import authenticate,login
 from django.urls import reverse 
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -61,31 +61,7 @@ def signup_page(request):
             OTPVerification.objects.create(user= user,otp_code= otp_code,
                     expires_at =timezone.now() + timedelta(minutes=1),)
             
-            send_mail(
-    'Verify Your Glowé Account',
-    f'''
-Dear {user.full_name or user.email.split('@')[0].capitalize()},
-
-We received a request to verify your account.
-
-Your One-Time Password (OTP) is:
-
-{''.join(otp_code)}
-
-This code is valid for 1 minute.
-
-If you did not request this verification, please ignore this email.
-
-For assistance, contact:
-glowe639@gmail.com
-
-Regards,  
-Glowé Team
-''',
-    settings.EMAIL_HOST_USER,
-    [user.email],
-    fail_silently=False,
-)
+            send_otp_email(request, user, otp_code)
             # in signup view — SAVE the email before redirecting
             request.session ['email']=user.email # it will store in broswer session
             request.session['otp_msg'] = 'OTP sent! Check your email.' 
@@ -190,50 +166,7 @@ def signup_resend_otp(request):
     user.resend_count += 1
     user.save()
     
-    send_mail(
-    'Verify Your Glowé Account',
-    f'''
-════════════════════════════════
-              Glowé
-      Your Natural Beauty Store
-════════════════════════════════
-
-Dear {user.full_name or user.email.split('@')[0].capitalize()},
-
-We received a request to verify your Glowé account.
-
-Please use the One-Time Password (OTP) below:
-
-  ──────────────────────────
-        Verification Code
-
-         {' '.join(otp_code)}
-
-  Valid for 1 minute
-  ──────────────────────────
-
-SECURITY NOTICE:
-Do not share this code with anyone.
-Glowé will never request your OTP.
-
-If you did not request this, you may ignore this email.
-
-────────────────────────────────
-For assistance, contact:
-glowe639@gmail.com
-────────────────────────────────
-
-════════════════════════════════
-Regards,  
-Glowé Team
-
-© 2025 Glowé. All rights reserved.
-════════════════════════════════
-''',
-    settings.EMAIL_HOST_USER,
-    [user.email],
-    fail_silently=False,
-)
+    send_otp_email(request, user, otp_code)
     
     request.session['otp_msg'] = 'New OTP sent to your email.'   
     return redirect('signup_otp_verify')
@@ -318,42 +251,7 @@ def forget_password(request):
                 reset_link = request.build_absolute_uri(
                     reverse('reset_password', kwargs={'uidb64': uid, 'token': token}))
                 
-                send_mail(
-    'Reset Your Glowé Password',
-    f'''
-════════════════════════════════
-              Glowé
-      Your Natural Beauty Store
-════════════════════════════════
-
-Dear {user.full_name or user.email.split('@')[0].capitalize()},
-
-We received a request to reset the password for your Glowé account.
-
-Please click the link below to reset your password:
-
-  ──────────────────────────
-  {reset_link}
-  ──────────────────────────
-
-This link will expire in 15 minutes.
-
-SECURITY NOTICE:
-- If you did not request a password reset, please ignore this email.
-- Never share this link with anyone, including Glowé staff.
-
-────────────────────────────────
-For assistance, contact:
-glowe639@gmail.com
-────────────────────────────────
-© 2025 Glowé. All rights reserved.
-Kerala, India
-════════════════════════════════
-''',
-    settings.EMAIL_HOST_USER,
-    [user.email],
-    fail_silently=False,
-)
+                send_password_reset_email(request, user, reset_link)
                 
                 request.session['reset_email'] = user.email
                
@@ -448,42 +346,7 @@ def resend_reset_email(request):
     reset_link = request.build_absolute_uri(
         reverse('reset_password', kwargs={'uidb64': uid, 'token': token}))
  
-    send_mail(
-    'Reset Your Glowé Password',
-    f'''
-════════════════════════════════
-              Glowé
-      Your Natural Beauty Store
-════════════════════════════════
-
-Dear {user.full_name or user.email.split('@')[0].capitalize()},
-
-We received a request to reset the password for your Glowé account.
-
-Please click the link below to reset your password:
-
-  ──────────────────────────
-  {reset_link}
-  ──────────────────────────
-
-This link will expire in 15 minutes.
-
-SECURITY NOTICE:
-- If you did not request a password reset, please ignore this email.
-- Never share this link with anyone, including Glowé staff.
-
-────────────────────────────────
-For assistance, contact:
-glowe639@gmail.com
-────────────────────────────────
-© 2025 Glowé. All rights reserved.
-Kerala, India
-════════════════════════════════
-''',
-    settings.EMAIL_HOST_USER,
-    [user.email],
-    fail_silently=False,
-) 
+    send_password_reset_email(request, user, reset_link) 
     messages.success(request, 'Reset link sent to your email.')
     return redirect('forget_password_link')
 

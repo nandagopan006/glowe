@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>{% if is_full_cancel %}Order Cancelled{% else %}Item Cancelled{% endif %} — Glowé</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#f5f1eb; font-family:'Georgia', serif; -webkit-text-size-adjust:100%; }
+  table { border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; }
+  img { border:0; display:block; outline:none; text-decoration:none; }
+  a { text-decoration:none; }
+
+  @media only screen and (max-width:600px) {
+    .email-wrapper { width:100% !important; padding:0 !important; }
+    .email-card { width:100% !important; border-radius:0 !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:#f5f1eb;">
+
+<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#f5f1eb;">
+<tr><td align="center" style="padding:40px 16px;">
+
+  <table class="email-card" width="560" cellpadding="0" cellspacing="0" role="presentation"
+         style="background:#f5f1eb; max-width:560px; width:100%;">
+
+    <!-- ══ HEADER ══ -->
+    <tr>
+      <td align="center" style="padding:0 0 20px;">
+        <h1 style="font-family:'Georgia', serif; font-size:48px; font-weight:400; color:#1a1208; letter-spacing:0.1em; text-transform:uppercase;">
+          GLOWÉ
+        </h1>
+      </td>
+    </tr>
+
+    <tr>
+      <td align="center" style="padding:0 0 40px;">
+        <div style="height:1px; width:120px; background:#1a1208; margin:0 auto;"></div>
+      </td>
+    </tr>
+
+    <!-- ══ MAIN MESSAGE ══ -->
+    <tr>
+      <td align="center" style="padding:0 0 30px;">
+        <p style="font-family:Arial, sans-serif; font-size:24px; font-weight:400; color:#1a1208; letter-spacing:0.04em; text-transform:uppercase;">
+          {% if is_full_cancel %}YOUR ORDER HAS BEEN CANCELLED{% else %}ITEM HAS BEEN CANCELLED{% endif %}
+        </p>
+      </td>
+    </tr>
+
+    <!-- ══ ACTION BUTTON ══ -->
+    <tr>
+      <td align="center" style="padding:0 0 30px;">
+        <a href="{{ request.scheme }}://{{ request.get_host }}/order-detail/{{ order.id }}/" 
+           style="display:inline-block; border:1px solid #1a1208; padding:18px 60px; 
+                  font-family:Arial, sans-serif; font-size:14px; font-weight:400; color:#1a1208; 
+                  letter-spacing:0.1em; text-transform:uppercase; text-decoration:none;">
+          {% if is_full_cancel %}VIEW ORDER{% else %}VIEW ORDER DETAILS{% endif %}
+        </a>
+      </td>
+    </tr>
+
+    <!-- ══ ORDER # ══ -->
+    <tr>
+      <td align="center" style="padding:0 0 15px;">
+        <p style="font-family:Arial, sans-serif; font-size:14px; font-weight:400; color:#1a1208; letter-spacing:0.04em; text-transform:uppercase;">
+          ORDER #{{ order.order_number }}
+        </p>
+      </td>
+    </tr>
+
+    <tr>
+      <td align="center" style="padding:0 0 40px;">
+        <div style="height:1px; width:160px; background:#1a1208; margin:0 auto;"></div>
+      </td>
+    </tr>
+
+    <!-- ══ ITEMS TITLE ══ -->
+    <tr>
+      <td align="center" style="padding:0 0 30px;">
+        <p style="font-family:Arial, sans-serif; font-size:16px; font-weight:400; color:#1a1208; letter-spacing:0.08em; text-transform:uppercase;">
+          {% if is_full_cancel %}CANCELLED ORDER ITEMS{% else %}CANCELLED ITEM DETAILS{% endif %}
+        </p>
+      </td>
+    </tr>
+
+    <!-- ══ ITEMS CONTENT ══ -->
+    <tr>
+      <td style="padding:0 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+          {% for item in items_to_show %}
+          <tr>
+            <td style="padding:0 0 30px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td width="150" style="vertical-align:top;">
+                    {% if item.cid_id %}
+                      <img src="cid:{{ item.cid_id }}" alt="{{ item.variant.product.name }}" 
+                           width="150" style="display:block; width:150px; height:auto; object-fit:contain; border:1px solid #e2dbd4;">
+                    {% else %}
+                      <div style="width:150px; height:150px; background:#ede8e0;"></div>
+                    {% endif %}
+                  </td>
+                  <td style="padding-left:25px; vertical-align:top;">
+                    <p style="font-family:Arial, sans-serif; font-size:16px; font-weight:400; color:#1a1208; margin-bottom:8px;">
+                      {{ item.variant.product.name }}
+                    </p>
+                    <p style="font-family:Arial, sans-serif; font-size:16px; font-weight:400; color:#1a1208;">
+                      ₹{{ item.price_at_time }} x {{ item.quantity }}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endfor %}
+        </table>
+      </td>
+    </tr>
+
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+        <tr>
+          <td style="padding:0 20px 40px;">
+             <p style="font-family:Arial, sans-serif; font-size:14px; color:#1a1208; font-style:italic;">
+                {% if order.payment.payment_method == 'COD' %}
+                    Your order has been cancelled. Since this was a Cash on Delivery order, no payment was required and no refund is necessary.
+                {% else %}
+                    Your cancellation is successful. Your refund of ₹{{ refund_amount }} will be processed and credited to your account within 2 to 4 business days.
+                {% endif %}
+             </p>
+          </td>
+        </tr>
+    </table>
+
+    <tr>
+      <td style="padding:0 0 30px;">
+        <div style="height:1px; background:#1a1208; width:100%;"></div>
+      </td>
+    </tr>
+
+    <!-- ══ TOTALS ══ -->
+    <tr>
+      <td align="right" style="padding:0 20px 40px;">
+        <table cellpadding="0" cellspacing="0" role="presentation">
+          <tr style="font-family:Arial, sans-serif; font-size:14px; color:#1a1208; letter-spacing:0.04em;">
+            <td align="right" style="padding-bottom:12px; text-transform:uppercase;">ORDER TOTAL:</td>
+            <td align="right" style="padding:0 0 12px 30px;">₹{{ order.total_amount }}</td>
+          </tr>
+          {% if order.payment.payment_method != 'COD' %}
+          <tr style="font-family:Arial, sans-serif; font-size:14px; font-weight:700; color:#d9534f; letter-spacing:0.04em;">
+            <td align="right" style="padding-bottom:12px; text-transform:uppercase;">REFUNDED:</td>
+            <td align="right" style="padding:0 0 12px 30px;">₹{{ refund_amount }}</td>
+          </tr>
+          {% endif %}
+        </table>
+      </td>
+    </tr>
+
+    <!-- ══ FOOTER ══ -->
+    <tr>
+      <td style="background:#000000; padding:40px 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+          <tr>
+            <td align="left" style="font-family:Arial, sans-serif; font-size:13px; color:#ffffff; line-height:1.8;">
+              <p style="margin-bottom:20px; font-weight:300;">
+                ©Glowé, Kerala, India, 673595
+              </p>
+              <p>
+                <a href="{{ request.scheme }}://{{ request.get_host }}/" style="color:#ffffff; text-decoration:underline; font-weight:400;">Experience the Glowé World</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+  </table>
+
+</td></tr>
+</table>
+
+</body>
+</html>

@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'product',
     'cart',
     'order',
+    'return',
     
     
 ]
@@ -87,6 +88,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "wishlist.context_processors.wishlist_count",
                 "cart.context_processors.cart_count",
+                "core.context_processors.global_settings",
             ],
         },
     },
@@ -145,7 +147,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 AUTH_USER_MODEL = "accounts.ProfileUser"
 
 ACCOUNT_EMAIL_VERIFICATION = 'none'

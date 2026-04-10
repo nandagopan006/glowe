@@ -1,0 +1,481 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Glowé Admin — Return Management</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600;700&family=Montserrat:wght@600&display=swap" rel="stylesheet"/>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['DM Sans', 'sans-serif'],
+            serif: ['Playfair Display', 'serif'],
+            montserrat: ['Montserrat', 'sans-serif'],
+          },
+          colors: {
+            sage: {
+              50: '#f2f7f2', 100: '#e2f0e2', 200: '#c3dfc3',
+              300: '#94c494', 400: '#64a864', 500: '#4a9050',
+              600: '#3a7a3e', 700: '#2f6232', 800: '#264f29', 900: '#1e3e20',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * { font-family: 'DM Sans', sans-serif; box-sizing: border-box; }
+    body { background: #f8f9fa; margin: 0; overflow-x: hidden; color: #1a1a1a; }
+    .admin-main-content { margin-left: 0; transition: margin-left .3s ease-in-out; }
+    @media (min-width: 1024px) { .admin-main-content { margin-left: 240px; } }
+  </style>
+</head>
+<body>
+
+{% include 'admin_sidebar.html' %}
+
+<div class="admin-main-content min-h-screen bg-gray-50">
+  <main class="p-4 sm:p-6">
+
+    <!-- Header -->
+    <div class="mb-6">
+      <h1 class="text-[20px] font-bold text-gray-900">Return Management</h1>
+      <p class="text-sm text-gray-400 mt-0.5">Review and manage customer return requests</p>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+      <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Pending Requests</p>
+            <p class="text-[26px] font-bold text-gray-900 leading-tight mt-1">{{ pending_count }}</p>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-yellow-50 flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M12 8v4M12 16h.01"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Approved Today</p>
+            <p class="text-[26px] font-bold text-gray-900 leading-tight mt-1">{{ approved_today }}</p>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Rejected Today</p>
+            <p class="text-[26px] font-bold text-gray-900 leading-tight mt-1">{{ rejected_today }}</p>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 9l-6 6M9 9l6 6"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Returns</p>
+            <p class="text-[26px] font-bold text-gray-900 leading-tight mt-1">{{ total_returns }}</p>
+          </div>
+          <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+            <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 14 4 9l5-5"/><path stroke-linecap="round" d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Table Card -->
+    <div class="bg-white rounded-xl border border-gray-100 shadow-sm">
+
+      <!-- Search + Filter toolbar (right-aligned) -->
+      <div class="flex items-center justify-end gap-2 p-4 border-b border-gray-100">
+
+        <!-- Search form -->
+        <form id="searchForm" method="GET">
+          <div class="relative">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none"
+                 fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input id="searchInput" type="text" name="search" value="{{ search }}"
+                   placeholder="Search returns..." oninput="toggleClear()"
+                   class="w-60 sm:w-72 pl-9 pr-8 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg
+                          outline-none focus:bg-white focus:border-green-400 focus:ring-2 focus:ring-green-100
+                          transition placeholder-gray-400">
+            <button type="button" id="clearBtn" onclick="clearSearch()"
+                    class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-gray-400
+                           hover:bg-gray-500 transition flex items-center justify-center
+                           {% if not search %}hidden{% endif %}">
+              <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+          {% if status %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
+        </form>
+
+        <!-- Status filter dropdown -->
+        <div class="relative" id="filterWrapper">
+          <button type="button" onclick="toggleFilterDropdown()"
+                  class="flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 rounded-lg
+                         text-sm font-medium text-gray-600 hover:bg-gray-50 transition whitespace-nowrap">
+            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <path stroke-linecap="round" d="M3 4h18M7 10h10M11 16h2"/>
+            </svg>
+            {% if status == "REQUESTED" %}
+              <span class="w-2 h-2 rounded-full bg-yellow-400"></span>Pending
+            {% elif status == "APPROVED" %}
+              <span class="w-2 h-2 rounded-full bg-green-500"></span>Approved
+            {% elif status == "REJECTED" %}
+              <span class="w-2 h-2 rounded-full bg-red-400"></span>Rejected
+            {% elif status == "PICKUP_SCHEDULED" %}
+              <span class="w-2 h-2 rounded-full bg-blue-400"></span>Pickup Sched.
+            {% elif status == "PICKED_UP" %}
+              <span class="w-2 h-2 rounded-full bg-purple-500"></span>Picked Up
+            {% elif status == "COMPLETED" %}
+              <span class="w-2 h-2 rounded-full bg-gray-400"></span>Completed
+            {% else %}
+              <span class="w-2 h-2 rounded-full bg-gray-300"></span>All Status
+            {% endif %}
+            <svg class="w-3.5 h-3.5 text-gray-400 ml-0.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+
+          <!-- Dropdown -->
+          <div id="filterMenu"
+               class="hidden absolute right-0 top-full mt-2 w-52 bg-white border border-gray-100 rounded-2xl shadow-xl z-50 py-2">
+
+            <a href="?{% if search %}search={{ search }}{% endif %}"
+               class="flex items-center gap-3 px-4 py-2.5 mx-1 rounded-xl text-[13px] transition
+                      {% if not status %}bg-gray-50 font-semibold text-gray-900{% else %}text-gray-500 hover:bg-gray-50{% endif %}">
+              <span class="w-2 h-2 rounded-full bg-gray-300 ring-2 ring-gray-100 flex-shrink-0"></span>
+              All Status
+              {% if not status %}<svg class="w-3 h-3 ml-auto text-green-500" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>{% endif %}
+            </a>
+
+            <div class="h-px bg-gray-100 mx-3 my-1"></div>
+
+            <a href="?status=REQUESTED{% if search %}&search={{ search }}{% endif %}"
+               class="flex items-center gap-3 px-4 py-2.5 mx-1 rounded-xl text-[13px] transition
+                      {% if status == 'REQUESTED' %}bg-yellow-50 font-semibold text-gray-900{% else %}text-gray-500 hover:bg-yellow-50{% endif %}">
+              <span class="w-2 h-2 rounded-full bg-yellow-400 ring-2 ring-yellow-100 flex-shrink-0"></span>
+              Pending Review
+              {% if status == 'REQUESTED' %}<svg class="w-3 h-3 ml-auto text-yellow-500" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>{% endif %}
+            </a>
+
+            <a href="?status=APPROVED{% if search %}&search={{ search }}{% endif %}"
+               class="flex items-center gap-3 px-4 py-2.5 mx-1 rounded-xl text-[13px] transition
+                      {% if status == 'APPROVED' %}bg-green-50 font-semibold text-gray-900{% else %}text-gray-500 hover:bg-green-50{% endif %}">
+              <span class="w-2 h-2 rounded-full bg-green-500 ring-2 ring-green-100 flex-shrink-0"></span>
+              Approved
+              {% if status == 'APPROVED' %}<svg class="w-3 h-3 ml-auto text-green-500" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>{% endif %}
+            </a>
+
+            <a href="?status=REJECTED{% if search %}&search={{ search }}{% endif %}"
+               class="flex items-center gap-3 px-4 py-2.5 mx-1 rounded-xl text-[13px] transition
+                      {% if status == 'REJECTED' %}bg-red-50 font-semibold text-gray-900{% else %}text-gray-500 hover:bg-red-50{% endif %}">
+              <span class="w-2 h-2 rounded-full bg-red-400 ring-2 ring-red-100 flex-shrink-0"></span>
+              Rejected
+              {% if status == 'REJECTED' %}<svg class="w-3 h-3 ml-auto text-red-400" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>{% endif %}
+            </a>
+
+            <a href="?status=PICKUP_SCHEDULED{% if search %}&search={{ search }}{% endif %}"
+               class="flex items-center gap-3 px-4 py-2.5 mx-1 rounded-xl text-[13px] transition
+                      {% if status == 'PICKUP_SCHEDULED' %}bg-blue-50 font-semibold text-gray-900{% else %}text-gray-500 hover:bg-blue-50{% endif %}">
+              <span class="w-2 h-2 rounded-full bg-blue-400 ring-2 ring-blue-100 flex-shrink-0"></span>
+              Pickup Scheduled
+              {% if status == 'PICKUP_SCHEDULED' %}<svg class="w-3 h-3 ml-auto text-blue-400" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>{% endif %}
+            </a>
+
+            <a href="?status=PICKED_UP{% if search %}&search={{ search }}{% endif %}"
+               class="flex items-center gap-3 px-4 py-2.5 mx-1 rounded-xl text-[13px] transition
+                      {% if status == 'PICKED_UP' %}bg-purple-50 font-semibold text-gray-900{% else %}text-gray-500 hover:bg-purple-50{% endif %}">
+              <span class="w-2 h-2 rounded-full bg-purple-500 ring-2 ring-purple-100 flex-shrink-0"></span>
+              Picked Up
+              {% if status == 'PICKED_UP' %}<svg class="w-3 h-3 ml-auto text-purple-500" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>{% endif %}
+            </a>
+
+            <a href="?status=COMPLETED{% if search %}&search={{ search }}{% endif %}"
+               class="flex items-center gap-3 px-4 py-2.5 mx-1 rounded-xl text-[13px] transition
+                      {% if status == 'COMPLETED' %}bg-gray-50 font-semibold text-gray-900{% else %}text-gray-500 hover:bg-gray-50{% endif %}">
+              <span class="w-2 h-2 rounded-full bg-gray-400 ring-2 ring-gray-100 flex-shrink-0"></span>
+              Completed
+              {% if status == 'COMPLETED' %}<svg class="w-3 h-3 ml-auto text-gray-500" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>{% endif %}
+            </a>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Desktop Table -->
+      <div class="hidden md:block overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-gray-100 bg-gray-50">
+              <th class="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider px-5 py-3">Request ID</th>
+              <th class="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider px-4 py-3">Customer</th>
+              <th class="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider px-4 py-3">Product</th>
+              <th class="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider px-4 py-3">Reason</th>
+              <th class="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider px-4 py-3">Status</th>
+              <th class="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider px-4 py-3">Date</th>
+              <th class="text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider px-4 py-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50">
+            {% for ret in returns %}
+            <tr class="hover:bg-gray-50 transition">
+
+              <td class="px-5 py-4 font-semibold text-gray-700 whitespace-nowrap">#RET-{{ ret.id }}</td>
+
+              <td class="px-4 py-4">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                       style="background: hsl({{ ret.id|add:120 }}, 50%, 55%);">
+                    {{ ret.user.full_name|first|upper }}
+                  </div>
+                  <span class="text-gray-800 font-medium text-[13px] whitespace-nowrap">{{ ret.user.full_name }}</span>
+                </div>
+              </td>
+
+              <td class="px-4 py-4">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-9 h-9 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
+                    {% with ret.order_item.variant.product.images.first as img %}
+                      {% if img %}
+                        <img src="{{ img.image.url }}" class="w-full h-full object-cover">
+                      {% else %}
+                        <div class="w-full h-full flex items-center justify-center">
+                          <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/></svg>
+                        </div>
+                      {% endif %}
+                    {% endwith %}
+                  </div>
+                  <span class="text-gray-800 text-[13px] font-medium max-w-[140px] truncate">{{ ret.order_item.variant.product.name }}</span>
+                </div>
+              </td>
+
+              <td class="px-4 py-4 text-gray-500 text-[13px] max-w-[130px]">
+                <span class="line-clamp-2">{{ ret.reason }}</span>
+              </td>
+
+              <td class="px-4 py-4">
+                {% if ret.return_status == "REQUESTED" %}
+                  <span class="inline-flex px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-yellow-50 text-yellow-700 border border-yellow-100">Pending Review</span>
+                {% elif ret.return_status == "APPROVED" %}
+                  <span class="inline-flex px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-green-50 text-green-700 border border-green-100">Approved</span>
+                {% elif ret.return_status == "REJECTED" %}
+                  <span class="inline-flex px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-red-50 text-red-600 border border-red-100">Rejected</span>
+                {% elif ret.return_status == "PICKUP_SCHEDULED" %}
+                  <span class="inline-flex px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-blue-50 text-blue-600 border border-blue-100">Pickup Scheduled</span>
+                {% elif ret.return_status == "PICKED_UP" %}
+                  <span class="inline-flex px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-purple-50 text-purple-600 border border-purple-100">Picked Up</span>
+                {% elif ret.return_status == "COMPLETED" %}
+                  <span class="inline-flex px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-gray-100 text-gray-500 border border-gray-200">Completed</span>
+                {% endif %}
+              </td>
+
+              <td class="px-4 py-4 text-gray-400 text-[12px] whitespace-nowrap">{{ ret.created_at|date:"M d, Y" }}</td>
+
+              <td class="px-4 py-4">
+                <div class="flex items-center gap-3">
+                  {% if ret.return_status == "REQUESTED" %}
+                    <a href="{% url 'approve_return' ret.id %}" class="text-green-500 hover:text-green-700 transition" title="Approve">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                      </svg>
+                    </a>
+                    <a href="{% url 'reject_return' ret.id %}" class="text-red-400 hover:text-red-600 transition" title="Reject">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                      </svg>
+                    </a>
+                  {% else %}
+                    <svg class="w-4 h-4 text-gray-200" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    <svg class="w-4 h-4 text-gray-200" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                  {% endif %}
+                  <a href="{% url 'admin_return_detail' ret.id %}" class="text-gray-400 hover:text-gray-700 transition" title="View">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                  </a>
+                </div>
+              </td>
+
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="px-6 py-20 text-center">
+                <div class="flex flex-col items-center gap-3 text-gray-400">
+                  <svg class="w-10 h-10 text-gray-200" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" d="M9 14 4 9l5-5"/><path stroke-linecap="round" d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>
+                  </svg>
+                  <p class="text-sm font-medium">No return requests found</p>
+                  {% if search or status %}
+                    <a href="{% url 'admin_return_list' %}" class="text-xs text-green-500 hover:underline">Clear filters</a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile Cards -->
+      <div class="md:hidden divide-y divide-gray-100">
+        {% for ret in returns %}
+        <div class="p-4">
+          <div class="flex items-start justify-between mb-3">
+            <div>
+              <p class="text-xs font-semibold text-gray-400">#RET-{{ ret.id }}</p>
+              <p class="text-[13px] font-semibold text-gray-800 mt-0.5">{{ ret.user.full_name }}</p>
+            </div>
+            {% if ret.return_status == "REQUESTED" %}
+              <span class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-yellow-50 text-yellow-700 border border-yellow-100">Pending</span>
+            {% elif ret.return_status == "APPROVED" %}
+              <span class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-green-50 text-green-700 border border-green-100">Approved</span>
+            {% elif ret.return_status == "REJECTED" %}
+              <span class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-red-50 text-red-600 border border-red-100">Rejected</span>
+            {% elif ret.return_status == "PICKUP_SCHEDULED" %}
+              <span class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-blue-50 text-blue-600 border border-blue-100">Pickup Sched.</span>
+            {% elif ret.return_status == "PICKED_UP" %}
+              <span class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-purple-50 text-purple-600 border border-purple-100">Picked Up</span>
+            {% elif ret.return_status == "COMPLETED" %}
+              <span class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-gray-100 text-gray-500 border border-gray-200">Completed</span>
+            {% endif %}
+          </div>
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
+              {% with ret.order_item.variant.product.images.first as img %}
+                {% if img %}<img src="{{ img.image.url }}" class="w-full h-full object-cover">{% endif %}
+              {% endwith %}
+            </div>
+            <div>
+              <p class="text-[13px] font-medium text-gray-800">{{ ret.order_item.variant.product.name }}</p>
+              <p class="text-xs text-gray-400 mt-0.5">{{ ret.reason|truncatechars:40 }}</p>
+            </div>
+          </div>
+          <div class="flex items-center justify-between">
+            <p class="text-xs text-gray-400">{{ ret.created_at|date:"M d, Y" }}</p>
+            <div class="flex items-center gap-3">
+              {% if ret.return_status == "REQUESTED" %}
+                <a href="{% url 'approve_return' ret.id %}" class="text-green-500 hover:text-green-700">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                </a>
+                <a href="{% url 'reject_return' ret.id %}" class="text-red-400 hover:text-red-600">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </a>
+              {% endif %}
+              <a href="{% url 'admin_return_detail' ret.id %}" class="text-gray-400 hover:text-gray-700">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </a>
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="p-12 text-center text-gray-400 text-sm">No return requests found.</div>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination -->
+      {% if returns.has_other_pages %}
+      <div class="flex items-center justify-between px-5 py-4 border-t border-gray-100 flex-wrap gap-3">
+        <p class="text-xs text-gray-400">
+          Showing {{ returns.start_index }}–{{ returns.end_index }} of {{ returns.paginator.count }} results
+        </p>
+        <div class="flex items-center gap-1">
+          {% if returns.has_previous %}
+            <a href="?page={{ returns.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}"
+               class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">Prev</a>
+          {% else %}
+            <span class="px-3 py-1.5 text-xs font-medium text-gray-300 bg-white border border-gray-100 rounded-lg cursor-not-allowed">Prev</span>
+          {% endif %}
+
+          {% for i in returns.paginator.page_range %}
+            {% if returns.number == i %}
+              <span class="px-3 py-1.5 text-xs font-semibold text-white bg-gray-900 rounded-lg">{{ i }}</span>
+            {% elif i == returns.number|add:"-2" or i == returns.number|add:"-1" or i == returns.number|add:"1" or i == returns.number|add:"2" %}
+              <a href="?page={{ i }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}"
+                 class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">{{ i }}</a>
+            {% elif i == 1 or i == returns.paginator.num_pages %}
+              <a href="?page={{ i }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}"
+                 class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">{{ i }}</a>
+            {% elif i == returns.number|add:"-3" or i == returns.number|add:"3" %}
+              <span class="px-1 text-xs text-gray-400">...</span>
+            {% endif %}
+          {% endfor %}
+
+          {% if returns.has_next %}
+            <a href="?page={{ returns.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if status %}&status={{ status }}{% endif %}"
+               class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">Next</a>
+          {% else %}
+            <span class="px-3 py-1.5 text-xs font-medium text-gray-300 bg-white border border-gray-100 rounded-lg cursor-not-allowed">Next</span>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </main>
+</div>
+
+<script>
+function toggleClear() {
+  const v = document.getElementById('searchInput').value.length > 0;
+  document.getElementById('clearBtn').classList.toggle('hidden', !v);
+}
+
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('clearBtn').classList.add('hidden');
+  document.getElementById('searchForm').submit();
+}
+
+function toggleFilterDropdown() {
+  document.getElementById('filterMenu').classList.toggle('hidden');
+}
+
+document.addEventListener('click', function(e) {
+  const w = document.getElementById('filterWrapper');
+  if (w && !w.contains(e.target)) {
+    document.getElementById('filterMenu').classList.add('hidden');
+  }
+});
+
+document.getElementById('searchInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') document.getElementById('searchForm').submit();
+});
+</script>
+
+</body>
+</html>

@@ -51,15 +51,41 @@
         <span>Dashboard</span>
       </a>
 
-      <!-- Orders -->
-      <a href="{% url 'admin_order_list' %}"
-         class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150
-                {% if request.resolver_match.url_name in 'admin_order_list,admin_order_detail' %}bg-sage-50 text-sage-700{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %}">
-        <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-        </svg>
-        <span>Orders</span>
-      </a>
+      <!-- Orders dropdown -->
+      <div>
+        <button type="button" id="orders-toggle" onclick="toggleOrdersMenu()"
+                class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150
+                       {% if request.resolver_match.url_name in 'admin_order_list,admin_order_detail,admin_return_list,admin_return_detail' %}bg-sage-50 text-sage-700{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %}">
+          <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+          <span class="flex-1 text-left">Orders</span>
+          <svg id="orders-chevron" class="w-3.5 h-3.5 transition-transform duration-200 flex-shrink-0"
+               fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 18l6-6-6-6"/>
+          </svg>
+        </button>
+        <div id="orders-dropdown" class="overflow-hidden transition-all duration-250 ease-in-out" style="max-height:0;">
+          <div class="pl-[38px] pt-0.5 pb-1 flex flex-col gap-0.5">
+            <a href="{% url 'admin_order_list' %}"
+               class="flex items-center gap-2 px-3 py-[7px] rounded-lg text-[13px] transition-all duration-150
+                      {% if request.resolver_match.url_name in 'admin_order_list,admin_order_detail' %}bg-sage-50 text-sage-700 font-medium{% else %}text-gray-500 hover:bg-gray-50 hover:text-gray-800{% endif %}">
+              <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+              </svg>
+              Order Management
+            </a>
+            <a href="{% url 'admin_return_list' %}"
+               class="flex items-center gap-2 px-3 py-[7px] rounded-lg text-[13px] transition-all duration-150
+                      {% if request.resolver_match.url_name in 'admin_return_list,admin_return_detail' %}bg-sage-50 text-sage-700 font-medium{% else %}text-gray-500 hover:bg-gray-50 hover:text-gray-800{% endif %}">
+              <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" d="M9 14 4 9l5-5"/><path stroke-linecap="round" d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>
+              </svg>
+              Return Management
+            </a>
+          </div>
+        </div>
+      </div>
 
       <!-- Products dropdown -->
       <div>
@@ -254,6 +280,20 @@ function toggleAdminSidebar() {
   }
 }
 
+/* ── Orders dropdown ── */
+function toggleOrdersMenu() {
+  const dropdown = document.getElementById('orders-dropdown');
+  const chevron  = document.getElementById('orders-chevron');
+  const isOpen   = dropdown.style.maxHeight && dropdown.style.maxHeight !== '0px';
+  if (isOpen) {
+    dropdown.style.maxHeight = '0px';
+    chevron.style.transform  = 'rotate(0deg)';
+  } else {
+    dropdown.style.maxHeight = dropdown.scrollHeight + 'px';
+    chevron.style.transform  = 'rotate(90deg)';
+  }
+}
+
 /* ── Products dropdown ── */
 function toggleProductsMenu() {
   const dropdown = document.getElementById('products-dropdown');
@@ -296,6 +336,19 @@ document.addEventListener('DOMContentLoaded', function() {
   })();
   {% endif %}
 
+  {% if request.resolver_match.url_name in 'admin_order_list,admin_order_detail,admin_return_list,admin_return_detail' %}
+  (function() {
+    const dd = document.getElementById('orders-dropdown');
+    const ch = document.getElementById('orders-chevron');
+    if (dd && ch) {
+      setTimeout(() => {
+        dd.style.maxHeight = dd.scrollHeight + 'px';
+        ch.style.transform = 'rotate(90deg)';
+      }, 80);
+    }
+  })();
+  {% endif %}
+
   /* Close sidebar on mobile when nav link clicked */
   if (window.innerWidth < 1024) {
     document.querySelectorAll('#adminSidebar nav a').forEach(link => {
@@ -303,7 +356,62 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
+
+/* ── Sign Out Modal ── */
+function openAdminSignoutModal() {
+  const o = document.getElementById('adminSignoutOverlay');
+  if (!o) return;
+  o.classList.remove('opacity-0','pointer-events-none');
+  o.classList.add('opacity-100','pointer-events-auto');
+  o.querySelector('div').classList.remove('scale-95','translate-y-2');
+  o.querySelector('div').classList.add('scale-100','translate-y-0');
+}
+
+function closeAdminSignoutModal() {
+  const o = document.getElementById('adminSignoutOverlay');
+  if (!o) return;
+  o.querySelector('div').classList.remove('scale-100','translate-y-0');
+  o.querySelector('div').classList.add('scale-95','translate-y-2');
+  setTimeout(() => {
+    o.classList.remove('opacity-100','pointer-events-auto');
+    o.classList.add('opacity-0','pointer-events-none');
+  }, 150);
+}
+
+// Close on escape or backdrop click
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeAdminSignoutModal();
+});
+document.addEventListener('DOMContentLoaded', () => {
+    const o = document.getElementById('adminSignoutOverlay');
+    if(o) {
+        o.addEventListener('click', (e) => {
+            if (e.target === o) closeAdminSignoutModal();
+        });
+    }
+});
 </script>
+
+<!-- Global Admin Signout Modal (Injected via Sidebar) -->
+<div id="adminSignoutOverlay" class="fixed inset-0 bg-black/25 backdrop-blur-sm z-[9999] flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-250" role="dialog" aria-modal="true">
+  <div class="bg-white rounded-2xl p-9 w-[360px] max-w-[calc(100vw-32px)] flex flex-col items-center text-center transform scale-95 translate-y-2 transition-transform duration-280">
+    <div class="w-16 h-16 rounded-full bg-sage-50 flex items-center justify-center mb-5 border border-sage-100">
+      <svg class="w-7 h-7 text-sage-600" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7"/>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12V7a2 2 0 012-2h6a2 2 0 012 2v1M3 12v5a2 2 0 002 2h6a2 2 0 002-2v-1"/>
+      </svg>
+    </div>
+    <h2 class="text-xl font-bold text-gray-900 mb-2.5 leading-tight">Are you sure you want to<br>Sign Out?</h2>
+    <p class="text-sm text-gray-600 mb-7 leading-relaxed max-w-[260px]">You will need to login again to access your admin dashboard.</p>
+    <div class="flex gap-3 w-full">
+      <button onclick="closeAdminSignoutModal()" class="flex-1 px-4 py-3 border border-gray-200 rounded-xl bg-white text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-colors">Cancel</button>
+      <form method="POST" action="{% url 'admin_signout' %}" class="flex-1">
+        {% csrf_token %}
+        <button type="submit" class="w-full px-4 py-3 border-none rounded-xl bg-red-500 text-white font-semibold text-sm hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 active:scale-95">Sign Out</button>
+      </form>
+    </div>
+  </div>
+</div>
 
 <style>
 /* Sidebar scrollbar */

@@ -1,0 +1,630 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Return Request – {{ item.variant.product.name }} – Glowé{% endblock %}
+
+{% block extra_css %}
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --glowe-gold: #c8a96e;
+    --glowe-brown-dark: #3e2723;
+    --glowe-brown-light: #7a6e60;
+    --glowe-bg: #fdfaf7;
+    --glowe-card-bg: #ffffff;
+    --glowe-border: #e6e0d8;
+    --glowe-text: #1a1208;
+    --glowe-sage: #9a9a8c;
+  }
+
+  body {
+    background-color: var(--glowe-bg);
+    color: var(--glowe-text);
+  }
+
+  .font-cormorant { font-family: 'Cormorant Garamond', serif; }
+  .font-montserrat { font-family: 'Montserrat', sans-serif; }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(230, 224, 216, 0.5);
+    box-shadow: 
+      0 2px 4px -1px rgba(0, 0, 0, 0.01),
+      0 4px 6px -1px rgba(0, 0, 0, 0.02);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .glass-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 10px 20px -5px rgba(0, 0, 0, 0.04),
+      0 25px 50px -12px rgba(0, 0, 0, 0.05);
+  }
+
+  /* Modern Custom Dropdown */
+  .custom-select-wrapper {
+    position: relative;
+    user-select: none;
+  }
+
+  .custom-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    background: white;
+    border: 1px solid var(--glowe-border);
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .custom-select-trigger:hover {
+    border-color: var(--glowe-gold);
+    background: #fafaf9;
+  }
+
+  .custom-select-wrapper.open .custom-select-trigger {
+    border-color: var(--glowe-brown-dark);
+    box-shadow: 0 0 0 3px rgba(62, 39, 35, 0.05);
+  }
+
+  .custom-options {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid var(--glowe-border);
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 100;
+    max-height: 250px;
+    overflow-y: auto;
+  }
+
+  .custom-select-wrapper.open .custom-options {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+
+  .custom-option {
+    padding: 0.85rem 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f8f5f2;
+  }
+
+  .custom-option:last-child {
+    border-bottom: none;
+  }
+
+  .custom-option:hover {
+    background: #faf8f5;
+    color: var(--glowe-gold);
+    padding-left: 1.5rem;
+  }
+
+  .custom-option.selected {
+    background: #fdfaf7;
+    color: var(--glowe-brown-dark);
+    font-weight: 600;
+  }
+
+  .custom-select-arrow {
+    transition: transform 0.3s ease;
+  }
+
+  .custom-select-wrapper.open .custom-select-arrow {
+    transform: rotate(180deg);
+  }
+
+  /* Custom Checkbox/Radio Styling */
+  .custom-radio:checked {
+    background-color: var(--glowe-brown-dark);
+    border-color: var(--glowe-brown-dark);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3E%3Ccircle cx='8' cy='8' r='3'/%3E%3C/svg%3E");
+  }
+
+  .method-card:hover {
+    border-color: var(--glowe-gold);
+    background-color: #faf9f7;
+    transform: translateY(-2px);
+  }
+
+  .method-card.active {
+    border-color: var(--glowe-brown-dark);
+    background-color: #f7f3f0;
+    box-shadow: 0 4px 12px rgba(62, 39, 35, 0.08);
+  }
+
+  /* Item row hover lift */
+  .item-row-lift {
+    transition: all 0.3s ease;
+  }
+  .item-row-lift:hover {
+    transform: translateX(8px);
+    background: white;
+    border-color: var(--glowe-gold);
+  }
+
+  /* Dropzone Styling */
+  .drop-zone {
+    border: 1px dashed var(--glowe-border);
+    transition: all 0.3s ease;
+  }
+
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--glowe-gold);
+    background-color: #faf9f7;
+  }
+
+  /* Quantity Controller */
+  .qty-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+
+  .qty-btn:hover {
+    background-color: var(--glowe-gold);
+    color: white;
+  }
+
+  /* Entrance animations */
+  .fade-up {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .delay-1 { animation-delay: 0.1s; }
+  .delay-2 { animation-delay: 0.2s; }
+  .delay-3 { animation-delay: 0.3s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto py-8 px-6">
+  
+  <!-- Breadcrumb -->
+  <nav class="flex items-center gap-2 mb-6 font-montserrat text-[10px] font-medium tracking-widest text-[#8a7e72] uppercase fade-up">
+    <a href="{% url 'home' %}" class="hover:text-[#3e2723] transition-colors">Home</a>
+    <span class="text-[#d8d2ca]">/</span>
+    <a href="{% url 'order_listing' %}" class="hover:text-[#3e2723] transition-colors">Account</a>
+    <span class="text-[#d8d2ca]">/</span>
+    <a href="{% url 'order_detail' item.order.id %}" class="hover:text-[#3e2723] transition-colors">Orders</a>
+    <span class="text-[#d8d2ca]">/</span>
+    <span class="text-[#3e2723]">Return Request</span>
+  </nav>
+
+  <!-- Header Section -->
+  <div class="text-center mb-10 fade-up delay-1">
+    <h1 class="text-[32px] md:text-[38px] text-[#1a1208] leading-tight mb-3" style="font-family:'Cormorant Garamond',serif;">Return Request</h1>
+    <p class="font-montserrat text-[12px] text-[#8a7e72] max-w-sm mx-auto leading-relaxed">
+      Fill out the form below to process your return for Order <span class="text-[#1a1208] font-bold">#{{ order.order_id|default:order.id }}</span>.
+    </p>
+  </div>
+
+  <form method="POST" enctype="multipart/form-data" id="returnForm" class="space-y-8">
+    {% csrf_token %}
+
+    <!-- SECTION 1: ITEMS TO RETURN -->
+    <div class="glass-card rounded-xl p-5 md:p-6 fade-up delay-2">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="w-5 h-5 rounded-full bg-[#f3f0eb] text-[#3e2723] flex items-center justify-center text-[9px] font-bold font-montserrat">1</span>
+        <h2 class="text-[9px] font-bold text-[#b0a498] uppercase tracking-[0.2em] font-montserrat">Items to Return</h2>
+      </div>
+
+      <!-- Item Card -->
+      <div class="item-row-lift flex items-center gap-3 p-3 rounded-lg border border-var(--glowe-border) bg-[#faf8f5]/50 transition-all group">
+         <!-- Image -->
+         <div class="w-14 h-14 md:w-16 md:h-16 rounded-md bg-white border border-var(--glowe-border) overflow-hidden shrink-0 shadow-sm">
+            {% if item.variant.product.images.first %}
+              <img src="{{ item.variant.product.images.first.image.url }}" alt="{{ item.variant.product.name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+            {% else %}
+              <div class="w-full h-full flex items-center justify-center text-[#d8d2ca]">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+              </div>
+            {% endif %}
+         </div>
+
+         <!-- Info -->
+         <div class="flex-1 min-w-0">
+           <h3 class="text-[14px] md:text-[16px] font-semibold text-[#1a1208] leading-tight mb-0.5" style="font-family:'Cormorant Garamond',serif;">
+             {{ item.variant.product.name }}
+           </h3>
+           <p class="text-[10px] font-montserrat text-[#8a7e72] mb-1.5">
+             {{ item.variant.size }} | {{ item.variant.color|default:"Standard" }}
+           </p>
+           
+           <!-- Qty Controller -->
+           <div class="flex items-center gap-2.5">
+              <span class="text-[8px] font-bold text-[#b0a498] uppercase tracking-widest font-montserrat">Qty:</span>
+              <div class="inline-flex items-center bg-white border border-[#e6e0d8] rounded-full overflow-hidden h-6 shadow-sm">
+                 <button type="button" id="minusBtn" class="qty-btn border-r border-[#e6e0d8] text-[#3e2723]">
+                   <svg width="6" height="1" viewBox="0 0 10 2" fill="none"><rect width="10" height="2" rx="1" fill="currentColor"/></svg>
+                 </button>
+                 <span id="qtyDisplay" class="w-6 text-center text-[10px] font-bold text-[#1a1208] font-montserrat">{{ item.quantity }}</span>
+                 <input type="hidden" name="return_quantity" id="qtyInput" value="{{ item.quantity }}">
+                 <button type="button" id="plusBtn" class="qty-btn border-l border-[#e6e0d8] text-[#3e2723]">
+                   <svg width="6" height="6" viewBox="0 0 10 10" fill="none"><rect y="4" width="10" height="2" rx="1" fill="currentColor"/><rect x="4" width="2" height="10" rx="1" fill="currentColor"/></svg>
+                 </button>
+              </div>
+           </div>
+         </div>
+
+         <!-- Price -->
+         <div class="shrink-0 text-right pr-0.5">
+            <p class="text-[14px] md:text-[16px] font-semibold text-[#1a1208] font-montserrat">₹{{ item.price_at_time }}</p>
+         </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: REASON FOR RETURN -->
+    <div class="glass-card rounded-2xl p-6 md:p-8 fade-up delay-3">
+      <div class="flex items-center gap-3 mb-6">
+        <span class="w-6 h-6 rounded-full bg-[#f3f0eb] text-[#3e2723] flex items-center justify-center text-[10px] font-bold font-montserrat">2</span>
+        <h2 class="text-[10px] font-bold text-[#b0a498] uppercase tracking-[0.2em] font-montserrat">Reason for Return</h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <!-- Reason Custom Dropdown -->
+        <div class="space-y-2">
+          <label class="block text-[10px] font-bold text-[#8a7e72] uppercase tracking-widest font-montserrat">Why are you returning this? <span class="text-red-500 text-[12px] leading-none">*</span></label>
+          <div class="custom-select-wrapper" id="reasonSelect">
+            <input type="hidden" name="reason" id="reasonInput" required>
+            <div class="custom-select-trigger font-montserrat text-[12px] text-[#1a1208] !py-3">
+              <span class="trigger-text">Select a reason</span>
+              <svg class="custom-select-arrow" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+            </div>
+            <div class="custom-options font-montserrat text-[12px] text-[#1a1208]">
+              {% for reason in RETURN_REASONS %}
+                <div class="custom-option" data-value="{{ reason }}">{{ reason }}</div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Condition Custom Dropdown -->
+        <div class="space-y-2">
+          <label class="block text-[10px] font-bold text-[#8a7e72] uppercase tracking-widest font-montserrat">Condition of Item <span class="text-red-500 text-[12px] leading-none">*</span></label>
+          <div class="custom-select-wrapper" id="conditionSelect">
+            <input type="hidden" name="condition" id="conditionInput" required>
+            <div class="custom-select-trigger font-montserrat text-[12px] text-[#1a1208] !py-3">
+              <span class="trigger-text">Select condition</span>
+              <svg class="custom-select-arrow" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
+            </div>
+            <div class="custom-options font-montserrat text-[12px] text-[#1a1208]">
+              {% for condition in ITEM_CONDITIONS %}
+                <div class="custom-option" data-value="{{ condition }}">{{ condition }}</div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Additional Comments -->
+      <div class="space-y-2 mb-6">
+        <label class="flex justify-between items-center block text-[10px] font-bold text-[#8a7e72] uppercase tracking-widest font-montserrat">
+          <span>Additional Comments <span class="text-red-500 text-[12px] leading-none">*</span></span>
+          <span class="text-[9px] lowercase normal-case tracking-normal font-medium text-[#b0a498]">(min. 10 characters)</span>
+        </label>
+        <textarea name="description" id="descriptionInput" placeholder="Please provide any additional details about your return request (min. 10 characters)..." class="w-full bg-white border border-[#e6e0d8] rounded-xl px-4 py-3 font-montserrat text-[12px] text-[#1a1208] focus:border-[#c8a96e] focus:ring-0 transition-all min-h-[100px] resize-none"></textarea>
+      </div>
+
+      <!-- Photo Upload -->
+      <div class="space-y-3">
+        <label class="block text-[11px] font-montserrat text-[#1a1208] font-medium leading-relaxed">Upload Photos (Optional - Helpful for damaged items)</label>
+        <div class="drop-zone rounded-[30px] p-6 py-10 flex flex-col items-center justify-center cursor-pointer group border-dashed border-[#e6e0d8] bg-transparent" id="dropZone" style="border-width: 1.5px;">
+          <input type="file" name="images" id="imageInput" multiple class="hidden" accept="image/*">
+          <div class="mb-4">
+             <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#7a6e60" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+               <path d="M17.5 19c2.5 0 4.5-2 4.5-4.5 0-2-1.3-3.7-3.2-4.2-.5-2.8-2.9-5-5.8-5-2.1 0-3.9 1.1-5 2.8-1.5-.5-3.2-.2-4.4.8C2.4 10 2 11.5 2 13c0 2.8 2.2 5 5 5h1"/>
+               <path d="M12 11v8m-3-3l3-3 3 3"/>
+             </svg>
+          </div>
+          <p class="font-montserrat text-[14px] text-[#7a6e60] tracking-tight">
+            <span class="text-[#1a1208] font-semibold">Upload a file</span> <span class="font-normal opacity-80">or drag and drop</span>
+          </p>
+          <div id="filePreview" class="flex flex-wrap gap-2 mt-4 justify-center"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: REFUND METHOD (RESTORED AS DISABLED/MODERN) -->
+    <div class="glass-card rounded-xl p-5 md:p-6 fade-up delay-3 opacity-60 pointer-events-none select-none" style="animation-delay: 0.4s; filter: grayscale(0.2);">
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-2">
+            <span class="w-5 h-5 rounded-full bg-[#f3f0eb] text-[#8a7e72] flex items-center justify-center text-[9px] font-bold font-montserrat">3</span>
+            <h2 class="text-[9px] font-bold text-[#b0a498] uppercase tracking-[0.2em] font-montserrat">Refund Method</h2>
+        </div>
+  
+      </div>
+
+      <div class="space-y-3">
+        <!-- Wallet Option (Disabled) -->
+        <div class="flex items-center gap-4 p-4 rounded-lg border border-[#e6e0d8] bg-[#faf8f5]/30">
+          <div class="w-4 h-4 rounded-full border border-[#d8d2ca]"></div>
+          <div class="flex-1">
+            <h3 class="font-montserrat text-[12px] font-bold text-[#b0a498] mb-0.5">Store to Wallet (Instant)</h3>
+            <p class="font-montserrat text-[10px] text-[#bcada0]">and after use through the wallet</p>
+          </div>
+          <div class="shrink-0 text-[#bcada0]">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18M16 14h2"/></svg>
+          </div>
+        </div>
+
+        <!-- Original Payment Option (Disabled) -->
+        <div class="flex items-center gap-4 p-4 rounded-lg border border-[#e6e0d8] bg-[#faf8f5]/30">
+           <div class="w-4 h-4 rounded-full border border-[#d8d2ca]"></div>
+           <div class="flex-1">
+             <h3 class="font-montserrat text-[12px] font-bold text-[#b0a498] mb-0.5">Original Payment Method</h3>
+             <p class="font-montserrat text-[10px] text-[#bcada0]">Refund to card ending in 4242. Takes 5-7 business days.</p>
+           </div>
+           <div class="shrink-0 text-[#bcada0]">
+             <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="10"/></svg>
+           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Final Actions -->
+    <div class="flex flex-wrap items-center justify-between gap-4 pt-8 fade-up" style="animation-delay: 0.4s;">
+      <a href="{% url 'order_detail' item.order.id %}" class="font-montserrat text-[10px] font-bold text-[#8a7e72] uppercase tracking-widest hover:text-[#1a1208] transition-colors underline underline-offset-8">Cancel Request</a>
+      <button type="submit" class="w-full md:w-auto bg-[#3e2723] text-white px-10 py-4 rounded-xl font-montserrat text-[11px] font-bold uppercase tracking-[0.3em] hover:bg-[#2a1a17] transition-all transform hover:-translate-y-1 shadow-md active:scale-95 flex items-center justify-center gap-2">
+        Submit Request
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+
+  </form>
+
+  <!-- Return Policy Highlights -->
+  <div class="mt-16 pt-8 border-t border-[#e6e0d8] grid grid-cols-1 md:grid-cols-3 gap-8 fade-up" style="animation-delay: 0.5s;">
+    <div class="flex gap-3">
+      <div class="w-8 h-8 rounded-full bg-[#f3f0eb] flex items-center justify-center shrink-0">
+        <svg width="14" height="14" fill="none" stroke="#3e2723" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      </div>
+      <div>
+        <h4 class="font-montserrat text-[9px] font-bold text-[#1a1208] uppercase tracking-widest mb-0.5">30-Day Window</h4>
+        <p class="font-montserrat text-[10px] text-[#8a7e72] leading-relaxed">Returns accepted within 30 days of delivery.</p>
+      </div>
+    </div>
+    <div class="flex gap-3">
+      <div class="w-8 h-8 rounded-full bg-[#f3f0eb] flex items-center justify-center shrink-0">
+        <svg width="14" height="14" fill="none" stroke="#3e2723" viewBox="0 0 24 24"><path d="M5 12h14m-3-3l3 3-3 3"/><rect x="2" y="7" width="15" height="10" rx="1"/></svg>
+      </div>
+      <div>
+        <h4 class="font-montserrat text-[9px] font-bold text-[#1a1208] uppercase tracking-widest mb-0.5">Free Shipping</h4>
+        <p class="font-montserrat text-[10px] text-[#8a7e72] leading-relaxed">Prepaid shipping label provided for all returns.</p>
+      </div>
+    </div>
+    <div class="flex gap-3">
+      <div class="w-8 h-8 rounded-full bg-[#f3f0eb] flex items-center justify-center shrink-0">
+        <svg width="14" height="14" fill="none" stroke="#3e2723" viewBox="0 0 24 24"><path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/><path d="M7 12.667L10.333 16 17 9.333"/></svg>
+      </div>
+      <div>
+        <h4 class="font-montserrat text-[9px] font-bold text-[#1a1208] uppercase tracking-widest mb-0.5">Sustainable</h4>
+        <p class="font-montserrat text-[10px] text-[#8a7e72] leading-relaxed">Recycled packaging responsibly.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Qty Controller
+    const minusBtn = document.getElementById('minusBtn');
+    const plusBtn = document.getElementById('plusBtn');
+    const qtyDisplay = document.getElementById('qtyDisplay');
+    const qtyInput = document.getElementById('qtyInput');
+    const maxQty = parseInt('{{ item.quantity }}');
+    
+    let currentQty = parseInt(qtyInput.value);
+
+    function updateQty(newQty) {
+        if (newQty >= 1 && newQty <= maxQty) {
+            currentQty = newQty;
+            qtyDisplay.textContent = currentQty;
+            qtyInput.value = currentQty;
+            
+            // Visual feedback
+            minusBtn.style.opacity = currentQty === 1 ? '0.3' : '1';
+            plusBtn.style.opacity = currentQty === maxQty ? '0.3' : '1';
+        }
+    }
+
+    minusBtn.addEventListener('click', () => updateQty(currentQty - 1));
+    plusBtn.addEventListener('click', () => updateQty(currentQty + 1));
+    updateQty(currentQty);
+
+    // Custom Dropdown Logic
+    const customSelects = document.querySelectorAll('.custom-select-wrapper');
+    
+    customSelects.forEach(wrapper => {
+        const trigger = wrapper.querySelector('.custom-select-trigger');
+        const options = wrapper.querySelectorAll('.custom-option');
+        const input = wrapper.querySelector('input[type="hidden"]');
+        const triggerText = wrapper.querySelector('.trigger-text');
+
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Close other dropdowns
+            customSelects.forEach(other => {
+                if (other !== wrapper) other.classList.remove('open');
+            });
+            wrapper.classList.toggle('open');
+        });
+
+        options.forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const value = option.getAttribute('data-value');
+                input.value = value;
+                triggerText.textContent = value;
+                
+                options.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                
+                wrapper.classList.remove('open');
+            });
+        });
+    });
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', () => {
+        customSelects.forEach(wrapper => wrapper.classList.remove('open'));
+    });
+
+    // Dropzone logic
+    const dropZone = document.getElementById('dropZone');
+    const imageInput = document.getElementById('imageInput');
+    const filePreview = document.getElementById('filePreview');
+
+    dropZone.addEventListener('click', () => imageInput.click());
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, e => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-over'));
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-over'));
+    });
+
+    dropZone.addEventListener('drop', e => {
+        const files = e.dataTransfer.files;
+        imageInput.files = files;
+        handleFiles(files);
+    });
+
+    imageInput.addEventListener('change', () => handleFiles(imageInput.files));
+
+    function handleFiles(files) {
+        filePreview.innerHTML = '';
+        Array.from(files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'w-12 h-12 object-cover rounded-lg border border-[#e6e0d8]';
+                filePreview.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // Radio Card Logic
+    const radioCards = document.querySelectorAll('.method-card');
+    const radios = document.querySelectorAll('input[name="refund_method"]');
+
+    radios.forEach((radio, idx) => {
+        radio.addEventListener('change', () => {
+             radioCards.forEach(c => {
+                 c.classList.remove('active', 'opacity-100');
+                 c.classList.add('opacity-70');
+             });
+             radioCards[idx].classList.add('active', 'opacity-100');
+             radioCards[idx].classList.remove('opacity-70');
+        });
+    });
+    // Validation
+    const returnForm = document.getElementById('returnForm');
+    const reasonInput = document.getElementById('reasonInput');
+    const conditionInput = document.getElementById('conditionInput');
+    const descriptionInput = document.getElementById('descriptionInput');
+    
+    const reasonTrigger = document.querySelector('#reasonSelect .custom-select-trigger');
+    const conditionTrigger = document.querySelector('#conditionSelect .custom-select-trigger');
+
+    returnForm.addEventListener('submit', (e) => {
+        let isValid = true;
+
+        // Clear previous errors
+        document.querySelectorAll('.error-message').forEach(el => el.remove());
+        document.querySelectorAll('.border-red-500').forEach(el => el.classList.remove('border-red-500', 'focus:border-red-500'));
+
+        function showError(element, wrapperNode, message) {
+            isValid = false;
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message text-red-500 text-[10px] font-montserrat mt-1.5 fade-up font-medium tracking-wide';
+            errorDiv.textContent = message;
+            wrapperNode.appendChild(errorDiv);
+            element.classList.add('border-red-500');
+            if (element.tagName === 'TEXTAREA') {
+                element.classList.add('focus:border-red-500');
+                element.classList.remove('focus:border-[#c8a96e]');
+            }
+        }
+
+        if (!reasonInput.value) {
+            showError(reasonTrigger, document.querySelector('#reasonSelect').parentNode, 'Please select a reason for the return.');
+        }
+
+        if (!conditionInput.value) {
+            showError(conditionTrigger, document.querySelector('#conditionSelect').parentNode, 'Please select the condition of the item.');
+        }
+
+        const descriptionText = descriptionInput.value.trim();
+        
+        if (descriptionText.length < 10) {
+            showError(descriptionInput, descriptionInput.parentNode, 'Please provide a more detailed description (at least 10 characters).');
+        }
+
+        if (!isValid) {
+            e.preventDefault();
+            // Scroll to the first error
+            const firstError = document.querySelector('.error-message');
+            if (firstError) {
+                firstError.parentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    });
+
+    // Remove errors on interaction
+    [reasonTrigger, conditionTrigger].forEach(trigger => {
+        trigger.addEventListener('click', () => {
+             const wrapper = trigger.closest('.space-y-2');
+             const error = wrapper.querySelector('.error-message');
+             if(error) error.remove();
+             trigger.classList.remove('border-red-500');
+        });
+    });
+
+    if (descriptionInput) {
+        descriptionInput.addEventListener('input', () => {
+             const wrapper = descriptionInput.parentNode;
+             const error = wrapper.querySelector('.error-message');
+             if(error) error.remove();
+             descriptionInput.classList.remove('border-red-500', 'focus:border-red-500');
+             descriptionInput.classList.add('focus:border-[#c8a96e]');
+        });
+    }
+});
+</script>
+{% endblock %}

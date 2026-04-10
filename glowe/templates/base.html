@@ -243,14 +243,8 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
 <!-- MOBILE SIDEBAR -->
 <div id="mob-sidebar-overlay" class="mob-sidebar-overlay" onclick="closeSidebar()"></div>
 <aside id="mob-sidebar" class="mob-sidebar">
-  <div class="mob-sidebar-head">
-    <a href="{% url 'home' %}" class="flex items-center gap-2 no-underline">
-      <svg width="18" height="18" viewBox="0 0 28 28" fill="none" stroke="#1a1208" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M14 24C14 24 4 18 4 10C4 6 8 3 12 4C13 4 14 5 14 5"/>
-        <path d="M14 24C14 24 24 18 24 10C24 6 20 3 16 4C15 4 14 5 14 5"/>
-        <line x1="14" y1="24" x2="14" y2="10"/>
-      </svg>
-      <span class="font-cormorant text-[19px] font-semibold tracking-[0.04em] text-[#1a1208]">Glowé</span>
+    <a href="{% url 'home' %}" class="flex items-center no-underline py-2">
+      <img src="{{ logo_url }}" alt="{{ site_name }} Logo" class="w-[120px] md:w-[140px] h-auto object-contain">
     </a>
     <button onclick="closeSidebar()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#f0ebe2] transition-colors">
       <svg width="16" height="16" fill="none" stroke="#1a1208" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
@@ -323,10 +317,10 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
      NAVBAR
 ══════════════════════════════════ -->
 <header class="sticky top-0 z-50 bg-white border-b border-[#e6e0d8] h-16 flex items-center">
-  <div class="w-full max-w-[1440px] mx-auto px-5 md:px-8 lg:px-12 flex items-center justify-between relative">
+  <div class="w-full px-4 md:px-6 lg:px-8 flex items-center justify-between relative">
 
     <!-- ══ MOBILE NAV ══ -->
-    <div class="flex md:hidden w-full items-center justify-between">
+    <div class="flex md:hidden w-full items-center justify-between relative">
 
       <!-- Left: Hamburger -->
       <button onclick="openSidebar()" aria-label="Open menu" class="flex flex-col gap-[5px] p-1 shrink-0">
@@ -336,13 +330,8 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
       </button>
 
       <!-- Center: Logo -->
-      <a href="{% url 'home' %}" class="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 no-underline">
-        <svg width="20" height="20" viewBox="0 0 28 28" fill="none" stroke="#1a1208" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 24C14 24 4 18 4 10C4 6 8 3 12 4C13 4 14 5 14 5"/>
-          <path d="M14 24C14 24 24 18 24 10C24 6 20 3 16 4C15 4 14 5 14 5"/>
-          <line x1="14" y1="24" x2="14" y2="10"/>
-        </svg>
-        <span class="font-cormorant text-[20px] font-semibold tracking-[0.04em] text-[#1a1208]">Glowé</span>
+      <a href="{% url 'home' %}" class="absolute left-1/2 -translate-x-1/2 flex items-center no-underline">
+        <img src="{{ logo_url }}" alt="{{ site_name }} Logo" class="w-[130px] md:w-[150px] h-auto object-contain">
       </a>
 
       <!-- Right: Search + Cart + Profile -->
@@ -425,14 +414,9 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
     <!-- end mobile nav -->
 
     <!-- ══ DESKTOP NAV ══ -->
-    <div class="hidden md:flex items-center justify-between w-full">
-      <a href="{% url 'home' %}" class="flex items-center gap-2.5 no-underline shrink-0">
-        <svg width="26" height="26" viewBox="0 0 28 28" fill="none" stroke="#1a1208" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M14 24C14 24 4 18 4 10C4 6 8 3 12 4C13 4 14 5 14 5"/>
-          <path d="M14 24C14 24 24 18 24 10C24 6 20 3 16 4C15 4 14 5 14 5"/>
-          <line x1="14" y1="24" x2="14" y2="10"/>
-        </svg>
-        <span class="font-cormorant text-[22px] font-semibold tracking-[0.04em] text-[#1a1208]">Glowé</span>
+    <div class="hidden md:flex items-center justify-between w-full relative">
+      <a href="{% url 'home' %}" class="flex items-center no-underline shrink-0 py-2 -ml-2 lg:-ml-8">
+        <img src="{{ logo_url }}" alt="{{ site_name }} Logo" class="w-[160px] md:w-[180px] lg:w-[200px] h-auto object-contain">
       </a>
       <nav class="flex items-center gap-10 absolute left-1/2 -translate-x-1/2">
         <a href="{% url 'product_listing' %}" class="gl-nav-link font-montserrat text-[11px] font-medium tracking-[0.16em] uppercase text-[#2a2018] no-underline hover:text-black {% if '/products' in request.path %}active{% endif %}">Shop</a>
@@ -440,13 +424,15 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
         <a href="#" class="gl-nav-link font-montserrat text-[11px] font-medium tracking-[0.16em] uppercase text-[#2a2018] no-underline hover:text-black {% if '/about' in request.path %}active{% endif %}">About</a>
         <a href="#" class="gl-nav-link font-montserrat text-[11px] font-medium tracking-[0.16em] uppercase text-[#2a2018] no-underline hover:text-black {% if '/contact' in request.path %}active{% endif %}">Contact</a>
       </nav>
-      <div class="flex items-center gap-5 shrink-0">
+      <div class="flex items-center gap-6 shrink-0">
 
         <!-- Search (desktop) -->
-        <svg class="w-5 h-5 cursor-pointer" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4.8-4.8"/></svg>
+        <button onclick="openSearch()" aria-label="Search" class="flex items-center justify-center p-0 m-0 bg-transparent border-none cursor-pointer hover:opacity-75 transition-opacity">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4.8-4.8"/></svg>
+        </button>
 
         <!-- Wishlist (desktop) -->
-        <a href="{% url 'wishlist' %}" aria-label="Wishlist" class="wish-nav-icon">
+        <a href="{% url 'wishlist' %}" aria-label="Wishlist" class="wish-nav-icon hover:opacity-75 transition-opacity">
           <svg class="w-5 h-5 cursor-pointer {% if wishlist_count > 0 %}is-filled{% endif %}" viewBox="0 0 24 24" fill="{% if wishlist_count > 0 %}url(#wishlist-grad){% else %}none{% endif %}" stroke="{% if wishlist_count > 0 %}none{% else %}#2a2018{% endif %}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
           {% if wishlist_count > 0 %}
           <span class="wish-badge -top-2 -right-2.5 text-[8px] w-4 h-4">{% if wishlist_count > 7 %}7+{% else %}{{ wishlist_count }}{% endif %}</span>
@@ -521,9 +507,8 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
   <div class="max-w-[1440px] mx-auto px-6 md:px-12 pt-10 md:pt-16 pb-6 md:pb-8">
     <div class="hidden md:grid gap-10 mb-14" style="grid-template-columns:280px 1fr 1fr 1fr;">
       <div>
-        <div class="flex items-center gap-2 mb-4">
-          <svg width="18" height="18" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 24C14 24 4 18 4 10C4 6 8 3 12 4C13 4 14 5 14 5"/><path d="M14 24C14 24 24 18 24 10C24 6 20 3 16 4C15 4 14 5 14 5"/><line x1="14" y1="24" x2="14" y2="10"/></svg>
-          <span class="font-cormorant text-white text-[20px] font-semibold tracking-[0.03em]">Glowé</span>
+        <div class="flex items-center mb-6 pt-1">
+          <img src="{{ logo_url }}" alt="{{ site_name }} Logo" class="w-[180px] md:w-[200px] h-auto object-contain brightness-0 invert opacity-90">
         </div>
         <p class="font-montserrat text-[12px] font-light leading-[1.8] text-white/50 mb-5 max-w-[240px]">Redefining natural skincare with premium ingredients that honor your skin and the planet.</p>
         <div class="flex gap-4">
@@ -559,9 +544,8 @@ html, body { margin: 0; padding: 0; overflow-x: hidden; }
     </div>
     <div class="md:hidden pb-2">
       <div class="mb-7">
-        <div class="flex items-center gap-2 mb-3">
-          <svg width="15" height="15" viewBox="0 0 28 28" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 24C14 24 4 18 4 10C4 6 8 3 12 4C13 4 14 5 14 5"/><path d="M14 24C14 24 24 18 24 10C24 6 20 3 16 4C15 4 14 5 14 5"/><line x1="14" y1="24" x2="14" y2="10"/></svg>
-          <span class="font-cormorant text-white text-[16px] font-semibold tracking-[0.04em]">Glowé</span>
+        <div class="flex items-center mb-5 pt-1">
+          <img src="{{ logo_url }}" alt="{{ site_name }} Logo" class="w-[150px] h-auto object-contain brightness-0 invert opacity-90">
         </div>
         <p class="font-montserrat text-[10px] font-light leading-[1.7] text-white/45 mb-3 max-w-[220px]">Redefining natural skincare with premium ingredients that honor your skin and the planet.</p>
         <div class="flex gap-3.5">

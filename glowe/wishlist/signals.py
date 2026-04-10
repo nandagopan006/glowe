@@ -6,6 +6,7 @@ from django.conf import settings
 
 from product.models import Variant
 from .models import StockNotification
+from .email_util import send_back_in_stock_email
 
 @receiver(post_save,sender=Variant)
 def notify_user_when_in_stock(sender,instance,**kwargs) :
@@ -17,23 +18,8 @@ def notify_user_when_in_stock(sender,instance,**kwargs) :
         for n in notifications:
             user = n.user
             
-            subject = "Your Wishlist Item is Back in Stock! 🎉"
-
-            message = (
-                f"Hi {user.full_name},\n\n"
-                f"Good news! The product \"{instance.product.name}\" is now back in stock.\n\n"
-                f"You can now add it to your cart and purchase it.\n\n"
-                f"Visit the website and grab it before it runs out again!\n\n"
-                f"Thank you for Visiting with us.\n"
-            )
-
-            send_mail(
-                subject,
-                message,
-                settings.EMAIL_HOST_USER,
-                [user.email],
-                fail_silently=False,
-            )
+            # Send premium back-in-stock email
+            send_back_in_stock_email(user, instance)
             
             # Mark as notified to prevent duplicate emails
             n.is_notified = True

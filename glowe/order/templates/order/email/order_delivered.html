@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Order Delivered — Glowé</title>
+<style>
+  /* ── Reset ── */
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background-color:#f4f4f4; font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; -webkit-text-size-adjust:100%; color:#111111; }
+  table { border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; }
+  img { border:0; display:block; outline:none; text-decoration:none; }
+  a { text-decoration:none; }
+
+  /* ── Responsive ── */
+  @media only screen and (max-width:640px) {
+    .container { width:100% !important; padding:0 !important; }
+    .hero { height:220px !important; }
+    .card { margin:-60px 10px 20px 10px !important; width:calc(100% - 20px) !important; padding:30px 20px !important; }
+    .col-3 { width:100% !important; display:block !important; padding:0 0 25px 0 !important; border-bottom:1px solid #eeeeee; margin-bottom:25px; }
+    .col-3:last-child { border-bottom:0; margin-bottom:0; }
+    .item-img-cell { width:100px !important; }
+    .item-details-cell { padding:0 10px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f4f4;">
+
+<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#f4f4f4;">
+<tr><td align="center">
+
+  <!-- ══ HERO HEADER ══ -->
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color:#000000;">
+    <tr>
+      <td align="center" class="hero" style="height:400px; background-image:url('https://images.unsplash.com/photo-1612817288484-6f916006741a?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'); background-size:cover; background-position:center; position:relative;">
+        <!-- Brand Name Overlay -->
+        <table width="100%" height="100%" cellpadding="0" cellspacing="0">
+          <tr>
+            <td align="center" valign="middle" style="background-color:rgba(0,0,0,0.45);">
+              <h1 style="font-family:'Helvetica', Arial, sans-serif; font-size:42px; font-weight:700; color:#ffffff; letter-spacing:12px; text-transform:uppercase; margin:0;">
+                GLOWÉ
+              </h1>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+  <!-- ══ MAIN CARD ══ -->
+  <table class="card" width="600" cellpadding="0" cellspacing="0" role="presentation" 
+         style="background-color:#ffffff; margin:-100px auto 40px; width:600px; border-radius:4px; border:1px solid #e0e0e0; box-shadow:0 15px 35px rgba(0,0,0,0.08); padding:60px;">
+    
+    <!-- THANKS MESSAGE -->
+    <tr>
+      <td align="center" style="padding:0 0 15px;">
+        <h2 style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; font-size:32px; font-weight:700; color:#000000; line-height:1.2;">
+          Thanks for your order, {{ order.user.full_name|title }}
+        </h2>
+      </td>
+    </tr>
+    <tr>
+      <td align="center" style="padding:0 0 50px;">
+        <p style="font-family:Arial, sans-serif; font-size:12px; color:#a1a1a1; font-weight:700; letter-spacing:1.5px; text-transform:uppercase;">
+          Order No. {{ order.order_number }}
+        </p>
+      </td>
+    </tr>
+
+    <!-- INFO GRID (3 COL) -->
+    <tr>
+      <td style="padding:0 0 50px; border-bottom:1px solid #eeeeee;">
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+          <tr>
+            <td class="col-3" width="31%" valign="top">
+              <p style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; font-size:10px; font-weight:700; color:#888888; text-transform:uppercase; letter-spacing:0.15em; margin-bottom:15px;">Shipping to</p>
+              <p style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; font-size:13px; color:#1a1a1a; line-height:1.7;">
+                <span style="font-weight:700;">{{ order.shipping_address.full_name }}</span><br>
+                <span style="color:#555555;">{{ order.shipping_address.address_line1 }}</span><br>
+                <span style="color:#555555;">{{ order.shipping_address.city }}, {{ order.shipping_address.pincode }}</span>
+              </p>
+            </td>
+            <td class="col-3" width="2%" style="font-size:1px;">&nbsp;</td>
+            <td class="col-3" width="31%" valign="top">
+              <p style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; font-size:10px; font-weight:700; color:#888888; text-transform:uppercase; letter-spacing:0.15em; margin-bottom:15px;">Billed to</p>
+              <p style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; font-size:13px; color:#1a1a1a; line-height:1.7;">
+                <span style="font-weight:700;">{{ order.user.username }}</span><br>
+                <span style="color:#555555;">{{ order.payment.payment_method }}</span>
+              </p>
+            </td>
+            <td class="col-3" width="2%" style="font-size:1px;">&nbsp;</td>
+            <td class="col-3" width="31%" valign="top">
+              <p style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; font-size:10px; font-weight:700; color:#888888; text-transform:uppercase; letter-spacing:0.15em; margin-bottom:15px;">Date delivered</p>
+              <p style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; font-size:13px; color:#1a1a1a; line-height:1.7;">
+                <span style="font-weight:700;">{{ order.delivered_date|date:"F d, Y" }}</span>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- MODERN DASHED DIVIDER -->
+    <tr>
+      <td align="center" style="padding:60px 0;">
+        <div style="position:relative; width:100%;">
+            <div style="border-top:1px dashed #d1d1d1; width:100%; height:1px;"></div>
+            <div style="position:absolute; top:-12px; left:50%; margin-left:-25px; background-color:#ffffff; padding:0 15px;">
+                <img src="https://cdn-icons-png.flaticon.com/512/783/783108.png" width="24" height="24" alt="Plane" style="display:inline-block; opacity:0.5;">
+            </div>
+        </div>
+      </td>
+    </tr>
+
+    <tr>
+      <td align="center" style="padding:0 0 45px;">
+        <p style="font-family:'Helvetica Neue', Helvetica, Arial, sans-serif; font-size:16px; color:#1a1a1a; font-weight:400; letter-spacing:0.02em;">
+          Your order has been successfully delivered.
+        </p>
+      </td>
+    </tr>
+
+    <!-- TRACK BUTTON -->
+    <tr>
+      <td align="center" style="padding:0 0 60px;">
+        <a href="{{ request.scheme }}://{{ request.get_host }}/order-detail/{{ order.id }}/" 
+           style="background-color:#333333; color:#ffffff; padding:20px 50px; font-family:Arial, sans-serif; font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:2px; border-radius:2px; display:inline-block; transition: all 0.3s;">
+          TRACK YOUR ORDER
+        </a>
+      </td>
+    </tr>
+
+    <!-- ORDER SUMMARY TITLE -->
+    <tr>
+      <td align="center" style="padding-bottom:30px; border-bottom:1px solid #f0f0f0;">
+        <p style="font-family:Arial, sans-serif; font-size:12px; font-weight:700; color:#000000; text-transform:uppercase; letter-spacing:2px;">Your Order Summary</p>
+      </td>
+    </tr>
+
+    <!-- ITEMS LOOP -->
+    <tr>
+      <td style="padding-top:40px;">
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+          {% for item in order_items %}
+          <tr>
+            <td style="padding-bottom:45px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <!-- Image -->
+                  <td class="item-img-cell" width="130" valign="top">
+                    {% if item.cid_id %}
+                      <img src="cid:{{ item.cid_id }}" alt="{{ item.variant.product.name }}" width="130" style="width:130px; height:auto; border:1px solid #eeeeee; border-radius:2px;">
+                    {% else %}
+                      <div style="width:130px; height:130px; background:#f9f9f9; border-radius:2px;"></div>
+                    {% endif %}
+                  </td>
+                  <!-- Details -->
+                  <td class="item-details-cell" style="padding:0 30px;" valign="top">
+                    <p style="font-family:Arial, sans-serif; font-size:16px; font-weight:700; color:#000000; margin-bottom:10px; line-height:1.4;">{{ item.variant.product.name }}</p>
+                    <p style="font-family:Arial, sans-serif; font-size:14px; color:#777777; margin-bottom:6px;">Size: {{ item.variant.size }}</p>
+                    <p style="font-family:Arial, sans-serif; font-size:14px; color:#777777; margin-bottom:20px;">Quantity: {{ item.quantity }}</p>
+                  </td>
+                  <!-- Price -->
+                  <td width="100" align="right" valign="top">
+                    <p style="font-family:Arial, sans-serif; font-size:16px; font-weight:700; color:#000000;">₹{{ item.price_at_time|floatformat:2 }}</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {% endfor %}
+        </table>
+      </td>
+    </tr>
+
+    <!-- TOTALS -->
+    <tr>
+      <td style="border-top:1px solid #f0f0f0; padding-top:35px;">
+        <table align="right" width="280" cellpadding="0" cellspacing="0" role="presentation">
+          <tr>
+            <td align="right" style="padding-bottom:15px; font-family:Arial, sans-serif; font-size:14px; color:#666666;">Subtotal</td>
+            <td width="100" align="right" style="padding-bottom:15px; font-family:Arial, sans-serif; font-size:14px; font-weight:700; color:#000000;">₹{{ order.subtotal|floatformat:2 }}</td>
+          </tr>
+          <tr>
+            <td align="right" style="padding-bottom:20px; font-family:Arial, sans-serif; font-size:14px; color:#666666; border-bottom:1px solid #f0f0f0;">Shipping</td>
+            <td align="right" style="padding-bottom:20px; font-family:Arial, sans-serif; font-size:14px; font-weight:700; color:#000000; border-bottom:1px solid #f0f0f0;">₹{{ order.delivery_charge|floatformat:2 }}</td>
+          </tr>
+          <tr>
+            <td align="right" style="padding-top:25px; font-family:Arial, sans-serif; font-size:18px; color:#000000; font-weight:700; text-transform:uppercase; letter-spacing:1px;">Total</td>
+            <td align="right" style="padding-top:25px; font-family:Arial, sans-serif; font-size:24px; font-weight:700; color:#000000;">₹{{ order.total_amount|floatformat:2 }}</td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+  </table>
+
+  <!-- ══ FOOTER ══ -->
+  <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:80px;">
+    <tr>
+      <td align="center" style="font-family:Arial, sans-serif; font-size:12px; color:#999999; line-height:1.8;">
+        <p style="margin-bottom:15px; color:#333333; font-weight:700; letter-spacing:1px;">
+          Glowé | Privacy Policy | Terms of Service
+        </p>
+        <p style="margin-bottom:15px;">
+            ©Glowé, Kerala, India, 673595 — All Rights Reserved
+        </p>
+        <p>
+          If you prefer not to receive emails like this from Glowé, you may <a href="#" style="color:#666666; text-decoration:underline; font-weight:700;">unsubscribe</a>.
+        </p>
+      </td>
+    </tr>
+  </table>
+
+</td></tr>
+</table>
+
+</body>
+</html>

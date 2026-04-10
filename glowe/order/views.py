@@ -20,6 +20,9 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 import io
 from collections import defaultdict
+from django.apps import apps
+from order.email_util import send_order_confirmation_email, send_order_cancellation_email, send_order_delivered_email
+
 
 
 @login_required
@@ -60,8 +63,8 @@ def place_order(request):
     with transaction.atomic():
         for item in cart_items:
             # lock variant ,,if one user bbuy same other USER aslo nedd lock  --oveerselling block
-            variant = Variant.objects.select_for_update().get(id=item.variant.id)
-            product = variant.product
+            variant =Variant.objects.select_for_update().get(id=item.variant.id)
+            product=variant.product
 
             if not product.is_active:
                 request.session["order_processing"] = False
@@ -137,33 +140,8 @@ def place_order(request):
         
         OrderStatusHistory.objects.create(order=order, status=Order.Status.CONFIRMED)
 
-        send_mail(
-            subject="Order Confirmed 🛍️",
-            message=f"""
-        Hi {request.user.username},
-
-        Your order has been placed successfully!
-
-        Order ID: {order.order_number}
-        Total Amount: ₹{order.total_amount}
-
-        We will deliver your order soon 🚚
-        
-        ━━━━━━━━━━━━━━━━━━━━━━━
-        What Happens Next?
-        ━━━━━━━━━━━━━━━━━━━━━━━
-        • Your order is being processed  
-        • It will be carefully packed and shipped  
-        • Delivery will be completed within 3–7 business days  
-
-        You will receive further updates as your order progresses.
-
-                Thank you for shopping with us ❤️
-                """,
-            from_email=settings.EMAIL_HOST_USER,
-            recipient_list=[request.user.email],
-            fail_silently=True,
-        )
+        # Send professional luxury order confirmation email
+        send_order_confirmation_email(request, order)
 
         # dlt all item, frm crt
         cart_items.delete()
@@ -246,6 +224,7 @@ def order_listing(request):
     elif filter_by == "1y":
         orders = orders.filter(created_at__gte=now - timedelta(days=365))
 
+    ReturnRequest = apps.get_model('return', 'ReturnRequest')
     for order in orders:
         order.delivery_start = order.created_at + timedelta(days=3)
         order.delivery_end = order.created_at + timedelta(days=7)
@@ -253,26 +232,39 @@ def order_listing(request):
         # cancelled items  the item count or create duplicate images
         active = [item for item in order.items.all() if item.item_status != "CANCELLED"]
         order.display_items = active if active else list(order.items.all())
-
+        
+        order.return_badge = None
+        returns = ReturnRequest.objects.filter(order_item__order=order)
+        
+        has_active = False
+        has_completed = False
+        
+        for r in returns:
+            if r.return_status == 'COMPLETED':
+                has_completed = True
+            elif r.return_status != 'REJECTED':
+                has_active = True
+                
+        if has_active:
+            order.return_badge = "Return Active"
+        elif has_completed:
+            order.return_badge = "Returned"
+            
     total_orders = orders.count()
     paginator = Paginator(orders, 5)
     page = request.GET.get("page")
     orders = paginator.get_page(page)
 
     return render(
-        request,
-        "user/order_listing.html",
-        {
-            "orders": orders,
-            "search": search,
-            "filter_by": filter_by,
-            "total_orders": total_orders,
-        },
-    )
+        request,"user/order_listing.html",{
+            "orders":orders,
+            "search":search,
+            "filter_by":filter_by,
+            "total_orders":total_orders,})
 
 
 @login_required
-def order_detial(request, order_id):
+def order_detail(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
 
     # not cancelled item
@@ -328,21 +320,26 @@ def order_detial(request, order_id):
     else:
         total_count = active_items.count()
 
+    ReturnRequest = apps.get_model('return', 'ReturnRequest')
+    returns = ReturnRequest.objects.filter(order_item__order=order).prefetch_related('images', 'order_item__variant__product__images').order_by('-created_at')
+
     return render(
         request,
         "user/order_detail.html",
         {
-            "order": order,
-            "active_items": active_items,
-            "cancelled_items": cancelled_items,
-            "all_cancelled": all_cancelled,
-            "history": history,
-            "delivery_start": order.delivery_start,
-            "delivery_end": order.delivery_end,
-            "can_cancel": can_cancel,
-            "can_return": can_return,
-            "payment": payment,
-            "total_count": total_count,
+            "order":order,
+            "active_items":active_items,
+            "cancelled_items":cancelled_items,
+            "all_cancelled":all_cancelled,
+            "history":history,
+            "delivery_start":order.delivery_start,
+            "delivery_end":order.delivery_end,
+            "can_cancel":can_cancel,
+            "can_return":can_return,
+            "payment":payment,
+            "total_count":total_count,
+            "returns":returns,
+            "returned_item_ids": [r.order_item.id for r in returns],
         },
     )
 
@@ -391,23 +388,8 @@ def cancel_order(request, order_id):
 
     # histy
     OrderStatusHistory.objects.create(order=order,status=Order.Status.CANCELLED)
-    send_mail(
-        subject="Order Cancelled ❌",
-        message=f"""
-Hi {request.user.full_name},
-
-Your order has been cancelled successfully.
-
-Order ID: {order.order_number}
-
-If payment was made, refund will be processed shortly.
-
-Thank you ❤️
-""",
-        from_email=settings.EMAIL_HOST_USER,
-        recipient_list=[request.user.email],
-        fail_silently=True,
-    )
+    # Professional luxury cancellation email
+    send_order_cancellation_email(request, order, is_full_cancel=True, refund_amount=order.total_amount)
 
     messages.success(request, "Order cancelled successfully")
     return redirect("order_cancelled_success", order_id=order.id)
@@ -464,8 +446,8 @@ def cancel_order_item(request, item_id):
             item.quantity -= quantity_to_cancel
             item.save()
 
-            # Createnew ecord for cancelled
-            OrderItem.objects.create(
+            # Createnew record for cancelled
+            cancelled_item = OrderItem.objects.create(
                 order=order,
                 variant=item.variant,
                 price_at_time=item.price_at_time,
@@ -478,6 +460,7 @@ def cancel_order_item(request, item_id):
             item.item_status = OrderItem.Status.CANCELLED
             item.cancel_reason = reason
             item.save()
+            cancelled_item = item
 
         # total
         order.total_amount = order.subtotal + order.delivery_charge
@@ -494,22 +477,13 @@ def cancel_order_item(request, item_id):
             order.order_status = Order.Status.CANCELLED
             order.save()
 
-    send_mail(
-        subject="Item Cancelled ❌",
-        message=f"""
-Hi {request.user.username},
-
-One item from your order has been cancelled.
-
-Order ID: {order.order_number}
-
-Refund will be processed shortly.
-
-Thank you ❤️
-""",
-        from_email=settings.EMAIL_HOST_USER,
-        recipient_list=[request.user.email],
-        fail_silently=True,
+    # Professional luxury cancellation email
+    send_order_cancellation_email(
+        request, 
+        order, 
+        cancelled_items=[cancelled_item], 
+        is_full_cancel=False, 
+        refund_amount=cancelled_amount
     )
 
     messages.success(request, "Item cancelled succussfully")
@@ -844,22 +818,8 @@ def update_order_status(request, order_id):
                 payment.payment_status = Payment.Status.SUCCESS
                 payment.save()
             
-            send_mail(
-                subject="Your Order Delivered 🎉",
-                message=f"""
-Hi {order.user.username},
-
-Your order has been successfully delivered!
-
-Order ID: {order.order_number}
-Total Amount: ₹{order.total_amount}
-
-Thank you for shopping with us ❤️
-                """,
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[order.user.email],
-                fail_silently=True,
-            )
+            # Send premium Everlane-style delivery email
+            send_order_delivered_email(request, order)
 
         order.save()
 

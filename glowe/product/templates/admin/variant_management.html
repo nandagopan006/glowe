@@ -663,30 +663,7 @@
         </div>
     </div>
 
-    <div id="signOutModal" class="fixed inset-0 z-[300] hidden items-center justify-center p-4">
-        <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity" onclick="closeModal('signOutModal')"></div>
-        <div class="relative bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl transform scale-95 opacity-0 transition-all duration-300 text-center" id="signOutModalContent">
-            
-            <div class="w-16 h-16 rounded-full bg-[#f3f7f4] flex items-center justify-center mx-auto mb-6">
-                <svg class="w-8 h-8 text-[#2F5233]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-            </div>
-
-            <h3 class="text-xl font-extrabold text-[#0a1b29] mb-2">Are you sure you want to<br>Sign Out?</h3>
-            <p class="text-gray-500 text-sm mb-8">You will need to login again to access<br>your admin dashboard.</p>
-
-            <div class="flex gap-4 w-full">
-                <button type="button" onclick="closeModal('signOutModal')" class="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-[#0a1b29] font-bold py-3 rounded-xl transition-colors shadow-sm">
-                    Cancel
-                </button>
-                <form action="{% url 'admin_signout' %}" method="POST" class="flex-1">
-                    {% csrf_token %}
-                    <button type="submit" class="w-full bg-[#ef4444] hover:bg-[#dc2626] text-white font-bold py-3 rounded-xl transition-all shadow-[0_8px_16px_rgba(239,68,68,0.3)]">
-                        Sign Out
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
+    <!-- Signout Modal (MOVED TO admin_sidebar.html) -->
 
 </body>
 </html>

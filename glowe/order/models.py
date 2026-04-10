@@ -42,6 +42,7 @@ class OrderItem(models.Model):
         SHIPPED ="SHIPPED","Shipped"
         DELIVERED= "DELIVERED","Delivered"
         CANCELLED="CANCELLED","Cancelled"
+        RETURN_REQUESTED = "RETURN_REQUESTED", "Return Requested"
 
     order=models.ForeignKey(Order, on_delete=models.CASCADE, related_name="items")
     variant=models.ForeignKey(Variant, on_delete=models.CASCADE)
@@ -78,6 +79,7 @@ class Payment(models.Model):
 
     class Method(models.TextChoices):
         COD ="COD", "Cash on Delivery"
+        RAZORPAY = "RAZORPAY", "Razorpay"
     class Status(models.TextChoices):
         PENDING="PENDING","Pending"
         SUCCESS="SUCCESS", "Success"

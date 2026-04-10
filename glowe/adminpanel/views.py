@@ -15,6 +15,7 @@ from django.shortcuts import  get_object_or_404
 import re
 from django.core.paginator import Paginator
 from django.db.models import Q
+from accounts.email_utils import send_admin_otp_email
 @never_cache
 def admin_signin(request):
 
@@ -101,48 +102,8 @@ def admin_forget_password(request):
             expires_at=timezone.now() +timedelta(minutes=2))
 
         
-        send_mail(
-    'Glowé Admin — OTP Verification',
-    f'''
-════════════════════════════════
-              Glowé
-         Admin Control Panel
-════════════════════════════════
-
-Hello Admin,
-
-A login attempt was made to the Glowé Admin Control Panel.
-
-Use the One-Time Password (OTP) below to verify your identity:
-
-  ──────────────────────────
-        Admin OTP
-
-           {' '.join(str(otp))}
-
-  This code is valid for 5 minutes.
-  ──────────────────────────
-
-SECURITY NOTICE:
-- This OTP is strictly for admin access.
-- Never share this code with anyone.
-- If you did not initiate this login attempt, secure your account immediately and contact support.
-
-For assistance, contact:
-glowe639@gmail.com
-
-════════════════════════════════
-Regards,  
-Glowé Team
-
-© 2025 Glowé. All rights reserved.
-Kerala, India — Admin Panel
-════════════════════════════════
-''',
-    settings.EMAIL_HOST_USER,
-    [email],
-    fail_silently=False,
-)
+        # Send premium admin OTP email
+        send_admin_otp_email(user, otp)
 
         request.session['reset_user']=user.id
         return redirect('admin_otp_verification')
@@ -211,45 +172,8 @@ def admin_resend_otp(request):
     OTPVerification.objects.create(user=user,otp_code=otp,
         expires_at=timezone.now() +timedelta(minutes=2))
 
-    send_mail(
-    'Glowé Admin — New OTP Requested',
-    f'''
-════════════════════════════════
-              Glowé
-         Admin Control Panel
-════════════════════════════════
-
-Hello Admin,
-
-You requested a new OTP for the Glowé Admin Control Panel.
-
-Your previous OTP has been cancelled.
-Use the new code below to verify your identity:
-
-  ──────────────────────────
-        Admin OTP
-
-           {' '.join(str(otp))}
-
-  This code is valid for 5 minutes.
-  ──────────────────────────
-
-SECURITY NOTICE:
-- This OTP is strictly for admin access.
-- Never share this code with anyone.
-- If you did not request a new OTP, secure your account immediately and contact support.
-
-For assistance, contact:
-glowe639@gmail.com
-════════════════════════════════
-© 2025 Glowé. All rights reserved.
-Kerala, India — Admin Panel
-════════════════════════════════
-''',
-    settings.EMAIL_HOST_USER,
-    [user.email],
-    fail_silently=False,
-)
+    # Send premium admin OTP email
+    send_admin_otp_email(user, otp)
     messages.success(request,"New OTP sent")
     return redirect('admin_otp_verification')
 

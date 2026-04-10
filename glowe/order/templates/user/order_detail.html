@@ -106,15 +106,15 @@
 
     <!-- Action Buttons -->
     <div class="flex flex-wrap gap-3 shrink-0 list-none">
-      {% if can_return %}
-        <a href="#" class="px-6 py-3 border border-[#1a1208] text-[#1a1208] text-[10px] font-bold uppercase tracking-widest hover:bg-[#1a1208] hover:text-white transition-all duration-300 rounded-md">Return Order</a>
-      {% endif %}
+
       
       {% if can_cancel %}
         <button type="button" onclick="openModal('cancelOrderModal')" class="px-6 py-3 border border-[#1a1208] text-[#1a1208] text-[10px] font-bold uppercase tracking-widest hover:bg-[#1a1208] hover:text-white transition-all duration-300 rounded-md">Cancel Order</button>
       {% endif %}
       
+      {% if order.order_status == 'DELIVERED' %}
       <a href="{% url 'download_invoice' order.id %}" class="px-6 py-3 bg-[#1a1208] border border-[#1a1208] text-white text-[10px] font-bold uppercase tracking-widest hover:bg-[#2a1d0d] transition-all duration-300 rounded-md shadow-sm hover:shadow-md">Download Invoice</a>
+      {% endif %}
     </div>
   </div>
 
@@ -139,92 +139,96 @@
           <div class="flex flex-col gap-10 relative z-10">
 
             {% for h in history reversed %}
-            <div class="flex items-stretch gap-6 sm:gap-7 group relative z-10" style="opacity:0; animation: fadeInUp 0.5s ease {{ forloop.counter0|add:1 }}00ms forwards;">
-              
-              <!-- Left Column: Node and Line -->
-              <div class="flex flex-col items-center relative z-20">
+              {% if returns and h.status != 'PENDING' and h.status != 'CONFIRMED' and h.status != 'DELIVERED' %}
+                {# SKIP INTERMEDIATE STEPS #}
+              {% else %}
+              <div class="flex items-stretch gap-6 sm:gap-7 group relative z-10" style="opacity:0; animation: fadeInUp 0.5s ease {{ forloop.counter0|add:1 }}00ms forwards;">
                 
-                {% if h.status == order.order_status and order.order_status != 'DELIVERED' and order.order_status != 'CANCELLED' %}
-                  <!-- ACTIVE NODE ('antigravity' float) -->
-                  <div class="w-8 h-8 rounded-full bg-[#faf8f5] flex items-center justify-center shrink-0 relative z-20 bg-white">
-                    <div class="w-6 h-6 rounded-full bg-[#f3ece6] flex items-center justify-center shadow-sm antigravity-active border border-[#e6e0d8]/50">
-                      <div class="w-2 h-2 rounded-full bg-[#3e3227] heartbeat-dot"></div>
+                <!-- Left Column: Node and Line -->
+                <div class="flex flex-col items-center relative z-20">
+                  
+                  {% if h.status == order.order_status and order.order_status != 'DELIVERED' and order.order_status != 'CANCELLED' %}
+                    <!-- ACTIVE NODE ('antigravity' float) -->
+                    <div class="w-8 h-8 rounded-full bg-[#faf8f5] flex items-center justify-center shrink-0 relative z-20 bg-white">
+                      <div class="w-6 h-6 rounded-full bg-[#f3ece6] flex items-center justify-center shadow-sm antigravity-active border border-[#e6e0d8]/50">
+                        <div class="w-2 h-2 rounded-full bg-[#3e3227] heartbeat-dot"></div>
+                      </div>
                     </div>
-                  </div>
-                {% else %}
-                  <!-- COMPLETED PAST NODE -->
-                  <div class="w-8 h-8 rounded-full bg-[#faf8f5] border-[1.5px] {% if 'cancel' in h.status|lower %}border-red-200 text-red-500 bg-red-50{% else %}border-[#e6e0d8]/80 text-[#a09486]{% endif %} flex items-center justify-center shrink-0 relative z-20 transition-all duration-500 group-hover:-translate-y-1 group-hover:shadow-[0_4px_16px_rgba(200,169,110,0.15)] group-hover:border-[#c8a96e] group-hover:text-[#c8a96e] cursor-default">
-                     {% if 'cancel' in h.status|lower %}
-                       <!-- Cancelled / Error Icon -->
-                       <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                         <circle cx="12" cy="12" r="10"></circle>
-                         <line x1="15" y1="9" x2="9" y2="15"></line>
-                         <line x1="9" y1="9" x2="15" y2="15"></line>
-                       </svg>
-                     {% elif 'ship' in h.status|lower or 'transit' in h.status|lower or 'depart' in h.status|lower or 'out' in h.status|lower %}
-                       <!-- Truck Icon -->
-                       <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                         <path d="M5 18H3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2"></path>
-                         <path d="M19 18h2a2 2 0 0 0 2-2v-4l-3-4h-5v10"></path>
-                         <circle cx="8" cy="18" r="3"></circle>
-                         <circle cx="16" cy="18" r="3"></circle>
-                       </svg>
-                     {% else %}
-                       <!-- Box / Document Icon -->
-                       <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                         <line x1="16" y1="4" x2="16" y2="20"></line>
-                         <line x1="8" y1="4" x2="8" y2="20"></line>
-                         <rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect>
-                       </svg>
-                     {% endif %}
-                  </div>
-                {% endif %}
-                
-                <!-- Animated connecting line down to the next node -->
-                {% if not forloop.last or order.order_status == 'DELIVERED' %}
-                  <div class="w-[1px] grow min-h-[40px] mt-[-4px] mb-[-4px] relative bg-[#e6e0d8] z-10">
-                     <div class="absolute top-0 bottom-0 left-0 right-0 bg-[#3e3227] opacity-0" style="transform-origin: top; animation: growDown 0.8s cubic-bezier(0.16,1,0.3,1) {{ forloop.counter0|add:2 }}00ms forwards;"></div>
-                  </div>
-                {% else %}
-                  <!-- Faded connecting line pointing to future steps if applicable -->
-                  <div class="w-[1px] grow min-h-[50px] mt-[-4px] mb-[-4px] bg-[#e6e0d8] opacity-50 z-10"></div>
-                {% endif %}
-              </div>
-              
-              <!-- Right Column: Content -->
-              <div class="flex-1 pb-10 w-full pt-[2px]">
-                <div class="flex flex-col sm:flex-row sm:justify-between items-start gap-1 sm:gap-4 lg:pr-4">
-                  <span class="inline-block relative {% if h.status == order.order_status and order.order_status != 'DELIVERED' %}shimmer-text{% endif %}">
-                    <p class="text-[19px] sm:text-[21px] m-0 leading-none {% if h.status == order.order_status and order.order_status != 'DELIVERED' %}text-[#4a3d31] font-bold{% else %}text-[#4a3d31] font-semibold{% endif %}" style="font-family:'Cormorant Garamond',serif;">
-                       {% if h.status == 'PENDING' %}Order Received
-                       {% elif h.status == 'ITEM_CANCELLED' %}Item Cancelled
-                       {% elif h.status == 'OUT_FOR_DELIVERY' %}Out for Delivery
-                       {% else %}{{ h.status|title }}{% endif %}
-                    </p>
-                  </span>
-                  <p class="font-montserrat text-[10.5px] text-[#9a8f82] m-0 font-semibold tracking-widest uppercase mt-0.5 shrink-0">
-                     {{ h.updated_at|date:"M d, Y - g:i A" }}
-                  </p>
-                </div>
-                {% if h.description %}
-                  <p class="font-montserrat text-[13.5px] text-[#8a7e72] m-0 mt-3 leading-[1.6] max-w-[90%]">{{ h.description }}</p>
-                {% else %}
-                  {% if 'Order Received' in h.status or h.status == 'PENDING' %}
-                    <p class="font-montserrat text-[13.5px] text-[#8a7e72] m-0 mt-3 leading-[1.6]">Glowé HQ has received your order details and is currently processing them.</p>
-                  {% elif 'Depart' in h.status or 'Ship' in h.status %}
-                    <p class="font-montserrat text-[13.5px] text-[#8a7e72] m-0 mt-3 leading-[1.6]">Your package has departed from the sorting facility and is on its way.</p>
-                  {% elif 'cancel' in h.status|lower %}
-                    <p class="font-montserrat text-[13.5px] text-[#8a7e72] m-0 mt-3 leading-[1.6]">A request was processed and an item has been successfully removed from this order.</p>
+                  {% else %}
+                    <!-- COMPLETED PAST NODE -->
+                    <div class="w-8 h-8 rounded-full bg-[#faf8f5] border-[1.5px] {% if 'cancel' in h.status|lower %}border-red-200 text-red-500 bg-red-50{% else %}border-[#e6e0d8]/80 text-[#a09486]{% endif %} flex items-center justify-center shrink-0 relative z-20 transition-all duration-500 group-hover:-translate-y-1 group-hover:shadow-[0_4px_16px_rgba(200,169,110,0.15)] group-hover:border-[#c8a96e] group-hover:text-[#c8a96e] cursor-default">
+                       {% if 'cancel' in h.status|lower %}
+                         <!-- Cancelled / Error Icon -->
+                         <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                           <circle cx="12" cy="12" r="10"></circle>
+                           <line x1="15" y1="9" x2="9" y2="15"></line>
+                           <line x1="9" y1="9" x2="15" y2="15"></line>
+                         </svg>
+                       {% elif 'ship' in h.status|lower or 'transit' in h.status|lower or 'depart' in h.status|lower or 'out' in h.status|lower %}
+                         <!-- Truck Icon -->
+                         <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                           <path d="M5 18H3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2"></path>
+                           <path d="M19 18h2a2 2 0 0 0 2-2v-4l-3-4h-5v10"></path>
+                           <circle cx="8" cy="18" r="3"></circle>
+                           <circle cx="16" cy="18" r="3"></circle>
+                         </svg>
+                       {% else %}
+                         <!-- Box / Document Icon -->
+                         <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                           <line x1="16" y1="4" x2="16" y2="20"></line>
+                           <line x1="8" y1="4" x2="8" y2="20"></line>
+                           <rect x="3" y="4" width="18" height="16" rx="2" ry="2"></rect>
+                         </svg>
+                       {% endif %}
+                    </div>
                   {% endif %}
-                {% endif %}
+                  
+                  <!-- Animated connecting line down to the next node -->
+                  {% if not forloop.last or order.order_status == 'DELIVERED' %}
+                    <div class="w-[1px] grow min-h-[40px] mt-[-4px] mb-[-4px] relative bg-[#e6e0d8] z-10">
+                       <div class="absolute top-0 bottom-0 left-0 right-0 bg-[#3e3227] opacity-0" style="transform-origin: top; animation: growDown 0.8s cubic-bezier(0.16,1,0.3,1) {{ forloop.counter0|add:2 }}00ms forwards;"></div>
+                    </div>
+                  {% else %}
+                    <!-- Faded connecting line pointing to future steps if applicable -->
+                    <div class="w-[1px] grow min-h-[50px] mt-[-4px] mb-[-4px] bg-[#e6e0d8] opacity-50 z-10"></div>
+                  {% endif %}
+                </div>
+                
+                <!-- Right Column: Content -->
+                <div class="flex-1 pb-10 w-full pt-[2px]">
+                  <div class="flex flex-col sm:flex-row sm:justify-between items-start gap-1 sm:gap-4 lg:pr-4">
+                    <span class="inline-block relative {% if h.status == order.order_status and order.order_status != 'DELIVERED' %}shimmer-text{% endif %}">
+                      <p class="text-[19px] sm:text-[21px] m-0 leading-none {% if h.status == order.order_status and order.order_status != 'DELIVERED' %}text-[#4a3d31] font-bold{% else %}text-[#4a3d31] font-semibold{% endif %}" style="font-family:'Cormorant Garamond',serif;">
+                         {% if h.status == 'PENDING' %}Order Received
+                         {% elif h.status == 'ITEM_CANCELLED' %}Item Cancelled
+                         {% elif h.status == 'OUT_FOR_DELIVERY' %}Out for Delivery
+                         {% else %}{{ h.status|title }}{% endif %}
+                      </p>
+                    </span>
+                    <p class="font-montserrat text-[10.5px] text-[#9a8f82] m-0 font-semibold tracking-widest uppercase mt-0.5 shrink-0">
+                       {{ h.updated_at|date:"M d, Y - g:i A" }}
+                    </p>
+                  </div>
+                  {% if h.description %}
+                    <p class="font-montserrat text-[13.5px] text-[#8a7e72] m-0 mt-3 leading-[1.6] max-w-[90%]">{{ h.description }}</p>
+                  {% else %}
+                    {% if 'Order Received' in h.status or h.status == 'PENDING' %}
+                      <p class="font-montserrat text-[13.5px] text-[#8a7e72] m-0 mt-3 leading-[1.6]">Glowé HQ has received your order details and is currently processing them.</p>
+                    {% elif 'Depart' in h.status or 'Ship' in h.status %}
+                      <p class="font-montserrat text-[13.5px] text-[#8a7e72] m-0 mt-3 leading-[1.6]">Your package has departed from the sorting facility and is on its way.</p>
+                    {% elif 'cancel' in h.status|lower %}
+                      <p class="font-montserrat text-[13.5px] text-[#8a7e72] m-0 mt-3 leading-[1.6]">A request was processed and an item has been successfully removed from this order.</p>
+                    {% endif %}
+                  {% endif %}
+                </div>
               </div>
-            </div>
+              {% endif %}
             {% empty %}
                <div class="opacity-50 pt-2 pl-4 text-[#8a7e72] font-montserrat text-[13px]">No tracking data available yet.</div>
             {% endfor %}
 
             <!-- FUTURE STEPS SECTION -->
-            {% if order.order_status != 'DELIVERED' and order.order_status != 'CANCELLED' %}
+            {% if order.order_status != 'DELIVERED' and order.order_status != 'CANCELLED' and not returns %}
               
               <!-- FUTURE: CONFIRMED -->
               {% if order.order_status == 'PENDING' %}
@@ -302,14 +306,89 @@
                   <p class="font-montserrat text-[13.5px] text-[#8a7e72] m-0 mt-3 leading-[1.6]">Your order has been arrived at your doorstep safely.</p>
                 </div>
               </div>
+            {% endif %}
 
+            <!-- RETURN TRACKING INTEGRATION (Unified) -->
+            {% if order.order_status == 'DELIVERED' and returns %}
+              {% for ret in returns %}
+                <!-- Connector Line from Delivered -->
+                <div class="flex flex-col items-center relative z-20 mt-[-20px] mb-[-4px]">
+                  <div class="w-[1px] h-10 bg-[#e6e0d8] relative z-10">
+                    <div class="absolute top-0 bottom-0 left-0 right-0 bg-[#3e3227] opacity-100"></div>
+                  </div>
+                </div>
+
+                <!-- Return Requested Step -->
+                <div class="flex items-stretch gap-6 sm:gap-7 group relative z-10 mt-[-4px] fade-in-up">
+                  <div class="flex flex-col items-center relative z-20">
+                    <div class="w-8 h-8 rounded-full bg-[#faf8f5] border-[1.5px] {% if ret.return_status == 'REQUESTED' %}border-[#c8a96e] text-[#4a3d31] antigravity-active bg-white{% else %}border-[#e6e0d8]/80 text-[#a09486] bg-white{% endif %} flex items-center justify-center shrink-0 z-20 transition-all duration-500">
+                      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>
+                    </div>
+                    {% if ret.return_status != 'REJECTED' %}
+                      <div class="w-[1px] grow min-h-[40px] mt-[-4px] mb-[-4px] relative bg-[#e6e0d8] z-10">
+                        {% if ret.return_status != 'REQUESTED' %}<div class="absolute top-0 bottom-0 left-0 right-0 bg-[#3e3227] opacity-100"></div>{% endif %}
+                      </div>
+                    {% endif %}
+                  </div>
+                  <div class="flex-1 pb-10 pt-[2px]">
+                    <p class="text-[19px] sm:text-[21px] m-0 leading-none text-[#4a3d31] {% if ret.return_status == 'REQUESTED' %}font-bold shimmer-text{% else %}font-semibold{% endif %}" style="font-family:'Cormorant Garamond',serif;">Return Requested</p>
+                    <p class="font-montserrat text-[10.5px] text-[#9a8f82] font-semibold tracking-widest uppercase mt-1">{{ ret.created_at|date:"M d, Y" }}</p>
+                  </div>
+                </div>
+
+                {% if ret.return_status == 'REJECTED' %}
+                   <div class="flex items-stretch gap-6 sm:gap-7 group relative z-10 mt-[-4px] fade-in-up">
+                    <div class="flex flex-col items-center relative z-20">
+                      <div class="w-8 h-8 rounded-full bg-red-50 border-[1.5px] border-red-200 text-red-500 flex items-center justify-center shrink-0 z-20 antigravity-active">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      </div>
+                    </div>
+                    <div class="flex-1 pt-[2px]">
+                      <p class="text-[19px] sm:text-[21px] m-0 leading-none text-red-600 font-bold" style="font-family:'Cormorant Garamond',serif;">Return Rejected</p>
+                      <p class="font-montserrat text-[13.5px] text-[#8a7e72] mt-2">Verification failed. Not eligible for return.</p>
+                    </div>
+                  </div>
+                {% else %}
+                  <!-- Picked Up Step -->
+                  <div class="flex items-stretch gap-6 sm:gap-7 group relative z-10 mt-[-4px] fade-in-up {% if ret.return_status == 'REQUESTED' or ret.return_status == 'APPROVED' or ret.return_status == 'PICKUP_SCHEDULED' %}opacity-40 mix-blend-multiply{% endif %}">
+                    <div class="flex flex-col items-center relative z-20">
+                      <div class="w-8 h-8 rounded-full bg-[#faf8f5] border-[1.5px] {% if ret.return_status == 'PICKED_UP' %}border-[#c8a96e] text-[#4a3d31] antigravity-active bg-white{% else %}border-[#e6e0d8] text-[#a09486] bg-white{% endif %} flex items-center justify-center shrink-0 z-20 transition-all duration-500">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-14v4m0 0l8 4m-8-4l-8 4m0-4v10l8 4"/></svg>
+                      </div>
+                      <div class="w-[1px] grow min-h-[40px] mt-[-4px] mb-[-4px] relative bg-[#e6e0d8] z-10">
+                        {% if ret.return_status == 'COMPLETED' %}<div class="absolute top-0 bottom-0 left-0 right-0 bg-[#3e3227] opacity-100"></div>{% endif %}
+                      </div>
+                    </div>
+                    <div class="flex-1 pb-10 pt-[2px]">
+                      <p class="text-[19px] sm:text-[21px] m-0 leading-none text-[#4a3d31] {% if ret.return_status == 'PICKED_UP' %}font-bold shimmer-text{% else %}font-semibold{% endif %}" style="font-family:'Cormorant Garamond',serif;">Item Picked Up</p>
+                      <p class="font-montserrat text-[13.5px] text-[#8a7e72] mt-2">Courier has collected the returning package.</p>
+                    </div>
+                  </div>
+
+                  <!-- Completed Step -->
+                  <div class="flex items-stretch gap-6 sm:gap-7 group relative z-10 mt-[-4px] fade-in-up {% if ret.return_status != 'COMPLETED' %}opacity-40 mix-blend-multiply{% endif %}">
+                    <div class="flex flex-col items-center relative z-20">
+                      <div class="w-8 h-8 rounded-full bg-[#faf8f5] border-[1.5px] {% if ret.return_status == 'COMPLETED' %}border-[#c8a96e] text-[#4a3d31] antigravity-active bg-white{% else %}border-[#e6e0d8] text-[#a09486] bg-white{% endif %} flex items-center justify-center shrink-0 z-20 transition-all duration-500">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                      </div>
+                    </div>
+                    <div class="flex-1 pt-[2px]">
+                      <p class="text-[19px] sm:text-[21px] m-0 leading-none text-[#4a3d31] {% if ret.return_status == 'COMPLETED' %}font-bold shimmer-text{% else %}font-semibold{% endif %}" style="font-family:'Cormorant Garamond',serif;">Refund Completed</p>
+                      <p class="font-montserrat text-[13.5px] text-[#8a7e72] mt-2">Refund initiated and return lifecycle finalized.</p>
+                    </div>
+                  </div>
+                {% endif %}
+              {% endfor %}
             {% endif %}
 
           </div>
         </div>
       </div>
 
+
+
       <!-- Shipping Details -->
+
       <div class="mt-8">
         <h2 class="text-[26px] text-[#1a1208] mb-6" style="font-family:'Cormorant Garamond',serif;">Shipping Destination</h2>
         
@@ -420,9 +499,26 @@
                 </div>
                 <div class="flex justify-between items-center mt-3">
                   <p class="font-montserrat text-[11px] text-[#8a7e72] font-medium m-0">Qty: {{ item.quantity }}</p>
-                  {% if can_cancel %}
-                  <button type="button" onclick="openCancelItemModal('{{ item.id }}', '{{ item.quantity }}', '{{ item.variant.product.name|escapejs }}', '{% if item.variant.product.images.first %}{{ item.variant.product.images.first.image.url }}{% endif %}')" class="text-[10px] text-[#cd9042] hover:text-[#1a1208] font-montserrat font-bold uppercase tracking-wider transition-colors bg-transparent border-none p-0 cursor-pointer text-right">Cancel Item</button>
-                  {% endif %}
+                  <div class="text-right">
+                    {% if can_cancel %}
+                    <button type="button" onclick="openCancelItemModal('{{ item.id }}', '{{ item.quantity }}', '{{ item.variant.product.name|escapejs }}', '{% if item.variant.product.images.first %}{{ item.variant.product.images.first.image.url }}{% endif %}')" class="text-[10px] text-[#cd9042] hover:text-[#1a1208] font-montserrat font-bold uppercase tracking-wider transition-colors bg-transparent border-none p-0 cursor-pointer text-right block mb-1">Cancel Item</button>
+                    {% endif %}
+                    {% if order.order_status == 'DELIVERED' %}
+                      {% if item.id in returned_item_ids %}
+                        {% for ret in returns %}
+                          {% if ret.order_item.id == item.id %}
+                            <span class="text-[9px] {% if ret.return_status == 'REJECTED' %}text-red-500 border-red-200 bg-red-50{% elif ret.return_status == 'COMPLETED' or ret.return_status == 'APPROVED' %}text-green-600 border-green-200 bg-green-50{% else %}text-[#c8a96e] border-[#c8a96e]/30 bg-[#faf8f5]{% endif %} font-montserrat font-bold uppercase tracking-wider px-2 py-0.5 rounded border">
+                              {% if ret.return_status == 'REQUESTED' %}Pending Return
+                              {% elif ret.return_status == 'PICKUP_SCHEDULED' %}Pickup Sched.
+                              {% else %}{{ ret.get_return_status_display }}{% endif %}
+                            </span>
+                          {% endif %}
+                        {% endfor %}
+                      {% else %}
+                        <a href="{% url 'request_return' item.id %}" class="text-[10px] text-[#c8a96e] hover:text-[#1a1208] font-montserrat font-bold uppercase tracking-wider transition-colors no-underline block cursor-pointer">Return Item</a>
+                      {% endif %}
+                    {% endif %}
+                  </div>
                 </div>
               </div>
             </div>
@@ -508,6 +604,30 @@
           {% endfor %}
         </div>
 
+      </div>
+      {% endif %}
+
+      {% if returns %}
+      <!-- Simplified Return Info Sidebar -->
+      <div class="mt-5">
+        {% for ret in returns %}
+        <div class="bg-[#faf8f5] rounded-[24px] p-5 border border-[#1a1208]/[0.04] shadow-sm hover:shadow-md transition-all duration-500 mb-4">
+           <div class="flex items-center justify-between mb-4">
+              <h3 class="text-[18px] text-[#1a1208]" style="font-family:'Cormorant Garamond',serif;">Return Info</h3>
+              <span class="text-[8px] font-bold {% if ret.return_status == 'REJECTED' %}text-red-500 border-red-200{% elif ret.return_status == 'COMPLETED' %}text-gray-500 border-gray-200{% else %}text-[#c8a96e] border-[#c8a96e]/30{% endif %} uppercase tracking-widest px-2 py-0.5 bg-white border rounded-full shadow-sm">{{ ret.get_return_status_display }}</span>
+           </div>
+           
+           <div class="flex items-center gap-4">
+              <div class="w-14 h-14 rounded-xl overflow-hidden bg-white border border-[#e6e0d8]/50 shrink-0">
+                  <img src="{{ ret.order_item.variant.product.images.first.image.url }}" class="w-full h-full object-cover">
+              </div>
+              <div class="flex-1 min-w-0">
+                  <p class="text-[15px] text-[#1a1208] leading-tight font-semibold truncate" style="font-family:'Cormorant Garamond',serif;">{{ ret.order_item.variant.product.name }}</p>
+                  <p class="text-[10px] font-montserrat text-[#8a7e72] mt-1">{{ ret.order_item.variant.size }} | Qty: {{ ret.quantity }}</p>
+              </div>
+           </div>
+        </div>
+        {% endfor %}
       </div>
       {% endif %}
 

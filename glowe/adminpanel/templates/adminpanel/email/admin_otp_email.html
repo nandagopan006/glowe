@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Admin Verification — Glowé</title>
+<style>
+  /* ── Reset ── */
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#f9f7f4; font-family:'Georgia',serif; -webkit-text-size-adjust:100%; }
+  table { border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; }
+  img { border:0; display:block; outline:none; text-decoration:none; }
+  a { text-decoration:none; }
+
+  /* ── Responsive ── */
+  @media only screen and (max-width:600px) {
+    .email-wrapper { width:100% !important; padding:0 !important; }
+    .email-card { border-radius:0 !important; margin:0 !important; }
+    .otp-digit { width:52px !important; height:62px !important; font-size:28px !important; }
+  }
+</style>
+</head>
+<body style="margin:0;padding:0;background-color:#f9f7f4;">
+
+<!-- Outer wrapper -->
+<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#f9f7f4;">
+<tr><td align="center" style="padding:40px 16px;">
+
+  <!-- Email card -->
+  <table class="email-card" width="560" cellpadding="0" cellspacing="0" role="presentation"
+         style="background:#ffffff;border-radius:12px;overflow:hidden;
+                box-shadow:0 10px 40px rgba(0,0,0,0.05);
+                max-width:560px;width:100%;border:1px solid #eeeeee;">
+
+    <!-- ══ HEADER ══ -->
+    <tr>
+      <td align="center" style="padding:40px 0 20px;">
+        <img src="{{ logo_url }}" alt="Glowé" width="140" style="display:block;max-width:140px;height:auto;">
+      </td>
+    </tr>
+
+    <!-- ══ DIVIDER ══ -->
+    <tr>
+      <td align="center">
+        <div style="height:1px; width:80%; background:#eeeeee;"></div>
+      </td>
+    </tr>
+
+    <!-- ══ BODY ══ -->
+    <tr>
+      <td style="padding:40px 50px;">
+        
+        <p style="font-family:Arial,sans-serif;font-size:11px;font-weight:700;
+                  letter-spacing:0.2em;text-transform:uppercase;color:#888888;margin-bottom:15px;">
+          Admin Control Panel
+        </p>
+        
+        <h1 style="font-family:'Georgia',serif;font-size:26px;font-weight:400;
+                   color:#1a1a1a;line-height:1.4;margin-bottom:15px;">
+          Hello Admin,
+        </h1>
+        
+        <p style="font-family:Arial,sans-serif;font-size:14px;color:#555555;line-height:1.7;margin-bottom:30px;">
+          A password reset attempt was made for your Glowé Admin account. 
+          Use the secure One-Time Password (OTP) below to verify your identity. 
+          This code is valid for <strong>{{ expiry_minutes }} minutes</strong>.
+        </p>
+
+        <!-- OTP BOX -->
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+          <tr>
+            <td align="center" style="padding:0 0 40px;">
+              <table cellpadding="0" cellspacing="0" role="presentation">
+                <tr>
+                  {% for digit in otp_digits %}
+                  <td style="padding:0 8px;">
+                    <div class="otp-digit"
+                         style="width:60px;height:70px;
+                                background:#fcfcfc;
+                                border:1px solid #e0e0e0;
+                                border-radius:4px;
+                                line-height:70px;
+                                text-align:center;
+                                font-family:'Georgia',serif;
+                                font-size:32px;
+                                font-weight:700;
+                                color:#1a1a1a;">
+                      {{ digit }}
+                    </div>
+                  </td>
+                  {% endfor %}
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+
+        <!-- Security Notice -->
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#fffcf8; border:1px solid #f9ebcc; border-radius:4px; padding:15px;">
+          <tr>
+            <td style="font-family:Arial,sans-serif; font-size:12px; color:#a37d2a; line-height:1.6;">
+              <strong>SECURITY NOTICE:</strong> This code is strictly for Glowé administrator access. 
+              Never share this code with anyone. If you did not initiate this request, please secure your account immediately.
+            </td>
+          </tr>
+        </table>
+
+      </td>
+    </tr>
+
+    <!-- ══ FOOTER ══ -->
+    <tr>
+      <td style="background:#fafafa;padding:30px 50px; border-top:1px solid #eeeeee;">
+        <p style="font-family:Arial,sans-serif;font-size:11px;color:#999999;line-height:1.6;text-align:center;">
+          © Glowé Skincare | Kerala, India<br>
+          This is an automated security notification.
+        </p>
+      </td>
+    </tr>
+
+  </table>
+
+</td></tr>
+</table>
+
+</body>
+</html>
