@@ -136,12 +136,22 @@ def place_order(request):
         if payment_method == Payment.Method.COD :
             payment.payment_status = Payment.Status.SUCCESS
             payment.save()
-
+            
+            order.order_status=Order.Status.CONFIRMED
+            order.save()
+            # sent order confirmation email
+            send_order_confirmation_email(request, order)
+            
+            #reduce the stock 
+            for item in order.items.all():
+                variant = item.variant
+                variant.stock -= item.quantity
+                variant.save()
         
-        OrderStatusHistory.objects.create(order=order, status=Order.Status.CONFIRMED)
-
-        # Send professional luxury order confirmation email
-        send_order_confirmation_email(request, order)
+            OrderStatusHistory.objects.create(order=order, status=Order.Status.CONFIRMED)
+        
+        else :
+            OrderStatusHistory.objects.create(order=order,status=Order.Status.PENDING)
 
         # dlt all item, frm crt
         cart_items.delete()
@@ -151,7 +161,14 @@ def place_order(request):
 
     request.session["order_processing"] = False
     messages.success(request, "Order placed successfully!")
-    return redirect("order_success", order_id=order.id)
+    
+    # redirect bases on pyment 
+    if payment_method == Payment.Method.COD:
+        return redirect("order_success",order_id=order.id)
+    else:
+        return redirect("payment_page",order_id=order.id)
+
+    
 
 
 @login_required
