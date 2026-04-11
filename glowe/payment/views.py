@@ -5,6 +5,7 @@ import razorpay
 from order.models import Order,Payment,OrderItem,OrderStatusHistory
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
+from django.db import transaction
 
 
 import razorpay
@@ -57,6 +58,16 @@ def verify_payment(request):
     order = get_object_or_404(Order, id=order_id, user=request.user)
     payment = order.payment
 
+    # prevent double processing
+    if payment.payment_status == Payment.Status.SUCCESS:
+        messages.warning(request, "Payment already processed")
+        return redirect("order_success", order_id=order.id)
+
+    # validate data
+    if not all([order_id, razorpay_order_id, razorpay_payment_id, razorpay_signature]):
+        messages.error(request, "Invalid payment data")
+        return redirect("payment_failed", order_id=order.id)
+
     client = razorpay.Client(
         auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
     )
@@ -68,36 +79,36 @@ def verify_payment(request):
             "razorpay_signature": razorpay_signature
         })
 
-        # success 
-        payment.payment_status = Payment.Status.SUCCESS
-        payment.transaction_id = razorpay_payment_id
-        payment.save()
+        with transaction.atomic():
 
-        order.order_status = Order.Status.CONFIRMED
-        order.save()
+            payment.payment_status = Payment.Status.SUCCESS
+            payment.transaction_id = razorpay_payment_id
+            payment.save()
 
-        # reduce stock here
-        for item in order.items.all():
-            variant = item.variant
-            variant.stock -= item.quantity
-            variant.save()
+            order.order_status = Order.Status.CONFIRMED
+            order.save()
 
-        OrderStatusHistory.objects.create(
-            order=order,
-            status=Order.Status.CONFIRMED
-        )
+            #reduce stock
+            for item in order.items.all():
+                variant = item.variant
+                variant.stock -= item.quantity
+                variant.save()
+
+            OrderStatusHistory.objects.create(
+                order=order,
+                status=Order.Status.CONFIRMED
+            )
 
         messages.success(request, "Payment successful")
         return redirect("order_success", order_id=order.id)
 
-    except:
-        # failed
+    except Exception as e:
+
         payment.payment_status = Payment.Status.FAILED
         payment.save()
 
         messages.error(request, "Payment verification failed")
         return redirect("payment_failed", order_id=order.id)
-
 
 @login_required
 def payment_failed(request, order_id):
