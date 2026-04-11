@@ -99,3 +99,11 @@ def verify_payment(request):
         return redirect("payment_failed", order_id=order.id)
 
 
+@login_required
+def payment_failed(request, order_id):
+
+    order = get_object_or_404(Order, id=order_id, user=request.user)
+
+    return render(request, "user/payment_failed.html", {
+        "order":order
+    })
