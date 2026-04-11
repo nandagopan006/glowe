@@ -2,11 +2,13 @@
 from django.shortcuts import redirect, get_object_or_404, render
 from django.contrib import messages
 import razorpay
+from order.models import Order,Payment
+from django.contrib.auth.decorators import login_required
 from django.conf import settings
 
 
 import razorpay
-from django.conf import settings
+from django.conf import settings                 
 
 @login_required
 def payment_page(request, order_id):
