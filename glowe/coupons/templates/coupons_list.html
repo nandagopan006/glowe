@@ -1,0 +1,593 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coupon Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#22c55e',
+                        primaryHover: '#16a34a',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f9fafb; }
+        
+        /* Modal Transitions */
+        .modal-overlay {
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease-out;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            opacity: 0;
+            transform: scale(0.95) translateY(10px);
+            transition: all 0.3s ease-out;
+        }
+        .modal-overlay.active .modal-content {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+<!-- Include Sidebar -->
+{% include 'admin_sidebar.html' %}
+
+<!-- Main Content Wrapper -->
+<div class="lg:ml-[240px] min-h-screen transition-all duration-300">
+    
+    <!-- Mobile Header -->
+    <div class="lg:hidden flex items-center px-6 py-4 bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30">
+        <button onclick="toggleAdminSidebar()" class="mr-4 text-gray-500 hover:text-gray-700">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </button>
+        <h1 class="text-xl font-bold tracking-tight">Coupons</h1>
+    </div>
+
+    <div class="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+
+        <!-- Django Messages -->
+        {% if messages %}
+        <div class="space-y-3 mb-6">
+            {% for message in messages %}
+            <div class="px-4 py-3 rounded-xl shadow-sm text-sm font-medium flex items-center justify-between transition-all {% if message.tags == 'error' %}bg-red-50 text-red-700 border border-red-100{% else %}bg-green-50 text-green-700 border border-green-100{% endif %}">
+                <div class="flex items-center gap-2">
+                    {% if message.tags == 'error' %}
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    {% else %}
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    {% endif %}
+                    {{ message }}
+                </div>
+                <button onclick="this.parentElement.style.display='none'" class="opacity-70 hover:opacity-100">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Coupon Management</h1>
+                <p class="text-sm text-gray-500 mt-1">Manage discounts, promo codes and offers for your customers.</p>
+            </div>
+            <button onclick="openModal('createModal')" class="inline-flex items-center justify-center px-5 py-2.5 bg-primary hover:bg-primaryHover text-white text-sm font-medium rounded-xl shadow-sm transition-all duration-200 w-full md:w-auto hover:scale-[1.02] active:scale-95">
+                <svg class="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Create Coupon
+            </button>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+            <!-- Card 1 -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:scale-[1.01] transition-transform duration-200">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 mb-1">Total Active Coupons</p>
+                        <h3 class="text-3xl font-bold text-gray-900">{{ total_active }}</h3>
+                        <p class="text-xs text-primary font-medium mt-2 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                            Current valid offers
+                        </p>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-primary">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:scale-[1.01] transition-transform duration-200">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 mb-1">Total Used</p>
+                        <h3 class="text-3xl font-bold text-gray-900">{{ total_used }}</h3>
+                        <p class="text-xs text-primary font-medium mt-2 flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                            Lifetime usage
+                        </p>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-500">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <form method="GET" class="relative w-full md:w-96 flex">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+                <input type="text" name="search" value="{{ search|default:'' }}" placeholder="Search coupons..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-sm">
+                
+                <select name="status" class="border border-l-0 border-gray-200 py-2 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-gray-600 bg-gray-50">
+                    <option value="">All</option>
+                    <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                    <option value="expired" {% if request.GET.status == 'expired' %}selected{% endif %}>Expired</option>
+                </select>
+
+                <button type="submit" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-r-lg border border-l-0 border-gray-200 text-sm font-medium transition-colors">
+                    Filter
+                </button>
+            </form>
+        </div>
+
+        <!-- Desktop Table & Mobile Cards -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            
+            <!-- Mobile Cards View (Visible on small screens) -->
+            <div class="md:hidden divide-y divide-gray-100">
+                {% for coupon in coupons %}
+                <div class="p-4 space-y-3 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-1 bg-orange-50 text-orange-600 text-xs font-bold rounded-lg border border-orange-100 flex items-center gap-1">
+                                {% if coupon.discount_type == "percentage" %}
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"></path></svg>
+                                {% else %}
+                                ₹
+                                {% endif %}
+                                {{ coupon.code }}
+                            </span>
+                        </div>
+                        
+                        <!-- Status Badge -->
+                        {% if coupon.status == 'Active' %}
+                            <span class="px-2.5 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-full border border-green-200">Active</span>
+                        {% elif coupon.status == 'Expired' %}
+                            <span class="px-2.5 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-full border border-gray-200">Expired</span>
+                        {% else %}
+                            <span class="px-2.5 py-1 text-xs font-medium bg-red-100 text-red-700 rounded-full border border-red-200">Inactive</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                            <p class="text-gray-500 text-xs">Value</p>
+                            <p class="font-semibold text-gray-900 mt-0.5">
+                                {% if coupon.discount_type == "percentage" %}
+                                {{ coupon.discount_value }}%
+                                {% else %}
+                                ₹{{ coupon.discount_value }}
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-xs">Expiry Date</p>
+                            <p class="font-medium text-gray-900 mt-0.5">{{ coupon.end_date|date:"M d, Y" }}</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p class="text-gray-500 text-xs mb-1.5 flex justify-between">
+                            <span>Usage Limit</span>
+                            <span class="font-medium text-gray-900">
+                                {% if coupon.total_usage_limit %}
+                                    {{ coupon.used_count }} / {{ coupon.total_usage_limit }}
+                                {% else %}
+                                    <span class="text-blue-600">Unlimited</span>
+                                {% endif %}
+                            </span>
+                        </p>
+                        <!-- Progress Bar -->
+                        <div class="w-full bg-gray-100 rounded-full h-1.5">
+                            {% if coupon.total_usage_limit %}
+                                <div class="bg-primary h-1.5 rounded-full" style="width: {{ coupon.usage_percent }}%"></div>
+                            {% else %}
+                                <div class="bg-blue-500 h-1.5 rounded-full" style="width: 100%"></div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex items-center justify-end gap-3 pt-2 border-t border-gray-50 mt-2">
+                        <form method="POST" action="{% url 'toggle_coupon' coupon.id %}">
+                            {% csrf_token %}
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" onchange="this.form.submit()" class="sr-only peer" {% if coupon.is_active %}checked{% endif %}>
+                                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                        </form>
+                        <button onclick="openModal('editModal{{ coupon.id }}')" class="p-1.5 text-gray-400 hover:text-blue-600 transition-colors bg-gray-50 hover:bg-blue-50 rounded-lg">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        </button>
+                        <button onclick="openModal('deleteModal{{ coupon.id }}')" class="p-1.5 text-gray-400 hover:text-red-600 transition-colors bg-gray-50 hover:bg-red-50 rounded-lg">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        </button>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="p-8 text-center text-gray-500">
+                    No coupons found.
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Desktop Table View (Visible on md and up) -->
+            <div class="hidden md:block overflow-x-auto">
+                <table class="w-full text-left text-sm whitespace-nowrap">
+                    <thead class="bg-gray-50/50 text-gray-500 font-semibold text-xs uppercase tracking-wider border-b border-gray-100">
+                        <tr>
+                            <th class="px-6 py-4">SL NO</th>
+                            <th class="px-6 py-4">Coupon Code</th>
+                            <th class="px-6 py-4">Discount Type</th>
+                            <th class="px-6 py-4">Value</th>
+                            <th class="px-6 py-4 w-48">Usage Limit</th>
+                            <th class="px-6 py-4">Expiry Date</th>
+                            <th class="px-6 py-4">Status</th>
+                            <th class="px-6 py-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 text-gray-700">
+                        {% for coupon in coupons %}
+                        <tr class="hover:bg-gray-50/50 transition-colors group">
+                            <td class="px-6 py-4 text-gray-400 font-medium">{{ forloop.counter0|add:coupons.start_index }}</td>
+                            <td class="px-6 py-4">
+                                <span class="px-2.5 py-1 bg-orange-50 text-orange-600 font-bold rounded-lg border border-orange-100">
+                                    {{ coupon.code }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 capitalize text-gray-500">
+                                {{ coupon.discount_type }}
+                            </td>
+                            <td class="px-6 py-4 font-semibold text-gray-900">
+                                {% if coupon.discount_type == "percentage" %}
+                                {{ coupon.discount_value }}%
+                                {% else %}
+                                ₹{{ coupon.discount_value }}
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex justify-between text-xs text-gray-500 mb-1">
+                                    <span>Usage</span>
+                                    <span class="font-medium">
+                                        {% if coupon.total_usage_limit %}
+                                            {{ coupon.used_count }} / {{ coupon.total_usage_limit }}
+                                        {% else %}
+                                            <span class="text-blue-500">Unlimited</span>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <div class="w-full bg-gray-100 rounded-full h-1.5">
+                                    {% if coupon.total_usage_limit %}
+                                        <div class="bg-primary h-1.5 rounded-full transition-all duration-500" style="width: {{ coupon.usage_percent }}%"></div>
+                                    {% else %}
+                                        <div class="bg-blue-500 h-1.5 rounded-full" style="width: 100%"></div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 font-medium text-gray-600">
+                                {{ coupon.end_date|date:"M d, Y" }}
+                            </td>
+                            <td class="px-6 py-4">
+                                {% if coupon.status == 'Active' %}
+                                    <span class="px-2.5 py-1 text-xs font-medium bg-green-100 text-green-700 rounded-full border border-green-200">Active</span>
+                                {% elif coupon.status == 'Expired' %}
+                                    <span class="px-2.5 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-full border border-gray-200">Expired</span>
+                                {% else %}
+                                    <span class="px-2.5 py-1 text-xs font-medium bg-red-100 text-red-700 rounded-full border border-red-200">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center justify-end gap-3">
+                                    <!-- Toggle Switch -->
+                                    <form method="POST" action="{% url 'toggle_coupon' coupon.id %}" class="mt-1">
+                                        {% csrf_token %}
+                                        <label class="relative inline-flex items-center cursor-pointer">
+                                            <input type="checkbox" onchange="this.form.submit()" class="sr-only peer" {% if coupon.is_active %}checked{% endif %}>
+                                            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                                        </label>
+                                    </form>
+
+                                    <!-- Edit Button -->
+                                    <button onclick="openModal('editModal{{ coupon.id }}')" class="p-1.5 text-gray-400 hover:text-blue-600 transition-colors bg-white hover:bg-blue-50 rounded-lg shadow-sm border border-gray-200 hover:border-blue-200">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                    </button>
+
+                                    <!-- Delete Button -->
+                                    <button onclick="openModal('deleteModal{{ coupon.id }}')" class="p-1.5 text-gray-400 hover:text-red-600 transition-colors bg-white hover:bg-red-50 rounded-lg shadow-sm border border-gray-200 hover:border-red-200">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="px-6 py-12 text-center">
+                                <div class="flex flex-col items-center justify-center text-gray-500">
+                                    <svg class="w-12 h-12 mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                                    <p class="text-base font-medium">No coupons found.</p>
+                                    <p class="text-sm mt-1">Try adjusting your search or filters.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if coupons.has_other_pages %}
+            <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-white">
+                <span class="text-sm text-gray-500 font-medium">
+                    Showing <span class="font-semibold text-gray-900">{{ coupons.start_index }}</span> to <span class="font-semibold text-gray-900">{{ coupons.end_index }}</span> of <span class="font-semibold text-gray-900">{{ coupons.paginator.count }}</span> results
+                </span>
+                
+                <div class="flex items-center gap-2">
+                    {% if coupons.has_previous %}
+                    <a href="?page={{ coupons.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">Previous</a>
+                    {% else %}
+                    <button disabled class="px-3 py-1.5 border border-gray-100 rounded-lg text-sm font-medium text-gray-400 bg-gray-50 cursor-not-allowed">Previous</button>
+                    {% endif %}
+                    
+                    {% if coupons.has_next %}
+                    <a href="?page={{ coupons.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="px-3 py-1.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">Next</a>
+                    {% else %}
+                    <button disabled class="px-3 py-1.5 border border-gray-100 rounded-lg text-sm font-medium text-gray-400 bg-gray-50 cursor-not-allowed">Next</button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- ========================= MODALS ========================= -->
+
+<!-- Create Coupon Modal -->
+<div id="createModal" class="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+    <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onclick="closeModal('createModal')"></div>
+    <div class="modal-content relative bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white/80 backdrop-blur-md z-10 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h3 class="text-lg font-bold text-gray-900">Create New Coupon</h3>
+            <button onclick="closeModal('createModal')" class="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        
+        <form action="{% url 'create_coupon' %}" method="POST" class="p-6">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                
+                <div class="space-y-1 md:col-span-2">
+                    <label class="text-sm font-semibold text-gray-700">Coupon Code *</label>
+                    <input type="text" name="code" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm uppercase" placeholder="e.g. SUMMER50">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-sm font-semibold text-gray-700">Discount Type *</label>
+                    <select name="discount_type" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm">
+                        <option value="percentage">Percentage (%)</option>
+                        <option value="flat">Flat Amount (₹)</option>
+                    </select>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-sm font-semibold text-gray-700">Discount Value *</label>
+                    <input type="number" step="0.01" name="discount_value" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" placeholder="e.g. 20 or 500">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-sm font-semibold text-gray-700">Minimum Purchase (₹)</label>
+                    <input type="number" step="0.01" name="min_purchase" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" placeholder="Optional">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-sm font-semibold text-gray-700">Maximum Discount (₹)</label>
+                    <input type="number" step="0.01" name="max_discount" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" placeholder="Optional">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-sm font-semibold text-gray-700">Total Usage Limit</label>
+                    <input type="number" name="total_usage_limit" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm" placeholder="Leave empty for unlimited">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-sm font-semibold text-gray-700">Usage Limit Per User</label>
+                    <input type="number" name="usage_limit_per_user" value="1" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-sm font-semibold text-gray-700">Start Date *</label>
+                    <input type="date" name="start_date" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-gray-700">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-sm font-semibold text-gray-700">End Date *</label>
+                    <input type="date" name="end_date" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-gray-700">
+                </div>
+
+                <div class="space-y-1 md:col-span-2 pt-2">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="is_active" checked class="w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary">
+                        <span class="text-sm font-semibold text-gray-700">Status Active</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="mt-8 flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+                <button type="button" onclick="closeModal('createModal')" class="px-5 py-2 text-sm font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors">Cancel</button>
+                <button type="submit" class="px-5 py-2 text-sm font-medium text-white bg-primary hover:bg-primaryHover rounded-lg transition-colors shadow-sm">Save Coupon</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% for coupon in coupons %}
+<!-- Edit Modal for {{ coupon.code }} -->
+<div id="editModal{{ coupon.id }}" class="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+    <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onclick="closeModal('editModal{{ coupon.id }}')"></div>
+    <div class="modal-content relative bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white/80 backdrop-blur-md z-10 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h3 class="text-lg font-bold text-gray-900">Edit Coupon</h3>
+            <button onclick="closeModal('editModal{{ coupon.id }}')" class="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        
+        <form action="{% url 'edit_coupon' coupon.id %}" method="POST" class="p-6">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                
+                <div class="space-y-1 md:col-span-2">
+                    <label class="text-sm font-semibold text-gray-700">Coupon Code *</label>
+                    <input type="text" name="code" value="{{ coupon.code }}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm uppercase">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-sm font-semibold text-gray-700">Discount Type *</label>
+                    <select name="discount_type" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm">
+                        <option value="percentage" {% if coupon.discount_type == 'percentage' %}selected{% endif %}>Percentage (%)</option>
+                        <option value="flat" {% if coupon.discount_type == 'flat' %}selected{% endif %}>Flat Amount (₹)</option>
+                    </select>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-sm font-semibold text-gray-700">Discount Value *</label>
+                    <input type="number" step="0.01" name="discount_value" value="{{ coupon.discount_value|stringformat:'f' }}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-sm font-semibold text-gray-700">Minimum Purchase (₹)</label>
+                    <input type="number" step="0.01" name="min_purchase" value="{% if coupon.min_purchase %}{{ coupon.min_purchase|stringformat:'f' }}{% endif %}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-sm font-semibold text-gray-700">Maximum Discount (₹)</label>
+                    <input type="number" step="0.01" name="max_discount" value="{% if coupon.max_discount %}{{ coupon.max_discount|stringformat:'f' }}{% endif %}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-sm font-semibold text-gray-700">Total Usage Limit</label>
+                    <input type="number" name="total_usage_limit" value="{% if coupon.total_usage_limit %}{{ coupon.total_usage_limit }}{% endif %}" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-sm font-semibold text-gray-700">Usage Limit Per User</label>
+                    <input type="number" name="usage_limit_per_user" value="{{ coupon.usage_limit_per_user }}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-sm font-semibold text-gray-700">Start Date *</label>
+                    <input type="date" name="start_date" value="{{ coupon.start_date|date:'Y-m-d' }}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-gray-700">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-sm font-semibold text-gray-700">End Date *</label>
+                    <input type="date" name="end_date" value="{{ coupon.end_date|date:'Y-m-d' }}" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-gray-700">
+                </div>
+
+                <div class="space-y-1 md:col-span-2 pt-2">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" name="is_active" {% if coupon.is_active %}checked{% endif %} class="w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary">
+                        <span class="text-sm font-semibold text-gray-700">Status Active</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="mt-8 flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+                <button type="button" onclick="closeModal('editModal{{ coupon.id }}')" class="px-5 py-2 text-sm font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg transition-colors">Cancel</button>
+                <button type="submit" class="px-5 py-2 text-sm font-medium text-white bg-primary hover:bg-primaryHover rounded-lg transition-colors shadow-sm">Update Coupon</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal for {{ coupon.code }} -->
+<div id="deleteModal{{ coupon.id }}" class="modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onclick="closeModal('deleteModal{{ coupon.id }}')"></div>
+    <div class="modal-content relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 text-center">
+        <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4 text-red-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        </div>
+        <h3 class="text-lg font-bold text-gray-900 mb-1">Delete Coupon?</h3>
+        <p class="text-sm text-gray-500 mb-6">Are you sure you want to delete <span class="font-bold text-gray-700">{{ coupon.code }}</span>? This action cannot be undone.</p>
+        
+        <form method="POST" action="{% url 'delete_coupon' coupon.id %}" class="flex gap-3">
+            {% csrf_token %}
+            <button type="button" onclick="closeModal('deleteModal{{ coupon.id }}')" class="flex-1 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 text-sm font-medium rounded-xl border border-gray-200 transition-colors">Cancel</button>
+            <button type="submit" class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-xl shadow-sm transition-colors">Delete</button>
+        </form>
+    </div>
+</div>
+{% endfor %}
+
+<script>
+    function openModal(id) {
+        document.getElementById(id).classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === "Escape") {
+            const activeModals = document.querySelectorAll('.modal-overlay.active');
+            activeModals.forEach(modal => {
+                closeModal(modal.id);
+            });
+        }
+    });
+
+    // Dummy function if admin_sidebar doesn't provide it
+    if(typeof toggleAdminSidebar !== 'function') {
+        window.toggleAdminSidebar = function() {
+            console.log('Toggle sidebar clicked');
+        }
+    }
+</script>
+
+</body>
+</html>
