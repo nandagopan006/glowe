@@ -64,8 +64,6 @@ def create_coupon(request):
 
         if form.is_valid():
             coupon =form.save(commit=False)
-
-            coupon.code=coupon.code.upper().strip()
             coupon.used_count=0
 
             coupon.save()
@@ -73,5 +71,24 @@ def create_coupon(request):
             messages.success(request, f"Coupon '{coupon.code}' created ")
         else:
             messages.error(request, "Please fix form errors ")
+
+    return redirect('coupon_list')
+
+def edit_coupon(request, id):
+    coupon=get_object_or_404(Coupon, id=id, is_deleted=False)
+
+    if request.method == "POST":
+        form = CouponForm(request.POST, instance=coupon)
+
+        if form.is_valid():
+            updated_coupon =form.save(commit=False)
+
+            updated_coupon.code =updated_coupon.code.upper().strip()
+
+            updated_coupon.save()
+
+            messages.success(request,"Coupon updated successfully ")
+        else:
+            messages.error(request,"Please fix the errors ")
 
     return redirect('coupon_list')
