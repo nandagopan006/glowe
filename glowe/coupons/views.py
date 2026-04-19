@@ -117,7 +117,9 @@ def toggle_coupon(request, id):
             messages.error(request, "Cannot activate expired coupon ")
             return redirect('coupon_list')
         
-        
+        if coupon.total_usage_limit and coupon.used_count >= coupon.total_usage_limit:
+            messages.error(request, "Coupon usage limit reached ")
+            return redirect('coupon_list')
 
         coupon.is_active = not coupon.is_active
         coupon.save()
