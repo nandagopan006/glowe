@@ -5,7 +5,7 @@ from django.utils import timezone
 class CouponForm(forms.ModelForm):
     class Meta:
         model = Coupon
-        fields = '__all__'
+        exclude = ['used_count', 'is_deleted']
 
     def clean_code(self):
         code =self.cleaned_data.get('code')
