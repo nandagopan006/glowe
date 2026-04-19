@@ -60,13 +60,13 @@ def coupon_list(request):
     
 def create_coupon(request):
     if request.method == "POST":
-        form = CouponForm(request.POST)
+        form =CouponForm(request.POST)
 
         if form.is_valid():
-            coupon = form.save(commit=False)
+            coupon =form.save(commit=False)
 
-            coupon.code = coupon.code.upper().strip()
-            coupon.used_count = 0
+            coupon.code=coupon.code.upper().strip()
+            coupon.used_count=0
 
             coupon.save()
 
