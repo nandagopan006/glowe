@@ -92,3 +92,15 @@ def edit_coupon(request, id):
             messages.error(request,"Please fix the errors ")
 
     return redirect('coupon_list')
+
+
+def delete_coupon(request, id):
+    coupon = get_object_or_404(Coupon, id=id, is_deleted=False)
+
+    if request.method == "POST":
+        coupon.is_deleted =True
+        coupon.save()
+
+        messages.success(request, "Coupon deleted successfully ")
+
+    return redirect('coupon_list')
