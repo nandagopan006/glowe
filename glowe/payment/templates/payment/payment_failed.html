@@ -36,11 +36,26 @@
 
         <!-- ACTIONS -->
         <div class="flex flex-col gap-3 px-6">
-            <a href="{% url 'payment_page' order.id %}" class="w-full bg-black text-white py-5 rounded-2xl font-montserrat text-[11px] font-bold uppercase tracking-[0.3em] transition-all hover:bg-gray-900 hover:shadow-xl active:scale-95">
+            {% if retry_allowed %}
+            <!-- TIMER -->
+            <div class="bg-red-50/50 p-3 rounded-xl border border-red-100 mb-1">
+                <p class="font-montserrat text-[10px] text-red-600 font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Retry expires in <span id="payment-timer" class="font-bold tabular-nums">--:--</span>
+                </p>
+            </div>
+            <a id="retry-btn" href="{% url 'payment_page' order.id %}" class="w-full bg-black text-white py-5 rounded-2xl font-montserrat text-[11px] font-bold uppercase tracking-[0.3em] transition-all hover:bg-gray-900 hover:shadow-xl active:scale-95">
                 Retry Payment
             </a>
-            <a href="{% url 'checkout' %}" class="w-full bg-white text-gray-800 py-5 rounded-2xl font-montserrat text-[11px] font-bold uppercase tracking-[0.3em] border border-gray-200 transition-all hover:bg-gray-50 active:scale-95">
-                Change Method
+            {% else %}
+            <button disabled class="w-full bg-gray-300 text-gray-500 py-5 rounded-2xl font-montserrat text-[11px] font-bold uppercase tracking-[0.3em] cursor-not-allowed">
+                Retry Time Exceeded
+            </button>
+            <p class="font-montserrat text-[9px] text-red-500 font-bold uppercase tracking-widest mt-1">Order has been cancelled.</p>
+            {% endif %}
+            
+            <a href="{% url 'order_detail' order.id %}" class="w-full bg-white text-gray-800 py-5 rounded-2xl font-montserrat text-[11px] font-bold uppercase tracking-[0.3em] border border-gray-200 transition-all hover:bg-gray-50 active:scale-95">
+                View Order
             </a>
         </div>
 
@@ -58,4 +73,35 @@
 }
 .animate-fade-in { animation: fade-in 0.7s ease-out forwards; }
 </style>
+
+<script>
+{% if retry_allowed %}
+document.addEventListener("DOMContentLoaded", function() {
+    let timeLeft = {{ time_left_seconds }};
+    const timerEl = document.getElementById('payment-timer');
+    const retryBtn = document.getElementById('retry-btn');
+    
+    function updateTimer() {
+        if (timeLeft <= 0) {
+            timerEl.innerText = "00:00";
+            if (retryBtn) {
+                retryBtn.classList.add('opacity-50', 'pointer-events-none');
+                retryBtn.innerText = "Processing...";
+            }
+            window.location.reload(); 
+            return;
+        }
+        
+        let m = Math.floor(timeLeft / 60);
+        let s = timeLeft % 60;
+        timerEl.innerText = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+        timeLeft--;
+    }
+    
+    // Initial call
+    updateTimer();
+    setInterval(updateTimer, 1000);
+});
+{% endif %}
+</script>
 {% endblock %}

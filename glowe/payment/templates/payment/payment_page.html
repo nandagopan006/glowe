@@ -10,7 +10,18 @@
     <!-- HEADER -->
     <div class="text-center mb-8">
       <h1 class="font-cormorant text-3xl md:text-4xl text-gray-900 mb-2 italic font-bold">Complete Your Payment</h1>
-      <p class="font-montserrat text-[10px] uppercase tracking-[0.2em] text-gray-500 font-medium">Secure checkout powered by Razorpay</p>
+      <p class="font-montserrat text-[10px] uppercase tracking-[0.2em] text-gray-500 font-medium mb-4">Secure checkout powered by Razorpay</p>
+      
+      <!-- CHECKOUT TIMER -->
+      <div class="inline-flex items-center gap-2.5 bg-amber-50 px-4 py-2 rounded-full border border-amber-100 shadow-sm">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+          </span>
+          <p class="font-montserrat text-[9px] font-bold text-amber-700 uppercase tracking-[0.15em]">
+              Checkout expires in <span id="checkout-timer" class="tabular-nums">--:--</span>
+          </p>
+      </div>
     </div>
 
     <!-- MAIN CARD -->
@@ -119,12 +130,53 @@ document.getElementById("pay-btn").onclick = function(e){
         "contact": "{{ order.address.phone_number }}"
     },
 
-    "theme": { "color": "#000" }
+    "theme": { "color": "#000" },
+    
+    "modal": {
+        "ondismiss": function() {
+            window.location.href = "{% url 'payment_failed' order.id %}";
+        }
+    }
 };
 
     // Open Razorpay strictly inside click handler to avoid about:blank issues
     var rzp = new Razorpay(options);
     rzp.open();
 }
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    let timeLeft = {{ time_left_seconds|default:0 }};
+    const timerEl = document.getElementById('checkout-timer');
+    const payBtn = document.getElementById('pay-btn');
+    
+    function updateTimer() {
+        if (timeLeft <= 0) {
+            if (timerEl) timerEl.innerText = "00:00";
+            if (payBtn) {
+                payBtn.disabled = true;
+                payBtn.innerText = "Timeout";
+                payBtn.classList.add('opacity-50', 'pointer-events-none');
+            }
+            window.location.reload(); 
+            return;
+        }
+        
+        let m = Math.floor(timeLeft / 60);
+        let s = timeLeft % 60;
+        if (timerEl) {
+            timerEl.innerText = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+        }
+        timeLeft--;
+    }
+    
+    if (timeLeft > 0) {
+        updateTimer();
+        setInterval(updateTimer, 1000);
+    } else {
+        updateTimer();
+    }
+});
 </script>
 {% endblock %}

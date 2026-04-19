@@ -128,7 +128,7 @@ def place_order(request):
             pincode=address.pincode,
         )
 
-        # Create Payment object (Initially PENDING)
+        # Create Payment
         payment = Payment.objects.create(
             order=order, 
             payment_method=payment_method, 
@@ -138,6 +138,23 @@ def place_order(request):
         
         # Initial status history
         OrderStatusHistory.objects.create(order=order, status=Order.Status.PENDING)
+        
+        # If COD, confirm immediately and reduce stock
+        if payment_method == Payment.Method.COD:
+            order.order_status = Order.Status.CONFIRMED
+            order.save()
+            
+            OrderStatusHistory.objects.create(order=order, status=Order.Status.CONFIRMED)
+            
+            for item in order.items.all():
+                variant = item.variant
+                variant.stock -= item.quantity
+                variant.save()
+            
+            try:
+                send_order_confirmation_email(request, order)
+            except Exception as e:
+                print("Email failed:", e)
 
         # dlt all item, frm crt
         cart_items.delete()
