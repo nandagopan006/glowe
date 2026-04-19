@@ -331,12 +331,25 @@ def order_detail(request, order_id):
     history = order.status_history.all().order_by("-updated_at")
 
     can_cancel = order.order_status in [
-        Order.Status.PENDING,
         Order.Status.CONFIRMED,
         Order.Status.PROCESSING,
     ]
     can_return = order.order_status == Order.Status.DELIVERED
     payment = getattr(order, "payment", None)
+
+    expiration_time = order.created_at + timedelta(minutes=5)
+    time_left_seconds = max(0, int((expiration_time - timezone.now()).total_seconds()))
+    
+    # Auto-cancel if pending and time exceeded
+    if order.order_status == Order.Status.PENDING and time_left_seconds <= 0:
+        order.order_status = Order.Status.CANCELLED
+        order.save()
+        OrderStatusHistory.objects.create(order=order, status=Order.Status.CANCELLED)
+        if payment and payment.payment_status == Payment.Status.PENDING:
+            payment.payment_status = Payment.Status.FAILED
+            payment.save()
+            
+    retry_allowed = (order.order_status == Order.Status.PENDING and time_left_seconds > 0)
 
     # cancelled_items
     if all_cancelled:
@@ -364,6 +377,8 @@ def order_detail(request, order_id):
             "total_count":total_count,
             "returns":returns,
             "returned_item_ids": [r.order_item.id for r in returns],
+            "retry_allowed": retry_allowed,
+            "time_left_seconds": time_left_seconds,
         },
     )
 
@@ -378,7 +393,6 @@ def cancel_order(request, order_id):
 
     # chck allowed only
     if order.order_status not in [
-        Order.Status.PENDING,
         Order.Status.CONFIRMED,
         Order.Status.PROCESSING,
     ]:
@@ -430,7 +444,6 @@ def cancel_order_item(request, item_id):
     order = item.order
 
     if order.order_status not in [
-        Order.Status.PENDING,
         Order.Status.CONFIRMED,
         Order.Status.PROCESSING,
     ]:

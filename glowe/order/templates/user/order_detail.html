@@ -106,14 +106,23 @@
 
     <!-- Action Buttons -->
     <div class="flex flex-wrap gap-3 shrink-0 list-none">
-
       
+      {% if retry_allowed %}
+      <div class="flex items-center gap-3">
+        <div class="bg-red-50 px-3 py-1.5 rounded-md border border-red-100 flex items-center gap-2 h-full">
+           <svg class="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+           <span class="font-montserrat text-[10px] text-red-600 font-bold uppercase tracking-widest tabular-nums" id="order-retry-timer">--:--</span>
+        </div>
+        <a href="{% url 'payment_page' order.id %}" id="order-retry-btn" class="px-6 py-3 bg-[#1a1208] border border-[#1a1208] text-white text-[10px] font-bold uppercase tracking-widest hover:bg-[#2a1d0d] transition-all duration-300 rounded-md shadow-sm no-underline flex items-center">Retry Payment</a>
+      </div>
+      {% endif %}
+
       {% if can_cancel %}
         <button type="button" onclick="openModal('cancelOrderModal')" class="px-6 py-3 border border-[#1a1208] text-[#1a1208] text-[10px] font-bold uppercase tracking-widest hover:bg-[#1a1208] hover:text-white transition-all duration-300 rounded-md">Cancel Order</button>
       {% endif %}
       
       {% if order.order_status == 'DELIVERED' %}
-      <a href="{% url 'download_invoice' order.id %}" class="px-6 py-3 bg-[#1a1208] border border-[#1a1208] text-white text-[10px] font-bold uppercase tracking-widest hover:bg-[#2a1d0d] transition-all duration-300 rounded-md shadow-sm hover:shadow-md">Download Invoice</a>
+      <a href="{% url 'download_invoice' order.id %}" class="px-6 py-3 bg-[#1a1208] border border-[#1a1208] text-white text-[10px] font-bold uppercase tracking-widest hover:bg-[#2a1d0d] transition-all duration-300 rounded-md shadow-sm hover:shadow-md no-underline flex items-center">Download Invoice</a>
       {% endif %}
     </div>
   </div>
@@ -843,5 +852,36 @@
       }
     });
   });
+</script>
+<script>
+{% if retry_allowed %}
+document.addEventListener("DOMContentLoaded", function() {
+    let timeLeft = {{ time_left_seconds|default:0 }};
+    const timerEl = document.getElementById('order-retry-timer');
+    const retryBtn = document.getElementById('order-retry-btn');
+    
+    function updateTimer() {
+        if (timeLeft <= 0) {
+            if (timerEl) timerEl.innerText = "00:00";
+            if (retryBtn) {
+                retryBtn.classList.add('opacity-50', 'pointer-events-none');
+                retryBtn.innerText = "Processing...";
+            }
+            window.location.reload(); 
+            return;
+        }
+        
+        let m = Math.floor(timeLeft / 60);
+        let s = timeLeft % 60;
+        if (timerEl) {
+            timerEl.innerText = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+        }
+        timeLeft--;
+    }
+    
+    updateTimer();
+    setInterval(updateTimer, 1000);
+});
+{% endif %}
 </script>
 {% endblock %}

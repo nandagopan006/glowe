@@ -92,7 +92,6 @@ def verify_payment(request):
         })
 
         with transaction.atomic():
-            # ✅ SUCCESS - CONFIRM ORDER & REDUCE STOCK
             payment.payment_status = Payment.Status.SUCCESS
             payment.transaction_id = razorpay_payment_id
             payment.save()
@@ -100,7 +99,7 @@ def verify_payment(request):
             order.order_status = Order.Status.CONFIRMED
             order.save()
 
-            # Reduce stock here (Realistic flow)
+            # Reduce stock here
             for item in order.items.all():
                 variant = item.variant
                 variant.stock -= item.quantity
