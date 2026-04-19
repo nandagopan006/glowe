@@ -104,3 +104,27 @@ def delete_coupon(request, id):
         messages.success(request, "Coupon deleted successfully ")
 
     return redirect('coupon_list')
+
+def toggle_coupon(request, id):
+    coupon =get_object_or_404(Coupon, id=id, is_deleted=False)
+
+    if request.method == "POST":
+
+        today=timezone.now().date()
+
+        # prevent activating expired coupon
+        if coupon.end_date < today:
+            messages.error(request, "Cannot activate expired coupon ")
+            return redirect('coupon_list')
+        
+        
+
+        coupon.is_active = not coupon.is_active
+        coupon.save()
+
+        if coupon.is_active:
+            messages.success(request,"Coupon activated")
+        else:
+            messages.success(request,"Coupon deactivated")
+
+    return redirect('coupon_list')
