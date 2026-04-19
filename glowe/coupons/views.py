@@ -51,7 +51,7 @@ def coupon_list(request):
 
     total_used = Coupon.objects.filter(is_deleted=False).aggregate(total=models.Sum('used_count'))['total'] or 0
 
-    return render(request, 'admin/coupons_list.html',{
+    return render(request,'admin/coupons_list.html',{
         'coupons':coupons,
         'search':search,
         'total_active':total_active,
