@@ -1,8 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.utils import timezone
-from .models import Coupon
+from .models import Coupon,CouponUsage
 from django.db import models
 from .forms import CouponForm
 
@@ -130,3 +131,61 @@ def toggle_coupon(request, id):
             messages.success(request,"Coupon deactivated")
 
     return redirect('coupon_list')
+
+
+#----- - - - -  user side------
+
+def apply_coupon(request):
+    if request.method == "POST":
+
+        code = request.POST.get('code')
+        if not code:
+            return JsonResponse({'success': False, 'message': 'Enter coupon code'})
+
+        code = code.strip().upper()
+        user = request.user
+        today = timezone.now().date()
+
+        # get cart total
+        cart_total = get_cart_total(user)   # use your function
+
+        try:
+            coupon = Coupon.objects.get(code=code, is_deleted=False)
+        except Coupon.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Invalid coupon'})
+
+        # not started yet
+        if coupon.start_date > today:
+            return JsonResponse({'success': False, 'message': 'Coupon not started'})
+
+        # inactive
+        if not coupon.is_active:
+            return JsonResponse({'success': False, 'message': 'Coupon inactive'})
+
+        # expired
+        if coupon.end_date < today:
+            return JsonResponse({'success': False, 'message': 'Coupon expired'})
+
+        # min purchase
+        if coupon.min_purchase and cart_total < coupon.min_purchase:
+            return JsonResponse({
+                'success': False,
+                'message': f'Minimum purchase ₹{coupon.min_purchase} required'
+            })
+
+        # usage limit
+        if coupon.total_usage_limit and coupon.used_count >= coupon.total_usage_limit:
+            return JsonResponse({'success': False, 'message': 'Coupon fully used'})
+
+        # ❌ per user limit
+        usage = CouponUsage.objects.filter(user=user, coupon=coupon).count()
+        if usage >= coupon.usage_limit_per_user:
+            return JsonResponse({'success': False, 'message': 'Already used this coupon'})
+
+        #replace old coupon
+        request.session['coupon_id'] = coupon.id
+
+        return JsonResponse({
+            'success': True,
+            'message': f'{coupon.code} applied successfully'
+        })
