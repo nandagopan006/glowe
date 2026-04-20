@@ -40,20 +40,28 @@
       <div class="p-8">
         <h3 class="font-montserrat text-[9px] uppercase tracking-[0.2em] text-gray-400 mb-6 font-bold text-center">Select Method</h3>
         <div class="grid grid-cols-1 gap-3 mb-8">
-            <button class="payment-method-opt active flex items-center justify-between p-4 rounded-xl border-2 border-gray-100 hover:border-black transition-all group" data-method="upi">
-                <span class="font-montserrat text-xs font-bold text-gray-800 uppercase tracking-tight">UPI / QR</span>
-                <div class="w-4 h-4 rounded-full border-2 border-gray-200 group-[.active]:border-black group-[.active]:bg-black flex items-center justify-center">
+            <!-- CARD OPTION (DEFAULT) -->
+            <button class="payment-method-opt active flex items-center justify-between p-4 rounded-xl border-2 border-black bg-gray-50 transition-all group" data-method="card">
+                <div class="flex items-center gap-3">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" class="text-gray-800">
+                        <rect x="2" y="5" width="20" height="14" rx="2"/>
+                        <line x1="2" y1="10" x2="22" y2="10"/>
+                    </svg>
+                    <span class="font-montserrat text-xs font-bold text-gray-800 uppercase tracking-tight">Credit / Debit Card</span>
+                </div>
+                <div class="w-4 h-4 rounded-full border-2 border-black bg-black flex items-center justify-center">
                     <div class="w-1.5 h-1.5 bg-white rounded-full"></div>
                 </div>
             </button>
-            <button class="payment-method-opt flex items-center justify-between p-4 rounded-xl border-2 border-gray-100 hover:border-black transition-all group" data-method="card">
-                <span class="font-montserrat text-xs font-bold text-gray-800 uppercase tracking-tight">Credit / Debit Card</span>
-                <div class="w-4 h-4 rounded-full border-2 border-gray-200 group-[.active]:border-black group-[.active]:bg-black flex items-center justify-center">
-                    <div class="w-1.5 h-1.5 bg-white rounded-full"></div>
-                </div>
-            </button>
+
+            <!-- NET BANKING OPTION -->
             <button class="payment-method-opt flex items-center justify-between p-4 rounded-xl border-2 border-gray-100 hover:border-black transition-all group" data-method="netbanking">
-                <span class="font-montserrat text-xs font-bold text-gray-800 uppercase tracking-tight">Net Banking</span>
+                <div class="flex items-center gap-3">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" class="text-gray-400 group-hover:text-gray-800">
+                        <path d="M3 21h18M3 10h18M5 10v11M19 10v11M12 10v11M7 10l5-7 5 7"/>
+                    </svg>
+                    <span class="font-montserrat text-xs font-bold text-gray-800 uppercase tracking-tight">Net Banking</span>
+                </div>
                 <div class="w-4 h-4 rounded-full border-2 border-gray-200 group-[.active]:border-black group-[.active]:bg-black flex items-center justify-center">
                     <div class="w-1.5 h-1.5 bg-white rounded-full"></div>
                 </div>
@@ -83,11 +91,13 @@
 
 <style>
 .payment-method-opt.active { border-color: #000; background-color: #f9fafb; }
+.payment-method-opt.active svg { color: #000; opacity: 1; }
+.payment-method-opt.active div[class*="rounded-full"] { border-color: #000; background-color: #000; }
 </style>
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
-let selectedMethod = "upi";
+let selectedMethod = "card";
 
 document.querySelectorAll(".payment-method-opt").forEach(btn => {
     btn.onclick = function() {
@@ -114,20 +124,20 @@ document.getElementById("pay-btn").onclick = function(e){
     "description": "Payment for Order #{{ order.order_number }}",
     "order_id": "{{ razorpay_order_id }}",
 
-    // 🔥 FIX: Callback URL must be ABSOLUTE for Razorpay Redirect
     "callback_url": "{{ request.scheme }}://{{ request.get_host }}{% url 'verify_payment' %}?order_id={{ order.id }}",
     "redirect": true,
 
     "method": {
-        "upi": selectedMethod === "upi",
         "card": selectedMethod === "card",
-        "netbanking": selectedMethod === "netbanking"
+        "netbanking": selectedMethod === "netbanking",
+        "upi": false,
+        "wallet": false
     },
 
     "prefill": {
         "name": "{{ request.user.username }}",
         "email": "{{ request.user.email }}",
-        "contact": "{{ order.address.phone_number }}"
+        "contact": "{{ order.shipping_address.phone }}"
     },
 
     "theme": { "color": "#000" },
@@ -139,9 +149,14 @@ document.getElementById("pay-btn").onclick = function(e){
     }
 };
 
-    // Open Razorpay strictly inside click handler to avoid about:blank issues
     var rzp = new Razorpay(options);
     rzp.open();
+
+    // Reset button after a delay in case modal fails to open
+    setTimeout(() => {
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }, 5000);
 }
 </script>
 
