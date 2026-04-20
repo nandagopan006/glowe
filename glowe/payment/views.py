@@ -43,8 +43,8 @@ def payment_page(request, order_id):
         "payment_capture": 1,
     })
 
-    # save order id
-    payment.transaction_id = razorpay_order["id"]
+    # save razorpay order id correctly
+    payment.razorpay_order_id = razorpay_order["id"]
     payment.save()
 
     expiration_time = order.created_at + timedelta(minutes=5)
@@ -93,6 +93,8 @@ def verify_payment(request):
 
         with transaction.atomic():
             payment.payment_status = Payment.Status.SUCCESS
+            payment.razorpay_payment_id = razorpay_payment_id
+            payment.razorpay_signature = razorpay_signature
             payment.transaction_id = razorpay_payment_id
             payment.save()
 

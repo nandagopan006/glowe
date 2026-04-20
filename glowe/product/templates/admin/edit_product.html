@@ -55,7 +55,7 @@ body { background:#f4f6f3; margin:0; }
 .crop-box { background:#fff; border-radius:20px; width:100%; max-width:480px; overflow:hidden; transform:scale(.94) translateY(12px); transition:transform .25s cubic-bezier(.34,1.56,.64,1); box-shadow:0 32px 80px rgba(0,0,0,.22); }
 .crop-modal.open .crop-box { transform:scale(1) translateY(0); }
 /* SIGNOUT MODAL (MOVED TO admin_sidebar.html) */
-.obar { height:3px; background:linear-gradient(90deg,#f87171,#dc2626); margin:-32px -28px 24px; width:calc(100% + 56px); }
+/* .obar removed — accent line is inline in modal */
 .card { background:#fff; border-radius:18px; border:1px solid #eaede8; padding:24px; transition:box-shadow .2s; }
 .card:hover { box-shadow:0 4px 20px rgba(0,0,0,.06); }
 .inp { width:100%; padding:10px 14px; border:1.5px solid #e5e7eb; border-radius:12px; font-size:14px; color:#111827; background:#fafafa; outline:none; transition:all .18s; }
@@ -100,6 +100,12 @@ body { background:#f4f6f3; margin:0; }
 .sk-badge.has { background:#e2f0e2; color:#264f29; border-color:#a3d9b0; }
 .sk-more-btn { width:100%; padding:9px; border-radius:10px; border:1.5px dashed #e5e7eb; background:transparent; color:#9ca3af; font-size:12px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:all .18s; }
 .sk-more-btn:hover { border-color:#64a864; color:#3a7a3e; background:#f6fdf6; }
+
+/* ── OVERLAY / MODAL ── */
+.overlay { position:fixed; inset:0; z-index:9980; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(0,0,0,.55); backdrop-filter:blur(6px); opacity:0; pointer-events:none; transition:opacity .25s; }
+.overlay.open { opacity:1; pointer-events:all; }
+.obox { background:#fff; border-radius:20px; width:100%; max-width:340px; padding:32px 28px 28px; text-align:center; position:relative; overflow:hidden; transform:scale(.94) translateY(12px); transition:transform .25s cubic-bezier(.34,1.56,.64,1); box-shadow:0 32px 80px rgba(0,0,0,.22); }
+.overlay.open .obox { transform:scale(1) translateY(0); }
 </style>
 </head>
 <body>
@@ -114,16 +120,36 @@ body { background:#f4f6f3; margin:0; }
 <!-- ARCHIVE MODAL -->
 <div id="archiveOverlay" class="overlay">
   <div class="obox">
-    <div class="obar"></div>
-    <div class="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mb-4" style="border:2px solid #fecaca;">
-      <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+    <!-- top accent line -->
+    <div style="position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#f87171,#dc2626);border-radius:20px 20px 0 0;"></div>
+
+    <!-- icon -->
+    <div style="width:64px;height:64px;border-radius:50%;background:#fff1f2;border:2px solid #fecaca;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+      <svg width="26" height="26" fill="none" stroke="#ef4444" stroke-width="1.8" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+      </svg>
     </div>
-    <h2 class="text-base font-bold text-gray-900 mb-1">Archive Product?</h2>
-    <p class="text-sm text-gray-400 mb-1 max-w-[220px] leading-relaxed">Moves <strong class="text-gray-700">{{ product.name }}</strong> to archived.</p>
-    <p class="text-xs text-gray-400 mb-6">You can restore it anytime.</p>
-    <div class="flex gap-3 w-full">
-      <button type="button" onclick="hideOverlay('archiveOverlay')" class="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition-colors">Cancel</button>
-      <button type="button" onclick="doArchive()" class="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold text-sm transition-colors">Archive</button>
+
+    <!-- text -->
+    <h2 style="margin:0 0 8px;font-size:17px;font-weight:700;color:#111827;text-align:center;">Archive Product?</h2>
+    <p style="margin:0 0 6px;font-size:13px;color:#6b7280;text-align:center;line-height:1.6;max-width:240px;margin-left:auto;margin-right:auto;">
+      Moves <strong style="color:#374151;font-weight:600;">{{ product.name }}</strong> to archived.
+    </p>
+    <p style="margin:0 0 28px;font-size:12px;color:#9ca3af;text-align:center;">You can restore it anytime.</p>
+
+    <!-- buttons -->
+    <div style="display:flex;gap:10px;width:100%;">
+      <button type="button" onclick="hideOverlay('archiveOverlay')"
+        style="flex:1;padding:11px 0;border-radius:12px;border:1.5px solid #e5e7eb;background:#fff;color:#374151;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;"
+        onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='#fff'">
+        Cancel
+      </button>
+      <button type="button" onclick="doArchive()"
+        style="flex:1;padding:11px 0;border-radius:12px;border:none;background:#ef4444;color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px;"
+        onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">
+        <svg width="14" height="14" fill="none" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+        Archive
+      </button>
     </div>
   </div>
 </div>
@@ -362,7 +388,8 @@ body { background:#f4f6f3; margin:0; }
 <div class="bot-bar">
   <p class="text-xs text-gray-400 mr-auto hidden sm:block">Editing: <span class="font-semibold text-gray-600">{{ product.name }}</span></p>
   <a href="{% url 'product_management' %}" class="inline-flex items-center gap-1.5 px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-full transition-colors no-underline">
-    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>Cancel
+    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+    Cancel
   </a>
   <button type="button" id="saveBtn" onclick="saveProduct()"
     class="inline-flex items-center gap-2 px-6 py-2.5 bg-sage-800 hover:bg-sage-900 text-white text-sm font-semibold rounded-full transition-all shadow-sm">
