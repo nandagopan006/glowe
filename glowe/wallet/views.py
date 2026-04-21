@@ -11,11 +11,21 @@ from payment.utils import verify_payment_signature
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
-
+from django.utils import timezone
+from datetime import timedelta
 
 
 def wallet_view(request):
     wallet,created = Wallet.objects.get_or_create(user=request.user)
+
+    #Mark pending add trantns older than 1 mtns as fail
+    check_time = timezone.now() - timedelta(minutes=1)
+    WalletTransaction.objects.filter(
+        wallet=wallet, 
+        status='PENDING', 
+        transaction_type='ADD',
+        created_at__lt=check_time
+    ).update(status='FAILED')
 
     transactions_list = wallet.transactions.all().order_by('-created_at')
 
@@ -125,3 +135,23 @@ def verify_wallet_payment(request):
         wallet.save()
 
     return JsonResponse({"status": "success"})
+
+
+@csrf_exempt
+@login_required
+def mark_wallet_payment_failed(request):
+    if request.method == "POST":
+        txn_id = request.POST.get("txn_id")
+        if not txn_id:
+            return JsonResponse({"status": "invalid_request"}, status=400)
+            
+        try:
+            txn = WalletTransaction.objects.select_related("wallet").get(id=txn_id)
+            if txn.wallet.user == request.user and txn.status == "PENDING":
+                txn.status = "FAILED"
+                txn.save()
+                return JsonResponse({"status": "success"})
+        except WalletTransaction.DoesNotExist:
+            pass
+        
+    return JsonResponse({"status": "failed"}, status=400)

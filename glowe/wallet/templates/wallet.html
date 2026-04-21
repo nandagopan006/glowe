@@ -118,6 +118,7 @@
                                 <tr class="border-b-[3px] border-[#1a1208]">
                                     <th class="py-4 pr-4 font-montserrat text-[10px] font-extrabold tracking-[0.15em] uppercase text-[#1a1208]">Date & Time</th>
                                     <th class="py-4 px-4 font-montserrat text-[10px] font-extrabold tracking-[0.15em] uppercase text-[#1a1208]">Transaction ID</th>
+                                    <th class="py-4 px-4 font-montserrat text-[10px] font-extrabold tracking-[0.15em] uppercase text-[#1a1208]">Order ID</th>
                                     <th class="py-4 px-4 font-montserrat text-[10px] font-extrabold tracking-[0.15em] uppercase text-[#1a1208]">Description</th>
                                     <th class="py-4 px-4 font-montserrat text-[10px] font-extrabold tracking-[0.15em] uppercase text-[#1a1208] text-center">Status</th>
                                     <th class="py-4 pl-4 font-montserrat text-[10px] font-extrabold tracking-[0.15em] uppercase text-[#1a1208] text-right">Amount</th>
@@ -127,7 +128,20 @@
                                 {% for txn in transactions %}
                                 <tr class="hover:bg-white/50 transition-colors duration-300">
                                     <td class="py-6 pr-4 text-[#1a1208] font-montserrat text-[11px] font-bold whitespace-nowrap">{{ txn.created_at|date:"d M Y, h:i A" }}</td>
-                                    <td class="py-6 px-4 text-[#8C7F77] font-montserrat text-[11px] font-bold tracking-widest uppercase">{{ txn.transaction_id|default:"-" }}</td>
+                                    <td class="py-6 px-4 text-[#8C7F77] font-montserrat text-[11px] font-bold tracking-widest uppercase">
+                                        {% if txn.transaction_type == 'ADD' %}
+                                            {{ txn.transaction_id|default:"-" }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td class="py-6 px-4 text-[#1a1208] font-montserrat text-[11px] font-bold tracking-widest uppercase">
+                                        {% if txn.order %}
+                                            #{{ txn.order.order_number }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
                                     <td class="py-6 px-4 text-[#1a1208] font-montserrat text-[12px] font-medium">{{ txn.description }}</td>
                                     <td class="py-6 px-4 text-center">
                                         {% if txn.status == 'COMPLETED' %}
@@ -141,7 +155,9 @@
                                         {% endif %}
                                     </td>
                                     <td class="py-6 pl-4 text-right whitespace-nowrap">
-                                        {% if txn.transaction_type == 'ADD' %}
+                                        {% if txn.status == 'FAILED' %}
+                                            <span class="font-montserrat text-[13px] font-bold text-[#8C7F77] tracking-wider line-through decoration-[1.5px]">₹{{ txn.amount|floatformat:2 }}</span>
+                                        {% elif txn.transaction_type == 'ADD' %}
                                             <span class="font-montserrat text-[13px] font-bold text-[#166534] tracking-wider">+ ₹{{ txn.amount|floatformat:2 }}</span>
                                         {% else %}
                                             <span class="font-montserrat text-[13px] font-bold text-[#991b1b] tracking-wider">- ₹{{ txn.amount|floatformat:2 }}</span>
@@ -150,7 +166,7 @@
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="5" class="py-16 text-center">
+                                    <td colspan="6" class="py-16 text-center">
                                         <div class="flex flex-col items-center justify-center">
                                             <p class="font-montserrat text-[12px] font-bold tracking-[0.15em] text-[#1a1208] uppercase">No transactions yet</p>
                                             <p class="font-montserrat text-[11px] text-[#8C7F77] mt-2">When you add funds or make purchases, they will appear here.</p>
@@ -415,6 +431,7 @@
                 },
                 modal: {
                     ondismiss: function() {
+                        markPaymentFailed(data.txn_id);
                         resetButtonState();
                         showToast('Payment cancelled', 'error');
                     }
@@ -424,6 +441,7 @@
             const rzp = new Razorpay(options);
             
             rzp.on('payment.failed', function (response){
+                markPaymentFailed(data.txn_id);
                 resetButtonState();
                 showToast('Payment failed. Please try again.', 'error');
             });
@@ -434,6 +452,22 @@
             console.error('Error:', error);
             showToast(error.message || 'Something went wrong', 'error');
             resetButtonState();
+        }
+    }
+
+    async function markPaymentFailed(txnId) {
+        try {
+            const formData = new FormData();
+            formData.append('txn_id', txnId);
+            fetch('/wallet/mark-failed/', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken },
+                body: formData
+            }).then(() => {
+                setTimeout(() => window.location.reload(), 1500);
+            });
+        } catch (e) {
+            console.error(e);
         }
     }
 
