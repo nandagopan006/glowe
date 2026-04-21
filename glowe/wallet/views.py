@@ -23,7 +23,7 @@ def wallet_view(request):
     page_number=request.GET.get('page')
     transactions =paginator.get_page(page_number)
 
-    return render(request,'wallet/wallet.html',{
+    return render(request,'wallet.html',{
         'wallet':wallet,
         'transactions':transactions
     })

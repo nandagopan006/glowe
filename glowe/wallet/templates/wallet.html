@@ -1,0 +1,445 @@
+{% extends 'base.html' %}
+{% block title %}My Wallet | Glowé{% endblock %}
+
+{% block extra_css %}
+<style>
+    body { background:#F5F1EC !important; }
+    
+    /* Custom Animations */
+    .fade-in-up { animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(20px); }
+    .scale-up { animation: scaleUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .slide-in-right { animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes scaleUp {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes slideInRight {
+        from { opacity: 0; transform: translateX(100%); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Glowé Brand Colors overrides */
+    .bg-brand-dark { background-color: #1a1208; }
+    .text-brand-dark { color: #1a1208; }
+    .border-brand-dark { border-color: #1a1208; }
+    
+    .wallet-card-bg {
+        background: linear-gradient(135deg, #2d1f0e 0%, #1a1208 100%);
+        box-shadow: 0 20px 40px rgba(26,18,8,0.15);
+    }
+    
+    .glass-effect {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-[1100px] mx-auto">
+        <!-- Header -->
+        <div class="mb-10 text-center sm:text-left fade-in-up" style="animation-delay: 0.1s;">
+            <h1 class="font-cormorant text-[clamp(28px,3.5vw,44px)] font-semibold text-[#1a1208] leading-tight mb-2">My Wallet</h1>
+            <p class="font-montserrat text-[11px] font-medium tracking-[0.16em] text-[#8C7F77] uppercase">Manage your funds & transactions</p>
+        </div>
+
+        <div class="flex flex-col lg:flex-row gap-8">
+            
+            <!-- LEFT SIDE: Wallet Card -->
+            <div class="w-full lg:w-[360px] fade-in-up flex-shrink-0" style="animation-delay: 0.2s;">
+                <div class="bg-white rounded-3xl shadow-sm border border-[#E7DDD6] overflow-hidden transform transition duration-500 hover:shadow-lg">
+                    <!-- The Card Itself -->
+                    <div class="wallet-card-bg p-8 text-white relative overflow-hidden aspect-[1.6/1] flex flex-col justify-between">
+                        <!-- Abstract shapes for luxury feel -->
+                        <div class="absolute top-0 right-0 -mr-12 -mt-12 w-40 h-40 rounded-full bg-white opacity-5 mix-blend-overlay blur-md"></div>
+                        <div class="absolute bottom-0 left-0 -ml-10 -mb-10 w-32 h-32 rounded-full bg-[#c8b89a] opacity-10 mix-blend-overlay blur-lg"></div>
+                        
+                        <div class="relative z-10 flex justify-between items-start">
+                            <div>
+                                <p class="font-montserrat text-[9px] font-semibold opacity-70 mb-2 tracking-[0.2em] text-[#c8b89a] uppercase">Available Balance</p>
+                                <h2 class="font-cormorant text-[40px] leading-none font-medium tracking-wide">₹{{ wallet.balance|floatformat:2|default:"0.00" }}</h2>
+                            </div>
+                            <!-- Minimalist Icon -->
+                            <div class="glass-effect p-2 rounded-xl">
+                                <svg class="w-6 h-6 opacity-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                            </div>
+                        </div>
+                        
+                        <div class="relative z-10 mt-auto">
+                            <p class="font-montserrat text-[8px] opacity-60 uppercase tracking-[0.2em] mb-1">Card Holder</p>
+                            <p class="font-montserrat text-[13px] font-semibold tracking-[0.1em] uppercase shadow-sm">{{ request.user.full_name|default:request.user.username }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="p-6 bg-white">
+                        <button onclick="openAddMoneyModal()" class="w-full py-4 bg-[#1a1208] hover:bg-[#2d1f0e] text-white rounded-xl font-montserrat text-[11px] font-bold tracking-[0.15em] uppercase transition duration-300 shadow-md flex justify-center items-center gap-3 group">
+                            <svg class="w-4 h-4 transform group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                            Add Money
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT SIDE: Transaction Table -->
+            <div class="w-full flex-grow fade-in-up" style="animation-delay: 0.3s;">
+                <div class="bg-white rounded-3xl shadow-sm border border-[#E7DDD6] overflow-hidden h-full flex flex-col">
+                    <div class="p-7 border-b border-[#E7DDD6] flex justify-between items-center bg-white">
+                        <h3 class="font-cormorant text-[24px] font-semibold text-[#1a1208]">Recent Transactions</h3>
+                    </div>
+                    
+                    <div class="overflow-x-auto flex-grow">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-[#faf8f5] border-b border-[#E7DDD6]">
+                                    <th class="px-7 py-5 font-montserrat text-[10px] font-semibold tracking-[0.15em] uppercase text-[#8C7F77]">Date</th>
+                                    <th class="px-7 py-5 font-montserrat text-[10px] font-semibold tracking-[0.15em] uppercase text-[#8C7F77]">Description</th>
+                                    <th class="px-7 py-5 font-montserrat text-[10px] font-semibold tracking-[0.15em] uppercase text-[#8C7F77]">Txn ID</th>
+                                    <th class="px-7 py-5 font-montserrat text-[10px] font-semibold tracking-[0.15em] uppercase text-[#8C7F77] text-center">Status</th>
+                                    <th class="px-7 py-5 font-montserrat text-[10px] font-semibold tracking-[0.15em] uppercase text-[#8C7F77] text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody class="text-sm divide-y divide-[#E7DDD6]/50">
+                                {% for txn in transactions %}
+                                <tr class="hover:bg-[#faf8f5]/60 transition duration-200">
+                                    <td class="px-7 py-5 text-[#8C7F77] font-montserrat text-[12px] whitespace-nowrap">{{ txn.created_at|date:"M d, Y" }}</td>
+                                    <td class="px-7 py-5 text-[#1a1208] font-montserrat text-[13px] font-medium">{{ txn.description }}</td>
+                                    <td class="px-7 py-5 text-[#8C7F77] font-montserrat text-[11px] font-mono tracking-widest">{{ txn.transaction_id|default:"-" }}</td>
+                                    <td class="px-7 py-5 text-center">
+                                        {% if txn.status == 'COMPLETED' %}
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full font-montserrat text-[9px] font-bold tracking-wider uppercase bg-[#f0fdf4] text-[#166534] border border-[#bbf7d0]">Completed</span>
+                                        {% elif txn.status == 'PENDING' %}
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full font-montserrat text-[9px] font-bold tracking-wider uppercase bg-[#fffbeb] text-[#92400e] border border-[#fde68a]">Pending</span>
+                                        {% elif txn.status == 'FAILED' %}
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full font-montserrat text-[9px] font-bold tracking-wider uppercase bg-[#fef2f2] text-[#991b1b] border border-[#fecaca]">Failed</span>
+                                        {% else %}
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full font-montserrat text-[9px] font-bold tracking-wider uppercase bg-gray-50 text-gray-700 border border-gray-200">{{ txn.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-7 py-5 text-right whitespace-nowrap">
+                                        {% if txn.transaction_type == 'ADD' %}
+                                            <span class="font-montserrat text-[14px] font-semibold text-[#166534] tracking-wide">+ ₹{{ txn.amount|floatformat:2 }}</span>
+                                        {% else %}
+                                            <span class="font-montserrat text-[14px] font-semibold text-[#991b1b] tracking-wide">- ₹{{ txn.amount|floatformat:2 }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="px-7 py-16 text-center">
+                                        <div class="flex flex-col items-center justify-center">
+                                            <div class="w-16 h-16 bg-[#F5F1EC] rounded-full flex items-center justify-center mb-4">
+                                                <svg class="w-8 h-8 text-[#c8b89a]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                            </div>
+                                            <p class="font-montserrat text-[13px] font-medium text-[#1a1208]">No transactions yet</p>
+                                            <p class="font-montserrat text-[11px] text-[#8C7F77] mt-1">When you add funds or make purchases, they will appear here.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if transactions.has_other_pages %}
+                    <div class="px-7 py-5 border-t border-[#E7DDD6] flex items-center justify-between bg-[#faf8f5]/50">
+                        <span class="font-montserrat text-[11px] font-medium text-[#8C7F77]">
+                            Page {{ transactions.number }} of {{ transactions.paginator.num_pages }}
+                        </span>
+                        <div class="flex gap-2">
+                            {% if transactions.has_previous %}
+                            <a href="?page={{ transactions.previous_page_number }}" class="px-4 py-2 rounded-lg border border-[#E7DDD6] bg-white font-montserrat text-[11px] font-medium text-[#1a1208] hover:bg-[#F5F1EC] transition-colors">Prev</a>
+                            {% else %}
+                            <button disabled class="px-4 py-2 rounded-lg border border-[#E7DDD6] bg-[#faf8f5] font-montserrat text-[11px] font-medium text-[#8C7F77] opacity-50 cursor-not-allowed">Prev</button>
+                            {% endif %}
+
+                            {% if transactions.has_next %}
+                            <a href="?page={{ transactions.next_page_number }}" class="px-4 py-2 rounded-lg border border-[#E7DDD6] bg-white font-montserrat text-[11px] font-medium text-[#1a1208] hover:bg-[#F5F1EC] transition-colors">Next</a>
+                            {% else %}
+                            <button disabled class="px-4 py-2 rounded-lg border border-[#E7DDD6] bg-[#faf8f5] font-montserrat text-[11px] font-medium text-[#8C7F77] opacity-50 cursor-not-allowed">Next</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ADD MONEY MODAL -->
+<div id="addMoneyModal" class="fixed inset-0 z-50 hidden items-center justify-center">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-[#1a1208]/60 backdrop-blur-sm transition-opacity" onclick="closeAddMoneyModal()"></div>
+    
+    <!-- Modal Content -->
+    <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md mx-4 overflow-hidden transform transition-all scale-up border border-[#E7DDD6]">
+        <div class="p-8">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h3 class="font-cormorant text-[32px] font-semibold text-[#1a1208] leading-tight">Add Funds</h3>
+                    <p class="font-montserrat text-[12px] text-[#8C7F77] mt-1">Securely top up your Glowé wallet.</p>
+                </div>
+                <button onclick="closeAddMoneyModal()" class="text-[#8C7F77] hover:text-[#1a1208] transition-colors rounded-full p-2 hover:bg-[#F5F1EC] focus:outline-none">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+
+            <!-- Quick Amounts -->
+            <div class="grid grid-cols-3 gap-3 mb-6">
+                <button onclick="setAmount(100)" class="py-3 px-2 border border-[#E7DDD6] rounded-xl font-montserrat text-[13px] font-semibold text-[#1a1208] hover:border-[#1a1208] hover:bg-[#faf8f5] transition-all duration-200">₹100</button>
+                <button onclick="setAmount(500)" class="py-3 px-2 border border-[#E7DDD6] rounded-xl font-montserrat text-[13px] font-semibold text-[#1a1208] hover:border-[#1a1208] hover:bg-[#faf8f5] transition-all duration-200">₹500</button>
+                <button onclick="setAmount(1000)" class="py-3 px-2 border border-[#E7DDD6] rounded-xl font-montserrat text-[13px] font-semibold text-[#1a1208] hover:border-[#1a1208] hover:bg-[#faf8f5] transition-all duration-200">₹1000</button>
+            </div>
+
+            <!-- Custom Input -->
+            <div class="mb-7 relative">
+                <label for="customAmount" class="block font-montserrat text-[10px] font-semibold uppercase tracking-[0.15em] text-[#8C7F77] mb-2">Custom Amount</label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-5 text-[#8C7F77] font-medium text-[16px]">₹</span>
+                    <input type="number" id="customAmount" min="1" step="1" class="w-full pl-10 pr-5 py-4 bg-[#faf8f5] border border-[#E7DDD6] rounded-xl focus:outline-none focus:border-[#c8b89a] focus:ring-1 focus:ring-[#c8b89a] transition-all font-montserrat font-medium text-[16px] text-[#1a1208]" placeholder="Enter amount">
+                </div>
+            </div>
+
+            <!-- Total Display -->
+            <div class="flex justify-between items-center py-5 border-t border-[#E7DDD6] mb-6">
+                <span class="font-montserrat text-[12px] font-medium text-[#8C7F77]">Total to pay</span>
+                <span class="font-cormorant text-[32px] font-semibold text-[#1a1208]" id="displayTotal">₹0</span>
+            </div>
+
+            <!-- Action Button -->
+            <button id="addFundsBtn" onclick="processAddFunds()" class="w-full py-4 bg-[#1a1208] hover:bg-[#2d1f0e] text-white rounded-xl font-montserrat text-[11px] font-bold tracking-[0.15em] uppercase transition-all duration-300 shadow-md relative overflow-hidden flex justify-center items-center group">
+                <span id="btnText">Secure Add Funds</span>
+                <svg id="btnSpinner" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white hidden absolute" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toastContainer" class="fixed top-24 right-6 z-[60] flex flex-col gap-3 pointer-events-none"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    const csrfToken = '{{ csrf_token }}';
+    const modal = document.getElementById('addMoneyModal');
+    const amountInput = document.getElementById('customAmount');
+    const displayTotal = document.getElementById('displayTotal');
+    const addFundsBtn = document.getElementById('addFundsBtn');
+    const btnText = document.getElementById('btnText');
+    const btnSpinner = document.getElementById('btnSpinner');
+
+    let isProcessing = false;
+
+    // --- Modal Logic ---
+    function openAddMoneyModal() {
+        if (isProcessing) return;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        // Reset state
+        amountInput.value = '';
+        updateTotal();
+        resetButtonState();
+    }
+
+    function closeAddMoneyModal() {
+        if (isProcessing) return;
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
+
+    // Amount Selection
+    function setAmount(val) {
+        amountInput.value = val;
+        updateTotal();
+    }
+
+    amountInput.addEventListener('input', updateTotal);
+
+    function updateTotal() {
+        const val = parseFloat(amountInput.value) || 0;
+        displayTotal.innerText = '₹' + val.toFixed(0);
+    }
+
+    // --- Toast Logic ---
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        
+        // Base classes
+        toast.className = 'slide-in-right flex items-center px-4 py-3.5 rounded-lg shadow-lg border min-w-[280px] max-w-sm pointer-events-auto transform transition-all duration-300';
+        
+        if (type === 'success') {
+            toast.classList.add('bg-white', 'border-green-100', 'text-green-800');
+            toast.innerHTML = `
+                <div class="flex-shrink-0 bg-green-50 rounded-full p-1 mr-3">
+                    <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+                <span class="font-montserrat font-medium text-[12px] tracking-wide">${message}</span>
+            `;
+        } else {
+            toast.classList.add('bg-white', 'border-red-100', 'text-red-800');
+            toast.innerHTML = `
+                <div class="flex-shrink-0 bg-red-50 rounded-full p-1 mr-3">
+                    <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <span class="font-montserrat font-medium text-[12px] tracking-wide">${message}</span>
+            `;
+        }
+
+        container.appendChild(toast);
+
+        // Auto hide
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        }, 3000);
+    }
+
+    // --- Button States ---
+    function setLoadingState() {
+        isProcessing = true;
+        addFundsBtn.disabled = true;
+        btnText.innerText = 'Processing...';
+        btnText.classList.add('ml-2');
+        btnSpinner.classList.remove('hidden');
+        addFundsBtn.classList.add('opacity-80', 'cursor-not-allowed');
+    }
+
+    function resetButtonState() {
+        isProcessing = false;
+        addFundsBtn.disabled = false;
+        btnText.innerText = 'Secure Add Funds';
+        btnText.classList.remove('ml-2');
+        btnSpinner.classList.add('hidden');
+        addFundsBtn.classList.remove('opacity-80', 'cursor-not-allowed');
+    }
+
+    // --- Process Payment ---
+    async function processAddFunds() {
+        if (isProcessing) return;
+
+        const amountStr = amountInput.value;
+        const amount = parseFloat(amountStr);
+
+        if (!amount || amount <= 0) {
+            showToast('Please enter a valid amount greater than 0', 'error');
+            return;
+        }
+
+        setLoadingState();
+
+        try {
+            const formData = new FormData();
+            formData.append('amount', amountStr);
+
+            const response = await fetch('/wallet/create-order/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Something went wrong');
+            }
+
+            // Open Razorpay
+            const options = {
+                key: data.key,
+                amount: data.amount,
+                currency: "INR",
+                name: "Glowé",
+                description: "Wallet Top-up",
+                order_id: data.order_id,
+                handler: function (response) {
+                    verifyPayment(response, data.txn_id);
+                },
+                prefill: {
+                    name: "{{ request.user.full_name|default:request.user.username }}",
+                    email: "{{ request.user.email }}"
+                },
+                theme: {
+                    color: "#1a1208"
+                },
+                modal: {
+                    ondismiss: function() {
+                        resetButtonState();
+                        showToast('Payment cancelled', 'error');
+                    }
+                }
+            };
+
+            const rzp = new Razorpay(options);
+            
+            rzp.on('payment.failed', function (response){
+                resetButtonState();
+                showToast('Payment failed. Please try again.', 'error');
+            });
+            
+            rzp.open();
+
+        } catch (error) {
+            console.error('Error:', error);
+            showToast(error.message || 'Something went wrong', 'error');
+            resetButtonState();
+        }
+    }
+
+    async function verifyPayment(paymentResponse, txnId) {
+        try {
+            const formData = new FormData();
+            formData.append('txn_id', txnId);
+            formData.append('razorpay_order_id', paymentResponse.razorpay_order_id);
+            formData.append('razorpay_payment_id', paymentResponse.razorpay_payment_id);
+            formData.append('razorpay_signature', paymentResponse.razorpay_signature);
+
+            const response = await fetch('/wallet/verify-payment/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                closeAddMoneyModal();
+                showToast('₹' + amountInput.value + ' added successfully', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                throw new Error(data.message || 'Payment verification failed');
+            }
+        } catch (error) {
+            console.error('Verification Error:', error);
+            showToast('Something went wrong', 'error');
+            resetButtonState();
+        }
+    }
+</script>
+{% endblock %}
