@@ -184,17 +184,41 @@
                 {{ product.name }}
             </h1>
             
-            <div class="flex items-center gap-4 mb-14 font-montserrat">
-                <span id="product-price" class="text-[22px] font-semibold text-[#1a1208]">₹{{ selected_variant.price|floatformat:2|default:"0.00" }}</span>
-                {% if product.old_price %}
-                <span class="text-[14px] font-medium text-[#c4b9b0] line-through">₹{{ product.old_price|floatformat:2 }}</span>
+            <div class="flex items-center gap-4 mb-6 font-montserrat flex-wrap">
+                <span id="product-price" class="text-[22px] font-semibold text-[#1a1208]">₹{{ final_price|floatformat:2|default:"0.00" }}</span>
+                {% if has_offer %}
+                <span id="product-original-price" class="text-[14px] font-medium text-[#c4b9b0] line-through">₹{{ selected_variant.price|floatformat:2|default:"0.00" }}</span>
                 {% endif %}
                 
                 <span id="stock-badge" class="px-2.5 py-1 text-[9px] font-bold tracking-[0.1em] rounded uppercase {% if stock > 0 %}bg-[#eae6e1] text-[#1a1208]{% else %}bg-red-100 text-red-800{% endif %}">
                     {% if stock > 0 %}In Stock{% else %}Out of Stock{% endif %}
                 </span>
             </div>
+            
+            {% if has_offer %}
+            <!-- Offer Highlight Section -->
+            <div class="mb-8 bg-gradient-to-r from-[#fef3f0] to-[#fff8f5] border border-[#f0d5cc] rounded-2xl p-5 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-[#e74c3c]/5 rounded-full -translate-y-8 translate-x-8"></div>
+                <div class="flex items-center gap-3 mb-3 relative z-10">
+                    <span class="inline-flex items-center gap-1.5 bg-gradient-to-r from-[#C0392B] to-[#E74C3C] text-white text-[9px] font-bold tracking-[0.12em] uppercase px-3 py-1.5 rounded-lg shadow-sm">
+                        <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                        <span id="offer-badge-text">{{ offer_text }}</span>
+                    </span>
+                    <span class="text-[9px] font-bold tracking-[0.1em] uppercase text-[#C0392B]/70">Best Offer Applied</span>
+                </div>
+                <div class="flex items-center justify-between relative z-10">
+                    <div>
+                        <p id="offer-name-text" class="font-montserrat text-[12px] font-semibold text-[#3b2e2a]">{{ offer.name }}</p>
+                        <p class="font-montserrat text-[10px] text-[#8a7e72] mt-0.5">Limited Time Offer</p>
+                    </div>
+                    <div class="text-right">
+                        <p id="offer-save-text" class="font-montserrat text-[13px] font-bold text-[#27AE60]">You save ₹{{ offer_discount|floatformat:2 }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
 
+            <!-- Offer data is passed via data attributes on the buttons below -->
             <form id="add-to-cart-form" method="POST" action="{% url 'add_to_cart' %}" class="flex flex-col">
                 {% csrf_token %}
                 <input type="hidden" name="variant_id" id="hidden-variant-id" value="{{ selected_variant.id }}">
@@ -207,6 +231,11 @@
                         <button type="button" 
                            data-variant-id="{{ variant.id }}"
                            data-variant-price="{{ variant.price|floatformat:2|default:'0.00' }}"
+                           data-final-price="{{ variant.final_price|floatformat:2|default:'0.00' }}"
+                           data-has-offer="{{ variant.has_offer|yesno:'true,false' }}"
+                           data-offer-text="{{ variant.offer_text|default:'' }}"
+                           data-offer-name="{{ variant.offer_name|default:'' }}"
+                           data-offer-discount="{{ variant.discount|floatformat:2|default:'0.00' }}"
                            data-variant-stock="{{ variant.stock }}"
                            class="variant-btn px-6 py-2.5 rounded-lg font-montserrat text-[11px] font-semibold transition-colors border
                                   {% if variant.stock == 0 %} opacity-40 border-gray-200 text-gray-400 pointer-events-none
@@ -1179,9 +1208,40 @@
                     const vId = this.getAttribute('data-variant-id');
                     const vPrice = this.getAttribute('data-variant-price');
                     const vStock = parseInt(this.getAttribute('data-variant-stock')) || 0;
+                    const vFinalPrice = this.getAttribute('data-final-price');
+                    const vHasOffer = this.getAttribute('data-has-offer') === 'true';
+                    const vOfferText = this.getAttribute('data-offer-text');
+                    const vOfferName = this.getAttribute('data-offer-name');
+                    const vOfferDiscount = this.getAttribute('data-offer-discount');
 
-                    document.getElementById('product-price').textContent = '₹' + vPrice;
                     document.getElementById('hidden-variant-id').value = vId;
+
+                    // ── Update price with offer data ──
+                    var priceEl = document.getElementById('product-price');
+                    var origPriceEl = document.getElementById('product-original-price');
+                    var offerBadgeText = document.getElementById('offer-badge-text');
+                    var offerNameText = document.getElementById('offer-name-text');
+                    var offerSaveText = document.getElementById('offer-save-text');
+                    var offerHighlight = document.querySelector('[class*="from-\\[\\#fef3f0\\]"]');
+
+                    if (vHasOffer) {
+                        priceEl.textContent = '₹' + vFinalPrice;
+                        // Show or create original price
+                        if (origPriceEl) {
+                            origPriceEl.textContent = '₹' + vPrice;
+                            origPriceEl.style.display = '';
+                        }
+                        if (offerBadgeText) offerBadgeText.textContent = vOfferText;
+                        if (offerNameText) offerNameText.textContent = vOfferName;
+                        if (offerSaveText) offerSaveText.textContent = 'You save ₹' + vOfferDiscount;
+                        // Show offer section if it was hidden
+                        if (offerHighlight) offerHighlight.style.display = '';
+                    } else {
+                        priceEl.textContent = '₹' + vPrice;
+                        if (origPriceEl) origPriceEl.style.display = 'none';
+                        // Hide offer section
+                        if (offerHighlight) offerHighlight.style.display = 'none';
+                    }
 
                     // Update wishlist button action and heart state
                     const wlBtn = document.getElementById('wishlist-btn-main');

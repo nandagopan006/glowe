@@ -28,6 +28,7 @@ from coupons.views import calculate_discount
 from coupons.models import Coupon, CouponUsage
 from decimal import Decimal
 from wallet.models import WalletTransaction
+from offer.utils import get_best_offer
 
 @login_required
 def place_order(request):
@@ -90,7 +91,29 @@ def place_order(request):
                 messages.error(request, f"{product.name}: only {variant.stock} left")
                 return redirect("cart")
 
-            item.item_total = item.quantity * variant.price
+            
+            price = Decimal("0.00")
+            try:
+                price = Decimal(str(variant.price))
+                offer, offer_disc = get_best_offer(product, price)
+                
+                if offer:
+                    if offer_disc > price:
+                        offer_disc = price  # Discount cannot exceed price
+                        
+                    final_price = price - offer_disc
+                    
+                    if final_price < Decimal("0.00"):
+                        final_price = Decimal("0.00")  # No negative price
+                else:
+                    final_price = price
+                    
+            except Exception:
+                # If error, use the regular price
+                final_price = price
+            
+            item.item_total = item.quantity * final_price
+            item.offer_price = final_price  # Store final price for the order item
             subtotal += Decimal(item.item_total)
 
         shipping = Decimal('0.00') if subtotal > Decimal('999') else Decimal('100.00')
@@ -116,7 +139,7 @@ def place_order(request):
             OrderItem.objects.create(
                 order=order,
                 variant=item.variant,
-                price_at_time=item.variant.price,
+                price_at_time=item.offer_price,
                 quantity=item.quantity,
             )
 
