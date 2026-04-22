@@ -629,7 +629,7 @@ def product_listing(request):
         min_price = None
         max_price = None
 
-    # if user mistake we correct it swap it
+    
     if min_price and max_price:
         if int(min_price) > int(max_price):
             min_price, max_price = max_price, min_price
@@ -790,7 +790,7 @@ def product_detail_view(request, slug):
     low_stock_count = stock if 0 < stock <= 5 else None
     all_out_of_stock = not variants.filter(stock__gt=0).exists()
 
-    # Default to 0 at the start
+
     sv_price = Decimal("0.00")
     
     try:
@@ -899,29 +899,42 @@ def product_detail_view(request, slug):
     ).exclude(id=product.id)[:7]
 
 
+    
     for rel in related_products:
-        rel_variant = (
-            rel.variants.filter(is_default=True).first() or rel.variants.first()
-        )
-        if rel_variant:
-            rel_price = Decimal(str(rel_variant.price))
+        rel_price = Decimal("0.00")
+        try:
+            rel_variant = rel.variants.filter(is_default=True).first() or rel.variants.first()
+            if rel_variant:
+                rel_price = Decimal(str(rel_variant.price))
+                
             rel_offer, rel_disc = get_best_offer(rel, rel_price)
+            
             if rel_offer:
-                rel_disc = min(rel_disc, rel_price)
-                rel.final_price = (rel_price - rel_disc).quantize(Decimal("0.01"))
-                rel.discount = rel_disc.quantize(Decimal("0.01"))
+                if rel_disc > rel_price:
+                    rel_disc = rel_price  # Discount cannot exceed price
+                    
+                final_rel_price = rel_price - rel_disc
+                
+                if final_rel_price < Decimal("0.00"):
+                    final_rel_price = Decimal("0.00")  # No negative price
+                    
+                rel.final_price = final_rel_price
+                rel.discount = rel_disc
                 rel.has_offer = True
-                rel.original_price = rel_price.quantize(Decimal("0.01"))
+                rel.original_price = rel_price
             else:
-                rel.final_price = rel_price.quantize(Decimal("0.01"))
+                # If no offer
+                rel.final_price = rel_price
                 rel.discount = Decimal("0.00")
                 rel.has_offer = False
-                rel.original_price = rel_price.quantize(Decimal("0.01"))
-        else:
-            rel.final_price = Decimal("0.00")
+                rel.original_price = rel_price
+                
+        except Exception:
+            # Default to normal price if error
+            rel.final_price = rel_price
             rel.discount = Decimal("0.00")
             rel.has_offer = False
-            rel.original_price = Decimal("0.00")
+            rel.original_price = rel_price
 
     # wishlisted variant 
     wishlisted_ids = []

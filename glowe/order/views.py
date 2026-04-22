@@ -571,7 +571,7 @@ def cancel_order_item(request, item_id):
         cancelled_amount = item.price_at_time * quantity_to_cancel
         order.subtotal -= cancelled_amount
 
-        # partial cancellation
+        # partial cancel
         if quantity_to_cancel < item.quantity:
             # Reduce original item quantity
             item.quantity -= quantity_to_cancel
@@ -608,7 +608,7 @@ def cancel_order_item(request, item_id):
             order.order_status = Order.Status.CANCELLED
             order.save()
 
-    # Process refund for the cancelled item amount (skips COD if not delivered)
+    # skips COD if not delivered
     refunded = process_refund(
         order,
         refund_amount=cancelled_amount,
@@ -641,7 +641,7 @@ def order_cancelled_success(request, order_id):
     if not cancelled_items.exists():
         return redirect("order_detail", order_id=order_id)
 
-    # Determine if the entire order is cancelled
+    #if the entire order is cancelled
     total_items = order.items.count()
     full_cancelled = cancelled_items.count() == total_items
 
