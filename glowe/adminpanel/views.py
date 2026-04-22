@@ -24,7 +24,11 @@ from datetime import datetime, timedelta
 from django.db.models import Sum, Count
 from django.db.models.functions import TruncDate
 from order.models import Order, OrderItem
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet
 
 
 
@@ -398,3 +402,206 @@ def sales_report(request):
 
     return render(request, "admin/sales_report.html", context)
  
+ 
+
+def export_sales_excel(request):
+    filter_type = request.GET.get("filter", "month")
+    today = timezone.now()
+
+ 
+    if filter_type == "day":
+        start_date = today.replace(hour=0, minute=0, second=0)
+        end_date = today
+
+    elif filter_type == "week":
+        start_date = today - timedelta(days=7)
+        end_date = today
+
+    elif filter_type == "year":
+        start_date = today - timedelta(days=365)
+        end_date = today
+
+    elif filter_type == "custom":
+        start = request.GET.get("start_date")
+        end = request.GET.get("end_date")
+
+        if start and end:
+            start_date = make_aware(datetime.strptime(start, "%Y-%m-%d"))
+            end_date = make_aware(datetime.strptime(end, "%Y-%m-%d"))
+        else:
+            start_date = today - timedelta(days=30)
+            end_date = today
+
+    else:
+        start_date = today - timedelta(days=30)
+        end_date = today
+
+
+    orders = Order.objects.filter(
+        created_at__range=[start_date, end_date],
+        status="DELIVERED"
+    ).only(
+        "id", "created_at", "total_amount",
+        "coupon_discount", "offer_discount",
+        "final_amount", "payment_method"
+    )
+
+   
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Sales Report"
+
+  
+    headers = [
+        "Order ID",
+        "Date",
+        "Total",
+        "Coupon Discount",
+        "Offer Discount",
+        "Final Amount",
+        "Payment Method"
+    ]
+
+    ws.append(headers)
+
+    from openpyxl.styles import Font
+    for cell in ws[1]:
+        cell.font = Font(bold=True)
+
+    total_sum = 0
+
+    for order in orders:
+        ws.append([
+            order.id,
+            order.created_at.strftime("%Y-%m-%d"),
+            float(order.total_amount),
+            float(order.coupon_discount),
+            float(order.offer_discount),
+            float(order.final_amount),
+            order.payment_method
+        ])
+        total_sum += float(order.final_amount)
+
+    # Add total row
+    ws.append([])
+    ws.append(["", "", "", "", "Total Revenue", total_sum])
+
+    
+    for col in ws.columns:
+        max_length = 0
+        col_letter = col[0].column_letter
+
+        for cell in col:
+            try:
+                if cell.value:
+                    max_length = max(max_length, len(str(cell.value)))
+            except:
+                pass
+
+        ws.column_dimensions[col_letter].width = max_length + 2
+
+  
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = 'attachment; filename="sales_report.xlsx"'
+
+    wb.save(response)
+    return response
+
+
+
+
+
+def export_sales_pdf(request):
+    filter_type = request.GET.get("filter", "month")
+    today = timezone.now()
+
+    #  Date filter 
+    if filter_type == "day":
+        start_date = today.replace(hour=0, minute=0, second=0)
+        end_date = today
+
+    elif filter_type == "week":
+        start_date = today - timedelta(days=7)
+        end_date = today
+
+    elif filter_type == "year":
+        start_date = today - timedelta(days=365)
+        end_date = today
+
+    elif filter_type == "custom":
+        start = request.GET.get("start_date")
+        end = request.GET.get("end_date")
+
+        if start and end:
+            start_date = make_aware(datetime.strptime(start, "%Y-%m-%d"))
+            end_date = make_aware(datetime.strptime(end, "%Y-%m-%d"))
+        else:
+            start_date = today - timedelta(days=30)
+            end_date = today
+    else:
+        start_date = today - timedelta(days=30)
+        end_date = today
+
+    # Filtered Orders
+    orders = Order.objects.filter(
+        created_at__range=[start_date, end_date],
+        status="DELIVERED"
+    )
+
+    #Totals
+    total_revenue = sum([o.final_amount for o in orders])
+    total_discount = sum([o.discount_amount for o in orders])
+
+    #Response
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = 'attachment; filename="sales_report.pdf"'
+
+    doc = SimpleDocTemplate(response, pagesize=A4)
+    styles = getSampleStyleSheet()
+
+    elements = []
+
+    # Title
+    elements.append(Paragraph("Sales Report", styles["Title"]))
+    elements.append(Spacer(1, 10))
+
+    # Summary
+    elements.append(Paragraph(f"Total Revenue: ₹{total_revenue}", styles["Normal"]))
+    elements.append(Paragraph(f"Total Discount: ₹{total_discount}", styles["Normal"]))
+    elements.append(Paragraph(f"Total Orders: {orders.count()}", styles["Normal"]))
+    elements.append(Spacer(1, 20))
+
+    # Table Data
+    data = [
+        ["ID", "Date", "Total", "Discount", "Final", "Payment"]
+    ]
+
+    for order in orders:
+        data.append([
+            order.id,
+            order.created_at.strftime("%Y-%m-%d"),
+            float(order.total_amount),
+            float(order.discount_amount),
+            float(order.final_amount),
+            order.payment_method
+        ])
+
+    table = Table(data)
+
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+
+        ("GRID", (0, 0), (-1, -1), 1, colors.black),
+
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("ALIGN", (2, 1), (-1, -1), "RIGHT"),
+    ]))
+
+    elements.append(table)
+
+    doc.build(elements)
+
+    return response
