@@ -300,3 +300,22 @@ def toggle_offer(request, id):
         messages.success(request, "Offer deactivated")
 
     return redirect("offer_list")
+
+def delete_offer(request, id):
+
+    if request.method == "POST":
+
+        offer = get_object_or_404(Offer, id=id)
+
+        offer.delete()
+
+        return JsonResponse({
+            "success": True,
+            "message": "Offer deleted successfully"
+        })
+
+    return JsonResponse({
+        "success": False,
+        "error": "Invalid request"
+    })
+    
