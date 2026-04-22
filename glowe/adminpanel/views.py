@@ -3,10 +3,9 @@
 from django.shortcuts import render, redirect
 import openpyxl
 from django.http import HttpResponse
-
+from coupons.models import Coupon as CouponModel
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from accounts.models import OTPVerification, ProfileUser
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.utils import timezone
@@ -22,6 +21,7 @@ from django.utils import timezone
 from django.utils.timezone import make_aware
 from datetime import datetime, timedelta
 from django.db.models import Sum, Count
+from user.models import Address
 from django.db.models.functions import TruncDate
 from order.models import Order, OrderItem
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
@@ -288,320 +288,377 @@ def admin_toggle_block(request, id):
 
     return redirect('user_management')
 def user_detail(request, id):
+    # Get the user
     user = get_object_or_404(ProfileUser, id=id, is_superuser=False)
- 
-    # Uncomment when Order model is ready:
-    # from orders.models import Order
-    # from django.db.models import Sum
-    # all_orders   = Order.objects.filter(user=user).order_by('-created_at')
-    # total_orders = all_orders.count()
-    # total_spent  = all_orders.aggregate(s=Sum('total_amount'))['s'] or 0
-    # avg_order    = round(total_spent / total_orders, 2) if total_orders else 0
-    # orders_page  = Paginator(all_orders, 5).get_page(request.GET.get('order_page', 1))
- 
-    total_orders=0
-    total_spent='0.00'
-    avg_order='0.00'
-    orders_page=    Paginator([], 5).get_page(1)
- 
-    return render(request,'user_detail.html',{
-        'user':user,
-        'total_orders':total_orders,
-        'total_spent':total_spent,
-        'avg_order':avg_order,
-        'orders':orders_page,
-    })
+    
+    # Get all orders for this user
+    all_orders = Order.objects.filter(user=user).order_by('-created_at')
+    
+    # Calculate total orders
+    total_orders = all_orders.count()
+    
+    
+    total_spent = 0
+    for order in all_orders:
+        total_spent += float(order.total_amount)
+    
+    # Calculate average order value
+    if total_orders > 0:
+        avg_order = round(total_spent / total_orders, 2)
+    else:
+        avg_order = 0
+    
+    # Count delivered orders
+    delivered_orders = all_orders.filter(order_status='DELIVERED').count()
+    
+    # Paginate
+    paginator = Paginator(all_orders, 5)
+    page_number = request.GET.get('page', 1)
+    orders_page = paginator.get_page(page_number)
+    
+    # Get user's addresses
+    addresses = Address.objects.filter(user=user)
+    
+    
+    phone_number = user.phone_number if user.phone_number else 'Not provided'
+    full_name = user.get_full_name() if user.get_full_name() else user.username
+    joined_date = user.date_joined
+    
+    # Get user's last login
+    last_login = user.last_login if user.last_login else 'Never'
+
+    context = {
+        'user': user,
+        'total_orders': total_orders,
+        'total_spent': total_spent,
+        'avg_order': avg_order,
+        'delivered_orders': delivered_orders,
+        'orders': orders_page,
+        'addresses': addresses,
+        'phone_number': phone_number,
+        'full_name': full_name,
+        'joined_date': joined_date,
+        'last_login': last_login,
+    }
+    
+    return render(request, 'user_detail.html', context)
     
 
 def sales_report(request):
-    filter_type = request.GET.get("filter", "month")
-
-    today = timezone.now()
-
-    #Date filtering
-    if filter_type == "day":
-        start_date = today.replace(hour=0, minute=0, second=0)
-        end_date = today
-
-    elif filter_type == "week":
-        start_date = today - timedelta(days=7)
-        end_date = today
-
-    elif filter_type == "year":
-        start_date = today - timedelta(days=365)
-        end_date = today
-
-    elif filter_type == "custom":
-        start = request.GET.get("start_date")
-        end = request.GET.get("end_date")
-
-        if start and end:
-            start_date = make_aware(datetime.strptime(start, "%Y-%m-%d"))
-            end_date = make_aware(datetime.strptime(end, "%Y-%m-%d"))
-        else:
-            start_date = today - timedelta(days=30)
-            end_date = today
-
-    else:
-        start_date = today - timedelta(days=30)
-        end_date = today
 
     
-    orders = Order.objects.filter(created_at__range=[start_date, end_date],status="DELIVERED")
-
-    total_revenue = orders.aggregate(Sum("final_amount"))["final_amount__sum"] or 0
-    total_orders = orders.count()
-
-    coupon_discount = orders.aggregate(Sum("coupon_discount"))["coupon_discount__sum"] or 0
-    offer_discount = orders.aggregate(Sum("offer_discount"))["offer_discount__sum"] or 0
-
-    total_discount = coupon_discount + offer_discount
-
-    products_sold = OrderItem.objects.filter(
-        order__in=orders
-    ).aggregate(Sum("quantity"))["quantity__sum"] or 0
-
-    #Chart Data
-    chart_data = orders.annotate(
-        date=TruncDate("created_at")
-    ).values("date").annotate(
-        total=Sum("final_amount")
-    ).order_by("date")
-
-    #Growth Calculation
-    previous_orders = Order.objects.filter(
-        created_at__range=[
-            start_date - (end_date - start_date),
-            start_date
-        ],
-        status="DELIVERED"
-    )
-
-    previous_revenue = previous_orders.aggregate(
-        Sum("final_amount")
-    )["final_amount__sum"] or 0
-
-    if previous_revenue > 0:
-        growth = ((total_revenue - previous_revenue) / previous_revenue) * 100
-    else:
-        growth = 0
-
-    context = {
-        "total_revenue": total_revenue,
-        "total_orders": total_orders,
-        "products_sold": products_sold,
-        "total_discount": total_discount,
-        "coupon_discount": coupon_discount,
-        "offer_discount": offer_discount,
-        "chart_data": list(chart_data),
-        "growth": round(growth, 2),
-        "filter_type": filter_type,
-        "start_date": start_date,
-        "end_date": end_date,
-    }
-
-    return render(request, "admin/sales_report.html", context)
- 
- 
-
-def export_sales_excel(request):
-    filter_type = request.GET.get("filter", "month")
+    filter_type = request.GET.get('filter', 'month')
     today = timezone.now()
 
- 
-    if filter_type == "day":
-        start_date = today.replace(hour=0, minute=0, second=0)
+    
+    if filter_type == 'day':
+        start_date = today.replace(hour=0, minute=0, second=0, microsecond=0)
         end_date = today
 
-    elif filter_type == "week":
+    elif filter_type == 'week':
         start_date = today - timedelta(days=7)
         end_date = today
 
-    elif filter_type == "year":
+    elif filter_type == 'year':
         start_date = today - timedelta(days=365)
         end_date = today
 
-    elif filter_type == "custom":
-        start = request.GET.get("start_date")
-        end = request.GET.get("end_date")
-
+    elif filter_type == 'custom':
+        start = request.GET.get('start_date')
+        end   = request.GET.get('end_date')
         if start and end:
-            start_date = make_aware(datetime.strptime(start, "%Y-%m-%d"))
-            end_date = make_aware(datetime.strptime(end, "%Y-%m-%d"))
+            start_date = make_aware(datetime.strptime(start, '%Y-%m-%d'))
+            end_date   = make_aware(datetime.strptime(end,   '%Y-%m-%d'))
         else:
             start_date = today - timedelta(days=30)
-            end_date = today
+            end_date   = today
 
-    else:
+    else:  # default: month
         start_date = today - timedelta(days=30)
-        end_date = today
+        end_date   = today
 
-
+    #Get all delivered orders in the date range
     orders = Order.objects.filter(
         created_at__range=[start_date, end_date],
-        status="DELIVERED"
-    ).only(
-        "id", "created_at", "total_amount",
-        "coupon_discount", "offer_discount",
-        "final_amount", "payment_method"
+        order_status='DELIVERED'
     )
 
+    
+    total_orders = orders.count()
+
+    total_revenue = 0
+    for order in orders:
+        total_revenue += float(order.total_amount)
+
+    coupon_discount = 0
+    for order in orders:
+        coupon_discount += float(order.discount_amount)
+
+    total_discount = coupon_discount  # discount_amount = coupon savings
+
+    #Count total products sold
+    order_items = OrderItem.objects.filter(order__in=orders)
+    products_sold = 0
+    for item in order_items:
+        products_sold += item.quantity
+
+    #Build chart data 
+    daily_data = (
+        orders
+        .annotate(date=TruncDate('created_at'))
+        .values('date')
+        .annotate(total=Sum('total_amount'))
+        .order_by('date')
+    )
+
+    chart_list = []
+    for row in daily_data:
+        chart_list.append({
+            'date':  str(row['date']),
+            'total': float(row['total'] or 0),
+        })
+
+    # Calculate growth vs previous period
+    period_length = end_date - start_date
+    prev_start    = start_date - period_length
+    prev_end      = start_date
+
+    previous_orders = Order.objects.filter(
+        created_at__range=[prev_start, prev_end],
+        order_status='DELIVERED'
+    )
+
+    previous_revenue = 0
+    for order in previous_orders:
+        previous_revenue += float(order.total_amount)
+
+    # Growth calculation logic
+    if previous_revenue > 0:
+        growth = round((total_revenue - previous_revenue) / previous_revenue * 100, 2)
+    elif total_revenue > 0 and previous_revenue == 0:
+  
+        growth = 100.0
+    else:
+        
+        growth = 0.0
+
+    # Build orders list for the discount table
+    orders_list = orders.select_related('payment').order_by('-created_at')[:50]
+
+
    
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = "Sales Report"
+    orders_with_discount_count = orders.filter(discount_amount__gt=0).count()
+
+   
+    
+    coupon_stats = CouponModel.objects.filter(
+        used_count__gt=0,
+        is_deleted=False
+    ).order_by('-used_count')
+
+    context = {
+        'total_revenue':              total_revenue,
+        'total_orders':               total_orders,
+        'products_sold':              products_sold,
+        'total_discount':             total_discount,
+        'coupon_discount':            coupon_discount,
+        'offer_discount':             0,
+        'chart_data':                 chart_list,
+        'growth':                     growth,
+        'filter_type':                filter_type,
+        'start_date':                 start_date,
+        'end_date':                   end_date,
+        'orders_list':                orders_list,
+        'orders_with_discount_count': orders_with_discount_count,
+        'coupon_stats':               coupon_stats,
+    }
+
+    return render(request, 'admin/sales_report.html', context)
+
+
+
+def export_sales_excel(request):
 
   
-    headers = [
-        "Order ID",
-        "Date",
-        "Total",
-        "Coupon Discount",
-        "Offer Discount",
-        "Final Amount",
-        "Payment Method"
-    ]
+    filter_type = request.GET.get('filter', 'month')
+    today = timezone.now()
 
-    ws.append(headers)
+    #Set dates
+    if filter_type == 'day':
+        start_date = today.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_date   = today
+    elif filter_type == 'week':
+        start_date = today - timedelta(days=7)
+        end_date   = today
+    elif filter_type == 'year':
+        start_date = today - timedelta(days=365)
+        end_date   = today
+    elif filter_type == 'custom':
+        start = request.GET.get('start_date')
+        end   = request.GET.get('end_date')
+        if start and end:
+            start_date = make_aware(datetime.strptime(start, '%Y-%m-%d'))
+            end_date   = make_aware(datetime.strptime(end,   '%Y-%m-%d'))
+        else:
+            start_date = today - timedelta(days=30)
+            end_date   = today
+    else:
+        start_date = today - timedelta(days=30)
+        end_date   = today
 
+    #Fetch delivered orders
+    orders = Order.objects.filter(
+        created_at__range=[start_date, end_date],
+        order_status='DELIVERED'
+    ).select_related('payment')
+
+    #Create Excel workbook
     from openpyxl.styles import Font
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Sales Report'
+
+    #Write header row
+    headers = ['Order ID', 'Date', 'Subtotal', 'Coupon Discount', 'Total Amount', 'Payment Method']
+    ws.append(headers)
     for cell in ws[1]:
         cell.font = Font(bold=True)
 
-    total_sum = 0
-
+  
+    grand_total = 0
     for order in orders:
+        # Get payment method safely
+        try:
+            payment_method = order.payment.payment_method
+        except Exception:
+            payment_method = 'N/A'
+
         ws.append([
             order.id,
-            order.created_at.strftime("%Y-%m-%d"),
+            order.created_at.strftime('%Y-%m-%d'),
+            float(order.subtotal),
+            float(order.discount_amount),
             float(order.total_amount),
-            float(order.coupon_discount),
-            float(order.offer_discount),
-            float(order.final_amount),
-            order.payment_method
+            payment_method,
         ])
-        total_sum += float(order.final_amount)
+        grand_total += float(order.total_amount)
 
-    # Add total row
+   
     ws.append([])
-    ws.append(["", "", "", "", "Total Revenue", total_sum])
+    ws.append(['', '', '', 'Grand Total', grand_total])
 
-    
+  
     for col in ws.columns:
-        max_length = 0
+        max_len = 0
         col_letter = col[0].column_letter
-
         for cell in col:
             try:
                 if cell.value:
-                    max_length = max(max_length, len(str(cell.value)))
-            except:
+                    max_len = max(max_len, len(str(cell.value)))
+            except Exception:
                 pass
+        ws.column_dimensions[col_letter].width = max_len + 4
 
-        ws.column_dimensions[col_letter].width = max_length + 2
 
-  
     response = HttpResponse(
-        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
-    response["Content-Disposition"] = 'attachment; filename="sales_report.xlsx"'
-
+    response['Content-Disposition'] = 'attachment; filename="sales_report.xlsx"'
     wb.save(response)
     return response
 
 
-
-
-
 def export_sales_pdf(request):
-    filter_type = request.GET.get("filter", "month")
+
+    # Step 1: Read filter
+    filter_type = request.GET.get('filter', 'month')
     today = timezone.now()
 
-    #  Date filter 
-    if filter_type == "day":
-        start_date = today.replace(hour=0, minute=0, second=0)
-        end_date = today
-
-    elif filter_type == "week":
+    # Step 2: Set dates
+    if filter_type == 'day':
+        start_date = today.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_date   = today
+    elif filter_type == 'week':
         start_date = today - timedelta(days=7)
-        end_date = today
-
-    elif filter_type == "year":
+        end_date   = today
+    elif filter_type == 'year':
         start_date = today - timedelta(days=365)
-        end_date = today
-
-    elif filter_type == "custom":
-        start = request.GET.get("start_date")
-        end = request.GET.get("end_date")
-
+        end_date   = today
+    elif filter_type == 'custom':
+        start = request.GET.get('start_date')
+        end   = request.GET.get('end_date')
         if start and end:
-            start_date = make_aware(datetime.strptime(start, "%Y-%m-%d"))
-            end_date = make_aware(datetime.strptime(end, "%Y-%m-%d"))
+            start_date = make_aware(datetime.strptime(start, '%Y-%m-%d'))
+            end_date   = make_aware(datetime.strptime(end,   '%Y-%m-%d'))
         else:
             start_date = today - timedelta(days=30)
-            end_date = today
+            end_date   = today
     else:
         start_date = today - timedelta(days=30)
-        end_date = today
+        end_date   = today
 
-    # Filtered Orders
+   #Fetch delivered orders
     orders = Order.objects.filter(
         created_at__range=[start_date, end_date],
-        status="DELIVERED"
-    )
+        order_status='DELIVERED'
+    ).select_related('payment')
 
-    #Totals
-    total_revenue = sum([o.final_amount for o in orders])
-    total_discount = sum([o.discount_amount for o in orders])
+    #Calculate totals
+    total_revenue  = 0
+    total_discount = 0
+    for order in orders:
+        total_revenue  += float(order.total_amount)
+        total_discount += float(order.discount_amount)
 
-    #Response
-    response = HttpResponse(content_type="application/pdf")
-    response["Content-Disposition"] = 'attachment; filename="sales_report.pdf"'
+    # Set up PDF response
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="sales_report.pdf"'
 
-    doc = SimpleDocTemplate(response, pagesize=A4)
+    doc    = SimpleDocTemplate(response, pagesize=A4)
     styles = getSampleStyleSheet()
-
     elements = []
 
-    # Title
-    elements.append(Paragraph("Sales Report", styles["Title"]))
-    elements.append(Spacer(1, 10))
-
-    # Summary
-    elements.append(Paragraph(f"Total Revenue: ₹{total_revenue}", styles["Normal"]))
-    elements.append(Paragraph(f"Total Discount: ₹{total_discount}", styles["Normal"]))
-    elements.append(Paragraph(f"Total Orders: {orders.count()}", styles["Normal"]))
+    # Step 6: Title and summary
+    elements.append(Paragraph('Glowe — Sales Report', styles['Title']))
+    elements.append(Spacer(1, 12))
+    elements.append(Paragraph(f'Period : {start_date.strftime("%Y-%m-%d")} to {end_date.strftime("%Y-%m-%d")}', styles['Normal']))
+    elements.append(Paragraph(f'Total Orders  : {orders.count()}',     styles['Normal']))
+    elements.append(Paragraph(f'Total Revenue : Rs.{total_revenue:.2f}',  styles['Normal']))
+    elements.append(Paragraph(f'Total Discount: Rs.{total_discount:.2f}', styles['Normal']))
     elements.append(Spacer(1, 20))
 
-    # Table Data
-    data = [
-        ["ID", "Date", "Total", "Discount", "Final", "Payment"]
-    ]
+    # Step 7: Build table rows
+    table_data = [['Order ID', 'Date', 'Subtotal', 'Discount', 'Total', 'Payment']]
 
     for order in orders:
-        data.append([
-            order.id,
-            order.created_at.strftime("%Y-%m-%d"),
-            float(order.total_amount),
-            float(order.discount_amount),
-            float(order.final_amount),
-            order.payment_method
+        try:
+            payment_method = order.payment.payment_method
+        except Exception:
+            payment_method = 'N/A'
+
+        table_data.append([
+            str(order.id),
+            order.created_at.strftime('%Y-%m-%d'),
+            f'Rs.{float(order.subtotal):.2f}',
+            f'Rs.{float(order.discount_amount):.2f}',
+            f'Rs.{float(order.total_amount):.2f}',
+            payment_method,
         ])
 
-    table = Table(data)
-
+ 
+    table = Table(table_data)
     table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-
-        ("GRID", (0, 0), (-1, -1), 1, colors.black),
-
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("ALIGN", (2, 1), (-1, -1), "RIGHT"),
+        ('BACKGROUND',  (0, 0), (-1, 0), colors.HexColor('#4a9050')),
+        ('TEXTCOLOR',   (0, 0), (-1, 0), colors.white),
+        ('FONTNAME',    (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE',    (0, 0), (-1, -1), 9),
+        ('GRID',        (0, 0), (-1, -1), 0.5, colors.lightgrey),
+        ('ALIGN',       (2, 1), (-1, -1), 'RIGHT'),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f9fafb')]),
     ]))
 
     elements.append(table)
 
-    doc.build(elements)
 
+    doc.build(elements)
     return response

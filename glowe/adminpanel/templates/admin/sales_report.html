@@ -1,0 +1,640 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sales Report — Glowé Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['DM Sans','sans-serif'] },
+          colors: {
+            sage: { 50:'#f2f7f2',100:'#e2f0e2',200:'#c3dfc3',500:'#4a9050',600:'#3a7a3e',700:'#2f6232' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    *{font-family:'DM Sans',sans-serif;box-sizing:border-box}
+    body{background:#f4f6f3;margin:0;overflow-x:hidden}
+
+    .admin-main{margin-left:0;transition:margin-left .3s}
+    @media(min-width:1024px){.admin-main{margin-left:240px}}
+
+    /* fade-up cards */
+    @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .fade-up{opacity:0;animation:fadeUp .5s ease forwards}
+    .fade-up:nth-child(1){animation-delay:.05s}
+    .fade-up:nth-child(2){animation-delay:.13s}
+    .fade-up:nth-child(3){animation-delay:.21s}
+    .fade-up:nth-child(4){animation-delay:.29s}
+
+    .metric-card{background:#fff;border-radius:18px;border:1px solid #eaede8;padding:22px 20px 18px;transition:transform .25s,box-shadow .25s}
+    .metric-card:hover{transform:scale(1.025);box-shadow:0 10px 32px rgba(0,0,0,.10)}
+
+    .chart-card{background:#fff;border-radius:18px;border:1px solid #eaede8;padding:26px}
+
+    .filter-btn{padding:6px 20px;border-radius:20px;font-size:.8rem;font-weight:600;cursor:pointer;border:none;background:transparent;color:#7a8c7a;transition:background .15s,color .15s;text-decoration:none;display:inline-block}
+    .filter-btn.active,.filter-btn:hover{background:#4a9050;color:#fff}
+
+    .export-menu{display:none;position:absolute;right:0;top:calc(100% + 8px);width:170px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.12);z-index:50;overflow:hidden}
+    .export-menu.open{display:block}
+
+    .prog{height:6px;border-radius:10px;background:#edf0ed;overflow:hidden;margin-top:5px}
+    .prog-fill{height:100%;border-radius:10px;transition:width 1.1s cubic-bezier(.4,0,.2,1)}
+
+    /* ring animation */
+    #growthRing{transition:stroke-dashoffset 1.1s cubic-bezier(.4,0,.2,1)}
+
+    /* skeleton */
+    @keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+    .skeleton{background:linear-gradient(90deg,#f0f0f0 25%,#e4e4e4 50%,#f0f0f0 75%);background-size:600px 100%;animation:shimmer 1.3s infinite;border-radius:8px}
+
+    @media(max-width:1023px){.admin-mobile-offset{padding-top:56px!important}}
+  </style>
+</head>
+<body>
+
+{% include 'admin_sidebar.html' %}
+
+<div class="admin-main min-h-screen admin-mobile-offset">
+<main class="p-4 sm:p-6 lg:p-8 max-w-[1380px] mx-auto">
+
+  <!-- ── HEADER ── -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+    <div>
+      <h1 class="text-[22px] font-bold text-gray-900 tracking-tight">Sales Report</h1>
+      <p class="text-sm text-gray-400 mt-0.5">
+        Performance overview · {{ start_date|date:"M d, Y" }} → {{ end_date|date:"M d, Y" }}
+      </p>
+    </div>
+    <div class="flex flex-wrap items-center gap-3">
+
+      <!-- Filter pills -->
+      <div class="flex items-center gap-1 bg-white border border-gray-200 rounded-full p-1 shadow-sm">
+        <a href="?filter=day"   class="filter-btn {% if filter_type == 'day' %}active{% endif %}">Day</a>
+        <a href="?filter=week"  class="filter-btn {% if filter_type == 'week' %}active{% endif %}">Week</a>
+        <a href="?filter=month" class="filter-btn {% if filter_type == 'month' or not filter_type %}active{% endif %}">Month</a>
+        <a href="?filter=year"  class="filter-btn {% if filter_type == 'year' %}active{% endif %}">Year</a>
+      </div>
+
+      <!-- Export dropdown -->
+      <div class="relative">
+        <button id="exportBtn" onclick="toggleExport()"
+                class="flex items-center gap-2 px-5 py-2.5 bg-[#4a9050] hover:bg-[#3a7a3e] text-white text-sm font-semibold rounded-full shadow-lg shadow-green-900/20 transition-all active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
+          </svg>
+          Export
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+        <div id="exportMenu" class="export-menu">
+          <a href="{% url 'export_sales_excel' %}?filter={{ filter_type }}"
+             class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 font-medium transition-colors">
+            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><path stroke-linecap="round" d="M8 12h8M8 8h4M8 16h6"/>
+            </svg>Excel (.xlsx)
+          </a>
+          <a href="{% url 'export_sales_pdf' %}?filter={{ filter_type }}"
+             class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 font-medium transition-colors">
+            <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" d="M9 12h6M9 16h4M7 4H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V8l-5-4z"/>
+            </svg>PDF (.pdf)
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if total_orders == 0 and total_revenue == 0 %}
+  <!-- ── EMPTY STATE ── -->
+  <div class="chart-card flex flex-col items-center justify-center py-20 mb-8 text-center">
+    <div class="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-5">
+      <svg class="w-9 h-9 text-gray-300" fill="none" stroke="currentColor" stroke-width="1.4" viewBox="0 0 24 24">
+        <path stroke-linecap="round" d="M9 17v-2m3 2v-4m3 4v-6M5 17H4a2 2 0 01-2-2V5a2 2 0 012-2h16a2 2 0 012 2v10a2 2 0 01-2 2h-1"/>
+      </svg>
+    </div>
+    <p class="text-gray-700 font-bold text-xl">No delivered orders in this period</p>
+    <p class="text-gray-400 text-sm mt-1 mb-6">Try a wider date range above.</p>
+    <div class="flex gap-3">
+      <a href="?filter=month" class="px-5 py-2.5 bg-[#4a9050] text-white rounded-full text-sm font-semibold hover:bg-[#3a7a3e] transition-colors">This Month</a>
+      <a href="?filter=year"  class="px-5 py-2.5 border border-gray-200 text-gray-700 rounded-full text-sm font-semibold hover:bg-gray-50 transition-colors">This Year</a>
+    </div>
+  </div>
+
+  {% else %}
+
+  <!-- ── METRIC CARDS ── -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+
+    <!-- Revenue -->
+    <div class="metric-card fade-up">
+      <div class="flex items-start justify-between mb-4">
+        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Revenue</span>
+        <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
+          <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24">
+            <path stroke-linecap="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+      </div>
+      <div class="text-[26px] font-bold text-gray-900 leading-tight">₹{{ total_revenue|floatformat:2 }}</div>
+      <div class="flex items-center gap-1.5 mt-2">
+        {% if growth >= 0 %}
+          <span class="inline-flex items-center gap-1 text-[12px] font-bold text-green-600 bg-green-50 px-2.5 py-0.5 rounded-full">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 15l7-7 7 7"/></svg>
+            +{{ growth }}%
+          </span>
+        {% else %}
+          <span class="inline-flex items-center gap-1 text-[12px] font-bold text-red-500 bg-red-50 px-2.5 py-0.5 rounded-full">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" d="M19 9l-7 7-7-7"/></svg>
+            {{ growth }}%
+          </span>
+        {% endif %}
+        <span class="text-[11px] text-gray-400">vs prev. period</span>
+      </div>
+    </div>
+
+    <!-- Orders -->
+    <div class="metric-card fade-up">
+      <div class="flex items-start justify-between mb-4">
+        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Orders</span>
+        <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+          <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24">
+            <path stroke-linecap="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+          </svg>
+        </div>
+      </div>
+      <div class="text-[26px] font-bold text-gray-900 leading-tight">{{ total_orders }}</div>
+      <div class="text-[12px] text-gray-400 mt-2">Delivered orders</div>
+    </div>
+
+    <!-- Products -->
+    <div class="metric-card fade-up">
+      <div class="flex items-start justify-between mb-4">
+        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Products Sold</span>
+        <div class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
+          <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24">
+            <path stroke-linecap="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+          </svg>
+        </div>
+      </div>
+      <div class="text-[26px] font-bold text-gray-900 leading-tight">{{ products_sold }}</div>
+      <div class="text-[12px] text-gray-400 mt-2">Total units dispatched</div>
+    </div>
+
+    <!-- Discounts -->
+    <div class="metric-card fade-up">
+      <div class="flex items-start justify-between mb-4">
+        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Coupon Savings</span>
+        <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center">
+          <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24">
+            <path stroke-linecap="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/>
+          </svg>
+        </div>
+      </div>
+      <div class="text-[26px] font-bold text-gray-900 leading-tight">₹{{ total_discount|floatformat:2 }}</div>
+      {% if total_discount > 0 %}
+        <div class="text-[12px] text-green-600 font-semibold mt-2">Coupons applied to orders</div>
+      {% else %}
+        <div class="text-[12px] text-gray-400 mt-2">No coupons used this period</div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- ── CHARTS ROW ── -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+
+    <!-- Revenue Line Chart -->
+    <div class="chart-card lg:col-span-2">
+      <div class="flex items-start justify-between flex-wrap gap-3 mb-6">
+        <div>
+          <div class="font-bold text-gray-900 text-[16px]">Revenue Overview</div>
+          <div class="text-xs text-gray-400 mt-0.5">Daily sales · {{ start_date|date:"M d" }} – {{ end_date|date:"M d, Y" }}</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-[22px] font-bold text-gray-900">₹{{ total_revenue|floatformat:2 }}</span>
+          {% if growth >= 0 %}
+            <span class="text-xs font-bold text-green-600 bg-green-50 px-2.5 py-1 rounded-full">+{{ growth }}%</span>
+          {% else %}
+            <span class="text-xs font-bold text-red-500 bg-red-50 px-2.5 py-1 rounded-full">{{ growth }}%</span>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if chart_data %}
+        <div style="height:250px;position:relative">
+          <canvas id="revenueChart"></canvas>
+        </div>
+      {% else %}
+        <div class="flex flex-col items-center justify-center h-52 text-gray-300">
+          <svg class="w-12 h-12 mb-3" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          <p class="text-sm text-gray-400">No chart data for this period</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Growth + Breakdown Panel -->
+    <div class="chart-card flex flex-col gap-6">
+
+      <!-- Growth Ring -->
+      <div class="text-center">
+        <div class="font-bold text-gray-900 text-[15px] mb-4">Period Growth</div>
+        <div class="relative inline-flex items-center justify-center w-32 h-32 mx-auto">
+          <svg class="w-32 h-32 -rotate-90" viewBox="0 0 110 110">
+            <circle cx="55" cy="55" r="44" fill="none" stroke="#edf0ed" stroke-width="10"/>
+            <circle cx="55" cy="55" r="44" fill="none"
+                    stroke="{% if growth >= 0 %}#4a9050{% else %}#ef4444{% endif %}"
+                    stroke-width="10"
+                    stroke-dasharray="276.5"
+                    stroke-dashoffset="276.5"
+                    stroke-linecap="round"
+                    id="growthRing"/>
+          </svg>
+          <div class="absolute inset-0 flex flex-col items-center justify-center">
+            <div class="text-[22px] font-bold {% if growth >= 0 %}text-green-600{% else %}text-red-500{% endif %}">
+              {% if growth >= 0 %}+{% endif %}{{ growth }}%
+            </div>
+            <div class="text-[10px] text-gray-400 font-semibold uppercase tracking-wider">Growth</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Discount Breakdown -->
+      <div class="border-t border-gray-100 pt-5 space-y-4">
+        <div class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Discount Breakdown</div>
+
+        <!-- Coupon -->
+        <div>
+          <div class="flex justify-between items-center mb-1.5">
+            <span class="text-[13px] text-gray-700 font-medium">Coupon Discount</span>
+            <span class="text-[13px] font-bold text-gray-900">₹{{ coupon_discount|floatformat:2 }}</span>
+          </div>
+          <div class="prog">
+            <div class="prog-fill bg-[#4a9050]" id="couponBar" style="width:0%"
+                 data-target="{% if total_discount > 0 %}100{% else %}0{% endif %}%"></div>
+          </div>
+        </div>
+
+        <!-- Avg order & period -->
+        <div class="grid grid-cols-2 gap-3 pt-1">
+          <div class="bg-gray-50 rounded-xl p-3 text-center">
+            <div class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Avg Order</div>
+            <div class="text-[15px] font-bold text-gray-900">
+              {% if total_orders > 0 %}₹{% widthratio total_revenue total_orders 1 %}{% else %}₹0{% endif %}
+            </div>
+          </div>
+          <div class="bg-gray-50 rounded-xl p-3 text-center">
+            <div class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">Period</div>
+            <div class="text-[15px] font-bold text-gray-900 capitalize">{{ filter_type }}</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── COUPON USAGE DETAILS ── -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+
+    <!-- Coupon Stats Summary -->
+    <div class="chart-card flex flex-col gap-4">
+      <div class="font-bold text-gray-900 text-[15px]">Coupon Summary</div>
+
+      <div class="flex items-center justify-between py-3 border-b border-gray-100">
+        <span class="text-sm text-gray-500">Orders with coupon</span>
+        <span class="text-sm font-bold text-gray-900">{{ orders_with_discount_count }}</span>
+      </div>
+      <div class="flex items-center justify-between py-3 border-b border-gray-100">
+        <span class="text-sm text-gray-500">Total saved by customers</span>
+        <span class="text-sm font-bold text-green-600">₹{{ coupon_discount|floatformat:2 }}</span>
+      </div>
+      <div class="flex items-center justify-between py-3 border-b border-gray-100">
+        <span class="text-sm text-gray-500">Orders without coupon</span>
+        <span class="text-sm font-bold text-gray-900">{{ total_orders|add:"-"|add:orders_with_discount_count }}</span>
+      </div>
+      <div class="flex items-center justify-between py-3">
+        <span class="text-sm text-gray-500">Unique coupons used</span>
+        <span class="text-sm font-bold text-gray-900">{{ coupon_stats|length }}</span>
+      </div>
+    </div>
+
+    <!-- Coupon Usage Table -->
+    <div class="chart-card lg:col-span-2">
+      <div class="font-bold text-gray-900 text-[15px] mb-4">Coupon Usage Details</div>
+
+      {% if coupon_stats %}
+      <div class="overflow-x-auto rounded-xl border border-gray-100">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-gray-50 border-b border-gray-100">
+              <th class="text-left px-4 py-2.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Coupon Code</th>
+              <th class="text-left px-4 py-2.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Type</th>
+              <th class="text-right px-4 py-2.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Discount</th>
+              <th class="text-right px-4 py-2.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Times Used</th>
+              <th class="text-right px-4 py-2.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Usage Limit</th>
+              <th class="text-center px-4 py-2.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50">
+            {% for coupon in coupon_stats %}
+            <tr class="hover:bg-gray-50 transition-colors">
+
+              <!-- Coupon Code -->
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center gap-1.5 font-bold text-[12px] text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-100">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/>
+                  </svg>
+                  {{ coupon.code }}
+                </span>
+              </td>
+
+              <!-- Discount Type -->
+              <td class="px-4 py-3">
+                {% if coupon.discount_type == 'percentage' %}
+                  <span class="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full">% Percentage</span>
+                {% else %}
+                  <span class="text-[11px] font-semibold text-orange-700 bg-orange-50 px-2.5 py-1 rounded-full">₹ Flat</span>
+                {% endif %}
+              </td>
+
+              <!-- Discount Value -->
+              <td class="px-4 py-3 text-right font-bold text-gray-800 text-[13px]">
+                {% if coupon.discount_type == 'percentage' %}
+                  {{ coupon.discount_value }}%
+                  {% if coupon.max_discount %}
+                    <div class="text-[10px] text-gray-400 font-normal">max ₹{{ coupon.max_discount }}</div>
+                  {% endif %}
+                {% else %}
+                  ₹{{ coupon.discount_value }}
+                {% endif %}
+              </td>
+
+              <!-- Times Used -->
+              <td class="px-4 py-3 text-right">
+                <span class="text-[13px] font-bold {% if coupon.used_count > 0 %}text-green-600{% else %}text-gray-400{% endif %}">
+                  {{ coupon.used_count }}×
+                </span>
+              </td>
+
+              <!-- Usage Limit -->
+              <td class="px-4 py-3 text-right text-[13px] text-gray-500">
+                {% if coupon.total_usage_limit %}
+                  {{ coupon.used_count }}/{{ coupon.total_usage_limit }}
+                {% else %}
+                  Unlimited
+                {% endif %}
+              </td>
+
+              <!-- Status -->
+              <td class="px-4 py-3 text-center">
+                {% if coupon.is_active %}
+                  <span class="text-[11px] font-semibold text-green-700 bg-green-50 px-2.5 py-1 rounded-full border border-green-100">Active</span>
+                {% else %}
+                  <span class="text-[11px] font-semibold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">Inactive</span>
+                {% endif %}
+              </td>
+
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="flex flex-col items-center justify-center py-10 text-center">
+        <svg class="w-10 h-10 text-gray-200 mb-3" fill="none" stroke="currentColor" stroke-width="1.3" viewBox="0 0 24 24">
+          <path stroke-linecap="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/>
+        </svg>
+        <p class="text-gray-400 text-sm font-medium">No coupons have been used yet</p>
+        <p class="text-gray-300 text-xs mt-1">Coupon usage will appear here once customers apply them at checkout</p>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- ── DISCOUNT / COUPON BREAKDOWN TABLE ── -->
+
+  <div class="chart-card mb-8">
+
+    <div class="flex items-center justify-between flex-wrap gap-3 mb-6">
+      <div>
+        <div class="font-bold text-gray-900 text-[16px]">Order Discount Breakdown</div>
+        <div class="text-xs text-gray-400 mt-0.5">Coupon deductions per delivered order · latest 50</div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-semibold text-orange-600 bg-orange-50 px-3 py-1.5 rounded-full border border-orange-100">
+          Total Saved: ₹{{ coupon_discount|floatformat:2 }}
+        </span>
+      </div>
+    </div>
+
+    {% if orders_list %}
+    <div class="overflow-x-auto rounded-xl border border-gray-100">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="bg-gray-50 border-b border-gray-100">
+            <th class="text-left px-4 py-3 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Order #</th>
+            <th class="text-left px-4 py-3 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Date</th>
+            <th class="text-right px-4 py-3 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Subtotal</th>
+            <th class="text-right px-4 py-3 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Coupon Discount</th>
+            <th class="text-right px-4 py-3 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Final Amount</th>
+            <th class="text-center px-4 py-3 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Payment</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+          {% for order in orders_list %}
+          <tr class="hover:bg-gray-50 transition-colors duration-150 group">
+
+            <!-- Order Number -->
+            <td class="px-4 py-3.5">
+              <span class="font-semibold text-gray-800 text-[13px]">{{ order.order_number }}</span>
+            </td>
+
+            <!-- Date -->
+            <td class="px-4 py-3.5 text-gray-500 text-[13px]">
+              {{ order.created_at|date:"M d, Y" }}
+            </td>
+
+            <!-- Subtotal -->
+            <td class="px-4 py-3.5 text-right text-gray-700 font-medium text-[13px]">
+              ₹{{ order.subtotal|floatformat:2 }}
+            </td>
+
+            <!-- Coupon Discount -->
+            <td class="px-4 py-3.5 text-right">
+              {% if order.discount_amount > 0 %}
+                <span class="inline-flex items-center gap-1 text-[12px] font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/>
+                  </svg>
+                  −₹{{ order.discount_amount|floatformat:2 }}
+                </span>
+              {% else %}
+                <span class="text-[12px] text-gray-300 font-medium">—</span>
+              {% endif %}
+            </td>
+
+            <!-- Final Amount -->
+            <td class="px-4 py-3.5 text-right">
+              <span class="font-bold text-gray-900 text-[13px]">₹{{ order.total_amount|floatformat:2 }}</span>
+            </td>
+
+            <!-- Payment Method -->
+            <td class="px-4 py-3.5 text-center">
+              {% with method=order.payment.payment_method|default:"N/A" %}
+                {% if method == "COD" %}
+                  <span class="text-[11px] font-semibold text-yellow-700 bg-yellow-50 px-2.5 py-1 rounded-full border border-yellow-100">COD</span>
+                {% elif method == "RAZORPAY" %}
+                  <span class="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">Razorpay</span>
+                {% elif method == "WALLET" %}
+                  <span class="text-[11px] font-semibold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-100">Wallet</span>
+                {% else %}
+                  <span class="text-[11px] font-semibold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">{{ method }}</span>
+                {% endif %}
+              {% endwith %}
+            </td>
+
+          </tr>
+          {% endfor %}
+        </tbody>
+
+        <!-- Table Footer Totals -->
+        <tfoot>
+          <tr class="bg-gray-50 border-t-2 border-gray-200">
+            <td colspan="2" class="px-4 py-3.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider">
+              Totals ({{ total_orders }} orders)
+            </td>
+            <td class="px-4 py-3.5 text-right text-[13px] font-bold text-gray-800">
+              ₹{{ orders_list|length }} orders
+            </td>
+            <td class="px-4 py-3.5 text-right">
+              {% if coupon_discount > 0 %}
+                <span class="text-[13px] font-bold text-green-700">−₹{{ coupon_discount|floatformat:2 }}</span>
+              {% else %}
+                <span class="text-[13px] text-gray-400">₹0.00</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3.5 text-right text-[14px] font-bold text-gray-900">
+              ₹{{ total_revenue|floatformat:2 }}
+            </td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    {% else %}
+    <div class="flex flex-col items-center justify-center py-12 text-center">
+      <svg class="w-10 h-10 text-gray-200 mb-3" fill="none" stroke="currentColor" stroke-width="1.3" viewBox="0 0 24 24">
+        <path stroke-linecap="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+      </svg>
+      <p class="text-gray-400 text-sm">No orders found for this period</p>
+    </div>
+    {% endif %}
+
+  </div>
+
+  {% endif %}
+
+</main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+/* Export dropdown */
+function toggleExport(){
+  document.getElementById('exportMenu').classList.toggle('open');
+}
+document.addEventListener('click', function(e){
+  var btn = document.getElementById('exportBtn');
+  var menu = document.getElementById('exportMenu');
+  if(menu && btn && !btn.contains(e.target) && !menu.contains(e.target)){
+    menu.classList.remove('open');
+  }
+});
+
+/* Progress bars */
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('[data-target]').forEach(function(el){
+    setTimeout(function(){ el.style.width = el.dataset.target; }, 450);
+  });
+});
+
+/* Growth ring */
+(function(){
+  var growth = {{ growth }};
+  var circumference = 276.5;
+  // If growth is 0, clamped is 0, offset is circumference (empty ring)
+  // If growth is 100+, clamped is 100, offset is 0 (full ring)
+  var clamped = Math.min(Math.abs(growth), 100);
+  var offset = circumference - (clamped / 100 * circumference);
+  // Ensure offset doesn't go below 0
+  offset = Math.max(0, offset);
+  var ring = document.getElementById('growthRing');
+  if(ring){
+    setTimeout(function(){
+      ring.style.strokeDashoffset = offset;
+    }, 350);
+  }
+})();
+
+/* Revenue chart */
+{% if chart_data %}
+(function(){
+  var labels = [{% for d in chart_data %}"{{ d.date }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+  var values = [{% for d in chart_data %}{{ d.total }}{% if not forloop.last %},{% endif %}{% endfor %}];
+  if(!labels.length) return;
+  var ctx = document.getElementById('revenueChart');
+  if(!ctx) return;
+  ctx = ctx.getContext('2d');
+  var grad = ctx.createLinearGradient(0,0,0,250);
+  grad.addColorStop(0,'rgba(74,144,80,0.20)');
+  grad.addColorStop(1,'rgba(74,144,80,0.01)');
+  new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:labels,
+      datasets:[{
+        data:values,
+        borderColor:'#1a2e1a',borderWidth:2.5,
+        fill:true,backgroundColor:grad,
+        pointRadius:0,pointHoverRadius:6,
+        pointHoverBackgroundColor:'#4a9050',
+        pointHoverBorderColor:'#fff',pointHoverBorderWidth:2,
+        tension:0.42
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#fff',borderColor:'#dde8d8',borderWidth:1,
+          titleColor:'#4a6a4a',bodyColor:'#1a2e1a',
+          bodyFont:{weight:'700',size:13},padding:12,
+          callbacks:{label:function(c){return ' ₹'+c.parsed.y.toLocaleString('en-IN',{minimumFractionDigits:2});}}
+        }
+      },
+      scales:{
+        x:{grid:{display:false},ticks:{font:{size:10,weight:'600'},color:'#a8bea8',maxTicksLimit:8},border:{display:false}},
+        y:{grid:{color:'#f0f4f0'},ticks:{font:{size:10},color:'#a8bea8',callback:function(v){return '₹'+v.toLocaleString('en-IN');}},border:{display:false}}
+      },
+      animation:{duration:900,easing:'easeInOutQuart'}
+    }
+  });
+})();
+{% endif %}
+</script>
+</body>
+</html>
