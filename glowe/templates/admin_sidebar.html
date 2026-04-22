@@ -17,7 +17,7 @@
   <!-- Logo -->
   <div class="flex items-center justify-between gap-3 px-5 py-4 border-b border-gray-100 flex-shrink-0">
     <a href="{% url 'admin_dashboard' %}" class="flex flex-col min-w-0 no-underline">
-      <img src="{{ logo_url }}" alt="{{ site_name }} Logo" class="w-[15f\\\8px] h-auto object-contain">
+      <img src="{{ logo_url }}" alt="{{ site_name }} Logo" class="w-32 h-auto object-contain">
     </a>
     <!-- Close — mobile/tablet only -->
     <button type="button" onclick="toggleAdminSidebar()"
@@ -129,9 +129,9 @@
       </a>
 
       <!-- Offers -->
-      <a href=""
+      <a href="{% url 'offer_list' %}"
          class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150
-                {% if request.resolver_match.url_name == 'admin_offers' %}bg-sage-50 text-sage-700{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %}">
+                {% if request.resolver_match.url_name == 'offer_list' %}bg-sage-50 text-sage-700{% else %}text-gray-600 hover:bg-gray-50 hover:text-gray-900{% endif %}">
         <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/>
         </svg>

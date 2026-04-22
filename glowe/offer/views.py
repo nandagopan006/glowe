@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from decimal import Decimal, InvalidOperation
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.utils import timezone
 
 from .models import Offer, OfferItem
@@ -9,6 +9,7 @@ from product.models import Product
 from category.models import Category
 from django.core.paginator import Paginator
 from django.http import JsonResponse
+
 
 def add_offer(request):
 
@@ -38,33 +39,32 @@ def add_offer(request):
         if not name:
             return error("Offer name required")
 
+        # Validation for numbers
         try:
             discount_value = Decimal(discount_value)
-        except (InvalidOperation, TypeError):
+            if discount_value <= 0:
+                return error("Discount must be greater than 0")
+            if discount_type == "PERCENTAGE" and discount_value > 100:
+                return error("Percentage discount cannot exceed 100%")
+        except:
             return error("Invalid discount value")
 
-        if discount_value <= 0:
-            return error("Discount must be greater than 0")
-
-        if discount_type not in ["PERCENTAGE", "FLAT"]:
-            return error("Invalid discount type")
-
-        if discount_type == "PERCENTAGE" and discount_value > 100:
-            return error("Percentage cannot exceed 100")
-
+        # Convert optional fields to None if empty
+        max_d_val = None
         if max_discount:
             try:
-                max_discount = Decimal(max_discount)
-                if max_discount <= 0:
-                    return error("Max discount must be > 0")
+                max_d_val = Decimal(max_discount)
+                if max_d_val <= 0:
+                    return error("Max discount must be greater than 0")
             except:
                 return error("Invalid max discount")
 
+        min_p_val = None
         if min_purchase:
             try:
-                min_purchase = Decimal(min_purchase)
-                if min_purchase <= 0:
-                    return error("Min purchase must be > 0")
+                min_p_val = Decimal(min_purchase)
+                if min_p_val < 0:
+                    return error("Min purchase cannot be negative")
             except:
                 return error("Invalid min purchase")
 
@@ -74,8 +74,28 @@ def add_offer(request):
         except:
             return error("Invalid date format")
 
-        if start_date >= end_date:
-            return error("End date must be after start date")
+     
+        today = timezone.now().date()
+        start_date_only = start_date.date() if hasattr(start_date, 'date') else start_date
+        end_date_only = end_date.date() if hasattr(end_date, 'date') else end_date
+
+       
+        if start_date_only < today:
+            return error("Start date cannot be in the past. Please select today or a future date.")
+
+        
+        if end_date_only <= start_date_only:
+            return error("End date must be at least one day after the start date.")
+
+    
+        duration = (end_date_only - start_date_only).days
+        if duration < 1:
+            return error("Offer must run for at least 1 day.")
+
+        
+        if duration > 365:
+            return error("Offer duration cannot exceed 1 year (365 days).")
+
 
         if apply_to == "PRODUCT" and not product_id:
             return error("Select a product")
@@ -91,7 +111,7 @@ def add_offer(request):
                 apply_to="PRODUCT",
                 offer__is_active=True,
                 offer__start_date__lte=now,
-                offer__end_date__gte=now
+                offer__end_date__gte=now,
             ).exists()
 
             if exists:
@@ -103,35 +123,45 @@ def add_offer(request):
                 apply_to="CATEGORY",
                 offer__is_active=True,
                 offer__start_date__lte=now,
-                offer__end_date__gte=now
+                offer__end_date__gte=now,
             ).exists()
 
             if exists:
                 return error("This category already has an active offer")
 
-        # save (same)
+        is_active = (
+            request.POST.get("is_active") == "true"
+            or request.POST.get("is_active") == "on"
+        )
+
+        # save
         offer = Offer.objects.create(
             name=name,
             discount_type=discount_type,
             discount_value=discount_value,
-            max_discount=max_discount if discount_type == "PERCENTAGE" else None,
-            min_purchase=min_purchase,
+            max_discount=max_d_val if discount_type == "PERCENTAGE" else None,
+            min_purchase=min_p_val,
             start_date=start_date,
             end_date=end_date,
-            is_active=True
+            is_active=is_active,
         )
 
         if apply_to == "PRODUCT":
-            OfferItem.objects.create(offer=offer, apply_to="PRODUCT", product_id=product_id)
+            OfferItem.objects.create(
+                offer=offer, apply_to="PRODUCT", product_id=product_id
+            )
         else:
-            OfferItem.objects.create(offer=offer, apply_to="CATEGORY", category_id=category_id)
+            OfferItem.objects.create(
+                offer=offer, apply_to="CATEGORY", category_id=category_id
+            )
 
         return JsonResponse({"success": True, "message": "Offer created successfully"})
 
-    return render(request, "admin/offer_list.html", {
-        "products": products,
-        "categories": categories
-    })
+    return render(
+        request,
+        "admin/offer_list.html",
+        {"products": products, "categories": categories},
+    )
 
 
 def edit_offer(request, id):
@@ -142,6 +172,7 @@ def edit_offer(request, id):
     if request.method == "POST":
 
         name = request.POST.get("name")
+        discount_type = request.POST.get("discount_type")
         discount_value = request.POST.get("discount_value")
         max_discount = request.POST.get("max_discount")
         min_purchase = request.POST.get("min_purchase")
@@ -152,34 +183,31 @@ def edit_offer(request, id):
         def error(msg):
             return JsonResponse({"success": False, "error": msg})
 
-        # validation 
-        if not name:
-            return error("Offer name required")
-
+        # Validation for numbers
         try:
-            discount_value = Decimal(discount_value)
-        except (InvalidOperation, TypeError):
+            d_val = Decimal(discount_value)
+            if d_val <= 0:
+                return error("Discount must be greater than 0")
+            if discount_type == "PERCENTAGE" and d_val > 100:
+                return error("Percentage discount cannot exceed 100%")
+        except:
             return error("Invalid discount value")
 
-        if discount_value <= 0:
-            return error("Discount must be greater than 0")
-
-        if offer.discount_type == "PERCENTAGE" and discount_value > 100:
-            return error("Percentage cannot exceed 100")
-
+        m_val = None
         if max_discount:
             try:
-                max_discount = Decimal(max_discount)
-                if max_discount <= 0:
-                    return error("Max discount must be > 0")
+                m_val = Decimal(max_discount)
+                if m_val <= 0:
+                    return error("Max discount must be greater than 0")
             except:
                 return error("Invalid max discount")
 
+        p_val = None
         if min_purchase:
             try:
-                min_purchase = Decimal(min_purchase)
-                if min_purchase <= 0:
-                    return error("Min purchase must be > 0")
+                p_val = Decimal(min_purchase)
+                if p_val < 0:
+                    return error("Min purchase cannot be negative")
             except:
                 return error("Invalid min purchase")
 
@@ -189,14 +217,53 @@ def edit_offer(request, id):
         except:
             return error("Invalid date format")
 
-        if start_date >= end_date:
-            return error("End date must be after start date")
+        # Get today's date 
+        today = timezone.now().date()
+        start_date_only = start_date.date() if hasattr(start_date, 'date') else start_date
+        end_date_only = end_date.date() if hasattr(end_date, 'date') else end_date
+        
+        # Get the original offer's start
+        original_start_date = offer.start_date.date() if hasattr(offer.start_date, 'date') else offer.start_date
 
-        # save (same)
+      
+        if original_start_date > today:
+          
+            if start_date_only < today:
+                return error("Start date cannot be in the past. Please select today or a future date.")
+        else:
+           
+            if start_date_only < original_start_date:
+                return error("Cannot change start date to an earlier date for an active or past offer.")
+           
+            if start_date_only != original_start_date and start_date_only < today:
+                return error("New start date cannot be in the past.")
+
+        
+        if end_date_only <= start_date_only:
+            return error("End date must be at least one day after the start date.")
+
+        
+        if end_date_only < today:
+            return error("End date cannot be in the past. The offer would be expired immediately.")
+
+        #Minimum offer duration (at least 1 day)
+        duration = (end_date_only - start_date_only).days
+        if duration < 1:
+            return error("Offer must run for at least 1 day.")
+
+        #Maximum offer duration (1 year)
+        if duration > 365:
+            return error("Offer duration cannot exceed 1 year (365 days).")
+
+        
+        
+
+        # save
         offer.name = name
-        offer.discount_value = discount_value
-        offer.max_discount = max_discount if offer.discount_type == "PERCENTAGE" else None
-        offer.min_purchase = min_purchase
+        offer.discount_type = discount_type
+        offer.discount_value = d_val
+        offer.max_discount = m_val if offer.discount_type == "PERCENTAGE" else None
+        offer.min_purchase = p_val
         offer.start_date = start_date
         offer.end_date = end_date
 
@@ -204,14 +271,14 @@ def edit_offer(request, id):
 
         return JsonResponse({"success": True, "message": "Offer updated successfully"})
 
-    return render(request, "admin/offer_list.html", {
-        "offer": offer,
-        "item": item
-    })
+    return render(request, "admin/offer_list.html", {"offer": offer, "item": item})
+
 
 def offer_list(request):
 
     offers = Offer.objects.all().order_by("-created_at")
+    products = Product.objects.all()
+    categories = Category.objects.all()
 
     search = request.GET.get("search")
     offer_type = request.GET.get("type")
@@ -219,7 +286,6 @@ def offer_list(request):
 
     now = timezone.now()
 
-    
     if search:
         offers = offers.filter(name__icontains=search)
 
@@ -228,23 +294,18 @@ def offer_list(request):
         offers = offers.filter(items__apply_to="PRODUCT")
 
     elif offer_type == "CATEGORY":
-        offers=offers.filter(items__apply_to="CATEGORY")
+        offers = offers.filter(items__apply_to="CATEGORY")
 
     # filter by status
     if status == "ACTIVE":
-        offers=offers.filter(
-            is_active=True,
-            start_date__lte=now,
-            end_date__gte=now
-        )
+        offers = offers.filter(is_active=True, start_date__lte=now, end_date__gte=now)
 
     elif status == "SCHEDULED":
-        offers=offers.filter(start_date__gt=now)
+        offers = offers.filter(start_date__gt=now)
 
     elif status == "EXPIRED":
-        offers =offers.filter(end_date__lt=now)
+        offers = offers.filter(end_date__lt=now)
 
-    
     offer_data = []
 
     for offer in offers:
@@ -260,62 +321,52 @@ def offer_list(request):
         else:
             offer_status = "Active"
 
-        offer_data.append({
-            "offer": offer,
-            "item": item,
-            "status": offer_status
-        })
-        
+        offer_data.append({"offer": offer, "item": item, "status": offer_status})
+
     paginator = Paginator(offer_data, 5)
     page = request.GET.get("page")
     offers = paginator.get_page(page)
 
-    return render(request, "admin/offer_list.html", {
-        "offers": offer_data,
-    })
+    return render(
+        request,
+        "admin/offer_list.html",
+        {
+            "offers": offers,
+            "products": products,
+            "categories": categories,
+        },
+    )
 
 
 def toggle_offer(request, id):
-
     if request.method != "POST":
-        messages.error(request, "Invalid request")
-        return redirect("offer_list")
+        return JsonResponse({"success": False, "error": "Invalid request"})
 
     offer = get_object_or_404(Offer, id=id)
-
     now = timezone.now()
 
-    #Prevent activating expired offers
-    if offer.end_date < now:
-        messages.error(request, "Cannot activate expired offer")
-        return redirect("offer_list")
+    if offer.end_date < now and not offer.is_active:
+        return JsonResponse(
+            {"success": False, "error": "Cannot activate expired offer"}
+        )
 
-    #Toggle
     offer.is_active = not offer.is_active
     offer.save()
 
-    if offer.is_active:
-        messages.success(request, "Offer activated")
-    else:
-        messages.success(request, "Offer deactivated")
+    return JsonResponse(
+        {
+            "success": True,
+            "message": f"Offer {'activated' if offer.is_active else 'deactivated'} successfully",
+            "is_active": offer.is_active,
+        }
+    )
 
-    return redirect("offer_list")
 
 def delete_offer(request, id):
-
     if request.method == "POST":
-
         offer = get_object_or_404(Offer, id=id)
-
         offer.delete()
+        return JsonResponse({"success": True, "message": "Offer deleted successfully"})
 
-        return JsonResponse({
-            "success": True,
-            "message": "Offer deleted successfully"
-        })
-
-    return JsonResponse({
-        "success": False,
-        "error": "Invalid request"
-    })
-    
+    return JsonResponse({"success": False, "error": "Invalid request"})
+            

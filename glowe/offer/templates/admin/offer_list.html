@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glowé Admin — Offers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom Scrollbar for modern dropdowns */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { 
+            background: #e2e8f0; 
+            border-radius: 20px;
+            transition: background 0.2s;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+
+        /* Custom Dropdown Animations */
+        .dropdown-content {
+            opacity: 0;
+            transform: translateY(-8px) scale(0.98);
+            pointer-events: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+        }
+        .dropdown-content.active {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+
+        /* Option Hover States */
+        .dropdown-option {
+            transition: all 0.15s ease;
+        }
+        .dropdown-option:hover {
+            background: #f8fafc;
+            padding-left: 1.25rem;
+            color: #2f6232;
+        }
+        .dropdown-option.selected {
+            background: #f0fdf4;
+            color: #166534;
+            font-weight: 700;
+            border-left: 3px solid #2f6232;
+        }
+    </style>
+</head>
+<body class="bg-[#f9fafb]">
+<!-- Include Sidebar -->
+{% include 'admin_sidebar.html' %}
+
+<div class="admin-main-content min-h-screen lg:ml-[240px] bg-[#f9fafb]">
+    <main class="px-6 py-10 lg:px-12 max-w-[1440px] mx-auto">
+        
+        <!-- Header Section -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+            <div>
+                <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight leading-none">Offers</h1>
+                <p class="text-[15px] text-gray-500 mt-2 font-medium">Manage discounts, coupons, and seasonal promotions.</p>
+            </div>
+            <button id="openAddModal" class="inline-flex items-center justify-center px-7 py-3 bg-[#1a1a1a] hover:bg-black text-white text-[14px] font-bold rounded-2xl shadow-lg shadow-black/10 transition-all duration-300 hover:-translate-y-0.5 active:scale-95 gap-2.5 group">
+                <svg class="w-5 h-5 transition-transform group-hover:rotate-90 duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>
+                Create New Offer
+            </button>
+        </div>
+
+        <!-- Filters & Search Bar -->
+        <div class="bg-white p-5 rounded-[28px] border border-gray-100 shadow-sm mb-8 flex flex-col xl:flex-row items-center justify-between gap-5">
+            <div class="flex-1 w-full xl:w-auto">
+                <form method="GET" id="searchFilterForm" class="flex flex-col md:flex-row items-center gap-4">
+                    <div class="relative w-full md:w-[380px]">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <svg class="w-4.5 h-4.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                        <input type="text" id="searchInput" name="search" value="{{ request.GET.search|default:'' }}" placeholder="Search by offer name..." class="w-full pl-12 pr-12 py-3.5 bg-gray-50/50 border border-transparent rounded-2xl focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[14px] outline-none">
+                        <button type="button" id="clearBtn" class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-300 hover:text-gray-900 transition-colors {% if not request.GET.search %}hidden{% endif %}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
+                    
+                    <div class="flex items-center gap-4 w-full md:w-auto">
+                        <!-- Modern Filter: All Types -->
+                        <div class="relative custom-dropdown w-full md:w-[160px]" id="filterTypeDropdown">
+                            <input type="hidden" name="type" id="filterTypeInput" value="{{ request.GET.type|default:'' }}">
+                            <button type="button" class="dropdown-trigger w-full px-5 py-3.5 bg-gray-50/50 border border-transparent rounded-2xl focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[14px] text-gray-700 font-medium outline-none flex items-center justify-between group">
+                                <span class="selected-text truncate">{% if request.GET.type == 'PRODUCT' %}Product{% elif request.GET.type == 'CATEGORY' %}Category{% else %}All Types{% endif %}</span>
+                                <svg class="w-4 h-4 text-gray-400 group-hover:text-[#2f6232] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            <div class="dropdown-content absolute left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+                                <div class="options-list p-1">
+                                    <div class="dropdown-option px-4 py-3 text-[14px] text-gray-700 font-medium cursor-pointer rounded-xl {% if not request.GET.type %}selected{% endif %}" data-value="">All Types</div>
+                                    <div class="dropdown-option px-4 py-3 text-[14px] text-gray-700 font-medium cursor-pointer rounded-xl {% if request.GET.type == 'PRODUCT' %}selected{% endif %}" data-value="PRODUCT">Product</div>
+                                    <div class="dropdown-option px-4 py-3 text-[14px] text-gray-700 font-medium cursor-pointer rounded-xl {% if request.GET.type == 'CATEGORY' %}selected{% endif %}" data-value="CATEGORY">Category</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Modern Filter: All Status -->
+                        <div class="relative custom-dropdown w-full md:w-[160px]" id="filterStatusDropdown">
+                            <input type="hidden" name="status" id="filterStatusInput" value="{{ request.GET.status|default:'' }}">
+                            <button type="button" class="dropdown-trigger w-full px-5 py-3.5 bg-gray-50/50 border border-transparent rounded-2xl focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[14px] text-gray-700 font-medium outline-none flex items-center justify-between group">
+                                <span class="selected-text truncate">{% if request.GET.status == 'ACTIVE' %}Active{% elif request.GET.status == 'SCHEDULED' %}Scheduled{% elif request.GET.status == 'EXPIRED' %}Expired{% elif request.GET.status == 'INACTIVE' %}Inactive{% else %}All Status{% endif %}</span>
+                                <svg class="w-4 h-4 text-gray-400 group-hover:text-[#2f6232] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            <div class="dropdown-content absolute left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+                                <div class="options-list p-1">
+                                    <div class="dropdown-option px-4 py-3 text-[14px] text-gray-700 font-medium cursor-pointer rounded-xl {% if not request.GET.status %}selected{% endif %}" data-value="">All Status</div>
+                                    <div class="dropdown-option px-4 py-3 text-[14px] text-gray-700 font-medium cursor-pointer rounded-xl {% if request.GET.status == 'ACTIVE' %}selected{% endif %}" data-value="ACTIVE">Active</div>
+                                    <div class="dropdown-option px-4 py-3 text-[14px] text-gray-700 font-medium cursor-pointer rounded-xl {% if request.GET.status == 'SCHEDULED' %}selected{% endif %}" data-value="SCHEDULED">Scheduled</div>
+                                    <div class="dropdown-option px-4 py-3 text-[14px] text-gray-700 font-medium cursor-pointer rounded-xl {% if request.GET.status == 'EXPIRED' %}selected{% endif %}" data-value="EXPIRED">Expired</div>
+                                    <div class="dropdown-option px-4 py-3 text-[14px] text-gray-700 font-medium cursor-pointer rounded-xl {% if request.GET.status == 'INACTIVE' %}selected{% endif %}" data-value="INACTIVE">Inactive</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="text-[13px] text-gray-400 font-medium hidden xl:block">
+                Total Results: <span class="text-gray-900">{{ offers.paginator.count }}</span>
+            </div>
+        </div>
+
+        <!-- Modern Table Design -->
+        <div class="bg-white rounded-[32px] border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.02)] overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50/30 text-[12px] font-bold text-gray-400 uppercase tracking-[0.05em] border-b border-gray-50">
+                            <th class="py-6 px-8">Offer Details</th>
+                            <th class="py-6 px-6">Scope</th>
+                            <th class="py-6 px-6">Discount</th>
+                            <th class="py-6 px-6">Min Purchase</th>
+                            <th class="py-6 px-6">Timeline</th>
+                            <th class="py-6 px-6 text-center">Status</th>
+                            <th class="py-6 px-8 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                        {% for data in offers %}
+                        <tr class="hover:bg-gray-50/40 transition-all duration-200 group">
+                            <td class="py-6 px-8">
+                                <div class="flex flex-col">
+                                    <span class="text-[15px] font-bold text-gray-900 group-hover:text-[#2f6232] transition-colors">{{ data.offer.name }}</span>
+                                    <span class="text-[12px] text-gray-400 mt-1 font-medium italic">
+                                        Applied to: {% if data.item.apply_to == 'PRODUCT' %}{{ data.item.product.name|default:"Product" }}{% else %}{{ data.item.category.name|default:"Category" }}{% endif %}
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="py-6 px-6">
+                                {% if data.item.apply_to == 'CATEGORY' %}
+                                <span class="inline-flex items-center px-3 py-1 bg-indigo-50 text-indigo-600 text-[11px] font-bold rounded-lg border border-indigo-100/50 uppercase tracking-wider">Category</span>
+                                {% else %}
+                                <span class="inline-flex items-center px-3 py-1 bg-amber-50 text-amber-600 text-[11px] font-bold rounded-lg border border-amber-100/50 uppercase tracking-wider">Product</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-6 px-6">
+                                <div class="flex flex-col">
+                                    <span class="text-[15px] font-extrabold text-gray-900">
+                                        {% if data.offer.discount_type == 'PERCENTAGE' %}{{ data.offer.discount_value|floatformat:0 }}% Off{% else %}₹{{ data.offer.discount_value|floatformat:0 }} Flat{% endif %}
+                                    </span>
+                                    <span class="text-[11px] text-gray-400 font-medium uppercase mt-0.5">{{ data.offer.get_discount_type_display }}</span>
+                                </div>
+                            </td>
+                            <td class="py-6 px-6">
+                                <span class="text-[14px] font-semibold text-gray-600">
+                                    {% if data.offer.min_purchase %}₹{{ data.offer.min_purchase|floatformat:0 }}{% else %}<span class="text-gray-300 font-normal">—</span>{% endif %}
+                                </span>
+                            </td>
+                            <td class="py-6 px-6">
+                                <div class="flex flex-col">
+                                    <span class="text-[13px] font-bold text-gray-800">{{ data.offer.start_date|date:"d M" }} — {{ data.offer.end_date|date:"d M, Y" }}</span>
+                                </div>
+                            </td>
+                            <td class="py-6 px-6 text-center">
+                                {% if data.status == 'Active' %}
+                                    <span class="inline-flex items-center px-4 py-1.5 bg-emerald-50 text-emerald-700 text-[11px] font-extrabold rounded-full border border-emerald-100">ACTIVE</span>
+                                {% elif data.status == 'Scheduled' %}
+                                    <span class="inline-flex items-center px-4 py-1.5 bg-blue-50 text-blue-700 text-[11px] font-extrabold rounded-full border border-blue-100">SCHEDULED</span>
+                                {% elif data.status == 'Expired' %}
+                                    <span class="inline-flex items-center px-4 py-1.5 bg-gray-100 text-gray-500 text-[11px] font-extrabold rounded-full">EXPIRED</span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-4 py-1.5 bg-red-50 text-red-600 text-[11px] font-extrabold rounded-full border border-red-100">INACTIVE</span>
+                                {% endif %}
+                            </td>
+                            <td class="py-6 px-8">
+                                <div class="flex items-center justify-end gap-2.5">
+                                    <button class="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-50 text-gray-400 hover:bg-[#2f6232]/10 hover:text-[#2f6232] transition-all duration-200" onclick="document.getElementById('editModal{{ data.offer.id }}').classList.remove('hidden')">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                                    </button>
+                                    <button type="button" class="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all duration-200" onclick="openDeleteModal({{ data.offer.id }})">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                    <div class="h-4 w-px bg-gray-100 mx-1"></div>
+                                    <label class="relative inline-flex items-center cursor-pointer select-none">
+                                        <input type="checkbox" onchange="toggleOffer({{ data.offer.id }})" class="sr-only peer" {% if data.offer.is_active %}checked{% endif %}>
+                                        <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-[16px] after:w-[16px] after:transition-all peer-checked:bg-[#2f6232]"></div>
+                                    </label>
+                                </div>
+
+                                <!-- Edit Modal (Embedded in row for guaranteed rendering) -->
+                                <div id="editModal{{ data.offer.id }}" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/60 backdrop-blur-md px-4 transition-all duration-500">
+                                    <div class="relative bg-white rounded-[36px] shadow-2xl w-full max-w-[640px] max-h-[92vh] overflow-y-auto animate-in fade-in zoom-in duration-300 custom-scrollbar text-left">
+                                        <div class="sticky top-0 bg-white/95 backdrop-blur-xl z-[1100] px-10 py-8 flex items-center justify-between border-b border-gray-50">
+                                            <div>
+                                                <h3 class="text-2xl font-extrabold text-gray-900 tracking-tight">Edit Offer</h3>
+                                                <p class="text-[14px] text-gray-400 mt-1 font-medium">Update existing promotion details.</p>
+                                            </div>
+                                            <button type="button" onclick="document.getElementById('editModal{{ data.offer.id }}').classList.add('hidden')" class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-900 rounded-2xl hover:bg-gray-50 transition-all">
+                                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                            </button>
+                                        </div>
+                                        
+                                        <form id="editForm{{ data.offer.id }}" method="POST" action="{% url 'edit_offer' data.offer.id %}" class="p-10 pt-8 edit-offer-form">
+                                            {% csrf_token %}
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
+                                                
+                                                <div class="space-y-2.5 md:col-span-2">
+                                                    <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Offer Label</label>
+                                                    <input type="text" name="name" value="{{ data.offer.name }}" required class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-medium outline-none placeholder:text-gray-300">
+                                                </div>
+
+                                                <div class="space-y-3">
+                                                    <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Discount Mode</label>
+                                                    <div class="flex items-center gap-3 p-1.5 bg-gray-50 rounded-[18px]">
+                                                        <label class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[14px] cursor-pointer transition-all has-[:checked]:bg-white has-[:checked]:text-[#2f6232] has-[:checked]:shadow-sm text-gray-400">
+                                                            <input type="radio" name="discount_type" value="PERCENTAGE" {% if data.offer.discount_type == 'PERCENTAGE' %}checked{% endif %} onchange="toggleEditDiscountType('{{ data.offer.id }}', 'PERCENTAGE')" class="hidden">
+                                                            <span class="text-[13px] font-bold">Percentage</span>
+                                                        </label>
+                                                        <label class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[14px] cursor-pointer transition-all has-[:checked]:bg-white has-[:checked]:text-[#2f6232] has-[:checked]:shadow-sm text-gray-400">
+                                                            <input type="radio" name="discount_type" value="FLAT" {% if data.offer.discount_type == 'FLAT' %}checked{% endif %} onchange="toggleEditDiscountType('{{ data.offer.id }}', 'FLAT')" class="hidden">
+                                                            <span class="text-[13px] font-bold">Flat</span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+
+                                                <div class="space-y-2.5">
+                                                    <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Discount Amount</label>
+                                                    <div class="relative">
+                                                        <input type="number" step="0.01" name="discount_value" value="{{ data.offer.discount_value|stringformat:'.2f' }}" required class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold outline-none">
+                                                        <div class="absolute inset-y-0 right-0 pr-6 flex items-center pointer-events-none">
+                                                            <span class="text-[14px] font-extrabold text-gray-300 tracking-tighter" id="editDiscountUnitLabel{{ data.offer.id }}">{% if data.offer.discount_type == 'PERCENTAGE' %}%{% else %}₹{% endif %}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="space-y-2.5 {% if data.offer.discount_type == 'FLAT' %}hidden{% endif %}" id="editMaxDiscountDiv{{ data.offer.id }}">
+                                                    <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Max Cap <span class="text-gray-300 lowercase font-medium">(Optional)</span></label>
+                                                    <input type="number" step="0.01" name="max_discount" value="{% if data.offer.max_discount %}{{ data.offer.max_discount|stringformat:'.2f' }}{% endif %}" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold outline-none" placeholder="₹ 0.00">
+                                                </div>
+
+                                                <div class="space-y-2.5">
+                                                    <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Min Order <span class="text-gray-300 lowercase font-medium">(Optional)</span></label>
+                                                    <input type="number" step="0.01" name="min_purchase" value="{% if data.offer.min_purchase %}{{ data.offer.min_purchase|stringformat:'.2f' }}{% endif %}" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold outline-none" placeholder="₹ 0.00">
+                                                </div>
+
+                                                <div class="md:col-span-2 space-y-2.5">
+                                                    <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Promotion Window</label>
+                                                    <div class="flex items-center gap-4">
+                                                        <div class="relative flex-1">
+                                                            <input type="date" name="start_date" value="{{ data.offer.start_date|date:'Y-m-d' }}" required class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[13px] font-bold uppercase outline-none cursor-pointer">
+                                                        </div>
+                                                        <span class="text-gray-300 font-bold">—</span>
+                                                        <div class="relative flex-1">
+                                                            <input type="date" name="end_date" value="{{ data.offer.end_date|date:'Y-m-d' }}" required class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[13px] font-bold uppercase outline-none cursor-pointer">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="mt-12 flex items-center justify-end gap-4">
+                                                <button type="button" onclick="document.getElementById('editModal{{ data.offer.id }}').classList.add('hidden')" class="px-8 py-3.5 text-[14px] font-bold text-gray-500 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-all">Discard</button>
+                                                <button type="submit" class="px-10 py-3.5 text-[14px] font-bold text-white bg-[#1a1a1a] hover:bg-black rounded-2xl shadow-xl shadow-black/10 transition-all duration-300 hover:-translate-y-0.5 active:scale-95">Update</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="py-24 text-center">
+                                <div class="flex flex-col items-center justify-center opacity-40">
+                                    <svg class="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                                    <p class="text-[15px] font-medium text-gray-500">No offers found matching your criteria.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if offers.has_other_pages %}
+            <div class="px-8 py-6 bg-gray-50/30 border-t border-gray-50 flex items-center justify-between">
+                <p class="text-[13px] text-gray-400 font-medium italic">Showing {{ offers.start_index }} to {{ offers.end_index }} of {{ offers.paginator.count }} items</p>
+                <div class="flex items-center gap-2">
+                    {% if offers.has_previous %}
+                    <a href="?page={{ offers.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}" class="w-10 h-10 flex items-center justify-center rounded-2xl bg-white border border-gray-100 text-gray-400 hover:text-gray-900 hover:border-gray-300 transition-all">
+                        <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+                    </a>
+                    {% endif %}
+                    
+                    {% for i in offers.paginator.page_range %}
+                        {% if offers.number == i %}
+                        <span class="w-10 h-10 flex items-center justify-center rounded-2xl bg-[#1a1a1a] text-white text-[13px] font-bold shadow-md shadow-black/10 transition-all">{{ i }}</span>
+                        {% elif i >= offers.number|add:"-2" and i <= offers.number|add:"2" %}
+                        <a href="?page={{ i }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}" class="w-10 h-10 flex items-center justify-center rounded-2xl bg-white border border-gray-100 text-gray-500 hover:bg-gray-50 hover:text-gray-900 transition-all text-[13px] font-bold">{{ i }}</a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if offers.has_next %}
+                    <a href="?page={{ offers.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}" class="w-10 h-10 flex items-center justify-center rounded-2xl bg-white border border-gray-100 text-gray-400 hover:text-gray-900 hover:border-gray-300 transition-all">
+                        <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </main>
+</div>
+
+<!-- Add Offer Modal -->
+<div id="addModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/60 backdrop-blur-md px-4 transition-all duration-500">
+    <div class="relative bg-white rounded-[36px] shadow-2xl w-full max-w-[640px] max-h-[92vh] overflow-y-auto animate-in fade-in zoom-in duration-300 custom-scrollbar">
+        <div class="sticky top-0 bg-white/95 backdrop-blur-xl z-[1100] px-10 py-8 flex items-center justify-between border-b border-gray-50">
+            <div>
+                <h3 class="text-2xl font-extrabold text-gray-900 tracking-tight">Create Offer</h3>
+                <p class="text-[14px] text-gray-400 mt-1 font-medium">Set up a new discount promotion.</p>
+            </div>
+            <button type="button" onclick="document.getElementById('addModal').classList.add('hidden')" class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-gray-900 rounded-2xl hover:bg-gray-50 transition-all">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        
+        <form id="addForm" method="POST" action="{% url 'add_offer' %}" class="p-10 pt-8">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
+                
+                <div class="space-y-2.5 md:col-span-2">
+                    <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Offer Label</label>
+                    <input type="text" name="name" required class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-medium outline-none placeholder:text-gray-300" placeholder="e.g. Seasonal Skincare Sale">
+                </div>
+
+                <div class="space-y-3">
+                    <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Applicable To</label>
+                    <div class="flex items-center gap-3 p-1.5 bg-gray-50 rounded-[18px]">
+                        <label class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[14px] cursor-pointer transition-all has-[:checked]:bg-white has-[:checked]:text-[#2f6232] has-[:checked]:shadow-sm text-gray-400">
+                            <input type="radio" name="apply_to" value="PRODUCT" checked onchange="toggleAddApplyTo('PRODUCT')" class="hidden">
+                            <span class="text-[13px] font-bold">Product</span>
+                        </label>
+                        <label class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[14px] cursor-pointer transition-all has-[:checked]:bg-white has-[:checked]:text-[#2f6232] has-[:checked]:shadow-sm text-gray-400">
+                            <input type="radio" name="apply_to" value="CATEGORY" onchange="toggleAddApplyTo('CATEGORY')" class="hidden">
+                            <span class="text-[13px] font-bold">Category</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Custom Product Dropdown -->
+                <div class="space-y-2.5" id="addProductSelectDiv">
+                    <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Target Product</label>
+                    <div class="relative custom-dropdown" id="productDropdown">
+                        <input type="hidden" name="product_id" id="selectedProductId">
+                        <button type="button" class="dropdown-trigger w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[14px] font-medium outline-none flex items-center justify-between group text-left">
+                            <span class="selected-text truncate text-gray-700">Select a product...</span>
+                            <svg class="w-5 h-5 text-gray-300 group-hover:text-[#2f6232] transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="dropdown-content absolute left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+                            <div class="p-3 border-b border-gray-50">
+                                <input type="text" class="dropdown-search w-full px-4 py-2 bg-gray-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-[#2f6232]/10 outline-none" placeholder="Search product...">
+                            </div>
+                            <div class="options-list max-h-[240px] overflow-y-auto custom-scrollbar p-1">
+                                <div class="dropdown-option px-4 py-3 text-[14px] text-gray-400 italic cursor-pointer rounded-xl" data-value="">Clear Selection</div>
+                                {% for product in products %}
+                                <div class="dropdown-option px-4 py-3 text-[14px] text-gray-700 font-medium cursor-pointer rounded-xl" data-value="{{ product.id }}">{{ product.name }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Category Dropdown -->
+                <div class="space-y-2.5 hidden" id="addCategorySelectDiv">
+                    <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Target Category</label>
+                    <div class="relative custom-dropdown" id="categoryDropdown">
+                        <input type="hidden" name="category_id" id="selectedCategoryId">
+                        <button type="button" class="dropdown-trigger w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[14px] font-medium outline-none flex items-center justify-between group text-left">
+                            <span class="selected-text truncate text-gray-700">Select a category...</span>
+                            <svg class="w-5 h-5 text-gray-300 group-hover:text-[#2f6232] transition-colors flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="dropdown-content absolute left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
+                            <div class="p-3 border-b border-gray-50">
+                                <input type="text" class="dropdown-search w-full px-4 py-2 bg-gray-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-[#2f6232]/10 outline-none" placeholder="Search category...">
+                            </div>
+                            <div class="options-list max-h-[240px] overflow-y-auto custom-scrollbar p-1">
+                                <div class="dropdown-option px-4 py-3 text-[14px] text-gray-400 italic cursor-pointer rounded-xl" data-value="">Clear Selection</div>
+                                {% for category in categories %}
+                                <div class="dropdown-option px-4 py-3 text-[14px] text-gray-700 font-medium cursor-pointer rounded-xl" data-value="{{ category.id }}">{{ category.name }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Discount Mode</label>
+                    <div class="flex items-center gap-3 p-1.5 bg-gray-50 rounded-[18px]">
+                        <label class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[14px] cursor-pointer transition-all has-[:checked]:bg-white has-[:checked]:text-[#2f6232] has-[:checked]:shadow-sm text-gray-400">
+                            <input type="radio" name="discount_type" value="PERCENTAGE" checked onchange="toggleAddDiscountType('PERCENTAGE')" class="hidden">
+                            <span class="text-[13px] font-bold">Percentage</span>
+                        </label>
+                        <label class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[14px] cursor-pointer transition-all has-[:checked]:bg-white has-[:checked]:text-[#2f6232] has-[:checked]:shadow-sm text-gray-400">
+                            <input type="radio" name="discount_type" value="FLAT" onchange="toggleAddDiscountType('FLAT')" class="hidden">
+                            <span class="text-[13px] font-bold">Flat</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="space-y-2.5">
+                    <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Discount Amount</label>
+                    <div class="relative">
+                        <input type="number" step="0.01" name="discount_value" required class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold outline-none" placeholder="0.00">
+                        <div class="absolute inset-y-0 right-0 pr-6 flex items-center pointer-events-none">
+                            <span class="text-[14px] font-extrabold text-gray-300 tracking-tighter" id="discountUnitLabel">%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-2.5" id="addMaxDiscountDiv">
+                    <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Max Cap <span class="text-gray-300 lowercase font-medium">(Optional)</span></label>
+                    <input type="number" step="0.01" name="max_discount" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold outline-none" placeholder="₹ 0.00">
+                </div>
+
+                <div class="space-y-2.5">
+                    <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Min Order <span class="text-gray-300 lowercase font-medium">(Optional)</span></label>
+                    <input type="number" step="0.01" name="min_purchase" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold outline-none" placeholder="₹ 0.00">
+                </div>
+
+                <div class="md:col-span-2 space-y-2.5">
+                    <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Promotion Window</label>
+                    <div class="flex items-center gap-4">
+                        <div class="relative flex-1">
+                            <input type="date" name="start_date" required class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[13px] font-bold uppercase outline-none cursor-pointer">
+                        </div>
+                        <span class="text-gray-300 font-bold">—</span>
+                        <div class="relative flex-1">
+                            <input type="date" name="end_date" required class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[13px] font-bold uppercase outline-none cursor-pointer">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-12 flex items-center justify-end gap-4">
+                <button type="button" onclick="document.getElementById('addModal').classList.add('hidden')" class="px-8 py-3.5 text-[14px] font-bold text-gray-500 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-all">Discard</button>
+                <button type="submit" class="px-10 py-3.5 text-[14px] font-bold text-white bg-[#1a1a1a] hover:bg-black rounded-2xl shadow-xl shadow-black/10 transition-all duration-300 hover:-translate-y-0.5 active:scale-95">Save</button>
+            </div>
+            <input type="hidden" name="is_active" value="true">
+        </form>
+    </div>
+</div>
+
+<!-- Modern Delete Confirmation Modal -->
+<div id="deleteConfirmModal" class="hidden fixed inset-0 z-[120] flex items-center justify-center bg-gray-900/60 backdrop-blur-md px-4 transition-all duration-500">
+    <div class="relative bg-white rounded-[40px] shadow-2xl w-full max-w-[440px] overflow-hidden animate-in fade-in zoom-in duration-300">
+        <div class="p-10 text-center">
+            <div class="w-20 h-20 bg-red-50 rounded-[30px] flex items-center justify-center mx-auto mb-6">
+                <svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </div>
+            <h3 class="text-2xl font-extrabold text-gray-900 tracking-tight mb-2">Delete Offer?</h3>
+            <p class="text-[15px] text-gray-500 font-medium leading-relaxed mb-10">This action cannot be undone. All data associated with this promotion will be removed.</p>
+            
+            <div class="flex flex-col gap-3">
+                <button type="button" id="confirmDeleteBtn" onclick="confirmDelete()" class="w-full py-4 bg-red-500 hover:bg-red-600 text-white text-[15px] font-bold rounded-[22px] shadow-lg shadow-red-500/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2">
+                    Delete Permanently
+                </button>
+                <button type="button" onclick="closeDeleteModal()" class="w-full py-4 bg-gray-50 hover:bg-gray-100 text-gray-500 text-[15px] font-bold rounded-[22px] transition-all active:scale-[0.98]">
+                    Keep Offer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Custom Dropdown Class (Must be at top for hoisting)
+    class ModernDropdown {
+        constructor(id, inputId, onSelect = null) {
+            this.container = document.getElementById(id);
+            if(!this.container) return;
+            this.trigger = this.container.querySelector('.dropdown-trigger');
+            this.content = this.container.querySelector('.dropdown-content');
+            this.search = this.container.querySelector('.dropdown-search');
+            this.options = this.container.querySelectorAll('.dropdown-option');
+            this.input = document.getElementById(inputId);
+            this.label = this.trigger.querySelector('.selected-text');
+            this.onSelect = onSelect;
+            this.init();
+        }
+        init() {
+            if (this.trigger) {
+                this.trigger.onclick = (e) => {
+                    e.stopPropagation();
+                    const active = this.content.classList.contains('active');
+                    document.querySelectorAll('.dropdown-content').forEach(c => c.classList.remove('active'));
+                    if(!active) this.content.classList.add('active');
+                };
+            }
+            this.options.forEach(opt => {
+                opt.onclick = (e) => {
+                    e.stopPropagation();
+                    const val = opt.dataset.value;
+                    if (this.input) this.input.value = val;
+                    if (this.label) this.label.innerText = opt.innerText;
+                    this.content.classList.remove('active');
+                    if(this.onSelect) this.onSelect(val);
+                };
+            });
+            document.addEventListener('click', () => {
+                if(this.content) this.content.classList.remove('active');
+            });
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Search Clear Logic
+        const searchInput = document.getElementById('searchInput');
+        const clearBtn = document.getElementById('clearBtn');
+        
+        if (searchInput && clearBtn) {
+            const toggleClearBtn = () => {
+                clearBtn.classList.toggle('hidden', !searchInput.value.length);
+            };
+            toggleClearBtn();
+            searchInput.oninput = toggleClearBtn;
+            clearBtn.onclick = () => {
+                searchInput.value = "";
+                window.location.href = "{% url 'offer_list' %}";
+            };
+        }
+
+        // Dropdowns
+        new ModernDropdown('productDropdown', 'selectedProductId');
+        new ModernDropdown('categoryDropdown', 'selectedCategoryId');
+        new ModernDropdown('filterTypeDropdown', 'filterTypeInput', () => document.getElementById('searchFilterForm').submit());
+        new ModernDropdown('filterStatusDropdown', 'filterStatusInput', () => document.getElementById('searchFilterForm').submit());
+
+        // Modals
+        const addBtn = document.getElementById('openAddModal');
+        if (addBtn) addBtn.onclick = () => document.getElementById('addModal').classList.remove('hidden');
+
+        // Forms
+        handleForm("addForm");
+        document.querySelectorAll('.edit-offer-form').forEach(f => handleForm(f.id));
+    });
+
+    // Delete Logic
+    let offerIdToDelete = null;
+    window.openDeleteModal = (id) => {
+        offerIdToDelete = id;
+        const modal = document.getElementById('deleteConfirmModal');
+        if(modal) modal.classList.remove('hidden');
+    };
+    window.closeDeleteModal = () => {
+        offerIdToDelete = null;
+        const modal = document.getElementById('deleteConfirmModal');
+        if(modal) modal.classList.add('hidden');
+    };
+    window.confirmDelete = async () => {
+        if(!offerIdToDelete) return;
+        const btn = document.getElementById('confirmDeleteBtn');
+        const old = btn.innerText;
+        btn.disabled = true;
+        btn.innerHTML = `<svg class="animate-spin h-4 w-4 mx-auto" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+        try {
+            const res = await fetch(`/offers/delete/${offerIdToDelete}/`, {
+                method: "POST",
+                headers: { "X-CSRFToken": "{{ csrf_token }}", "X-Requested-With": "XMLHttpRequest" }
+            });
+            const data = await res.json();
+            if(data.success) location.reload();
+            else throw new Error(data.error);
+        } catch(e) {
+            alert(e.message);
+            btn.disabled = false;
+            btn.innerText = old;
+            closeDeleteModal();
+        }
+    };
+
+    // Toggle Logic
+    window.toggleOffer = (id) => {
+        fetch(`/offers/toggle/${id}/`, {
+            method: "POST",
+            headers: { "X-CSRFToken": "{{ csrf_token }}", "X-Requested-With": "XMLHttpRequest" }
+        }).then(() => location.reload());
+    };
+
+    // Modal Utility Functions
+    window.toggleAddApplyTo = (type) => {
+        document.getElementById('addProductSelectDiv').classList.toggle('hidden', type !== 'PRODUCT');
+        document.getElementById('addCategorySelectDiv').classList.toggle('hidden', type !== 'CATEGORY');
+        const btns = document.querySelectorAll('#applyToToggle button');
+        btns.forEach(b => {
+            const active = b.getAttribute('onclick').includes(`'${type}'`);
+            b.className = active ? 'flex-1 py-2.5 text-[13px] bg-white shadow-sm ring-1 ring-black/5 text-[#2f6232] font-bold rounded-xl transition-all' : 'flex-1 py-2.5 text-[13px] text-gray-500 font-medium hover:text-gray-900 transition-all';
+        });
+    };
+
+    window.toggleAddDiscountType = (type) => {
+        const isP = type === 'PERCENTAGE';
+        document.getElementById('addMaxDiscountDiv').classList.toggle('hidden', !isP);
+        document.getElementById('discountUnitLabel').innerText = isP ? '%' : '₹';
+        document.getElementById('addDiscountTypeInput').value = type;
+        const btns = document.querySelectorAll('#discountTypeToggle button');
+        btns.forEach(b => {
+            const active = b.getAttribute('onclick').includes(`'${type}'`);
+            b.className = active ? 'flex-1 py-2.5 text-[13px] bg-white shadow-sm ring-1 ring-black/5 text-[#2f6232] font-bold rounded-xl transition-all' : 'flex-1 py-2.5 text-[13px] text-gray-500 font-medium hover:text-gray-900 transition-all';
+        });
+    };
+
+    window.toggleEditDiscountType = (id, type) => {
+        const isP = type === 'PERCENTAGE';
+        document.getElementById(`editMaxDiscountDiv${id}`).classList.toggle('hidden', !isP);
+        document.getElementById(`editDiscountUnitLabel${id}`).innerText = isP ? '%' : '₹';
+        document.getElementById(`editDiscountTypeInput${id}`).value = type;
+        const btns = document.querySelectorAll(`#discountTypeToggle${id} button`);
+        btns.forEach(b => {
+            const active = b.getAttribute('onclick').includes(`'${type}'`);
+            b.className = active ? 'flex-1 py-2.5 text-[13px] bg-white shadow-sm ring-1 ring-black/5 text-[#2f6232] font-bold rounded-xl transition-all' : 'flex-1 py-2.5 text-[13px] text-gray-500 font-medium hover:text-gray-900 transition-all';
+        });
+    };
+
+    // Form AJAX
+    function handleForm(id) {
+        const f = document.getElementById(id);
+        if(!f) return;
+        f.onsubmit = async (e) => {
+            e.preventDefault();
+            
+            // Clear previous errors
+            const prevError = f.querySelector('.form-error-msg');
+            if (prevError) prevError.classList.add('hidden');
+
+            const btn = f.querySelector('button[type="submit"]');
+            const old = btn.innerText;
+            btn.disabled = true;
+            btn.innerHTML = `<svg class="animate-spin h-5 w-5 mx-auto" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+            try {
+                const res = await fetch(f.action, {
+                    method: "POST",
+                    body: new FormData(f),
+                    headers: { "X-CSRFToken": "{{ csrf_token }}", "X-Requested-With": "XMLHttpRequest" }
+                });
+                const data = await res.json();
+                if(data.success) location.reload();
+                else throw new Error(data.error);
+            } catch(e) {
+                btn.disabled = false;
+                btn.innerText = old;
+                
+                // Show error in modal instead of alert
+                let errorDiv = f.querySelector('.form-error-msg');
+                if (!errorDiv) {
+                    errorDiv = document.createElement('div');
+                    errorDiv.className = 'form-error-msg mt-4 p-4 bg-red-50 text-red-600 text-[13px] font-bold rounded-2xl border border-red-100 animate-in fade-in slide-in-from-top-2 duration-300';
+                    btn.parentElement.before(errorDiv);
+                }
+                errorDiv.innerText = e.message;
+                errorDiv.classList.remove('hidden');
+            }
+        };
+    }
+</script>
+</body>
+</html>
