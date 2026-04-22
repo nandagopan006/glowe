@@ -581,7 +581,13 @@ body { background: var(--cream); }
             </div>
 
             <!-- Price -->
-            <span class="item-price">₹{{ entry.price|floatformat:2 }}</span>
+            <div class="flex flex-col items-end">
+              <span class="item-price">₹{{ entry.final_price|floatformat:2 }}</span>
+              {% if entry.has_offer %}
+                <span style="font-family:'Montserrat',sans-serif; font-size:.65rem; color:var(--dust); text-decoration:line-through;">₹{{ entry.price|floatformat:2 }}</span>
+                <span style="font-family:'Montserrat',sans-serif; font-size:.58rem; font-weight:600; color:#27AE60; margin-top:2px;">{{ entry.offer_text }}</span>
+              {% endif %}
+            </div>
           </div>
 
           <!-- Qty + Remove -->
@@ -613,7 +619,7 @@ body { background: var(--cream); }
                 {{ entry.item.id }},
                 '{{ entry.product.name|escapejs }}',
                 '{{ entry.variant.size|default:''|escapejs }}',
-                '{{ entry.price|floatformat:2 }}',
+                '{{ entry.final_price|floatformat:2 }}',
                 '{% if entry.product.images.first %}{{ entry.product.images.first.image.url }}{% endif %}'
               )">
               <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
@@ -658,6 +664,12 @@ body { background: var(--cream); }
           <span class="summary-row-label">Subtotal</span>
           <span class="summary-row-value" id="summary-subtotal">₹{{ total|floatformat:2 }}</span>
         </div>
+        {% if total_offer_savings > 0 %}
+        <div class="summary-row" id="summary-savings-row">
+          <span class="summary-row-label" style="color:#27AE60;">Offer Savings</span>
+          <span class="summary-row-value" id="summary-savings" style="color:#27AE60;">- ₹{{ total_offer_savings|floatformat:2 }}</span>
+        </div>
+        {% endif %}
         <div class="summary-row">
           <span class="summary-row-label tooltip-wrapper">
             Shipping

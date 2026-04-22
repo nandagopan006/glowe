@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'payment',
     'coupons',
     'wallet',
+    'offer',
     
     
 ]

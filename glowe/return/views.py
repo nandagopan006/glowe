@@ -139,8 +139,7 @@ def request_return(request, item_id):
 def request_full_return(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
     
-    # Get all items that aren't cancelled or already requested for return
-    # Since the order is DELIVERED, these items are eligible
+    # Get all items that not cancelled or already requested for return
     active_items = order.items.filter(
         ~Q(item_status__in=[OrderItem.Status.CANCELLED, OrderItem.Status.RETURN_REQUESTED])
     )
@@ -407,7 +406,7 @@ def complete_return(request, return_id):
         r.return_status = ReturnRequest.Status.COMPLETED
         r.save()
 
-        # Update item status to reflect return completion
+        # Update item status 
         item.item_status = OrderItem.Status.RETURNED
         item.save()
 

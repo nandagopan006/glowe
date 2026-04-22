@@ -9,6 +9,7 @@ from coupons.models import Coupon
 from django.utils import timezone
 from decimal import Decimal
 from wallet.models import Wallet
+from offer.utils import get_best_offer
 
 def cart(request):
     if not request.user.is_authenticated:
@@ -18,7 +19,8 @@ def cart(request):
     items= user_cart.items.select_related('variant__product')
     
     cart_items=[]
-    total=0
+    total=Decimal('0.00')
+    total_offer_savings = Decimal('0.00')
     
     for item in items:
         variant=item.variant
@@ -27,7 +29,43 @@ def cart(request):
         if product.is_active and  not product.is_deleted and variant.is_active:
             
             stock =variant.stock
-            price=variant.price
+            
+            price = Decimal("0.00")
+            try:
+                price = Decimal(str(variant.price))
+                offer, discount_per_unit = get_best_offer(product, price)
+                
+                if offer:
+                    if discount_per_unit > price:
+                        discount_per_unit = price  # Discount cannot exceed price
+                        
+                    item_final_price = price - discount_per_unit
+                    
+                    if item_final_price < Decimal("0.00"):
+                        item_final_price = Decimal("0.00")  # No negative price
+                        
+                    item_has_offer = True
+                    item_discount = discount_per_unit
+                    
+                   
+                    if offer.discount_type == "PERCENTAGE":
+                        item_offer_text = f"{offer.discount_value:g}% OFF"
+                    else:
+                        item_offer_text = f"Flat ₹{offer.discount_value:g} OFF"
+                else:
+                    # If no offer
+                    item_final_price = price
+                    item_has_offer = False
+                    item_discount = Decimal("0.00")
+                    item_offer_text = ""
+                    
+            except Exception:
+                # Default to normal price if anything fails
+                item_final_price = price
+                item_has_offer = False
+                item_discount = Decimal("0.00")
+                item_offer_text = ""
+            
             #out of stock  it marks akumm  out of stock ui 
             if stock == 0:
                 cart_items.append({
@@ -36,10 +74,14 @@ def cart(request):
                     'variant':variant,
                     'quantity':0,
                     'price':price,
-                    'subtotal':0,
+                    'final_price': item_final_price,
+                    'subtotal':Decimal('0.00'),
                     'stock':0,
                     'is_out_of_stock':True,
                     'low_stock':False,
+                    'has_offer': item_has_offer,
+                    'discount': item_discount,
+                    'offer_text': item_offer_text,
                 })
             else:
             
@@ -50,8 +92,9 @@ def cart(request):
                 
                 qty =item.quantity
             
-                subtotal =variant.price * qty
+                subtotal = item_final_price * qty
                 total +=subtotal
+                total_offer_savings += item_discount * qty
                 
                 low_stock= stock > 0 and stock <=5
                 
@@ -61,10 +104,14 @@ def cart(request):
                     'variant':variant,
                     'quantity':qty,
                     'price':price,
+                    'final_price': item_final_price,
                     'subtotal':subtotal,
                     'stock':stock,
                     'is_out_of_stock':False,
                     'low_stock':low_stock,
+                    'has_offer': item_has_offer,
+                    'discount': item_discount,
+                    'offer_text': item_offer_text,
                 })
     is_empty = not cart_items
     cart_count = request.user.cart.items.count()
@@ -74,6 +121,7 @@ def cart(request):
         'total':total,
         'is_empty':is_empty,
         'cart_count':cart_count,
+        'total_offer_savings': total_offer_savings.quantize(Decimal("0.01")),
     })
 
 def update_cart(request):
@@ -139,6 +187,10 @@ def checkout(request):
         default_address=addresses.first()
         
     subtotal = Decimal('0.00')
+    original_subtotal = Decimal('0.00')
+    total_offer_savings = Decimal('0.00')
+    checkout_items = []
+    
     for item in cart_items:
         variant = item.variant
         product = variant.product
@@ -163,8 +215,54 @@ def checkout(request):
             messages.error(request, f"{product.name} only {variant.stock} left")
             return redirect('cart')
     
-        item.item_total = item.quantity * variant.price 
+        price = Decimal("0.00")
+        try:
+            price = Decimal(str(variant.price))
+            original_subtotal += price * item.quantity
+            
+            offer, offer_disc = get_best_offer(product, price)
+            
+            if offer:
+                if offer_disc > price:
+                    offer_disc = price  # Discount cannot exceed price
+                    
+                item_final_price = price - offer_disc
+                
+                if item_final_price < Decimal("0.00"):
+                    item_final_price = Decimal("0.00")  # No negative price
+                    
+                item_has_offer = True
+                item_discount = offer_disc
+                
+                if offer.discount_type == "PERCENTAGE":
+                    item_offer_text = f"{offer.discount_value:g}% OFF"
+                else:
+                    item_offer_text = f"Flat ₹{offer.discount_value:g} OFF"
+            else:
+                # If no offer
+                item_final_price = price
+                item_has_offer = False
+                item_discount = Decimal("0.00")
+                item_offer_text = ""
+                
+        except Exception:
+            # Default to normal price if anything fails
+            item_final_price = price if price > Decimal("0.00") else Decimal(str(variant.price))
+            original_subtotal += item_final_price * item.quantity if price == Decimal("0.00") else Decimal("0.00")
+            item_has_offer = False
+            item_discount = Decimal("0.00")
+            item_offer_text = ""
+        
+        item.item_total = item_final_price * item.quantity
+        item.original_total = price * item.quantity
+        item.final_price = item_final_price
+        item.original_price = price
+        item.has_offer = item_has_offer
+        item.offer_discount = item_discount
+        item.offer_text = item_offer_text
+        
         subtotal += Decimal(item.item_total)
+        total_offer_savings += item_discount * item.quantity
         
     shipping = Decimal('0.00') if subtotal > Decimal('999') else Decimal('100.00')
     
@@ -192,9 +290,11 @@ def checkout(request):
         "addresses": addresses,
         "default_address": default_address,
         "subtotal": subtotal,
+        "original_subtotal": original_subtotal.quantize(Decimal("0.01")),
         "shipping": shipping,
         "discount": discount,
         "final_total": final_total,
         "available_coupons": available_coupons,
         "wallet":wallet,
+        "total_offer_savings": total_offer_savings.quantize(Decimal("0.01")),
     })

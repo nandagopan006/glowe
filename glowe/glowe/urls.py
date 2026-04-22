@@ -21,6 +21,7 @@ urlpatterns = [
     path('',include('return.urls')),
     path('',include('coupons.urls')),
     path('',include('wallet.urls')),
+    path('',include('offer.urls')),
 
     
 ]
