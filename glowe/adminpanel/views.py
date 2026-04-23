@@ -315,8 +315,12 @@ def user_detail(request, id):
     orders_page = paginator.get_page(page_number)
     
     # Get user's addresses
-    addresses = Address.objects.filter(user=user)
+    all_addresses = Address.objects.filter(user=user)
     
+    # Paginate addresses 
+    address_paginator = Paginator(all_addresses, 3)
+    address_page_number = request.GET.get('address_page', 1)
+    addresses_page = address_paginator.get_page(address_page_number)
     
     phone_number = user.phone_number if user.phone_number else 'Not provided'
     full_name = user.get_full_name() if user.get_full_name() else user.username
@@ -330,9 +334,9 @@ def user_detail(request, id):
         'total_orders': total_orders,
         'total_spent': total_spent,
         'avg_order': avg_order,
-        'delivered_orders': delivered_orders,
+        'delivered_count': delivered_orders,
         'orders': orders_page,
-        'addresses': addresses,
+        'addresses': addresses_page,
         'phone_number': phone_number,
         'full_name': full_name,
         'joined_date': joined_date,
@@ -346,34 +350,38 @@ def sales_report(request):
 
     
     filter_type = request.GET.get('filter', 'month')
-    today = timezone.now()
+    now = timezone.localtime(timezone.now())
+    today_midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
-    
     if filter_type == 'day':
-        start_date = today.replace(hour=0, minute=0, second=0, microsecond=0)
-        end_date = today
-
+        # Today (since midnight)
+        start_date = today_midnight
+        end_date = now
     elif filter_type == 'week':
-        start_date = today - timedelta(days=7)
-        end_date = today
-
+        # Last 7 days
+        start_date = now - timedelta(days=7)
+        end_date = now
     elif filter_type == 'year':
-        start_date = today - timedelta(days=365)
-        end_date = today
-
+        # Last 365 days
+        start_date = now - timedelta(days=365)
+        end_date = now
     elif filter_type == 'custom':
         start = request.GET.get('start_date')
         end   = request.GET.get('end_date')
         if start and end:
-            start_date = make_aware(datetime.strptime(start, '%Y-%m-%d'))
-            end_date   = make_aware(datetime.strptime(end,   '%Y-%m-%d'))
+            try:
+                start_date = make_aware(datetime.strptime(start, '%Y-%m-%d'))
+                end_date   = make_aware(datetime.strptime(end,   '%Y-%m-%d'))
+            except:
+                start_date = now - timedelta(days=30)
+                end_date   = now
         else:
-            start_date = today - timedelta(days=30)
-            end_date   = today
-
+            start_date = now - timedelta(days=30)
+            end_date   = now
     else:  # default: month
-        start_date = today - timedelta(days=30)
-        end_date   = today
+        # Last 30 days
+        start_date = now - timedelta(days=30)
+        end_date   = now
 
     #Get all delivered orders in the date range
     orders = Order.objects.filter(
@@ -382,93 +390,96 @@ def sales_report(request):
     )
 
     
-    total_orders = orders.count()
-
-    total_revenue = 0
+    total_revenue = 0.0
+    coupon_discount = 0.0
     for order in orders:
         total_revenue += float(order.total_amount)
-
-    coupon_discount = 0
-    for order in orders:
         coupon_discount += float(order.discount_amount)
 
-    total_discount = coupon_discount  # discount_amount = coupon savings
-
-    #Count total products sold
+    # Count total products sold
     order_items = OrderItem.objects.filter(order__in=orders)
-    products_sold = 0
-    for item in order_items:
-        products_sold += item.quantity
+    products_sold = sum(item.quantity for item in order_items)
 
-    #Build chart data 
-    daily_data = (
-        orders
-        .annotate(date=TruncDate('created_at'))
-        .values('date')
-        .annotate(total=Sum('total_amount'))
-        .order_by('date')
-    )
+    
+    chart_dict = {}
+    if filter_type == 'day':
+        # Hourly data for Today
+        for h in range(24):
+            chart_dict[f"{h:02d}:00"] = 0.0
+            
+        for order in orders:
+            hour_key = order.created_at.strftime("%H:00")
+            if hour_key in chart_dict:
+                chart_dict[hour_key] += float(order.total_amount)
+        
+        chart_list = [{'date': k, 'total': v} for k, v in chart_dict.items()]
+    else:
+        # Daily data for other filters
+        temp_date = start_date.date()
+        end_date_only = end_date.date()
+        while temp_date <= end_date_only:
+            chart_dict[str(temp_date)] = 0.0
+            temp_date += timedelta(days=1)
+                
+        for order in orders:
+            date_str = str(order.created_at.date())
+            if date_str in chart_dict:
+                chart_dict[date_str] += float(order.total_amount)
 
-    chart_list = []
-    for row in daily_data:
-        chart_list.append({
-            'date':  str(row['date']),
-            'total': float(row['total'] or 0),
-        })
+        chart_list = [{'date': k, 'total': v} for k, v in chart_dict.items()]
+        chart_list.sort(key=lambda x: x['date'])
 
-    # Calculate growth vs previous period
-    period_length = end_date - start_date
-    prev_start    = start_date - period_length
-    prev_end      = start_date
-
-    previous_orders = Order.objects.filter(
-        created_at__range=[prev_start, prev_end],
-        order_status='DELIVERED'
-    )
-
-    previous_revenue = 0
-    for order in previous_orders:
-        previous_revenue += float(order.total_amount)
-
-    # Growth calculation logic
-    if previous_revenue > 0:
-        growth = round((total_revenue - previous_revenue) / previous_revenue * 100, 2)
-    elif total_revenue > 0 and previous_revenue == 0:
   
-        growth = 100.0
+    if filter_type == 'day':
+        # Exactly yesterday (full day)
+        prev_date = start_date.date() - timedelta(days=1)
+        prev_rev_sum = Order.objects.filter(
+            created_at__date=prev_date,
+            order_status='DELIVERED'
+        ).aggregate(total=Sum('total_amount'))['total'] or 0
+        previous_revenue = float(prev_rev_sum)
     else:
         
-        growth = 0.0
+        if filter_type == 'week':
+            prev_start, prev_end = start_date - timedelta(days=7), start_date
+        elif filter_type == 'year':
+            prev_start, prev_end = start_date - timedelta(days=365), start_date
+        else:
+            period_length = end_date - start_date
+            prev_start, prev_end = start_date - period_length, start_date
 
-    # Build orders list for the discount table
-    orders_list = orders.select_related('payment').order_by('-created_at')[:50]
+        prev_rev_sum = Order.objects.filter(
+            created_at__range=[prev_start, prev_end],
+            order_status='DELIVERED'
+        ).aggregate(total=Sum('total_amount'))['total'] or 0
+        previous_revenue = float(prev_rev_sum)
 
+    # Growth percentage calculation
+    if previous_revenue > 0:
+        growth = round(((total_revenue - previous_revenue) / previous_revenue) * 100, 2)
+    else:
+        growth = 100.0 if total_revenue > 0 else 0.0
 
    
-    orders_with_discount_count = orders.filter(discount_amount__gt=0).count()
+    orders_list = orders.select_related('payment').order_by('-created_at')
+    coupon_stats = CouponModel.objects.filter(used_count__gt=0, is_deleted=False).order_by('-used_count')
 
-   
-    
-    coupon_stats = CouponModel.objects.filter(
-        used_count__gt=0,
-        is_deleted=False
-    ).order_by('-used_count')
+    order_page_obj = Paginator(orders_list, 4).get_page(request.GET.get('order_page'))
+    coupon_page_obj = Paginator(coupon_stats, 4).get_page(request.GET.get('coupon_page'))
 
     context = {
-        'total_revenue':              total_revenue,
-        'total_orders':               total_orders,
-        'products_sold':              products_sold,
-        'total_discount':             total_discount,
-        'coupon_discount':            coupon_discount,
-        'offer_discount':             0,
-        'chart_data':                 chart_list,
-        'growth':                     growth,
-        'filter_type':                filter_type,
-        'start_date':                 start_date,
-        'end_date':                   end_date,
-        'orders_list':                orders_list,
-        'orders_with_discount_count': orders_with_discount_count,
-        'coupon_stats':               coupon_stats,
+        'total_revenue':     total_revenue,
+        'previous_revenue':  previous_revenue,
+        'total_orders':      orders.count(),
+        'products_sold':     products_sold,
+        'coupon_discount':   coupon_discount,
+        'chart_data':        chart_list,
+        'growth':            growth,
+        'filter_type':       filter_type,
+        'start_date':        start_date,
+        'end_date':          end_date,
+        'orders_list':       order_page_obj,
+        'coupon_stats':      coupon_page_obj,
     }
 
     return render(request, 'admin/sales_report.html', context)
@@ -476,187 +487,177 @@ def sales_report(request):
 
 
 def export_sales_excel(request):
-
-  
     filter_type = request.GET.get('filter', 'month')
-    today = timezone.now()
+    now = timezone.localtime(timezone.now())
+    today_midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
-    #Set dates
     if filter_type == 'day':
-        start_date = today.replace(hour=0, minute=0, second=0, microsecond=0)
-        end_date   = today
+        start_date, end_date = today_midnight, now
     elif filter_type == 'week':
-        start_date = today - timedelta(days=7)
-        end_date   = today
+        start_date, end_date = now - timedelta(days=7), now
     elif filter_type == 'year':
-        start_date = today - timedelta(days=365)
-        end_date   = today
+        start_date, end_date = now - timedelta(days=365), now
     elif filter_type == 'custom':
-        start = request.GET.get('start_date')
-        end   = request.GET.get('end_date')
+        start, end = request.GET.get('start_date'), request.GET.get('end_date')
         if start and end:
-            start_date = make_aware(datetime.strptime(start, '%Y-%m-%d'))
-            end_date   = make_aware(datetime.strptime(end,   '%Y-%m-%d'))
+            try:
+                start_date = make_aware(datetime.strptime(start, '%Y-%m-%d'))
+                end_date = make_aware(datetime.strptime(end, '%Y-%m-%d'))
+            except:
+                start_date, end_date = now - timedelta(days=30), now
         else:
-            start_date = today - timedelta(days=30)
-            end_date   = today
+            start_date, end_date = now - timedelta(days=30), now
     else:
-        start_date = today - timedelta(days=30)
-        end_date   = today
+        start_date, end_date = now - timedelta(days=30), now
 
-    #Fetch delivered orders
     orders = Order.objects.filter(
         created_at__range=[start_date, end_date],
         order_status='DELIVERED'
-    ).select_related('payment')
+    ).select_related('payment').order_by('-created_at')
 
-    #Create Excel workbook
-    from openpyxl.styles import Font
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = 'Sales Report'
 
-    #Write header row
-    headers = ['Order ID', 'Date', 'Subtotal', 'Coupon Discount', 'Total Amount', 'Payment Method']
+    header_fill = PatternFill(start_color='4A9050', end_color='4A9050', fill_type='solid')
+    header_font = Font(color='FFFFFF', bold=True, size=11)
+    center_align = Alignment(horizontal='center')
+    money_format = '₹#,##0.00'
+    thin_border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
+
+    headers = ['Order Number', 'Date', 'Subtotal', 'Discount', 'Total Amount', 'Payment Method']
     ws.append(headers)
     for cell in ws[1]:
-        cell.font = Font(bold=True)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = center_align
+        cell.border = thin_border
 
-  
-    grand_total = 0
+    total_sum = 0
     for order in orders:
-        # Get payment method safely
-        try:
-            payment_method = order.payment.payment_method
-        except Exception:
-            payment_method = 'N/A'
-
+        pm = getattr(order.payment, 'payment_method', 'N/A')
         ws.append([
-            order.id,
+            order.order_number,
             order.created_at.strftime('%Y-%m-%d'),
             float(order.subtotal),
             float(order.discount_amount),
             float(order.total_amount),
-            payment_method,
+            pm
         ])
-        grand_total += float(order.total_amount)
+        total_sum += float(order.total_amount)
+        curr_row = ws.max_row
+        for i, cell in enumerate(ws[curr_row], 1):
+            cell.border = thin_border
+            if i in [3, 4, 5]: cell.number_format = money_format
+            if i in [1, 2, 6]: cell.alignment = center_align
 
-   
     ws.append([])
-    ws.append(['', '', '', 'Grand Total', grand_total])
+    ws.append(['', '', '', 'GRAND TOTAL', total_sum])
+    total_row = ws.max_row
+    ws.cell(row=total_row, column=4).font = Font(bold=True)
+    ws.cell(row=total_row, column=5).font = Font(bold=True)
+    ws.cell(row=total_row, column=5).number_format = money_format
 
-  
     for col in ws.columns:
-        max_len = 0
-        col_letter = col[0].column_letter
-        for cell in col:
-            try:
-                if cell.value:
-                    max_len = max(max_len, len(str(cell.value)))
-            except Exception:
-                pass
-        ws.column_dimensions[col_letter].width = max_len + 4
+        max_len = max(len(str(cell.value or "")) for cell in col)
+        ws.column_dimensions[col[0].column_letter].width = max_len + 5
 
-
-    response = HttpResponse(
-        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    )
-    response['Content-Disposition'] = 'attachment; filename="sales_report.xlsx"'
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="Glowe_Sales_{filter_type}.xlsx"'
     wb.save(response)
     return response
 
 
 def export_sales_pdf(request):
-
-    # Step 1: Read filter
     filter_type = request.GET.get('filter', 'month')
-    today = timezone.now()
+    now = timezone.localtime(timezone.now())
+    today_midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
-    # Step 2: Set dates
     if filter_type == 'day':
-        start_date = today.replace(hour=0, minute=0, second=0, microsecond=0)
-        end_date   = today
+        start_date, end_date = today_midnight, now
     elif filter_type == 'week':
-        start_date = today - timedelta(days=7)
-        end_date   = today
+        start_date, end_date = now - timedelta(days=7), now
     elif filter_type == 'year':
-        start_date = today - timedelta(days=365)
-        end_date   = today
+        start_date, end_date = now - timedelta(days=365), now
     elif filter_type == 'custom':
-        start = request.GET.get('start_date')
-        end   = request.GET.get('end_date')
+        start, end = request.GET.get('start_date'), request.GET.get('end_date')
         if start and end:
-            start_date = make_aware(datetime.strptime(start, '%Y-%m-%d'))
-            end_date   = make_aware(datetime.strptime(end,   '%Y-%m-%d'))
+            try:
+                start_date = make_aware(datetime.strptime(start, '%Y-%m-%d'))
+                end_date = make_aware(datetime.strptime(end, '%Y-%m-%d'))
+            except:
+                start_date, end_date = now - timedelta(days=30), now
         else:
-            start_date = today - timedelta(days=30)
-            end_date   = today
+            start_date, end_date = now - timedelta(days=30), now
     else:
-        start_date = today - timedelta(days=30)
-        end_date   = today
+        start_date, end_date = now - timedelta(days=30), now
 
-   #Fetch delivered orders
     orders = Order.objects.filter(
         created_at__range=[start_date, end_date],
         order_status='DELIVERED'
-    ).select_related('payment')
+    ).select_related('payment').order_by('-created_at')
 
-    #Calculate totals
-    total_revenue  = 0
-    total_discount = 0
-    for order in orders:
-        total_revenue  += float(order.total_amount)
-        total_discount += float(order.discount_amount)
+    total_revenue = sum(float(o.total_amount) for o in orders)
+    total_discount = sum(float(o.discount_amount) for o in orders)
 
-    # Set up PDF response
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = 'attachment; filename="sales_report.pdf"'
+    response['Content-Disposition'] = f'attachment; filename="Glowe_Sales_{filter_type}.pdf"'
 
-    doc    = SimpleDocTemplate(response, pagesize=A4)
+    doc = SimpleDocTemplate(response, pagesize=A4, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
     styles = getSampleStyleSheet()
-    elements = []
+    
+    title_style = styles['Title']
+    title_style.textColor = colors.HexColor('#1A2E1A')
+    title_style.fontSize = 20
+    title_style.spaceAfter = 20
 
-    # Step 6: Title and summary
-    elements.append(Paragraph('Glowe — Sales Report', styles['Title']))
-    elements.append(Spacer(1, 12))
-    elements.append(Paragraph(f'Period : {start_date.strftime("%Y-%m-%d")} to {end_date.strftime("%Y-%m-%d")}', styles['Normal']))
-    elements.append(Paragraph(f'Total Orders  : {orders.count()}',     styles['Normal']))
-    elements.append(Paragraph(f'Total Revenue : Rs.{total_revenue:.2f}',  styles['Normal']))
-    elements.append(Paragraph(f'Total Discount: Rs.{total_discount:.2f}', styles['Normal']))
+    elements = []
+    
+    elements.append(Paragraph("GLOWÉ — SALES REPORT", title_style))
+    elements.append(Paragraph(f"Period: {start_date.strftime('%b %d, %Y')} to {end_date.strftime('%b %d, %Y')}", styles['Normal']))
     elements.append(Spacer(1, 20))
 
-    # Step 7: Build table rows
-    table_data = [['Order ID', 'Date', 'Subtotal', 'Discount', 'Total', 'Payment']]
+    summary_data = [
+        ['Total Orders', 'Total Revenue', 'Total Savings'],
+        [str(orders.count()), f"₹{total_revenue:,.2f}", f"₹{total_discount:,.2f}"]
+    ]
+    summary_table = Table(summary_data, colWidths=[150, 150, 150])
+    summary_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#F3F4F6')),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.HexColor('#6B7280')),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('FONTSIZE', (0,1), (-1,1), 14),
+        ('FONTNAME', (0,1), (-1,1), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 10),
+    ]))
+    elements.append(summary_table)
+    elements.append(Spacer(1, 30))
 
-    for order in orders:
-        try:
-            payment_method = order.payment.payment_method
-        except Exception:
-            payment_method = 'N/A'
-
+    table_data = [['Order Number', 'Date', 'Subtotal', 'Discount', 'Total Amount']]
+    for o in orders:
         table_data.append([
-            str(order.id),
-            order.created_at.strftime('%Y-%m-%d'),
-            f'Rs.{float(order.subtotal):.2f}',
-            f'Rs.{float(order.discount_amount):.2f}',
-            f'Rs.{float(order.total_amount):.2f}',
-            payment_method,
+            o.order_number,
+            o.created_at.strftime('%Y-%m-%d'),
+            f"₹{float(o.subtotal):.2f}",
+            f"₹{float(o.discount_amount):.2f}",
+            f"₹{float(o.total_amount):.2f}",
         ])
 
- 
-    table = Table(table_data)
-    table.setStyle(TableStyle([
-        ('BACKGROUND',  (0, 0), (-1, 0), colors.HexColor('#4a9050')),
-        ('TEXTCOLOR',   (0, 0), (-1, 0), colors.white),
-        ('FONTNAME',    (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE',    (0, 0), (-1, -1), 9),
-        ('GRID',        (0, 0), (-1, -1), 0.5, colors.lightgrey),
-        ('ALIGN',       (2, 1), (-1, -1), 'RIGHT'),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f9fafb')]),
+    main_table = Table(table_data, colWidths=[120, 90, 100, 100, 100])
+    main_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A9050')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('ALIGN', (2, 1), (-1, -1), 'RIGHT'),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F9FAFB')]),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
     ]))
-
-    elements.append(table)
-
+    elements.append(main_table)
 
     doc.build(elements)
     return response

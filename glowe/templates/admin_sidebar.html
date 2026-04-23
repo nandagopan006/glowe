@@ -214,50 +214,22 @@
      STICKY TOPBAR — mobile & tablet only (hidden on lg+)
      This is the "3-line hamburger" bar that sticks to top
 ══════════════════════════════════ -->
-<header id="mobileTopbar"
-        class="lg:hidden fixed top-0 left-0 right-0 z-30 bg-white border-b border-gray-100
-               flex items-center gap-3 px-4 h-14
-               shadow-sm">
-
-  <!-- Hamburger button -->
-  <button type="button" id="hamburgerBtn" onclick="toggleAdminSidebar()"
-          class="w-9 h-9 flex flex-col items-center justify-center gap-[5px] rounded-xl
-                 hover:bg-gray-100 transition-all duration-150 flex-shrink-0 group">
-    <span class="hamburger-line block w-5 h-[2px] bg-gray-600 rounded-full transition-all duration-200 group-hover:bg-gray-900"></span>
-    <span class="hamburger-line block w-5 h-[2px] bg-gray-600 rounded-full transition-all duration-200 group-hover:bg-gray-900"></span>
-    <span class="hamburger-line block w-5 h-[2px] bg-gray-600 rounded-full transition-all duration-200 group-hover:bg-gray-900"></span>
-  </button>
-
-  <!-- Logo / page title -->
-  <div class="flex items-center gap-2 flex-1 min-w-0">
-    <img src="{{ logo_url }}" alt="{{ site_name }} Logo" class="w-[140px] h-auto object-contain shrink-0">
-    <span class="text-[10px] font-semibold tracking-[0.18em] uppercase text-gray-400 truncate">Admin</span>
-  </div>
-
-  <!-- Right side: notification + avatar -->
-  <div class="flex items-center gap-2 flex-shrink-0">
-    <button type="button" class="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-gray-100 transition-colors relative">
-      <svg class="w-4.5 h-4.5 text-gray-600" style="width:18px;height:18px" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-      </svg>
-      <span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full"></span>
-    </button>
-    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-sage-100 to-sage-200 flex items-center justify-center flex-shrink-0">
-      {% if user.profile_image and user.profile_image.name != 'profile/default.png' %}
-        <img src="{{ user.profile_image.url }}" alt="{{ user.username }}" class="w-full h-full rounded-full object-cover"/>
-      {% else %}
-        <span class="text-sage-700 font-bold text-xs">{{ user.username|first|upper }}</span>
-      {% endif %}
-    </div>
-  </div>
-</header>
+<!-- Floating Mobile Hamburger (Hidden on Desktop) -->
+<button type="button" 
+        id="mobileFloatingBtn"
+        onclick="toggleAdminSidebar()"
+        class="lg:hidden fixed top-4 left-4 z-[60] w-10 h-10 bg-white shadow-xl border border-gray-100 rounded-xl flex flex-col items-center justify-center gap-[4.5px] transition-all active:scale-95 group">
+  <span class="hamburger-line block w-5 h-[2px] bg-gray-600 rounded-full transition-all duration-200 group-hover:bg-gray-900"></span>
+  <span class="hamburger-line block w-5 h-[2px] bg-gray-600 rounded-full transition-all duration-200 group-hover:bg-gray-900"></span>
+  <span class="hamburger-line block w-5 h-[2px] bg-gray-600 rounded-full transition-all duration-200 group-hover:bg-gray-900"></span>
+</button>
 
 <script>
 /* ── Sidebar toggle ── */
 function toggleAdminSidebar() {
   const sidebar = document.getElementById('adminSidebar');
   const overlay = document.getElementById('adminSidebarOverlay');
-  const btn     = document.getElementById('hamburgerBtn');
+  const btn     = document.getElementById('mobileFloatingBtn');
   const isOpen  = sidebar.classList.contains('translate-x-0');
 
   if (isOpen) {
@@ -430,9 +402,8 @@ document.addEventListener('DOMContentLoaded', () => {
 }
 .hamburger-line { transition: transform 0.22s ease, opacity 0.18s ease; }
 
-/* Pages that include this sidebar need top padding on mobile */
-/* Add class 'has-mobile-topbar' to your main content wrapper */
+/* Pages that include this sidebar need top padding on mobile to clear the floating button */
 @media (max-width: 1023px) {
-  .admin-mobile-offset { padding-top: 56px !important; }
+  .admin-mobile-offset { padding-top: 72px !important; }
 }
 </style>
