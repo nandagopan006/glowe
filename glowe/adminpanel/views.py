@@ -1,31 +1,29 @@
 # views.py
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 import openpyxl
 from django.http import HttpResponse
 from coupons.models import Coupon as CouponModel
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
+from accounts.models import OTPVerification, ProfileUser
+from user.models import Address
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.cache import never_cache
 from django.utils import timezone
 import random
 from django.core.mail import send_mail
 from django.conf import settings
-from django.shortcuts import  get_object_or_404
 import re
 from django.core.paginator import Paginator
 from django.db.models import Q
 from accounts.email_utils import send_admin_otp_email
-from django.utils import timezone
 from django.utils.timezone import make_aware
 from datetime import datetime, timedelta
 from django.db.models import Sum, Count
-from user.models import Address
 from django.db.models.functions import TruncDate
 from order.models import Order, OrderItem
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet
