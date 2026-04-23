@@ -110,8 +110,8 @@
   
   /* Light Card Styling */
   .light-card { 
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); 
-    border: 1px solid #e2e8f0;
+    background: #fff; 
+    border: 1px solid #eaede8;
     position: relative;
   }
   
@@ -132,16 +132,16 @@
   }
   
   .light-card .kpi-icon-wrap { 
-    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    background: linear-gradient(135deg, #f2f7f2 0%, #e2f0e2 100%);
+    box-shadow: 0 4px 12px rgba(74, 144, 80, 0.08);
   }
   
   .light-card .kpi-icon-wrap::before { 
-    border: 2px solid #e2e8f0; 
+    border: 2px solid #e2f0e2; 
   }
   
   .light-card .kpi-icon-wrap::after { 
-    border: 2px solid #f1f5f9; 
+    border: 2px solid #f2f7f2; 
   }
 
   /* Number Counter Animation */
@@ -162,49 +162,24 @@
 
   /* Filter Buttons */
   .filter-btn { 
-    padding: 8px 20px; 
-    border-radius: 10px; 
+    padding: 6px 20px; 
+    border-radius: 20px; 
     font-size: 0.8rem; 
     font-weight: 600; 
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.15s;
     position: relative;
     overflow: hidden;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: #7a8c7a;
+    text-decoration: none;
+    display: inline-block;
   }
   
-  .filter-btn::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(74, 144, 80, 0.2);
-    transform: translate(-50%, -50%);
-    transition: width 0.4s, height 0.4s;
-  }
-  
-  .filter-btn:hover::before {
-    width: 200%;
-    height: 200%;
-  }
-  
-  .filter-btn.active { 
-    background: linear-gradient(135deg, #4a9050 0%, #3a7a3e 100%); 
-    color: white;
-    box-shadow: 0 4px 12px rgba(74, 144, 80, 0.3);
-    transform: translateY(-2px);
-  }
-  
-  .filter-btn:not(.active) { 
-    background: #f1f5f9; 
-    color: #64748b; 
-  }
-  
-  .filter-btn:not(.active):hover { 
-    background: #e2e8f0; 
-    color: #1e293b;
-    transform: translateY(-2px);
+  .filter-btn.active, .filter-btn:hover { 
+    background: #4a9050; 
+    color: #fff;
   }
 
   /* Dark Section */
@@ -272,6 +247,8 @@
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    background: #fff;
+    border: 1px solid #eaede8;
   }
   
   .chart-card::before {
@@ -281,7 +258,7 @@
     left: -2px;
     right: -2px;
     bottom: -2px;
-    background: linear-gradient(45deg, #8b5cf6, #ec4899, #8b5cf6);
+    background: linear-gradient(45deg, #4a9050, #64a864, #4a9050);
     border-radius: 20px;
     opacity: 0;
     z-index: -1;
@@ -290,11 +267,11 @@
   
   .chart-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 20px 40px rgba(139, 92, 246, 0.15);
+    box-shadow: 0 20px 40px rgba(74, 144, 80, 0.12);
   }
   
   .chart-card:hover::before {
-    opacity: 0.1;
+    opacity: 0.08;
   }
 
   /* Inventory Alert Cards */
@@ -353,16 +330,16 @@
 {% block content %}
 {% include 'admin_sidebar.html' %}
 
-<div class="admin-main-content bg-[#f8fafc] min-h-screen">
+<div class="admin-main-content bg-[#f4f6f3] min-h-screen">
   <main class="p-6 max-w-[1400px] mx-auto">
 
     <!-- Header & Filters -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 fade-in">
       <div>
         <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Dashboard Overview</h1>
-        <p class="text-sm text-gray-500 mt-1">Welcome back, here is your summary.</p>
+        <p class="text-sm text-gray-400 mt-1">Welcome back, here is your summary.</p>
       </div>
-      <div class="flex items-center gap-2 bg-white p-1.5 rounded-xl border border-gray-100 shadow-sm">
+      <div class="flex items-center gap-2 bg-white border border-gray-200 rounded-full p-1 shadow-sm">
         <a href="?filter=day" class="filter-btn {% if filter_type == 'day' %}active{% endif %}">Day</a>
         <a href="?filter=week" class="filter-btn {% if filter_type == 'week' %}active{% endif %}">Week</a>
         <a href="?filter=month" class="filter-btn {% if filter_type == 'month' %}active{% endif %}">Month</a>
@@ -441,7 +418,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
       
       <!-- Sales Activity Chart -->
-      <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6 fade-in d-2 chart-card">
+      <div class="lg:col-span-2 bg-white rounded-2xl border border-[#eaede8] shadow-sm p-6 fade-in d-2 chart-card">
         <div class="flex items-center justify-between mb-6">
           <div>
             <h2 class="text-base font-bold text-gray-900 flex items-center gap-2">
@@ -517,7 +494,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
       
       <!-- Best Categories -->
-      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 fade-in d-4">
+      <div class="bg-white rounded-2xl border border-[#eaede8] shadow-sm p-6 fade-in d-4">
         <div class="flex items-center justify-between mb-6">
           <h2 class="text-base font-bold text-gray-900 flex items-center gap-2">
             <span class="w-2 h-2 rounded-full bg-[#10b981] shadow-[0_0_8px_#10b981]"></span>
@@ -548,7 +525,7 @@
       </div>
 
       <!-- Inventory Alerts -->
-      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 fade-in d-4">
+      <div class="bg-white rounded-2xl border border-[#eaede8] shadow-sm p-6 fade-in d-4">
         <h2 class="text-base font-bold text-gray-900 mb-6 flex items-center gap-2">
           <span class="w-2 h-2 rounded-full bg-[#ef4444] shadow-[0_0_8px_#ef4444]"></span>
           Inventory Alerts
@@ -584,7 +561,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-8">
       
       <!-- Most Popular Products -->
-      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 fade-in d-4 overflow-hidden flex flex-col h-[400px]">
+      <div class="bg-white rounded-2xl border border-[#eaede8] shadow-sm p-6 fade-in d-4 overflow-hidden flex flex-col h-[400px]">
         <h2 class="text-base font-bold text-gray-900 mb-6 flex items-center gap-2 shrink-0">
           <span class="w-2 h-2 rounded-full bg-[#8b5cf6] shadow-[0_0_8px_#8b5cf6]"></span>
           Most Popular Products
@@ -637,7 +614,7 @@
       </div>
 
       <!-- Recent Orders List -->
-      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 fade-in d-4 overflow-hidden flex flex-col h-[400px]">
+      <div class="bg-white rounded-2xl border border-[#eaede8] shadow-sm p-6 fade-in d-4 overflow-hidden flex flex-col h-[400px]">
         <div class="flex items-center justify-between mb-6 shrink-0">
           <h2 class="text-base font-bold text-gray-900">Recent Orders</h2>
           <a href="{% url 'admin_order_list' %}" class="text-xs text-emerald-600 font-semibold hover:underline">View All</a>
