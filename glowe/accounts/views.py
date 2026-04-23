@@ -9,7 +9,7 @@ from django.conf import settings
 from django.contrib import messages
 from .models import ProfileUser, OTPVerification
 from .email_utils import send_otp_email, send_password_reset_email
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, update_session_auth_hash
 from django.urls import reverse
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -324,9 +324,9 @@ def signin_page(request):
 
 
 def forget_password(request):
-
-    if request.user.is_authenticated:
-        return redirect("home")
+    # Allow authenticated users too (e.g. from change password page)
+    # Pre-fill their email on GET so they don't have to type it
+    prefill_email = request.user.email if request.user.is_authenticated else ""
 
     if request.method == "POST":
         email = request.POST.get("email")
@@ -372,6 +372,9 @@ def forget_password(request):
 
                 request.session["reset_email"] = user.email
 
+                # Store a flag so reset_password knows to redirect to change_password
+                if request.user.is_authenticated:
+                    request.session["reset_from_change_password"] = True
                 return redirect("forget_password_link")
 
             else:
@@ -394,7 +397,7 @@ def forget_password(request):
                 },
             )
 
-    return render(request, "forget_password.html")
+    return render(request, "forget_password.html", {"prefill_email": prefill_email})
 
 
 def forget_password_link(request):
@@ -498,8 +501,7 @@ def resend_reset_email(request):
 
 def reset_password(request, uidb64, token):
 
-    if request.user.is_authenticated:
-        return redirect("home")
+    # Do NOT block authenticated users — they arrive here from the change password flow
 
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
@@ -550,17 +552,33 @@ def reset_password(request, uidb64, token):
                 },
             )
 
+        # Store authentication status before password change
+        is_authenticated = request.user.is_authenticated
+        from_change_password = request.session.get("reset_from_change_password", False)
+
         user.set_password(new_password)
 
-        # clear reset token appo enii link chayan paatilla  allam clear chaayumm
+        # clear reset token
         user.reset_token = None
         user.reset_requested_at = None
         user.reset_attempts = 0
         user.reset_block_until = None
         user.save()
 
-        request.session["update_password"] = "SuccessFully Updated The Password"
-        messages.success(request, "Password reset successful. Please sign in.")
+        # If user was authenticated, keep them logged in (password change invalidates session otherwise)
+        if is_authenticated:
+            update_session_auth_hash(request, user)
+            messages.success(request, "Password updated successfully.")
+            
+            # Clean up session flag
+            request.session.pop("reset_from_change_password", None)
+            
+            # Redirect to change_password if they came from there, otherwise profile
+            if from_change_password:
+                return redirect("change_password")
+            return redirect("profile_overview")
+
+        messages.success(request, "Password reset successful. Please sign in with your new password.")
         return redirect("signin")
 
     return render(

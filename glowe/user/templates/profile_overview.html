@@ -1,182 +1,125 @@
 {% extends 'base.html' %}
 {% load static %}
-
 {% block title %}Glowé – My Account{% endblock %}
 
 {% block extra_css %}
 body { background:#F5F1EC !important; }
 
-@keyframes toastIn  { to { transform:translateY(0); opacity:1; } }
-@keyframes toastOut { to { transform:translateY(-80px); opacity:0; } }
-@keyframes toastProg { from{width:100%;} to{width:0%;} }
-.po-toast { pointer-events:all; display:flex; align-items:center; width:300px; border-radius:14px; overflow:hidden; position:relative; box-shadow:0 10px 32px rgba(42,31,20,0.2),0 2px 8px rgba(42,31,20,0.10); animation:toastIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards; transform:translateY(-80px); opacity:0; }
-.po-toast.hide { animation:toastOut 0.35s cubic-bezier(0.4,0,1,1) forwards; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(18px);} to{opacity:1;transform:translateY(0);} }
+.fu1{animation:fadeUp .5s .05s both;} .fu2{animation:fadeUp .5s .12s both;} .fu3{animation:fadeUp .5s .2s both;} .fu4{animation:fadeUp .5s .28s both;}
 
-.signout-overlay { position:fixed; inset:0; z-index:9999; background:rgba(240,235,226,0.72); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.25s ease; }
-.signout-overlay.open { opacity:1; pointer-events:all; }
-.signout-modal { background:#faf8f5; border-radius:24px; padding:36px 32px 28px; width:340px; max-width:calc(100vw - 32px); display:flex; flex-direction:column; align-items:center; text-align:center; transform:scale(0.94) translateY(8px); transition:transform 0.28s cubic-bezier(0.34,1.56,0.64,1); box-shadow:0 20px 60px rgba(26,18,8,0.13),0 4px 16px rgba(26,18,8,0.07); }
-.signout-overlay.open .signout-modal { transform:scale(1) translateY(0); }
-.signout-icon-wrap { width:56px; height:56px; border-radius:50%; background:#f0ebe2; display:flex; align-items:center; justify-content:center; margin-bottom:20px; }
+.card { background:#fff; border:1px solid #ede8e0; border-radius:20px; transition:box-shadow .3s,transform .3s; }
+.card:hover { box-shadow:0 12px 32px rgba(26,18,8,.08); transform:translateY(-3px); }
 
-@media (max-width:1023px) { .desktop-sidebar { display:none !important; } }
-@media (min-width:1024px) { .mobile-nav-fab { display:none !important; } .mobile-nav-sheet { display:none !important; } .mobile-nav-overlay { display:none !important; } }
-.mobile-nav-overlay { position:fixed; inset:0; z-index:998; background:rgba(26,18,8,0.35); opacity:0; pointer-events:none; transition:opacity 0.25s ease; }
-.mobile-nav-overlay.open { opacity:1; pointer-events:all; }
-.mobile-nav-sheet { position:fixed; bottom:0; left:0; right:0; z-index:999; background:#ffffff; border-radius:24px 24px 0 0; border-top:1px solid #E7DDD6; padding:0 0 28px; transform:translateY(100%); transition:transform 0.38s cubic-bezier(0.34,1.2,0.64,1); }
-.mobile-nav-sheet.open { transform:translateY(0); }
-.sheet-handle { width:36px; height:4px; background:#E7DDD6; border-radius:2px; margin:10px auto 16px; }
-.sheet-nav-item { display:flex; align-items:center; gap:14px; padding:13px 20px; cursor:pointer; transition:background 0.15s; text-decoration:none; border:none; background:none; width:100%; text-align:left; }
-.sheet-nav-item:hover { background:#F5F1EC; }
-.sheet-nav-item.s-active { background:#F5F1EC; }
-.sheet-nav-icon { width:38px; height:38px; border-radius:11px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.sheet-nav-label { font-family:'Montserrat',sans-serif; font-size:13px; font-weight:600; color:#1a1208; }
-.sheet-nav-sub   { font-family:'Montserrat',sans-serif; font-size:10px; font-weight:400; color:#8C7F77; margin-top:1px; }
-.sheet-active-dot { width:7px; height:7px; border-radius:50%; background:#1a1208; margin-left:auto; flex-shrink:0; }
-.sheet-nav-divider { height:1px; background:#F0EBE2; margin:4px 20px; }
-.mobile-nav-fab { position:fixed; bottom:24px; right:20px; z-index:997; width:50px; height:50px; border-radius:50%; background:#1a1208; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 20px rgba(26,18,8,0.3); transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1), background 0.2s; }
-.mobile-nav-fab:hover { background:#3a2414; }
-.mobile-nav-fab.open  { transform:rotate(45deg); background:#3a2414; }
+.stat-chip { border-radius:14px; padding:1.4rem 1.6rem; display:flex; align-items:center; gap:14px; }
+.stat-chip .ic { width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+
+.nav-link { display:flex;align-items:center;gap:12px;padding:13px 18px;border-left:2px solid transparent;transition:all .2s;text-decoration:none;color:#4a3728; }
+.nav-link:hover { background:#F5F1EC; border-left-color:#c8b89a; }
+.nav-link.active { background:#F5F1EC; border-left-color:#1a1208; }
+.nav-link svg { opacity:.6; }
+.nav-link.active svg { opacity:1; }
+
+.action-card { display:block;text-decoration:none;border-radius:18px;padding:1.5rem;border:1px solid #ede8e0;background:#fff;transition:all .3s;position:relative;overflow:hidden; }
+.action-card::after { content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(26,18,8,.02),transparent);opacity:0;transition:opacity .3s; }
+.action-card:hover { box-shadow:0 16px 36px rgba(26,18,8,.1);transform:translateY(-4px); }
+.action-card:hover::after { opacity:1; }
+.action-card .ac-icon { width:48px;height:48px;border-radius:13px;display:flex;align-items:center;justify-content:center;margin-bottom:1rem;transition:all .3s; }
+.action-card:hover .ac-icon { transform:scale(1.1);border-radius:16px; }
+
+.signout-overlay{position:fixed;inset:0;z-index:9999;background:rgba(240,235,226,.72);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s;}
+.signout-overlay.open{opacity:1;pointer-events:all;}
+.signout-modal{background:#faf8f5;border-radius:24px;padding:36px 32px 28px;width:340px;max-width:calc(100vw - 32px);display:flex;flex-direction:column;align-items:center;text-align:center;transform:scale(.94) translateY(8px);transition:transform .28s cubic-bezier(.34,1.56,.64,1);box-shadow:0 20px 60px rgba(26,18,8,.13);}
+.signout-overlay.open .signout-modal{transform:scale(1) translateY(0);}
+
+@media(max-width:1023px){.desktop-sidebar{display:none!important;}}
 {% endblock %}
 
 {% block content %}
-
-<div id="poToastContainer" class="fixed top-5 z-[9999] flex flex-col gap-2 pointer-events-none" style="left:50%;transform:translateX(-50%);align-items:center;width:max-content;"></div>
-
 {% if success %}<span id="session-success" class="hidden">{{ success }}</span>{% endif %}
 
-<!-- SIGNOUT MODAL -->
-<div id="signout-overlay" class="signout-overlay" role="dialog" aria-modal="true">
+<div id="signout-overlay" class="signout-overlay" role="dialog">
   <div class="signout-modal">
-    <div class="signout-icon-wrap">
+    <div style="width:52px;height:52px;border-radius:50%;background:#f0ebe2;display:flex;align-items:center;justify-content:center;margin-bottom:18px;">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2a2018" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
     </div>
-    <h2 class="font-cormorant text-[#1a1208] leading-snug mb-3" style="font-size:26px;font-weight:400;">Are you sure you want to<br>Sign out?</h2>
-    <p class="font-montserrat font-light text-[#7a6e62] text-[12px] leading-[1.75] mb-7 max-w-[240px]">You will need to sign back in to access your orders and curated favorites.</p>
+    <h2 class="font-cormorant text-[#1a1208] mb-3" style="font-size:26px;font-weight:400;">Sign out of Glowé?</h2>
+    <p class="font-montserrat font-light text-[#7a6e62] text-[12px] leading-[1.75] mb-7 max-w-[240px]">You'll need to sign back in to access your orders and curated favourites.</p>
     <form method="post" action="{% url 'signout' %}" class="w-full mb-3">
       {% csrf_token %}
-      <button type="submit" class="w-full py-[15px] bg-[#1a1208] hover:bg-[#2d1f0e] text-white font-montserrat text-[10px] font-bold tracking-[0.22em] uppercase border-none cursor-pointer rounded-[10px] transition-colors duration-200">YES, LOGOUT</button>
+      <button type="submit" class="w-full py-[14px] bg-[#1a1208] hover:bg-[#2d1f0e] text-white font-montserrat text-[10px] font-bold tracking-[.22em] uppercase border-none cursor-pointer rounded-[10px] transition-colors">YES, SIGN OUT</button>
     </form>
-    <button onclick="closeSignoutModal()" class="w-full py-[14px] bg-transparent border border-[#ddd6cc] hover:bg-[#f0ebe2] text-[#1a1208] font-montserrat text-[10px] font-bold tracking-[0.22em] uppercase cursor-pointer rounded-[10px] transition-colors duration-200">STAY LOGGED IN</button>
+    <button onclick="closeSignout()" class="w-full py-[13px] bg-transparent border border-[#ddd6cc] hover:bg-[#f0ebe2] text-[#1a1208] font-montserrat text-[10px] font-bold tracking-[.22em] uppercase cursor-pointer rounded-[10px] transition-colors">STAY LOGGED IN</button>
   </div>
 </div>
 
-<!-- MOBILE NAV OVERLAY -->
-<div id="mobileNavOverlay" class="mobile-nav-overlay" onclick="closeMobileNav()"></div>
-
-<!-- MOBILE NAV BOTTOM SHEET -->
-<div id="mobileNavSheet" class="mobile-nav-sheet">
-  <div class="sheet-handle"></div>
-  <div style="display:flex;align-items:center;gap:12px;padding:0 20px 14px;border-bottom:1px solid #F0EBE2;margin-bottom:4px;">
-    <div style="width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid #E7DDD6;">
-      <img src="{% if user.profile_image and user.profile_image.name != 'profile/default.png' %}{{ user.profile_image.url }}{% else %}/media/profile/default.png{% endif %}" alt="{{ user.full_name }}" style="width:100%;height:100%;object-fit:cover;"/>
-    </div>
-    <div>
-      <p style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:#1a1208;margin:0;line-height:1.2;">{{ user.full_name }}</p>
-      <p style="font-family:'Montserrat',sans-serif;font-size:10px;color:#8C7F77;margin:2px 0 0;">{{ user.email }}</p>
-    </div>
-  </div>
-  <a href="{% url 'profile_overview' %}" class="sheet-nav-item s-active">
-    <div class="sheet-nav-icon" style="background:#F5F1EC;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1a1208" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
-    <div><div class="sheet-nav-label">Overview</div><div class="sheet-nav-sub">Account summary</div></div>
-    <div class="sheet-active-dot"></div>
-  </a>
-  <a href="{% url 'order_listing' %}" class="sheet-nav-item">
-    <div class="sheet-nav-icon" style="background:#f0f8f4;">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
-        <path d="m3.3 7 8.7 5 8.7-5" />
-        <path d="M12 22V12" />
-      </svg>
-    </div>
-    <div><div class="sheet-nav-label">My Orders</div><div class="sheet-nav-sub">Track &amp; manage</div></div>
-  </a>
-  <a href="{% url 'wishlist' %}" class="sheet-nav-item">
-    <div class="sheet-nav-icon" style="background:#fdf0f4;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#993556" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
-    <div><div class="sheet-nav-label">Wishlist</div><div class="sheet-nav-sub">Saved items</div></div>
-  </a>
-  <a href="{% url 'address' %}" class="sheet-nav-item">
-    <div class="sheet-nav-icon" style="background:#eef4ff;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#185FA5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
-    <div><div class="sheet-nav-label">Addresses</div><div class="sheet-nav-sub">Delivery locations</div></div>
-  </a>
-  <a href="{% url 'change_password' %}" class="sheet-nav-item">
-    <div class="sheet-nav-icon" style="background:#faf8f5;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4A2E24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
-    <div><div class="sheet-nav-label">Change Password</div><div class="sheet-nav-sub">Update security</div></div>
-  </a>
-  <div class="sheet-nav-divider"></div>
-  <button type="button" onclick="closeMobileNav(); setTimeout(openSignoutModal, 200);" class="sheet-nav-item">
-    <div class="sheet-nav-icon" style="background:#fdf3f1;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c0392b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
-    <div><div class="sheet-nav-label" style="color:#c0392b;">Sign Out</div><div class="sheet-nav-sub">See you soon</div></div>
-  </button>
-</div>
-
-<button id="mobileNavFab" class="mobile-nav-fab" onclick="toggleMobileNav()" aria-label="Open menu">
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
-  </svg>
-</button>
-
-<!-- BREADCRUMB -->
-<div class="max-w-[1440px] mx-auto px-6 md:px-10 pt-8 pb-6">
-  <p class="font-montserrat text-[11px] font-medium tracking-[0.14em] text-[#8C7F77] uppercase">
-    <a href="{% url 'home' %}" class="hover:text-[#1a1208] transition-colors no-underline text-[#8C7F77]">Home</a>
-    <span class="mx-2">/</span>
-    <span class="text-[#1a1208]">My Account</span>
+<div class="max-w-[1300px] mx-auto px-5 md:px-10 pt-8 pb-4 fu1">
+  <p class="font-montserrat text-[10px] tracking-[.14em] text-[#8C7F77] uppercase">
+    <a href="{% url 'home' %}" class="hover:text-[#1a1208] no-underline text-[#8C7F77] transition-colors">Home</a>
+    <span class="mx-2">/</span><span class="text-[#1a1208]">My Account</span>
   </p>
 </div>
 
-<!-- MAIN LAYOUT -->
-<main class="max-w-[1440px] mx-auto px-6 md:px-10 pb-20">
-  <div class="flex flex-col lg:flex-row gap-6">
+<main class="max-w-[1300px] mx-auto px-5 md:px-10 pb-20">
+  <div class="flex flex-col lg:flex-row gap-7">
 
-    <!-- DESKTOP SIDEBAR -->
-    <aside class="desktop-sidebar w-full lg:w-[300px] lg:shrink-0 flex flex-col gap-4">
-      <div class="bg-white rounded-2xl border border-[#E7DDD6] shadow-sm p-6">
-        <div class="flex items-center gap-4 mb-6">
-          <div class="w-14 h-14 rounded-full overflow-hidden shrink-0 border-2 border-[#E7DDD6]">
-            <img src="{% if user.profile_image and user.profile_image.name != 'profile/default.png' %}{{ user.profile_image.url }}{% else %}/media/profile/default.png{% endif %}" alt="{{ user.full_name }}" class="w-full h-full object-cover"/>
+    <!-- SIDEBAR -->
+    <aside class="desktop-sidebar w-full lg:w-[270px] shrink-0 flex flex-col gap-5">
+
+      <!-- Profile card -->
+      <div class="card p-6 fu1">
+        <div class="flex items-center gap-4 mb-5">
+          <div style="width:58px;height:58px;border-radius:50%;overflow:hidden;border:2px solid #e7ddd6;flex-shrink:0;">
+            <img src="{% if user.profile_image and user.profile_image.name != 'profile/default.png' %}{{ user.profile_image.url }}{% else %}/media/profile/default.png{% endif %}" alt="{{ user.full_name }}" style="width:100%;height:100%;object-fit:cover;">
           </div>
           <div>
-            <p class="font-cormorant text-[18px] font-semibold text-[#1a1208] leading-tight">{{ user.full_name }}</p>
+            <p class="font-cormorant text-[20px] font-semibold text-[#1a1208] leading-tight">{{ user.full_name }}</p>
+            <p class="font-montserrat text-[10px] text-[#8C7F77] mt-0.5">Member</p>
           </div>
         </div>
-        <div class="space-y-3 mb-5">
+        <div class="space-y-2.5 mb-5">
           <div class="flex items-center gap-3">
-            <svg class="w-4 h-4 text-[#8C7F77] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-            <span class="font-montserrat text-[11px] font-light text-[#8C7F77]">{{ user.email }}</span>
+            <svg class="w-3.5 h-3.5 text-[#8C7F77] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+            <span class="font-montserrat text-[11px] text-[#8C7F77] truncate">{{ user.email }}</span>
           </div>
           <div class="flex items-center gap-3">
-            <svg class="w-4 h-4 text-[#8C7F77] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.56 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-            <span class="font-montserrat text-[11px] font-light text-[#8C7F77]">{{ user.phone_number|default:"Not provided" }}</span>
+            <svg class="w-3.5 h-3.5 text-[#8C7F77] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.56 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <span class="font-montserrat text-[11px] text-[#8C7F77]">{{ user.phone_number|default:"Not provided" }}</span>
           </div>
         </div>
-        <a href="{% url 'change_password' %}" class="block w-full text-center font-montserrat text-[11px] font-semibold tracking-[0.1em] text-[#1a1208] border border-[#E7DDD6] rounded-lg py-2.5 hover:bg-[#F5F1EC] hover:border-[#c8b89a] transition-all">Change Password</a>
+        <a href="{% url 'edit_profile' %}" class="flex items-center justify-center gap-2 w-full font-montserrat text-[10px] font-semibold tracking-[.1em] uppercase text-[#1a1208] border border-[#e7ddd6] rounded-xl py-2.5 hover:bg-[#F5F1EC] hover:border-[#c8b89a] transition-all no-underline">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Edit Profile
+        </a>
       </div>
-      <div class="bg-white rounded-2xl border border-[#E7DDD6] shadow-sm overflow-hidden">
+
+      <!-- Nav -->
+      <div class="card overflow-hidden fu2">
         <nav>
-          <a href="#" class="flex items-center gap-3 px-5 py-4 bg-[#F5F1EC] border-l-2 border-[#1a1208] no-underline">
-            <svg class="w-4 h-4 text-[#1a1208]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-            <span class="font-montserrat text-[12px] font-semibold text-[#1a1208]">Overview</span>
+          <a href="{% url 'profile_overview' %}" class="nav-link active">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            <span class="font-montserrat text-[12px] font-semibold">Overview</span>
           </a>
-          <a href="{% url 'order_listing' %}" class="flex items-center gap-3 px-5 py-4 border-l-2 border-transparent hover:bg-[#F5F1EC] hover:border-[#E7DDD6] transition-all no-underline">
-            <svg class="w-4 h-4 text-[#8C7F77]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
-              <path d="m3.3 7 8.7 5 8.7-5" />
-              <path d="M12 22V12" />
-            </svg>
-            <span class="font-montserrat text-[12px] font-medium text-[#8C7F77]">Orders</span>
+          <a href="{% url 'order_listing' %}" class="nav-link">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+            <span class="font-montserrat text-[12px] font-medium">Orders</span>
           </a>
-          <a href="{% url 'wishlist' %}" class="flex items-center gap-3 px-5 py-4 border-l-2 border-transparent hover:bg-[#F5F1EC] hover:border-[#E7DDD6] transition-all no-underline">
-            <svg class="w-4 h-4 text-[#8C7F77]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            <span class="font-montserrat text-[12px] font-medium text-[#8C7F77]">Wishlist</span>
+          <a href="{% url 'wishlist' %}" class="nav-link">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <span class="font-montserrat text-[12px] font-medium">Wishlist</span>
           </a>
-          <a href="{% url 'address' %}" class="flex items-center gap-3 px-5 py-4 border-l-2 border-transparent hover:bg-[#F5F1EC] hover:border-[#E7DDD6] transition-all no-underline">
-            <svg class="w-4 h-4 text-[#8C7F77]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            <span class="font-montserrat text-[12px] font-medium text-[#8C7F77]">Addresses</span>
+          <a href="{% url 'address' %}" class="nav-link">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span class="font-montserrat text-[12px] font-medium">Addresses</span>
           </a>
-          <div class="border-t border-[#E7DDD6] mx-5"></div>
-          <button type="button" onclick="openSignoutModal()" class="w-full flex items-center gap-3 px-5 py-4 border-l-2 border-transparent hover:bg-[#fdf3f1] hover:border-[#c0392b] transition-all group bg-transparent cursor-pointer">
-            <svg class="w-4 h-4 text-[#8C7F77] group-hover:text-[#c0392b] transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            <span class="font-montserrat text-[12px] font-medium text-[#8C7F77] group-hover:text-[#c0392b] transition-colors">Sign Out</span>
+          <a href="{% url 'change_password' %}" class="nav-link">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span class="font-montserrat text-[12px] font-medium">Password</span>
+          </a>
+          <div class="border-t border-[#f0ebe2] mx-4"></div>
+          <button onclick="document.getElementById('signout-overlay').classList.add('open')" class="nav-link w-full border-none bg-transparent cursor-pointer group">
+            <svg class="w-4 h-4 shrink-0 group-hover:text-[#c0392b] transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            <span class="font-montserrat text-[12px] font-medium group-hover:text-[#c0392b] transition-colors">Sign Out</span>
           </button>
         </nav>
       </div>
@@ -184,95 +127,116 @@ body { background:#F5F1EC !important; }
 
     <!-- MAIN CONTENT -->
     <div class="flex-1 flex flex-col gap-6">
-      <div class="bg-white rounded-2xl border border-[#E7DDD6] shadow-sm p-8 flex items-center justify-between overflow-hidden relative">
-        <div class="max-w-[560px] z-10">
-          <h1 class="font-cormorant text-[clamp(28px,3.5vw,44px)] font-semibold text-[#1a1208] leading-tight mb-3">Welcome back {{ user.full_name }}.</h1>
-          <p class="font-montserrat text-[13px] font-light text-[#8C7F77] leading-[1.8]">Your radiance journey is evolving. Discover what's new in our collection tailored just for you.</p>
-        </div>
-        <div class="hidden md:flex items-center justify-center shrink-0 ml-6 z-10">
-          <div class="w-44 h-44 rounded-full border border-[#E7DDD6] bg-[#F5F1EC] flex items-center justify-center">
-            <a href="#" class="bg-[#1a1208] text-white font-montserrat text-[10px] font-bold tracking-[0.14em] uppercase px-5 py-3 rounded-full hover:bg-[#4A2E24] transition-colors shadow-md no-underline text-center">Explore New<br>Arrivals</a>
+
+      <!-- Hero Banner -->
+      <div class="fu2" style="background:linear-gradient(135deg,#1a1208 0%,#3a2414 100%);border-radius:22px;padding:2.5rem;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:-60px;right:-60px;width:220px;height:220px;border-radius:50%;border:1px solid rgba(255,255,255,.06);"></div>
+        <div style="position:absolute;top:20px;right:40px;width:120px;height:120px;border-radius:50%;border:1px solid rgba(255,255,255,.06);"></div>
+        <div style="position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1.5rem;">
+          <div>
+            <p class="font-montserrat text-[10px] font-semibold tracking-[.22em] uppercase text-white/50 mb-2">Welcome back</p>
+            <h1 class="font-cormorant text-[clamp(28px,4vw,46px)] font-medium text-white leading-tight mb-3">{{ user.full_name }} ✨</h1>
+            <p class="font-montserrat text-[12px] font-light text-white/60 leading-[1.8] max-w-sm">Your radiance journey continues. Discover new arrivals curated just for your skin.</p>
           </div>
+          <a href="{% url 'product_listing' %}" class="font-montserrat text-[10px] font-bold tracking-[.18em] uppercase no-underline shrink-0" style="background:rgba(255,255,255,.1);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.15);color:#fff;padding:14px 28px;border-radius:100px;transition:all .3s;display:inline-block;">
+            Explore Arrivals →
+          </a>
         </div>
-        <div class="absolute right-0 top-0 w-72 h-72 rounded-full border border-[#E7DDD6] opacity-20 translate-x-1/3 -translate-y-1/3"></div>
       </div>
 
-      <div>
-        <h2 class="font-cormorant text-[24px] font-semibold text-[#1a1208] mb-5">Settings &amp; Preferences</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <a href="{% url 'edit_profile' %}" class="block bg-white rounded-2xl border border-[#E7DDD6] shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer group no-underline">
-            <div class="w-11 h-11 rounded-full bg-[#F5F1EC] border border-[#E7DDD6] flex items-center justify-center mb-4 group-hover:bg-[#e6ddd4] transition-colors">
-              <svg class="w-5 h-5 text-[#4A2E24]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            </div>
-            <h3 class="font-cormorant text-[18px] font-semibold text-[#1a1208] mb-1.5">Profile Details</h3>
-            <p class="font-montserrat text-[12px] font-light text-[#8C7F77] leading-[1.7]">Update personal info.</p>
-          </a>
-          <a href="{% url 'wallet_view' %}" class="block bg-white rounded-2xl border border-[#E7DDD6] shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer group no-underline">
-            <div class="w-11 h-11 rounded-full bg-[#F5F1EC] border border-[#E7DDD6] flex items-center justify-center mb-4 group-hover:bg-[#e6ddd4] transition-colors">
-              <svg class="w-5 h-5 text-[#4A2E24]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-            </div>
-            <h3 class="font-cormorant text-[18px] font-semibold text-[#1a1208] mb-1.5">Wallet Payment</h3>
-            <p class="font-montserrat text-[12px] font-light text-[#8C7F77] leading-[1.7]">Saved cards &amp; billing history.</p>
-          </a>
-          <a href="{% url 'referral_page' %}" class="bg-white rounded-2xl border border-[#E7DDD6] shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer group no-underline block">
-            <div class="w-11 h-11 rounded-full bg-[#F5F1EC] border border-[#E7DDD6] flex items-center justify-center mb-4 group-hover:bg-[#e6ddd4] transition-colors">
-              <svg class="w-5 h-5 text-[#4A2E24]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-            </div>
-            <h3 class="font-cormorant text-[18px] font-semibold text-[#1a1208] mb-1.5">Refer &amp; Earn</h3>
-            <p class="font-montserrat text-[12px] font-light text-[#8C7F77] leading-[1.7]">Invite friends &amp; earn rewards</p>
-          </a>
-          <div class="bg-white rounded-2xl border border-[#E7DDD6] shadow-sm p-6 hover:shadow-md transition-shadow cursor-pointer group">
-            <div class="w-11 h-11 rounded-full bg-[#F5F1EC] border border-[#E7DDD6] flex items-center justify-center mb-4 group-hover:bg-[#e6ddd4] transition-colors">
-              <svg class="w-5 h-5 text-[#4A2E24]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            </div>
-            <h3 class="font-cormorant text-[18px] font-semibold text-[#1a1208] mb-1.5">Help Center</h3>
-            <p class="font-montserrat text-[12px] font-light text-[#8C7F77] leading-[1.7]">FAQs and customer support.</p>
+      <!-- Stats Row -->
+      <div class="grid grid-cols-3 gap-4 fu3">
+        <div class="stat-chip card">
+          <div class="ic" style="background:#f0f8f4;">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
           </div>
+          <div>
+            <p class="font-montserrat text-[9px] font-semibold tracking-[.12em] uppercase text-[#8C7F77]">Orders</p>
+            <p class="font-cormorant text-[32px] font-semibold text-[#1a1208] leading-none">{{ order_count }}</p>
+          </div>
+        </div>
+        <div class="stat-chip card">
+          <div class="ic" style="background:#fdf0f4;">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#993556" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          </div>
+          <div>
+            <p class="font-montserrat text-[9px] font-semibold tracking-[.12em] uppercase text-[#8C7F77]">Wishlist</p>
+            <p class="font-cormorant text-[32px] font-semibold text-[#1a1208] leading-none">{{ wishlist_count }}</p>
+          </div>
+        </div>
+        <div class="stat-chip" style="background:linear-gradient(135deg,#022c22,#064e3b);border:1px solid rgba(16,185,129,.2);border-radius:14px;">
+          <div class="ic" style="background:rgba(16,185,129,.15);">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#6ee7b7" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5"/><line x1="16" y1="12" x2="22" y2="12"/></svg>
+          </div>
+          <div>
+            <p class="font-montserrat text-[9px] font-semibold tracking-[.12em] uppercase text-emerald-300">Wallet</p>
+            <p class="font-cormorant text-[32px] font-semibold text-white leading-none">₹{{ wallet_balance }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="fu4">
+        <h2 class="font-cormorant text-[22px] font-semibold text-[#1a1208] mb-4">Quick Actions</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <a href="{% url 'edit_profile' %}" class="action-card">
+            <div class="ac-icon" style="background:#F5F1EC;">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#4A2E24" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <h3 class="font-cormorant text-[18px] font-semibold text-[#1a1208] mb-1">Profile Details</h3>
+            <p class="font-montserrat text-[11px] text-[#8C7F77]">Update personal information</p>
+            <span class="font-montserrat text-[10px] font-semibold text-[#1a1208] mt-3 inline-flex items-center gap-1">Edit →</span>
+          </a>
+
+          <a href="{% url 'wallet_view' %}" class="action-card">
+            <div class="ac-icon" style="background:#eef9f5;">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            </div>
+            <h3 class="font-cormorant text-[18px] font-semibold text-[#1a1208] mb-1">Wallet & Payments</h3>
+            <p class="font-montserrat text-[11px] text-[#8C7F77]">Balance & transaction history</p>
+            <span class="font-montserrat text-[10px] font-semibold text-[#0F6E56] mt-3 inline-flex items-center gap-1">₹{{ wallet_balance }} available →</span>
+          </a>
+
+          <a href="{% url 'referral_page' %}" class="action-card">
+            <div class="ac-icon" style="background:#fff8f0;">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <h3 class="font-cormorant text-[18px] font-semibold text-[#1a1208] mb-1">Refer & Earn</h3>
+            <p class="font-montserrat text-[11px] text-[#8C7F77]">Invite friends, earn ₹500 each</p>
+            <span class="font-montserrat text-[10px] font-semibold text-[#b45309] mt-3 inline-flex items-center gap-1">Share code →</span>
+          </a>
+
+          <a href="{% url 'address' %}" class="action-card">
+            <div class="ac-icon" style="background:#eef4ff;">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#185FA5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
+            <h3 class="font-cormorant text-[18px] font-semibold text-[#1a1208] mb-1">My Addresses</h3>
+            <p class="font-montserrat text-[11px] text-[#8C7F77]">Manage delivery locations</p>
+            <span class="font-montserrat text-[10px] font-semibold text-[#185FA5] mt-3 inline-flex items-center gap-1">Manage →</span>
+          </a>
+
         </div>
       </div>
     </div>
   </div>
 </main>
-
 {% endblock %}
 
 {% block extra_js %}
 <script>
-function openSignoutModal()  { document.getElementById('signout-overlay').classList.add('open'); }
-function closeSignoutModal() { document.getElementById('signout-overlay').classList.remove('open'); }
-document.getElementById('signout-overlay').addEventListener('click', function(e){ if(e.target===this)closeSignoutModal(); });
+function closeSignout(){ document.getElementById('signout-overlay').classList.remove('open'); }
+document.getElementById('signout-overlay').addEventListener('click', function(e){ if(e.target===this) closeSignout(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeSignout(); });
 
-function toggleMobileNav(){ const sheet=document.getElementById('mobileNavSheet'),overlay=document.getElementById('mobileNavOverlay'),fab=document.getElementById('mobileNavFab'); const isOpen=sheet.classList.contains('open'); sheet.classList.toggle('open',!isOpen);overlay.classList.toggle('open',!isOpen);fab.classList.toggle('open',!isOpen); document.body.style.overflow=isOpen?'':'hidden'; }
-function closeMobileNav(){ document.getElementById('mobileNavSheet').classList.remove('open');document.getElementById('mobileNavOverlay').classList.remove('open');document.getElementById('mobileNavFab').classList.remove('open'); document.body.style.overflow=''; }
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeMobileNav();closeSignoutModal();} });
-
-const PO_CONFIGS = {
-  success: { bg:'#1e3d2f', blobBg:'#172f24', iconBg:'radial-gradient(circle,#3aaa72,#1a6644)', icon:'✓', label:'#6ee7a8', titleC:'#f0fdf4', msgC:'#bbf7d0', prog:'#4ade80', typeLabel:'success', blobs:['#3aaa72','#1a6644','#0d4a30'] },
-  error:   { bg:'#3d1e1e', blobBg:'#2f1717', iconBg:'radial-gradient(circle,#e05050,#a82020)', icon:'✕', label:'#fca5a5', titleC:'#fff1f2', msgC:'#fecaca', prog:'#f87171', typeLabel:'error',   blobs:['#e05050','#a82020','#7a1010'] },
-  warning: { bg:'#3d2000', blobBg:'#2e1800', iconBg:'radial-gradient(circle,#f59e0b,#b45309)', icon:'!', label:'#fcd34d', titleC:'#fff8e1', msgC:'#fde68a', prog:'#f59e0b', typeLabel:'warning', blobs:['#f59e0b','#b45309','#7c2d00'] },
-};
-function _bsvg(b){return `<svg viewBox="0 0 50 70" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;width:100%;height:100%;"><ellipse cx="12" cy="12" rx="20" ry="16" fill="${b[0]}" opacity="0.45"/><ellipse cx="40" cy="52" rx="16" ry="14" fill="${b[1]}" opacity="0.35"/><ellipse cx="24" cy="34" rx="11" ry="9" fill="${b[2]}" opacity="0.3"/><ellipse cx="6" cy="56" rx="10" ry="8" fill="${b[0]}" opacity="0.22"/></svg>`;}
-function poShowToast(type,title,message){
-  const c=PO_CONFIGS[type]||PO_CONFIGS.success; const container=document.getElementById('poToastContainer'); const toast=document.createElement('div');
-  toast.className='po-toast'; toast.style.background=c.bg;
-  toast.innerHTML=`<div style="width:54px;min-width:54px;align-self:stretch;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:${c.blobBg};">${_bsvg(c.blobs)}<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;z-index:2;position:relative;background:${c.iconBg};flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.2);">${c.icon}</div></div><div style="flex:1;padding:10px 6px 10px 10px;"><p style="font-family:'Montserrat',sans-serif;font-size:7px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 2px;color:${c.label};opacity:0.85;">${c.typeLabel}</p><p style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;line-height:1.2;margin:0 0 2px;color:${c.titleC};">${title}</p><p style="font-family:'Montserrat',sans-serif;font-size:9px;font-weight:400;line-height:1.5;margin:0;color:${c.msgC};opacity:0.85;">${message}</p></div><button onclick="_poDismiss(this.parentElement)" style="background:none;border:none;cursor:pointer;font-size:10px;padding:6px 10px 0 0;align-self:flex-start;color:#fff;opacity:0.4;">✕</button><div style="position:absolute;bottom:0;left:0;height:2px;border-radius:0 2px 0 0;background:${c.prog};animation:toastProg 5s linear forwards;"></div>`;
-  container.appendChild(toast); toast._t=setTimeout(()=>_poDismiss(toast),5000);
-}
-function _poDismiss(t){if(!t||t._d)return;t._d=true;clearTimeout(t._t);t.classList.add('hide');setTimeout(()=>t.remove(),350);}
-
-window.addEventListener('load',()=>{
-  const el=document.getElementById('session-success');
-  if(!el)return;
-  const text=el.textContent.trim();
-  let title='Profile Updated!';
-  if(text.toLowerCase().includes('password'))title='Password Updated!';
-  if(text.toLowerCase().includes('email'))title='Email Updated!';
-  setTimeout(()=>poShowToast('success',title,text),400);
+window.addEventListener('load', ()=>{
+  const el = document.getElementById('session-success');
+  if(!el) return;
+  const text = el.textContent.trim();
+  let title = 'Profile Updated!';
+  if(text.toLowerCase().includes('password')) title = 'Password Updated!';
+  if(text.toLowerCase().includes('email')) title = 'Email Updated!';
+  setTimeout(()=> showToast('success', title, text), 400);
 });
 </script>
 {% endblock %}

@@ -24,6 +24,20 @@ html, body { height: 100vh; overflow: hidden; }
   background-size: 100% 1px;
 }
 
+/* ── HIDE BROWSER EYE ── */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+input::-webkit-contacts-auto-fill-button,
+input::-webkit-credentials-auto-fill-button {
+  visibility: hidden;
+  display: none !important;
+  pointer-events: none;
+  position: absolute;
+  right: 0;
+}
+
 /* ── LEFT PANEL ── */
 @keyframes slideInLeft {
   from { transform: translateX(-100%); opacity: 0; }
