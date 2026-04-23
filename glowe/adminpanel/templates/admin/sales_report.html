@@ -1,0 +1,838 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sales Report — Glowé Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['DM Sans','sans-serif'] },
+          colors: {
+            sage: { 50:'#f2f7f2',100:'#e2f0e2',200:'#c3dfc3',500:'#4a9050',600:'#3a7a3e',700:'#2f6232' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    *{font-family:'DM Sans',sans-serif;box-sizing:border-box}
+    body{background:#f4f6f3;margin:0;overflow-x:hidden}
+
+    .admin-main{margin-left:0;transition:margin-left .3s}
+    @media(min-width:1024px){.admin-main{margin-left:240px}}
+
+    /* fade-up cards */
+    @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .fade-up{opacity:0;animation:fadeUp .5s ease forwards}
+    .fade-up:nth-child(1){animation-delay:.05s}
+    .fade-up:nth-child(2){animation-delay:.13s}
+    .fade-up:nth-child(3){animation-delay:.21s}
+    .fade-up:nth-child(4){animation-delay:.29s}
+
+    .metric-card{background:#fff;border-radius:18px;border:1px solid #eaede8;padding:22px 20px 18px;transition:transform .25s,box-shadow .25s;position:relative;overflow:hidden}
+    .metric-card::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(74,144,80,0.08),transparent);transition:left 0.5s}
+    .metric-card:hover{transform:scale(1.025);box-shadow:0 10px 32px rgba(0,0,0,.10)}
+    .metric-card:hover::after{left:100%}
+
+    .chart-card{background:#fff;border-radius:18px;border:1px solid #eaede8;padding:26px;position:relative;overflow:hidden;transition:all 0.3s ease}
+    .chart-card::before{content:'';position:absolute;top:-2px;left:-2px;right:-2px;bottom:-2px;background:linear-gradient(45deg,#4a9050,#64a864,#4a9050);border-radius:20px;opacity:0;z-index:-1;transition:opacity 0.3s ease}
+    .chart-card:hover{transform:translateY(-4px);box-shadow:0 20px 40px rgba(74,144,80,0.12)}
+    .chart-card:hover::before{opacity:0.08}
+
+    .filter-btn{padding:6px 20px;border-radius:20px;font-size:.8rem;font-weight:600;cursor:pointer;border:none;background:transparent;color:#7a8c7a;transition:background .15s,color .15s;text-decoration:none;display:inline-block}
+    .filter-btn.active,.filter-btn:hover{background:#4a9050;color:#fff}
+
+    .export-menu{display:none;position:absolute;left:0;top:calc(100% + 8px);width:170px;background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.12);z-index:50;overflow:hidden}
+    @media(min-width:640px){.export-menu{left:auto;right:0;}}
+    .export-menu.open{display:block}
+
+    .prog{height:6px;border-radius:10px;background:#edf0ed;overflow:hidden;margin-top:5px}
+    .prog-fill{height:100%;border-radius:10px;transition:width 1.1s cubic-bezier(.4,0,.2,1)}
+
+    /* ring animation */
+    #growthRing{transition:stroke-dashoffset 1.1s cubic-bezier(.4,0,.2,1)}
+
+    /* skeleton */
+    @keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+    .skeleton{background:linear-gradient(90deg,#f0f0f0 25%,#e4e4e4 50%,#f0f0f0 75%);background-size:600px 100%;animation:shimmer 1.3s infinite;border-radius:8px}
+
+    /* pagination */
+    .pg-btn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#fff;border:1px solid #eaede8;color:#111;font-size:.85rem;font-weight:600;text-decoration:none;transition:all .2s ease;}
+    .pg-btn:hover:not(.disabled){background:#f0fdf4;border-color:#4a9050;color:#4a9050;}
+    .pg-btn.active{background:#111;border-color:#111;color:#fff;}
+    .pg-btn.disabled{opacity:0.4;cursor:not-allowed;background:#fafafa;}
+
+
+  </style>
+</head>
+<body>
+
+{% include 'admin_sidebar.html' %}
+
+<div class="admin-main min-h-screen admin-mobile-offset">
+<main class="p-4 sm:p-6 lg:p-8 max-w-[1380px] mx-auto">
+
+  <!-- ── HEADER ── -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+    <div>
+      <h1 class="text-[22px] font-bold text-gray-900 tracking-tight">Sales Report</h1>
+      <p class="text-sm text-gray-400 mt-0.5">
+        Performance overview · {{ start_date|date:"M d, Y" }} → {{ end_date|date:"M d, Y" }}
+      </p>
+    </div>
+    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+
+      <!-- Filter pills -->
+      <div class="flex items-center gap-1 bg-white border border-gray-200 rounded-full p-1 shadow-sm">
+        <a href="?filter=day"   class="filter-btn {% if filter_type == 'day' %}active{% endif %}">Day</a>
+        <a href="?filter=week"  class="filter-btn {% if filter_type == 'week' %}active{% endif %}">Week</a>
+        <a href="?filter=month" class="filter-btn {% if filter_type == 'month' or not filter_type %}active{% endif %}">Month</a>
+        <a href="?filter=year"  class="filter-btn {% if filter_type == 'year' %}active{% endif %}">Year</a>
+      </div>
+
+      <!-- Export dropdown -->
+      <div class="relative">
+        <button id="exportBtn" onclick="toggleExport()"
+                class="flex items-center gap-2 px-5 py-2.5 bg-[#4a9050] hover:bg-[#3a7a3e] text-white text-sm font-semibold rounded-full shadow-lg shadow-green-900/20 transition-all active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/>
+          </svg>
+          Export
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+        <div id="exportMenu" class="export-menu">
+          <a href="{% url 'export_sales_excel' %}?filter={{ filter_type }}"
+             class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 font-medium transition-colors">
+            <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><path stroke-linecap="round" d="M8 12h8M8 8h4M8 16h6"/>
+            </svg>Excel (.xlsx)
+          </a>
+          <a href="{% url 'export_sales_pdf' %}?filter={{ filter_type }}"
+             class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 font-medium transition-colors">
+            <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" d="M9 12h6M9 16h4M7 4H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V8l-5-4z"/>
+            </svg>PDF (.pdf)
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if total_orders == 0 and total_revenue == 0 %}
+  <!-- ── EMPTY STATE ── -->
+  <div class="chart-card flex flex-col items-center justify-center py-20 mb-8 text-center">
+    <div class="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-5">
+      <svg class="w-9 h-9 text-gray-300" fill="none" stroke="currentColor" stroke-width="1.4" viewBox="0 0 24 24">
+        <path stroke-linecap="round" d="M9 17v-2m3 2v-4m3 4v-6M5 17H4a2 2 0 01-2-2V5a2 2 0 012-2h16a2 2 0 012 2v10a2 2 0 01-2 2h-1"/>
+      </svg>
+    </div>
+    <p class="text-gray-700 font-bold text-xl">No delivered orders in this period</p>
+    <p class="text-gray-400 text-sm mt-1 mb-6">Try a wider date range above.</p>
+    <div class="flex gap-3">
+      <a href="?filter=month" class="px-5 py-2.5 bg-[#4a9050] text-white rounded-full text-sm font-semibold hover:bg-[#3a7a3e] transition-colors">This Month</a>
+      <a href="?filter=year"  class="px-5 py-2.5 border border-gray-200 text-gray-700 rounded-full text-sm font-semibold hover:bg-gray-50 transition-colors">This Year</a>
+    </div>
+  </div>
+
+  {% else %}
+
+  <!-- ── METRIC CARDS ── -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+
+    <!-- Revenue -->
+    <div class="metric-card fade-up">
+      <div class="flex items-start justify-between mb-4">
+        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Revenue</span>
+        <div class="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
+          <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24">
+            <path stroke-linecap="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+      </div>
+      <div class="text-[26px] font-bold text-gray-900 leading-tight">₹{{ total_revenue|floatformat:2 }}</div>
+      <div class="flex items-center gap-1.5 mt-2">
+        {% if growth >= 0 %}
+          <span class="inline-flex items-center gap-1 text-[12px] font-bold text-green-600 bg-green-50 px-2.5 py-0.5 rounded-full">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" d="M5 15l7-7 7 7"/></svg>
+            +{{ growth }}%
+          </span>
+        {% else %}
+          <span class="inline-flex items-center gap-1 text-[12px] font-bold text-red-500 bg-red-50 px-2.5 py-0.5 rounded-full">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" d="M19 9l-7 7-7-7"/></svg>
+            {{ growth }}%
+          </span>
+        {% endif %}
+        <span class="text-[11px] text-gray-400">vs prev. period</span>
+      </div>
+    </div>
+
+    <!-- Orders -->
+    <div class="metric-card fade-up">
+      <div class="flex items-start justify-between mb-4">
+        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Total Orders</span>
+        <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+          <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24">
+            <path stroke-linecap="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+          </svg>
+        </div>
+      </div>
+      <div class="text-[26px] font-bold text-gray-900 leading-tight">{{ total_orders }}</div>
+      <div class="text-[12px] text-gray-400 mt-2">Delivered orders</div>
+    </div>
+
+    <!-- Products -->
+    <div class="metric-card fade-up">
+      <div class="flex items-start justify-between mb-4">
+        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Products Sold</span>
+        <div class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
+          <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24">
+            <path stroke-linecap="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+          </svg>
+        </div>
+      </div>
+      <div class="text-[26px] font-bold text-gray-900 leading-tight">{{ products_sold }}</div>
+      <div class="text-[12px] text-gray-400 mt-2">Total units dispatched</div>
+    </div>
+
+  </div>
+
+  <!-- ── CHARTS ROW ── -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+
+    <!-- Revenue Line Chart -->
+    <div class="chart-card lg:col-span-2">
+      <div class="flex items-start justify-between flex-wrap gap-3 mb-6">
+        <div>
+          <div class="font-bold text-gray-900 text-[16px]">Revenue Overview</div>
+          <div class="text-xs text-gray-400 mt-0.5">{% if filter_type == 'day' %}Hourly sales{% else %}Daily sales{% endif %} · {{ start_date|date:"M d" }} – {{ end_date|date:"M d, Y" }}</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-[22px] font-bold text-gray-900">₹{{ total_revenue|floatformat:2 }}</span>
+          {% if growth >= 0 %}
+            <span class="text-xs font-bold text-green-600 bg-green-50 px-2.5 py-1 rounded-full">+{{ growth }}%</span>
+          {% else %}
+            <span class="text-xs font-bold text-red-500 bg-red-50 px-2.5 py-1 rounded-full">{{ growth }}%</span>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if chart_data %}
+        <div style="height:250px;position:relative">
+          <canvas id="revenueChart"></canvas>
+        </div>
+      {% else %}
+        <div class="flex flex-col items-center justify-center h-52 text-gray-300">
+          <svg class="w-12 h-12 mb-3" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+          <p class="text-sm text-gray-400">No chart data for this period</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Growth Comparison Chart -->
+    <div class="chart-card flex flex-col h-full min-h-[320px]">
+      <div class="flex items-center justify-between mb-6">
+        <div class="font-bold text-gray-900 text-[16px]">Growth Comparison</div>
+        {% if growth >= 0 %}
+          <span class="text-[12px] font-bold text-green-600 bg-green-50 px-2.5 py-1 rounded-full">+{{ growth }}%</span>
+        {% else %}
+          <span class="text-[12px] font-bold text-red-500 bg-red-50 px-2.5 py-1 rounded-full">{{ growth }}%</span>
+        {% endif %}
+      </div>
+      
+      <div class="flex-grow relative" style="min-height:200px">
+        <canvas id="growthComparisonChart"></canvas>
+      </div>
+      
+      <div class="text-[11px] text-gray-400 text-center mt-4 font-medium uppercase tracking-wider">
+        Current vs Previous Period
+      </div>
+    </div>
+
+  </div>
+
+  
+  <!-- ── TABLES ROW ── -->
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+
+    <!-- Coupon Usage Table -->
+    <div class="chart-card flex flex-col h-full overflow-hidden">
+      <div class="flex-grow">
+        <div class="font-bold text-gray-900 text-[15px] mb-4">Coupon Usage Details</div>
+
+      {% if coupon_stats %}
+      <div class="overflow-x-auto rounded-xl border border-gray-100">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-gray-50 border-b border-gray-100">
+              <th class="text-left px-4 py-2.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Coupon Code</th>
+              <th class="text-left px-4 py-2.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Type</th>
+              <th class="text-right px-4 py-2.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Discount</th>
+              <th class="text-right px-4 py-2.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Times Used</th>
+              <th class="text-right px-4 py-2.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Usage Limit</th>
+              <th class="text-center px-4 py-2.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Status</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50">
+            {% for coupon in coupon_stats %}
+            <tr class="hover:bg-gray-50 transition-colors">
+
+              <!-- Coupon Code -->
+              <td class="px-4 py-3">
+                <span class="inline-flex items-center gap-1.5 font-bold text-[12px] text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-100">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/>
+                  </svg>
+                  {{ coupon.code }}
+                </span>
+              </td>
+
+              <!-- Discount Type -->
+              <td class="px-4 py-3">
+                {% if coupon.discount_type == 'percentage' %}
+                  <span class="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full">% Percentage</span>
+                {% else %}
+                  <span class="text-[11px] font-semibold text-orange-700 bg-orange-50 px-2.5 py-1 rounded-full">₹ Flat</span>
+                {% endif %}
+              </td>
+
+              <!-- Discount Value -->
+              <td class="px-4 py-3 text-right font-bold text-gray-800 text-[13px]">
+                {% if coupon.discount_type == 'percentage' %}
+                  {{ coupon.discount_value }}%
+                  {% if coupon.max_discount %}
+                    <div class="text-[10px] text-gray-400 font-normal">max ₹{{ coupon.max_discount }}</div>
+                  {% endif %}
+                {% else %}
+                  ₹{{ coupon.discount_value }}
+                {% endif %}
+              </td>
+
+              <!-- Times Used -->
+              <td class="px-4 py-3 text-right">
+                <span class="text-[13px] font-bold {% if coupon.used_count > 0 %}text-green-600{% else %}text-gray-400{% endif %}">
+                  {{ coupon.used_count }}×
+                </span>
+              </td>
+
+              <!-- Usage Limit -->
+              <td class="px-4 py-3 text-right text-[13px] text-gray-500">
+                {% if coupon.total_usage_limit %}
+                  {{ coupon.used_count }}/{{ coupon.total_usage_limit }}
+                {% else %}
+                  Unlimited
+                {% endif %}
+              </td>
+
+              <!-- Status -->
+              <td class="px-4 py-3 text-center">
+                {% if coupon.is_active %}
+                  <span class="text-[11px] font-semibold text-green-700 bg-green-50 px-2.5 py-1 rounded-full border border-green-100">Active</span>
+                {% else %}
+                  <span class="text-[11px] font-semibold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full">Inactive</span>
+                {% endif %}
+              </td>
+
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="flex flex-col items-center justify-center py-10 text-center">
+        <svg class="w-10 h-10 text-gray-200 mb-3" fill="none" stroke="currentColor" stroke-width="1.3" viewBox="0 0 24 24">
+          <path stroke-linecap="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/>
+        </svg>
+        <p class="text-gray-400 text-sm font-medium">No coupons have been used yet</p>
+        <p class="text-gray-300 text-xs mt-1">Coupon usage will appear here once customers apply them at checkout</p>
+      </div>
+      {% endif %}
+      </div>
+      {% if coupon_stats.paginator.num_pages > 1 %}
+      <div class="mt-6 mb-2 flex items-center justify-center gap-2">
+        {% if coupon_stats.has_previous %}
+          <a href="?filter={{ filter_type }}&coupon_page={{ coupon_stats.previous_page_number }}&order_page={{ orders_list.number|default:1 }}" class="pg-btn">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 18l-6-6 6-6"/></svg>
+          </a>
+        {% else %}
+          <span class="pg-btn disabled">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 18l-6-6 6-6"/></svg>
+          </span>
+        {% endif %}
+        
+        {% for i in coupon_stats.paginator.page_range %}
+          {% if coupon_stats.number == i %}
+            <span class="pg-btn active">{{ i }}</span>
+          {% elif i >= coupon_stats.number|add:"-2" and i <= coupon_stats.number|add:"2" %}
+            <a href="?filter={{ filter_type }}&coupon_page={{ i }}&order_page={{ orders_list.number|default:1 }}" class="pg-btn">{{ i }}</a>
+          {% endif %}
+        {% endfor %}
+
+        {% if coupon_stats.has_next %}
+          <a href="?filter={{ filter_type }}&coupon_page={{ coupon_stats.next_page_number }}&order_page={{ orders_list.number|default:1 }}" class="pg-btn">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 18l6-6-6-6"/></svg>
+          </a>
+        {% else %}
+          <span class="pg-btn disabled">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 18l6-6-6-6"/></svg>
+          </span>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Order Discount Breakdown -->
+    <div class="chart-card flex flex-col h-full overflow-hidden">
+      <div class="flex-grow">
+        <div class="flex items-center justify-between flex-wrap gap-3 mb-6">
+          <div>
+            <div class="font-bold text-gray-900 text-[16px]">Order Discount Breakdown</div>
+            <div class="text-xs text-gray-400 mt-0.5">Coupon deductions per delivered order</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold text-orange-600 bg-orange-50 px-3 py-1.5 rounded-full border border-orange-100">
+              Total Saved: ₹{{ coupon_discount|floatformat:2 }}
+            </span>
+          </div>
+        </div>
+
+        {% if orders_list %}
+        <div class="overflow-x-auto rounded-xl border border-gray-100">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-gray-50 border-b border-gray-100">
+                <th class="text-left px-4 py-3 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Order #</th>
+                <th class="text-left px-4 py-3 text-[11px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Date</th>
+                <th class="text-right px-4 py-3 text-[11px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Subtotal</th>
+                <th class="text-right px-4 py-3 text-[11px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Discount</th>
+                <th class="text-right px-4 py-3 text-[11px] font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">Final Amount</th>
+                <th class="text-center px-4 py-3 text-[11px] font-bold text-gray-400 uppercase tracking-wider">Payment</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+              {% for order in orders_list %}
+              <tr class="hover:bg-gray-50 transition-colors duration-150 group">
+
+                <!-- Order Number -->
+                <td class="px-4 py-3.5">
+                  <span class="font-semibold text-gray-800 text-[12px] whitespace-nowrap">{{ order.order_number|truncatechars:15 }}</span>
+                </td>
+
+                <!-- Date -->
+                <td class="px-4 py-3.5 text-gray-500 text-[12px] whitespace-nowrap">
+                  {{ order.created_at|date:"M d, Y" }}
+                </td>
+
+                <!-- Subtotal -->
+                <td class="px-4 py-3.5 text-right text-gray-700 font-medium text-[12px] whitespace-nowrap">
+                  ₹{{ order.subtotal|floatformat:2 }}
+                </td>
+
+                <!-- Coupon Discount -->
+                <td class="px-4 py-3.5 text-right whitespace-nowrap">
+                  {% if order.discount_amount > 0 %}
+                    <span class="inline-flex items-center gap-1 text-[11px] font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded-full">
+                      −₹{{ order.discount_amount|floatformat:2 }}
+                    </span>
+                  {% else %}
+                    <span class="text-[12px] text-gray-300 font-medium">—</span>
+                  {% endif %}
+                </td>
+
+                <!-- Final Amount -->
+                <td class="px-4 py-3.5 text-right whitespace-nowrap">
+                  <span class="font-bold text-gray-900 text-[13px]">₹{{ order.total_amount|floatformat:2 }}</span>
+                </td>
+
+                <!-- Payment Method -->
+                <td class="px-4 py-3.5 text-center">
+                  {% with method=order.payment.payment_method|default:"N/A" %}
+                    {% if method == "COD" %}
+                      <span class="text-[10px] font-bold text-yellow-700 bg-yellow-50 px-2 py-0.5 rounded-full border border-yellow-100">COD</span>
+                    {% elif method == "RAZORPAY" %}
+                      <span class="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">Razorpay</span>
+                    {% elif method == "WALLET" %}
+                      <span class="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100">Wallet</span>
+                    {% else %}
+                      <span class="text-[10px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{{ method }}</span>
+                    {% endif %}
+                  {% endwith %}
+                </td>
+
+              </tr>
+              {% endfor %}
+            </tbody>
+
+            <!-- Table Footer Totals -->
+            <tfoot>
+              <tr class="bg-gray-50 border-t border-gray-200">
+                <td colspan="2" class="px-4 py-3 text-[11px] font-bold text-gray-400 uppercase">
+                  Totals ({{ total_orders }})
+                </td>
+                <td class="px-4 py-3 text-right text-[12px] font-bold text-gray-800">
+                  Visible: {{ orders_list|length }}
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <span class="text-[12px] font-bold text-green-700">−₹{{ coupon_discount|floatformat:2 }}</span>
+                </td>
+                <td class="px-4 py-3 text-right text-[13px] font-bold text-gray-900">
+                  ₹{{ total_revenue|floatformat:2 }}
+                </td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        {% else %}
+        <div class="flex flex-col items-center justify-center py-12 text-center">
+          <svg class="w-10 h-10 text-gray-200 mb-3" fill="none" stroke="currentColor" stroke-width="1.3" viewBox="0 0 24 24">
+            <path stroke-linecap="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+          <p class="text-gray-400 text-sm">No orders found for this period</p>
+        </div>
+        {% endif %}
+      </div>
+
+    {% if orders_list.paginator.num_pages > 1 %}
+    <div class="mt-6 mb-2 flex items-center justify-center gap-2">
+      {% if orders_list.has_previous %}
+        <a href="?filter={{ filter_type }}&order_page={{ orders_list.previous_page_number }}&coupon_page={{ coupon_stats.number|default:1 }}" class="pg-btn">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 18l-6-6 6-6"/></svg>
+        </a>
+      {% else %}
+        <span class="pg-btn disabled">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 18l-6-6 6-6"/></svg>
+        </span>
+      {% endif %}
+      
+      {% for i in orders_list.paginator.page_range %}
+        {% if orders_list.number == i %}
+          <span class="pg-btn active">{{ i }}</span>
+        {% elif i >= orders_list.number|add:"-2" and i <= orders_list.number|add:"2" %}
+          <a href="?filter={{ filter_type }}&order_page={{ i }}&coupon_page={{ coupon_stats.number|default:1 }}" class="pg-btn">{{ i }}</a>
+        {% endif %}
+      {% endfor %}
+
+      {% if orders_list.has_next %}
+        <a href="?filter={{ filter_type }}&order_page={{ orders_list.next_page_number }}&coupon_page={{ coupon_stats.number|default:1 }}" class="pg-btn">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 18l6-6-6-6"/></svg>
+        </a>
+      {% else %}
+        <span class="pg-btn disabled">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 18l6-6-6-6"/></svg>
+        </span>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+  </div>
+
+  {% endif %}
+
+</main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+/* Export dropdown */
+function toggleExport(){
+  document.getElementById('exportMenu').classList.toggle('open');
+}
+document.addEventListener('click', function(e){
+  var btn = document.getElementById('exportBtn');
+  var menu = document.getElementById('exportMenu');
+  if(menu && btn && !btn.contains(e.target) && !menu.contains(e.target)){
+    menu.classList.remove('open');
+  }
+});
+
+/* Progress bars */
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('[data-target]').forEach(function(el){
+    setTimeout(function(){ el.style.width = el.dataset.target; }, 450);
+  });
+});
+
+/* Growth Comparison Chart (Modern Bar with Gradient) */
+(function(){
+  var ctx = document.getElementById('growthComparisonChart');
+  if(!ctx) return;
+  ctx = ctx.getContext('2d');
+  
+  var current = {{ total_revenue }};
+  var previous = {{ previous_revenue|default:0 }};
+  
+  // Create gradient for current bar
+  var gradientCurrent = ctx.createLinearGradient(0, 0, 0, 300);
+  gradientCurrent.addColorStop(0, 'rgba(16, 185, 129, 1)');    // Emerald-500
+  gradientCurrent.addColorStop(1, 'rgba(5, 150, 105, 0.8)');   // Emerald-600
+  
+  // Create gradient for previous bar
+  var gradientPrevious = ctx.createLinearGradient(0, 0, 0, 300);
+  gradientPrevious.addColorStop(0, 'rgba(203, 213, 225, 1)');  // Slate-300
+  gradientPrevious.addColorStop(1, 'rgba(148, 163, 184, 0.8)'); // Slate-400
+  
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Previous Period', 'Current Period'],
+      datasets: [{
+        data: [previous, current],
+        backgroundColor: [gradientPrevious, gradientCurrent],
+        borderRadius: 12,
+        barThickness: 50,
+        borderWidth: 0,
+        hoverBackgroundColor: [
+          'rgba(148, 163, 184, 1)',
+          'rgba(5, 150, 105, 1)'
+        ]
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          enabled: true,
+          backgroundColor: 'rgba(17, 24, 39, 0.95)',
+          titleColor: '#fff',
+          bodyColor: '#fff',
+          padding: 16,
+          cornerRadius: 12,
+          displayColors: false,
+          titleFont: {
+            size: 13,
+            weight: '600'
+          },
+          bodyFont: {
+            size: 16,
+            weight: 'bold'
+          },
+          callbacks: {
+            title: function(context) {
+              return context[0].label;
+            },
+            label: function(c) {
+              return '₹' + c.parsed.y.toLocaleString('en-IN', { 
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              });
+            }
+          }
+        }
+      },
+      scales: {
+        x: { 
+          grid: { display: false }, 
+          border: { display: false }, 
+          ticks: { 
+            font: { weight: '600', size: 11 }, 
+            color: '#64748b',
+            padding: 8
+          } 
+        },
+        y: { 
+          display: true,
+          grid: { 
+            display: true,
+            color: 'rgba(0, 0, 0, 0.03)',
+            drawBorder: false
+          }, 
+          border: { display: false },
+          ticks: {
+            font: { size: 10, weight: '500' },
+            color: '#94a3b8',
+            padding: 8,
+            callback: function(value) {
+              if (value >= 100000) {
+                return '₹' + (value / 100000).toFixed(1) + 'L';
+              } else if (value >= 1000) {
+                return '₹' + (value / 1000).toFixed(1) + 'k';
+              }
+              return '₹' + value;
+            }
+          }
+        }
+      },
+      animation: { 
+        duration: 1800, 
+        easing: 'easeOutBounce',
+        // Animate bars from bottom to top
+        onProgress: function(animation) {
+          var chart = animation.chart;
+          var ctx = chart.ctx;
+          ctx.save();
+          ctx.globalAlpha = animation.currentStep / animation.numSteps;
+          ctx.restore();
+        }
+      }
+    }
+  });
+})();
+
+/* Revenue Overview Chart - Ultra Modern Design */
+{% if chart_data %}
+(function(){
+  var labels = [{% for d in chart_data %}"{{ d.date }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+  var values = [{% for d in chart_data %}{{ d.total }}{% if not forloop.last %},{% endif %}{% endfor %}];
+  if(!labels.length) return;
+  
+  var ctx = document.getElementById('revenueChart');
+  if(!ctx) return;
+  ctx = ctx.getContext('2d');
+  
+  // Create beautiful gradient for area fill
+  var gradientFill = ctx.createLinearGradient(0, 0, 0, 250);
+  gradientFill.addColorStop(0, 'rgba(74, 144, 80, 0.25)');   // Sage green top
+  gradientFill.addColorStop(0.5, 'rgba(74, 144, 80, 0.12)'); // Mid fade
+  gradientFill.addColorStop(1, 'rgba(74, 144, 80, 0)');      // Transparent bottom
+  
+  // Create gradient for the line
+  var gradientLine = ctx.createLinearGradient(0, 0, 600, 0);
+  gradientLine.addColorStop(0, '#1a2e1a');    // Dark green
+  gradientLine.addColorStop(0.5, '#4a9050');  // Sage green
+  gradientLine.addColorStop(1, '#2f6232');    // Medium green
+  
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: values,
+        borderColor: gradientLine,
+        borderWidth: 3,
+        fill: true,
+        backgroundColor: gradientFill,
+        pointRadius: 0,
+        pointHoverRadius: 8,
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: '#4a9050',
+        pointHoverBorderWidth: 4,
+        tension: 0.4,
+        // Add shadow effect
+        shadowOffsetX: 0,
+        shadowOffsetY: 4,
+        shadowBlur: 8,
+        shadowColor: 'rgba(74, 144, 80, 0.2)',
+        segment: {
+          borderColor: ctx => {
+            // Dynamic color based on value trend
+            const curr = ctx.p1.parsed.y;
+            const prev = ctx.p0.parsed.y;
+            return curr > prev ? '#10b981' : curr < prev ? '#f59e0b' : '#4a9050';
+          }
+        }
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          enabled: true,
+          backgroundColor: 'rgba(17, 24, 39, 0.95)',
+          titleColor: '#fff',
+          bodyColor: '#fff',
+          padding: 16,
+          cornerRadius: 12,
+          displayColors: false,
+          titleFont: {
+            size: 13,
+            weight: '600'
+          },
+          bodyFont: {
+            size: 16,
+            weight: 'bold'
+          },
+          callbacks: {
+            title: function(context) {
+              return context[0].label;
+            },
+            label: function(c) {
+              return '₹' + c.parsed.y.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              });
+            }
+          },
+          animation: {
+            duration: 400,
+            easing: 'easeOutCubic'
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { 
+            display: true,
+            color: 'rgba(0, 0, 0, 0.03)',
+            drawBorder: false
+          },
+          ticks: { 
+            font: { size: 10, weight: '600' }, 
+            color: '#94a3b8',
+            maxTicksLimit: 10,
+            padding: 8
+          },
+          border: { display: false }
+        },
+        y: {
+          grid: { 
+            display: true,
+            color: 'rgba(0, 0, 0, 0.03)',
+            drawBorder: false
+          },
+          ticks: { 
+            font: { size: 10, weight: '500' }, 
+            color: '#94a3b8',
+            padding: 12,
+            callback: function(value) {
+              if (value >= 100000) {
+                return '₹' + (value / 100000).toFixed(1) + 'L';
+              } else if (value >= 1000) {
+                return '₹' + (value / 1000).toFixed(1) + 'k';
+              }
+              return '₹' + value;
+            }
+          },
+          border: { display: false }
+        }
+      },
+      animation: { 
+        duration: 2000, 
+        easing: 'easeInOutQuart',
+        // Smooth entry animation
+        onProgress: function(animation) {
+          var chart = animation.chart;
+          var ctx = chart.ctx;
+          ctx.save();
+          ctx.globalAlpha = animation.currentStep / animation.numSteps;
+          ctx.restore();
+        }
+      },
+      hover: {
+        mode: 'index',
+        intersect: false,
+        animationDuration: 400
+      }
+    }
+  });
+})();
+{% endif %}
+</script>
+</body>
+</html>

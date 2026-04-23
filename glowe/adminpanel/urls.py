@@ -14,5 +14,7 @@ urlpatterns = [
       path('user-management/',views.user_management,name='user_management'),
       path("admin-toggle-block/<int:id>/", views.admin_toggle_block , name='admin_toggle_block'),
       path('user-detail/<int:id>/',views.user_detail,name='user_detail'),
-     
+      path("admin-panel/sales-report/", views.sales_report, name="sales_report"),
+      path("admin-panel/sales-report/export/excel/", views.export_sales_excel, name="export_sales_excel"),
+      path("admin-panel/sales-report/export/pdf/", views.export_sales_pdf, name="export_sales_pdf"),
 ]

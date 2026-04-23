@@ -20,6 +20,17 @@
 .glow-img { height:clamp(260px,41vw,560px); overflow:hidden; }
 .glow-img img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .5s; }
 .glow-img:hover img { transform:scale(1.03); }
+
+/* Scroll Animations */
+.reveal-up { opacity: 0; transform: translateY(40px); transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.reveal-fade { opacity: 0; transition: opacity 1s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.reveal-scale { opacity: 0; transform: scale(0.93); transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.is-revealed { opacity: 1; transform: translateY(0) scale(1); }
+
+/* Delay helpers for staggering */
+.delay-100 { transition-delay: 100ms; }
+.delay-200 { transition-delay: 200ms; }
+.delay-300 { transition-delay: 300ms; }
 {% endblock %}
 
 {% block content %}
@@ -62,20 +73,33 @@
 <!-- ══════════════════════════════════
   OUR PHILOSOPHY
 ══════════════════════════════════ -->
-<section class="bg-[#f0ebe2] pt-14 md:pt-[72px] overflow-x-hidden">
-  <div class="text-center px-6 md:px-10 mb-10 md:mb-14">
-    <h2 class="font-montserrat font-bold uppercase text-[#1a1208] mb-6 tracking-[0.22em]" style="font-size:clamp(18px,2.4vw,32px);">Our Philosophy</h2>
-    <p class="font-montserrat font-light text-[#2a2018] text-[13px] md:text-[14px] text-center leading-[2.0] max-w-[600px] mx-auto">
-      Infused with potent botanicals and advanced actives, our formulas restore balance and strengthen your skin barrier. Revealing a luminous, healthy glow that feels effortlessly natural.
-    </p>
-  </div>
-  <div class="flex flex-col md:hidden">
-    <div class="iz w-full h-[280px]"><img src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=1100&q=90&fit=crop&crop=faces,top" alt="Philosophy 1" style="object-position:center 25%;"/></div>
-    <div class="iz w-full h-[240px]"><img src="https://images.unsplash.com/photo-1600428610114-e9d4f8faebe2?w=900&q=90&fit=crop" alt="Philosophy 2" style="object-position:center center;"/></div>
-  </div>
-  <div class="hidden md:flex gap-[4px]">
-    <div class="iz shrink-0" style="width:54vw; height:clamp(340px,42vw,600px);"><img src="https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=1100&q=90&fit=crop&crop=faces,top" alt="Philosophy 1" style="object-position:center 25%;"/></div>
-    <div class="iz shrink-0" style="width:29vw; height:clamp(340px,42vw,600px);"><img src="https://images.unsplash.com/photo-1600428610114-e9d4f8faebe2?w=900&q=90&fit=crop" alt="Philosophy 2" style="object-position:center center;"/></div>
+<section class="bg-[#f0ebe2] py-16 md:py-[100px] overflow-hidden relative">
+  <div class="max-w-[1280px] mx-auto px-6 md:px-12">
+    <div class="flex flex-col md:flex-row items-center justify-between gap-12 lg:gap-20">
+      
+      <!-- Modern Typography Title -->
+      <div class="w-full md:w-5/12 z-10 text-center md:text-left reveal-up">
+        <p class="font-montserrat text-[10px] font-semibold tracking-[0.25em] uppercase text-[#8a7e72] mb-4">The Glowé Way</p>
+        <h2 class="font-cormorant text-[#1a1208] leading-[1.05]" style="font-size:clamp(48px, 7vw, 84px);">
+          <span class="block italic font-light text-[#8a7e72]">Our</span>
+          Philosophy
+        </h2>
+      </div>
+
+      <!-- Modern Image Overlap Layout -->
+      <div class="w-full md:w-7/12 relative h-[450px] md:h-[650px] mt-8 md:mt-0 reveal-up delay-200 group">
+        <!-- Back Image -->
+        <div class="absolute top-0 right-0 w-[75%] md:w-[70%] h-[75%] md:h-[80%] rounded-[2px] md:rounded-bl-[80px] md:rounded-tr-[80px] overflow-hidden shadow-2xl transition-all duration-[1s] ease-out group-hover:scale-[1.02] group-hover:translate-x-3 group-hover:-translate-y-3 z-10">
+          <img src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=900&q=90&fit=crop" alt="Philosophy Serum" class="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-[1.1]" style="object-position:center 25%;"/>
+        </div>
+        
+        <!-- Front Image -->
+        <div class="absolute bottom-0 left-[5%] w-[55%] md:w-[45%] h-[55%] md:h-[60%] rounded-[2px] md:rounded-tl-[60px] md:rounded-br-[60px] overflow-hidden shadow-[0_30px_60px_rgba(26,18,8,0.15)] transition-all duration-[1s] ease-out group-hover:scale-[1.04] group-hover:-translate-x-3 group-hover:translate-y-3 z-20 border-[6px] border-[#f0ebe2]">
+          <img src="https://images.unsplash.com/photo-1600428610114-e9d4f8faebe2?w=900&q=90&fit=crop" alt="Philosophy Hands" class="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-[1.1]"/>
+        </div>
+      </div>
+      
+    </div>
   </div>
 </section>
 
@@ -170,38 +194,6 @@
   </div>
 </section>
 
-<!-- ══════════════════════════════════
-  WHAT'S NEW
-══════════════════════════════════ -->
-<section class="bg-[#f0ebe2] border-t border-[#ddd6cc] pt-14 md:pt-[72px] pb-14 md:pb-[72px]">
-  <h2 class="font-montserrat font-bold uppercase text-[#1a1208] text-center mb-8 md:mb-10 px-6 md:px-10 tracking-[0.24em]" style="font-size:clamp(15px,1.8vw,22px);">What's New?</h2>
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-0 md:gap-2.5 max-w-[1440px] mx-auto px-0 md:px-10">
-    <div>
-      <div class="iz h-[240px] md:h-[clamp(200px,14vw,215px)]"><img src="https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=700&q=90&fit=crop&crop=faces" alt="Blog 1"/></div>
-      <div class="text-center md:text-left px-6 md:px-0 pt-5 pb-8 md:pb-0">
-        <p class="font-montserrat text-[9px] font-bold tracking-[0.16em] uppercase text-[#7a6e62] mb-1.5">BLOG POST 01</p>
-        <p class="font-montserrat text-[13px] font-bold text-[#1a1208] leading-snug mb-2 tracking-[0.05em]">PARIS FASHION WEEK 2024</p>
-        <p class="font-montserrat text-[11px] font-light text-[#5a4e42] leading-[1.75]">Sed ut perspiciatis unde omnis iste natus error sit volupt atem accusantium</p>
-      </div>
-    </div>
-    <div>
-      <div class="iz h-[240px] md:h-[clamp(200px,14vw,215px)]"><img src="https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=700&q=90&fit=crop" alt="Blog 2"/></div>
-      <div class="text-center md:text-left px-6 md:px-0 pt-5 pb-8 md:pb-0">
-        <p class="font-montserrat text-[9px] font-bold tracking-[0.16em] uppercase text-[#7a6e62] mb-1.5">BLOG POST 02</p>
-        <p class="font-montserrat text-[13px] font-bold text-[#1a1208] leading-snug mb-2 tracking-[0.05em]">BRAZILIAN SUMMER VIBES</p>
-        <p class="font-montserrat text-[11px] font-light text-[#5a4e42] leading-[1.75]">Sed ut perspiciatis unde omnis iste natus error sit volupt atem accusantium</p>
-      </div>
-    </div>
-    <div>
-      <div class="iz h-[240px] md:h-[clamp(200px,14vw,215px)]"><img src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=700&q=90&fit=crop&crop=faces,top" alt="Blog 3"/></div>
-      <div class="text-center md:text-left px-6 md:px-0 pt-5 pb-8 md:pb-0">
-        <p class="font-montserrat text-[9px] font-bold tracking-[0.16em] uppercase text-[#7a6e62] mb-1.5">BLOG POST 03</p>
-        <p class="font-montserrat text-[13px] font-bold text-[#1a1208] leading-snug mb-2 tracking-[0.05em]">WHITE IS THE NEW BLACK</p>
-        <p class="font-montserrat text-[11px] font-light text-[#5a4e42] leading-[1.75]">Sed ut perspiciatis unde omnis iste natus error sit volupt atem accusantium</p>
-      </div>
-    </div>
-  </div>
-</section>
 
 <!-- ══════════════════════════════════
   MOSTLY VIEWED
@@ -273,4 +265,76 @@
   </div>
 </section>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // Setup Intersection Observer for smooth scroll animations
+    const observerOptions = {
+      root: null,
+      rootMargin: "0px 0px -60px 0px",
+      threshold: 0.1
+    };
+    
+    const observer = new IntersectionObserver((entries, obs) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-revealed');
+          obs.unobserve(entry.target); // Animate only once
+        }
+      });
+    }, observerOptions);
+
+    // Select elements within sections to animate, excluding the hero
+    const targets = document.querySelectorAll('section h2, section .iz, section .s25-scene > div, section .grid > div, section p, section .glow-img, section a.btn-dark, .reveal-up');
+
+    targets.forEach(el => {
+      // Don't apply scroll animations to the hero section
+      const section = el.closest('section');
+      if(section && !section.classList.contains('h-[100svh]')) {
+        
+        // Decide which animation to apply based on element type
+        if(el.tagName === 'H2' || el.classList.contains('glow-img')) {
+          el.classList.add('reveal-scale');
+        } else if (el.tagName === 'P') {
+          el.classList.add('reveal-fade');
+        } else {
+          el.classList.add('reveal-up');
+          
+          // Add staggering for grids and grouped items
+          const parent = el.parentNode;
+          if (parent.classList.contains('grid') || parent.classList.contains('s25-scene')) {
+            const childrenArray = Array.from(parent.children).filter(c => c.tagName !== 'STYLE' && c.tagName !== 'SCRIPT');
+            const parentIdx = childrenArray.indexOf(el);
+            if(parentIdx % 4 === 1) el.classList.add('delay-100');
+            else if(parentIdx % 4 === 2) el.classList.add('delay-200');
+            else if(parentIdx % 4 === 3) el.classList.add('delay-300');
+          }
+        }
+        
+        observer.observe(el);
+      }
+    });
+
+    // Hero section intro animation
+    const heroSection = document.querySelector('section.relative.h-\\[100svh\\]');
+    if (heroSection) {
+      const heroElements = heroSection.querySelectorAll('h1, p, a');
+      heroElements.forEach((el, idx) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(30px)';
+        el.style.transition = `all 1s cubic-bezier(0.2, 0.8, 0.2, 1) ${0.2 + idx*0.15}s`;
+        
+        // Trigger reflow then start animation
+        requestAnimationFrame(() => {
+          setTimeout(() => { 
+            el.style.opacity = '1'; 
+            el.style.transform = 'translateY(0)'; 
+          }, 50);
+        });
+      });
+    }
+  });
+</script>
 {% endblock %}

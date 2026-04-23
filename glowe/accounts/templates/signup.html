@@ -45,31 +45,28 @@
 <body class="flex h-screen overflow-hidden font-montserrat">
 
   <!-- ── LEFT PANEL ── -->
-  <div class="left-panel relative hidden md:block w-1/2 h-screen flex-shrink-0 overflow-hidden">
+  <!-- ── LEFT PANEL ── -->
+  <div class="left-panel relative hidden md:block w-1/2 h-screen flex-shrink-0 overflow-hidden bg-white">
     <img
-      src="https://i.pinimg.com/736x/87/73/ac/8773ac09c14bccb57938093b456d2884.jpg"
+      src="{% static 'accounts/images/c8941f3d3a8e47f34a5dfab99edc8aea.jpg' %}"
       alt="Glowé Women"
-      class="w-full h-full object-cover object-top"
+      class="w-full h-full object-cover"
+      style="object-fit: cover; object-position: center 40%; image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; image-rendering: high-quality; backface-visibility: hidden; transform: translateZ(0);"
+      loading="eager"
+      decoding="sync"
     />
-    <span class="absolute top-6 left-8 font-cormorant font-normal text-white text-[15px] tracking-[0.15em] uppercase">
-      GLOWÉ
-    </span>
+    
     <div class="absolute bottom-8 left-8">
-      <h2 class="font-cormorant font-bold text-white text-2xl lg:text-3xl xl:text-4xl leading-tight tracking-tight">
-        Glowé Women
-      </h2>
-      <p class="text-white/85 text-[9px] tracking-[0.25em] uppercase mt-1">
-        ê Skincare Collection
-      </p>
+      
     </div>
   </div>
 
   <!-- ── RIGHT PANEL ── -->
-  <div class="right-panel w-full md:w-1/2 h-screen bg-[#f5f2ed] flex items-center justify-center overflow-hidden px-8 sm:px-12 lg:px-16">
+  <div class="right-panel w-full md:w-1/2 h-screen bg-white flex items-center justify-center overflow-hidden px-8 sm:px-12 lg:px-16">
     <div class="w-full max-w-sm lg:max-w-md">
 
       <!-- Brand Logo -->
-      <div class="flex justify-center mb-6 lg:mb-8">
+      <div class="flex justify-center mb-2 ">
         <img src="{{ logo_url }}" alt="Glowé Logo" class="w-[200px] sm:w-[220px] lg:w-[250px] h-auto object-contain">
       </div>
 

@@ -54,19 +54,19 @@
   {% endif %}
 
   <!-- ── LEFT PANEL ── -->
-  <div class="left-panel relative hidden md:block w-1/2 h-screen flex-shrink-0 overflow-hidden">
+  <div class="left-panel relative hidden md:block w-1/2 h-screen flex-shrink-0 overflow-hidden bg-[#f5f2ed]">
     <img
-      src="https://i.pinimg.com/736x/87/73/ac/8773ac09c14bccb57938093b456d2884.jpg"
+      src="{% static 'accounts/images/selin-CMCwyIRZqxY-unsplash.png' %}"
       alt="Glowé Women"
-      class="w-full h-full object-cover object-top"
+      class="w-full h-full object-cover"
+      style="object-fit: cover; object-position: center center;"
     />
-    <span class="absolute top-6 left-8 font-cormorant font-normal text-white text-[15px] tracking-[0.15em] uppercase">
-      GLOWÉ
-    </span>
+    
+    <!-- Perfect gradient overlay blending to right panel -->
+    <div class="absolute inset-0 pointer-events-none" style="background: linear-gradient(to right, transparent 0%, transparent 50%, rgba(245, 242, 237, 0.3) 70%, rgba(245, 242, 237, 0.9) 100%);"></div>
+    
     <div class="absolute bottom-8 left-8">
-      <h2 class="font-cormorant italic font-semibold text-white text-2xl lg:text-3xl xl:text-4xl leading-tight">
-        Glowé Women
-      </h2>
+      
     </div>
   </div>
 
