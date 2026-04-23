@@ -99,44 +99,18 @@
   <div id="toast-container" class="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] flex flex-col items-center gap-3 pointer-events-none"></div>
 
   <!-- Main Content Wrapper -->
-  <div class="admin-main-content min-h-screen">
+  <div class="admin-main-content min-h-screen admin-mobile-offset">
     
-    <!-- Top Header mimicking admin_base.html -->
-    <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center px-4 lg:px-8 h-16">
-      <button onclick="toggleAdminSidebar()" class="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-50 mr-4">
-        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
-      </button>
-
-      <div class="hidden sm:block text-sm font-medium text-gray-500">
-        Orders / <span class="text-gray-900">Management</span>
-      </div>
-
-      <div class="flex-1"></div>
-
-      <!-- Profile Dropdown -->
-      <div class="relative">
-        <button onclick="toggleProfileDropdown()" id="profileDropdownBtn" class="flex items-center gap-2 p-1 rounded-full hover:bg-gray-50 transition-colors">
-          <div class="w-8 h-8 rounded-full bg-sage-100 flex items-center justify-center overflow-hidden border border-sage-200">
-            {% if user.profile_image and user.profile_image.name != 'profile/default.png' %}
-              <img src="{{ user.profile_image.url }}" class="w-full h-full object-cover"/>
-            {% else %}
-              <span class="text-sage-700 font-bold text-xs">{{ user.username|first|upper }}</span>
-            {% endif %}
-          </div>
-        </button>
-        <div id="profileDropdownMenu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50">
-          <div class="px-4 py-2 border-b border-gray-50">
-            <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Admin</p>
-            <p class="text-sm font-semibold text-gray-900 truncate">{{ user.username }}</p>
-          </div>
-          <a href="{% url 'profile_overview' %}" class="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Profile</a>
-          <button onclick="openAdminSignoutModal()" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Sign Out</button>
-        </div>
-      </div>
-    </header>
+    <!-- Top Header removed as per user request -->
 
     <!-- Main Page Content -->
     <main class="p-4 lg:p-8 max-w-[1400px] mx-auto">
+
+      <!-- Page Header -->
+      <div class="mb-8">
+        <h1 class="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight leading-none">Order Management</h1>
+        <p class="text-sm md:text-[15px] text-gray-500 mt-2 font-medium">Monitor and manage all customer orders and fulfillments.</p>
+      </div>
       
       <!-- Stats Summary -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">

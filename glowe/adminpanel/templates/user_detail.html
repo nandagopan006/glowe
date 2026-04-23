@@ -194,18 +194,9 @@ body { background:#f0f4f0; margin:0; }
 {% include 'admin_sidebar.html' %}
 
 <!-- ══ MAIN ══ -->
-<div class="lg:ml-[240px] min-h-screen p-5 sm:p-6 lg:p-8">
+<div class="lg:ml-[240px] min-h-screen p-5 sm:p-6 lg:p-8 admin-mobile-offset">
 
-  <!-- Mobile top bar -->
-  <div class="flex items-center gap-3 mb-5 lg:hidden">
-    <button onclick="toggleAdminSidebar()" style="padding:8px;border-radius:10px;border:1px solid #e0e8e0;background:#fff;cursor:pointer;display:flex;align-items:center;">
-      <svg class="w-5 h-5" style="color:#4a5e4a" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
-    </button>
-    <div>
-      <div style="font-weight:700;font-size:1.05rem;color:#111;">User Details</div>
-      <div style="font-size:.72rem;color:#8aaa8a;">{% if user.full_name %}{{ user.full_name }}{% else %}{{ user.email }}{% endif %}</div>
-    </div>
-  </div>
+  <!-- Mobile top bar removed as per user request -->
 
   <!-- Desktop breadcrumb -->
   <div class="breadcrumb hidden lg:flex">
@@ -216,13 +207,13 @@ body { background:#f0f4f0; margin:0; }
     <span>{% if user.full_name %}{{ user.full_name }}{% else %}{{ user.email }}{% endif %}</span>
   </div>
 
-  <!-- Desktop page header -->
-  <div class="page-header hidden lg:flex">
+  <!-- Page header -->
+  <div class="page-header flex flex-col md:flex-row md:items-center justify-between gap-4">
     <div>
-      <h1 style="font-size:1.7rem;font-weight:700;color:#111;letter-spacing:-.4px;margin:0;">User Details</h1>
-      <p style="margin:4px 0 0;font-size:.85rem;color:#8aaa8a;">Manage and view complete information for this user.</p>
+      <h1 class="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight m-0">User Details</h1>
+      <p class="text-sm md:text-[15px] text-gray-400 mt-1.5 font-medium">Manage and view complete information for this user.</p>
     </div>
-    <a href="{% url 'user_management' %}" class="back-btn">
+    <a href="{% url 'user_management' %}" class="back-btn self-start md:self-auto">
       <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M15 19l-7-7 7-7"/></svg>
       Back to Users
     </a>

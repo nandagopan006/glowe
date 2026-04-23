@@ -34,10 +34,15 @@
     .fade-up:nth-child(3){animation-delay:.21s}
     .fade-up:nth-child(4){animation-delay:.29s}
 
-    .metric-card{background:#fff;border-radius:18px;border:1px solid #eaede8;padding:22px 20px 18px;transition:transform .25s,box-shadow .25s}
+    .metric-card{background:#fff;border-radius:18px;border:1px solid #eaede8;padding:22px 20px 18px;transition:transform .25s,box-shadow .25s;position:relative;overflow:hidden}
+    .metric-card::after{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(74,144,80,0.08),transparent);transition:left 0.5s}
     .metric-card:hover{transform:scale(1.025);box-shadow:0 10px 32px rgba(0,0,0,.10)}
+    .metric-card:hover::after{left:100%}
 
-    .chart-card{background:#fff;border-radius:18px;border:1px solid #eaede8;padding:26px}
+    .chart-card{background:#fff;border-radius:18px;border:1px solid #eaede8;padding:26px;position:relative;overflow:hidden;transition:all 0.3s ease}
+    .chart-card::before{content:'';position:absolute;top:-2px;left:-2px;right:-2px;bottom:-2px;background:linear-gradient(45deg,#4a9050,#64a864,#4a9050);border-radius:20px;opacity:0;z-index:-1;transition:opacity 0.3s ease}
+    .chart-card:hover{transform:translateY(-4px);box-shadow:0 20px 40px rgba(74,144,80,0.12)}
+    .chart-card:hover::before{opacity:0.08}
 
     .filter-btn{padding:6px 20px;border-radius:20px;font-size:.8rem;font-weight:600;cursor:pointer;border:none;background:transparent;color:#7a8c7a;transition:background .15s,color .15s;text-decoration:none;display:inline-block}
     .filter-btn.active,.filter-btn:hover{background:#4a9050;color:#fff}
@@ -556,7 +561,7 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 });
 
-/* Growth Comparison Chart (Bar) */
+/* Growth Comparison Chart (Modern Bar with Gradient) */
 (function(){
   var ctx = document.getElementById('growthComparisonChart');
   if(!ctx) return;
@@ -565,18 +570,30 @@ document.addEventListener('DOMContentLoaded', function(){
   var current = {{ total_revenue }};
   var previous = {{ previous_revenue|default:0 }};
   
+  // Create gradient for current bar
+  var gradientCurrent = ctx.createLinearGradient(0, 0, 0, 300);
+  gradientCurrent.addColorStop(0, 'rgba(16, 185, 129, 1)');    // Emerald-500
+  gradientCurrent.addColorStop(1, 'rgba(5, 150, 105, 0.8)');   // Emerald-600
+  
+  // Create gradient for previous bar
+  var gradientPrevious = ctx.createLinearGradient(0, 0, 0, 300);
+  gradientPrevious.addColorStop(0, 'rgba(203, 213, 225, 1)');  // Slate-300
+  gradientPrevious.addColorStop(1, 'rgba(148, 163, 184, 0.8)'); // Slate-400
+  
   new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: ['Previous', 'Current'],
+      labels: ['Previous Period', 'Current Period'],
       datasets: [{
         data: [previous, current],
-        backgroundColor: [
-          'rgba(241, 245, 249, 1)', // Previous - slate-100
-          'rgba(34, 197, 94, 0.8)'   // Current - green-500
-        ],
-        borderRadius: 8,
-        barThickness: 40,
+        backgroundColor: [gradientPrevious, gradientCurrent],
+        borderRadius: 12,
+        barThickness: 50,
+        borderWidth: 0,
+        hoverBackgroundColor: [
+          'rgba(148, 163, 184, 1)',
+          'rgba(5, 150, 105, 1)'
+        ]
       }]
     },
     options: {
@@ -585,70 +602,233 @@ document.addEventListener('DOMContentLoaded', function(){
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#fff',
-          borderColor: '#eaede8',
-          borderWidth: 1,
-          titleColor: '#64748b',
-          bodyColor: '#1e293b',
-          bodyFont: { weight: 'bold' },
+          enabled: true,
+          backgroundColor: 'rgba(17, 24, 39, 0.95)',
+          titleColor: '#fff',
+          bodyColor: '#fff',
+          padding: 16,
+          cornerRadius: 12,
+          displayColors: false,
+          titleFont: {
+            size: 13,
+            weight: '600'
+          },
+          bodyFont: {
+            size: 16,
+            weight: 'bold'
+          },
           callbacks: {
+            title: function(context) {
+              return context[0].label;
+            },
             label: function(c) {
-              return ' ₹' + c.parsed.y.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+              return '₹' + c.parsed.y.toLocaleString('en-IN', { 
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              });
             }
           }
         }
       },
       scales: {
-        x: { grid: { display: false }, border: { display: false }, ticks: { font: { weight: '600' }, color: '#64748b' } },
-        y: { display: false, grid: { display: false }, border: { display: false } }
+        x: { 
+          grid: { display: false }, 
+          border: { display: false }, 
+          ticks: { 
+            font: { weight: '600', size: 11 }, 
+            color: '#64748b',
+            padding: 8
+          } 
+        },
+        y: { 
+          display: true,
+          grid: { 
+            display: true,
+            color: 'rgba(0, 0, 0, 0.03)',
+            drawBorder: false
+          }, 
+          border: { display: false },
+          ticks: {
+            font: { size: 10, weight: '500' },
+            color: '#94a3b8',
+            padding: 8,
+            callback: function(value) {
+              if (value >= 100000) {
+                return '₹' + (value / 100000).toFixed(1) + 'L';
+              } else if (value >= 1000) {
+                return '₹' + (value / 1000).toFixed(1) + 'k';
+              }
+              return '₹' + value;
+            }
+          }
+        }
       },
-      animation: { duration: 1200, easing: 'easeOutQuart' }
+      animation: { 
+        duration: 1800, 
+        easing: 'easeOutBounce',
+        // Animate bars from bottom to top
+        onProgress: function(animation) {
+          var chart = animation.chart;
+          var ctx = chart.ctx;
+          ctx.save();
+          ctx.globalAlpha = animation.currentStep / animation.numSteps;
+          ctx.restore();
+        }
+      }
     }
   });
 })();
 
-/* Revenue chart */
+/* Revenue Overview Chart - Ultra Modern Design */
 {% if chart_data %}
 (function(){
   var labels = [{% for d in chart_data %}"{{ d.date }}"{% if not forloop.last %},{% endif %}{% endfor %}];
   var values = [{% for d in chart_data %}{{ d.total }}{% if not forloop.last %},{% endif %}{% endfor %}];
   if(!labels.length) return;
+  
   var ctx = document.getElementById('revenueChart');
   if(!ctx) return;
   ctx = ctx.getContext('2d');
-  var grad = ctx.createLinearGradient(0,0,0,250);
-  grad.addColorStop(0,'rgba(74,144,80,0.20)');
-  grad.addColorStop(1,'rgba(74,144,80,0.01)');
-  new Chart(ctx,{
-    type:'line',
-    data:{
-      labels:labels,
-      datasets:[{
-        data:values,
-        borderColor:'#1a2e1a',borderWidth:2.5,
-        fill:true,backgroundColor:grad,
-        pointRadius:0,pointHoverRadius:6,
-        pointHoverBackgroundColor:'#4a9050',
-        pointHoverBorderColor:'#fff',pointHoverBorderWidth:2,
-        tension:0.42
+  
+  // Create beautiful gradient for area fill
+  var gradientFill = ctx.createLinearGradient(0, 0, 0, 250);
+  gradientFill.addColorStop(0, 'rgba(74, 144, 80, 0.25)');   // Sage green top
+  gradientFill.addColorStop(0.5, 'rgba(74, 144, 80, 0.12)'); // Mid fade
+  gradientFill.addColorStop(1, 'rgba(74, 144, 80, 0)');      // Transparent bottom
+  
+  // Create gradient for the line
+  var gradientLine = ctx.createLinearGradient(0, 0, 600, 0);
+  gradientLine.addColorStop(0, '#1a2e1a');    // Dark green
+  gradientLine.addColorStop(0.5, '#4a9050');  // Sage green
+  gradientLine.addColorStop(1, '#2f6232');    // Medium green
+  
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        data: values,
+        borderColor: gradientLine,
+        borderWidth: 3,
+        fill: true,
+        backgroundColor: gradientFill,
+        pointRadius: 0,
+        pointHoverRadius: 8,
+        pointHoverBackgroundColor: '#fff',
+        pointHoverBorderColor: '#4a9050',
+        pointHoverBorderWidth: 4,
+        tension: 0.4,
+        // Add shadow effect
+        shadowOffsetX: 0,
+        shadowOffsetY: 4,
+        shadowBlur: 8,
+        shadowColor: 'rgba(74, 144, 80, 0.2)',
+        segment: {
+          borderColor: ctx => {
+            // Dynamic color based on value trend
+            const curr = ctx.p1.parsed.y;
+            const prev = ctx.p0.parsed.y;
+            return curr > prev ? '#10b981' : curr < prev ? '#f59e0b' : '#4a9050';
+          }
+        }
       }]
     },
-    options:{
-      responsive:true,maintainAspectRatio:false,
-      plugins:{
-        legend:{display:false},
-        tooltip:{
-          backgroundColor:'#fff',borderColor:'#dde8d8',borderWidth:1,
-          titleColor:'#4a6a4a',bodyColor:'#1a2e1a',
-          bodyFont:{weight:'700',size:13},padding:12,
-          callbacks:{label:function(c){return ' ₹'+c.parsed.y.toLocaleString('en-IN',{minimumFractionDigits:2});}}
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          enabled: true,
+          backgroundColor: 'rgba(17, 24, 39, 0.95)',
+          titleColor: '#fff',
+          bodyColor: '#fff',
+          padding: 16,
+          cornerRadius: 12,
+          displayColors: false,
+          titleFont: {
+            size: 13,
+            weight: '600'
+          },
+          bodyFont: {
+            size: 16,
+            weight: 'bold'
+          },
+          callbacks: {
+            title: function(context) {
+              return context[0].label;
+            },
+            label: function(c) {
+              return '₹' + c.parsed.y.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              });
+            }
+          },
+          animation: {
+            duration: 400,
+            easing: 'easeOutCubic'
+          }
         }
       },
-      scales:{
-        x:{grid:{display:false},ticks:{font:{size:10,weight:'600'},color:'#a8bea8',maxTicksLimit:8},border:{display:false}},
-        y:{grid:{color:'#f0f4f0'},ticks:{font:{size:10},color:'#a8bea8',callback:function(v){return '₹'+v.toLocaleString('en-IN');}},border:{display:false}}
+      scales: {
+        x: {
+          grid: { 
+            display: true,
+            color: 'rgba(0, 0, 0, 0.03)',
+            drawBorder: false
+          },
+          ticks: { 
+            font: { size: 10, weight: '600' }, 
+            color: '#94a3b8',
+            maxTicksLimit: 10,
+            padding: 8
+          },
+          border: { display: false }
+        },
+        y: {
+          grid: { 
+            display: true,
+            color: 'rgba(0, 0, 0, 0.03)',
+            drawBorder: false
+          },
+          ticks: { 
+            font: { size: 10, weight: '500' }, 
+            color: '#94a3b8',
+            padding: 12,
+            callback: function(value) {
+              if (value >= 100000) {
+                return '₹' + (value / 100000).toFixed(1) + 'L';
+              } else if (value >= 1000) {
+                return '₹' + (value / 1000).toFixed(1) + 'k';
+              }
+              return '₹' + value;
+            }
+          },
+          border: { display: false }
+        }
       },
-      animation:{duration:900,easing:'easeInOutQuart'}
+      animation: { 
+        duration: 2000, 
+        easing: 'easeInOutQuart',
+        // Smooth entry animation
+        onProgress: function(animation) {
+          var chart = animation.chart;
+          var ctx = chart.ctx;
+          ctx.save();
+          ctx.globalAlpha = animation.currentStep / animation.numSteps;
+          ctx.restore();
+        }
+      },
+      hover: {
+        mode: 'index',
+        intersect: false,
+        animationDuration: 400
+      }
     }
   });
 })();

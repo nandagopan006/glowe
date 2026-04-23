@@ -203,16 +203,14 @@ a,button{transition:all .18s cubic-bezier(.4,0,.2,1)}
 
 {% include 'admin_sidebar.html' %}
 
-<div class="lg:ml-[240px] min-h-screen flex flex-col">
+<div class="lg:ml-[240px] min-h-screen flex flex-col admin-mobile-offset">
   <main class="flex-1 px-5 sm:px-8 py-7 max-w-[1200px] w-full mx-auto">
 
     <!-- ── Page Header ── -->
     <div class="flex items-center justify-between mb-7">
       <div>
-        <h1 style="font-family:'DM Sans',sans-serif;font-size:20px;font-weight:700;color:#111827;letter-spacing:-.02em;margin:0 0 3px">
-          Categories
-        </h1>
-        <p style="font-size:13px;color:#9ca3af;margin:0">Manage all product categories</p>
+        <h1 class="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight leading-none">Categories</h1>
+        <p class="text-sm md:text-[15px] text-gray-500 mt-2 font-medium">Manage all product categories and collections.</p>
       </div>
       {% if status != 'archived' %}
       <button onclick="openAddModal()"

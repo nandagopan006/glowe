@@ -220,11 +220,8 @@
         </div>
     </aside>
 
-    <div class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        <header class="lg:hidden flex items-center bg-white px-4 py-3 border-b border-gray-200 z-30 flex-shrink-0 shadow-sm">
-            <button onclick="toggleSidebar()" class="text-gray-700 hover:text-[#2F5233] p-2 -ml-2 rounded-lg active:bg-gray-100 transition-colors"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></button>
-            <span class="font-bold text-gray-900 text-lg ml-2">Glowé</span>
-        </header>
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden relative admin-mobile-offset">
+        <!-- Mobile topbar removed as per user request -->
 
         <main class="flex-1 overflow-y-auto scrollbar-hide p-4 md:p-6 lg:p-10 w-full animate-fade-in relative z-0">
             <div class="max-w-[1200px] mx-auto space-y-6">
@@ -235,8 +232,9 @@
                     <span class="text-gray-800 font-medium">Variant Management</span>
                 </nav>
 
-                <header class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Manage Variants</h1>
+                <header>
+                    <h1 class="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight leading-none">Manage Variants</h1>
+                    <p class="text-sm md:text-[15px] text-gray-500 mt-2 font-medium">Configure sizes, prices, and stock levels for this product.</p>
                 </header>
 
                 <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col lg:flex-row lg:items-center justify-between gap-6">

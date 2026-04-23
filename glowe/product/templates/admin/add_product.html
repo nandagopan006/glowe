@@ -122,10 +122,10 @@ body { background:#f4f6f3; margin:0; }
 </div>
 
 <!-- MAIN -->
-<div class="lg:ml-[240px] min-h-screen bg-gray-50 pb-[80px]">
-  <div class="sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-gray-100 px-5 sm:px-8 py-4">
-    <h1 class="text-xl font-bold text-gray-900" style="font-family:'Playfair Display',serif;">Add New Product</h1>
-    <p class="text-xs text-gray-400 mt-0.5">Create a new listing for your skincare collection.</p>
+<div class="lg:ml-[240px] min-h-screen bg-gray-50 pb-[80px] admin-mobile-offset">
+  <div class="px-5 sm:px-8 py-8">
+    <h1 class="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight leading-none">Add New Product</h1>
+    <p class="text-sm md:text-[15px] text-gray-500 mt-2 font-medium">Create a new listing for your skincare collection.</p>
   </div>
 
   <form id="addProductForm" method="POST" enctype="multipart/form-data" action="{% url 'add_product' %}" novalidate>

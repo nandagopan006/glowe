@@ -21,8 +21,10 @@ from accounts.email_utils import send_admin_otp_email
 from django.utils.timezone import make_aware
 from datetime import datetime, timedelta
 from django.db.models import Sum, Count
-from django.db.models.functions import TruncDate
-from order.models import Order, OrderItem
+from django.db.models.functions import TruncDate, TruncMonth
+from order.models import Order, OrderItem, Payment
+from product.models import Product, Variant
+from category.models import Category
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -73,11 +75,198 @@ def admin_signin(request):
 @never_cache
 @login_required(login_url='/admin-signin/')
 def admin_dashboard(request):
-    success=request.session.pop('success',None)
     if not request.user.is_superuser:
         return redirect('admin_signin')
+    
+    success = request.session.pop('success', None)
+    
+  
+    filter_type = request.GET.get('filter', 'month')  # Default to 'month' instead of 'all'
+    now = timezone.now()
+    start_date = None
+    
+    if filter_type == 'day':
+        start_date = now.replace(hour=0, minute=0, second=0)
+    elif filter_type == 'week':
+        start_date = now - timedelta(days=7)
+    elif filter_type == 'month':
+        start_date = now.replace(day=1, hour=0, minute=0, second=0)
+    elif filter_type == 'year':
+        start_date = now.replace(month=1, day=1, hour=0, minute=0, second=0)
+    else:
+        # If invalid filter, default to month
+        filter_type = 'month'
+        start_date = now.replace(day=1, hour=0, minute=0, second=0)
 
-    return render(request, 'admin_dashboard.html',{"success":success})
+  
+    if start_date:
+        filtered_orders = Order.objects.filter(created_at__gte=start_date)
+    else:
+        filtered_orders = Order.objects.all()
+
+   
+    total_revenue = filtered_orders.aggregate(total=Sum('total_amount'))['total'] or 0
+    
+    today_start = now.replace(hour=0, minute=0, second=0)
+    today_revenue = Order.objects.filter(created_at__gte=today_start).aggregate(total=Sum('total_amount'))['total'] or 0
+    
+    month_start = now.replace(day=1, hour=0, minute=0, second=0)
+    monthly_revenue = Order.objects.filter(created_at__gte=month_start).aggregate(total=Sum('total_amount'))['total'] or 0
+    
+    total_orders_count = filtered_orders.count()
+    avg_order_value = total_revenue / total_orders_count if total_orders_count > 0 else 0
+
+  
+    pending_orders = filtered_orders.filter(order_status='PENDING').count()
+    delivered_orders = filtered_orders.filter(order_status='DELIVERED').count()
+    cancelled_orders = filtered_orders.filter(order_status='CANCELLED').count()
+    return_orders = filtered_orders.filter(order_status='RETURNED').count()
+
+   
+    out_of_stock_products = Variant.objects.filter(stock=0).count()
+    low_stock_products = Variant.objects.filter(stock__lt=5, stock__gt=0).count()
+
+   
+    total_users = ProfileUser.objects.filter(is_superuser=False).count()
+
+ 
+    best_products_raw = OrderItem.objects.filter(order__in=filtered_orders)\
+        .values('variant__product__id', 'variant__product__name')\
+        .annotate(total_qty=Sum('quantity'))\
+        .order_by('-total_qty')[:10]
+
+    best_products = []
+    for bp in best_products_raw:
+        product_obj = Product.objects.get(id=bp['variant__product__id'])
+        primary_image = product_obj.images.filter(is_primary=True).first()
+        if not primary_image:
+            primary_image = product_obj.images.first()
+        image_url = primary_image.image.url if primary_image else None
+        
+        best_products.append({
+            'id': bp['variant__product__id'],
+            'name': bp['variant__product__name'],
+            'total_qty': bp['total_qty'],
+            'image_url': image_url
+        })
+
+  
+    best_categories = OrderItem.objects.filter(order__in=filtered_orders)\
+        .values('variant__product__category__name')\
+        .annotate(total_qty=Sum('quantity'))\
+        .order_by('-total_qty')[:10]
+
+   
+    recent_orders = filtered_orders.order_by('-created_at')[:10]
+
+    # Generate chart data based on filter type
+    chart_data = []
+    
+    if filter_type == 'day':
+        # Hourly data for today
+        for hour in range(24):
+            hour_start = now.replace(hour=hour, minute=0, second=0)
+            hour_end = hour_start + timedelta(hours=1)
+            hour_revenue = filtered_orders.filter(
+                created_at__gte=hour_start,
+                created_at__lt=hour_end
+            ).aggregate(total=Sum('total_amount'))['total'] or 0
+            
+            chart_data.append({
+                'label': f"{hour:02d}:00",
+                'total': float(hour_revenue)
+            })
+    
+    elif filter_type == 'week':
+        # Daily data for last 7 days
+        for i in range(7):
+            day = now - timedelta(days=6-i)
+            day_start = day.replace(hour=0, minute=0, second=0)
+            day_end = day_start + timedelta(days=1)
+            day_revenue = filtered_orders.filter(
+                created_at__gte=day_start,
+                created_at__lt=day_end
+            ).aggregate(total=Sum('total_amount'))['total'] or 0
+            
+            chart_data.append({
+                'label': day.strftime('%a'),  # Mon, Tue, etc
+                'total': float(day_revenue)
+            })
+    
+    elif filter_type == 'month':
+        # Daily data for current month
+        month_start = now.replace(day=1, hour=0, minute=0, second=0)
+        days_in_month = (month_start.replace(month=month_start.month % 12 + 1, day=1) - timedelta(days=1)).day
+        
+        for day in range(1, days_in_month + 1):
+            day_date = month_start.replace(day=day)
+            day_end = day_date + timedelta(days=1)
+            day_revenue = filtered_orders.filter(
+                created_at__gte=day_date,
+                created_at__lt=day_end
+            ).aggregate(total=Sum('total_amount'))['total'] or 0
+            
+            chart_data.append({
+                'label': str(day),
+                'total': float(day_revenue)
+            })
+    
+    elif filter_type == 'year':
+        # Monthly data for current year
+        year_start = now.replace(month=1, day=1, hour=0, minute=0, second=0)
+        for month in range(1, 13):
+            month_date = year_start.replace(month=month)
+            if month == 12:
+                month_end = year_start.replace(year=year_start.year + 1, month=1, day=1)
+            else:
+                month_end = year_start.replace(month=month + 1, day=1)
+            
+            month_revenue = filtered_orders.filter(
+                created_at__gte=month_date,
+                created_at__lt=month_end
+            ).aggregate(total=Sum('total_amount'))['total'] or 0
+            
+            chart_data.append({
+                'label': month_date.strftime('%b'),
+                'total': float(month_revenue)
+            })
+    
+    else:
+        # Default: show monthly data for current year
+        chart_data_raw = Order.objects.filter(created_at__year=now.year)\
+            .annotate(month=TruncMonth('created_at'))\
+            .values('month')\
+            .annotate(total=Sum('total_amount'))\
+            .order_by('month')
+        
+        for entry in chart_data_raw:
+            chart_data.append({
+                'label': entry['month'].strftime('%b'),
+                'total': float(entry['total'])
+            })
+
+    context = {
+        'success': success,
+        'filter_type': filter_type,
+        'total_revenue': total_revenue,
+        'today_revenue': today_revenue,
+        'monthly_revenue': monthly_revenue,
+        'avg_order_value': avg_order_value,
+        'total_orders': total_orders_count,
+        'pending_orders': pending_orders,
+        'delivered_orders': delivered_orders,
+        'cancelled_orders': cancelled_orders,
+        'return_orders': return_orders,
+        'total_users': total_users,
+        'out_of_stock_products': out_of_stock_products,
+        'low_stock_products': low_stock_products,
+        'best_products': best_products,
+        'best_categories': best_categories,
+        'recent_orders': recent_orders,
+        'chart_data': chart_data,
+    }
+
+    return render(request, 'admin_dashboard.html', context)
 
 def admin_signout(request):
     logout(request)
