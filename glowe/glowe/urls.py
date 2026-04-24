@@ -23,6 +23,7 @@ urlpatterns = [
     path('', include('coupons.urls')),
     path('', include('wallet.urls')),
     path('', include('offer.urls')),
+    path('', include('search.urls')),
 
    
     # re_path(r'^(?!admin/).*$', custom_404, {'exception': Exception('Page not found')}),

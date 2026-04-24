@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if query %}{{ query }} — Search Results | Glowé{% else %}Search | Glowé{% endif %}{% endblock %}
+
+{% block extra_css %}
+/* Custom animations */
+.reveal-up { 
+    opacity: 0; 
+    transform: translateY(30px); 
+    transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); 
+}
+.reveal-up.is-revealed { 
+    opacity: 1; 
+    transform: translateY(0); 
+}
+
+.search-hero {
+    background-color: #FAF8F5;
+    position: relative;
+    overflow: hidden;
+}
+
+.search-hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -10%;
+    width: 40%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(235, 239, 235, 0.5) 0%, rgba(250, 248, 245, 0) 70%);
+    z-index: 0;
+}
+
+.product-card {
+    background: transparent;
+    transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.product-img-wrap {
+    position: relative;
+    overflow: hidden;
+    background: #f5f1ea;
+    border-radius: 20px;
+}
+
+.product-img-wrap img {
+    transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.product-card:hover .product-img-wrap img {
+    transform: scale(1.08);
+}
+
+.product-card:hover .product-info {
+    transform: translateY(-5px);
+}
+
+.product-info {
+    transition: transform 0.4s ease;
+    padding-top: 1.25rem;
+}
+
+.search-input-wrap input:focus {
+    box-shadow: 0 0 0 4px rgba(59, 36, 20, 0.05);
+}
+
+.no-results-icon {
+    position: relative;
+}
+
+.no-results-icon::after {
+    content: '';
+    position: absolute;
+    inset: -15px;
+    background: #ebefeb;
+    border-radius: 50%;
+    z-index: -1;
+    opacity: 0.5;
+}
+
+.delay-1 { transition-delay: 0.1s; }
+.delay-2 { transition-delay: 0.2s; }
+.delay-3 { transition-delay: 0.3s; }
+.delay-4 { transition-delay: 0.4s; }
+{% endblock %}
+
+{% block content %}
+
+<!-- Search Hero -->
+<section class="search-hero px-6 pt-20 pb-12 md:pt-28 md:pb-16 text-center">
+    <div class="relative z-10 max-w-[800px] mx-auto">
+        <p class="font-montserrat text-[9px] font-bold tracking-[0.3em] uppercase text-[#a49888] mb-4 reveal-up">Discovery</p>
+        
+        {% if query %}
+            <h1 class="font-cormorant text-[32px] md:text-[48px] text-[#2a2018] mb-3 leading-[1.1] reveal-up delay-1">
+                Searching for <span class="italic text-[#8a7e72]">"{{ query }}"</span>
+            </h1>
+            <p class="font-montserrat text-[12px] text-[#8a7e72] font-light tracking-[0.05em] reveal-up delay-2">
+                {% if result_count == 0 %}
+                    No matches found for your request.
+                {% elif result_count == 1 %}
+                    We found one curated match for you.
+                {% else %}
+                    We found {{ result_count }} essentials for your skin journey.
+                {% endif %}
+            </p>
+        {% else %}
+            <h1 class="font-cormorant text-[32px] md:text-[48px] text-[#2a2018] mb-3 reveal-up delay-1">Search Our Collection</h1>
+            <p class="font-montserrat text-[12px] text-[#8a7e72] font-light tracking-[0.05em] reveal-up delay-2">Explore the art of personalized skincare.</p>
+        {% endif %}
+
+        <!-- Search bar -->
+        <div class="mt-8 flex justify-center reveal-up delay-3">
+            <form method="GET" action="{% url 'search' %}" class="relative w-full max-w-[500px] search-input-wrap">
+                <input
+                    type="text"
+                    name="q"
+                    value="{{ query }}"
+                    placeholder="Search by ingredient, concern or product..."
+                    autocomplete="off"
+                    class="w-full font-montserrat text-[13px] text-[#2a2018] bg-white border border-[#e8e2d9] rounded-full px-6 py-3.5 pr-14 focus:outline-none focus:border-[#3b2414] transition-all duration-300 shadow-[0_4px_20px_rgba(0,0,0,0.03)]"
+                >
+                <button type="submit" class="absolute right-4 top-1/2 -translate-y-1/2 text-[#3b2414] hover:scale-110 transition-transform p-2">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="7.5"/><path d="m20.5 20.5-4.8-4.8"/>
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<!-- Results Grid -->
+<section class="bg-[#FAF8F5] px-6 py-12 md:py-20 min-h-[50vh]">
+    <div class="max-w-[1400px] mx-auto">
+        {% if results %}
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-16 md:gap-x-12 md:gap-y-24">
+                {% for item in results %}
+                <div class="reveal-up" style="transition-delay: {% cycle '100ms' '200ms' '300ms' '400ms' %};">
+                    <a href="{% url 'product_detail_view' item.product.slug %}" class="product-card no-underline block group">
+                        <div class="product-img-wrap aspect-[4/5] w-full shadow-[0_15px_35px_rgba(59,36,20,0.04)] group-hover:shadow-[0_25px_50px_rgba(59,36,20,0.08)] transition-shadow duration-500">
+                            {% if item.image %}
+                                <img src="{{ item.image.image.url }}" alt="{{ item.product.name }}" class="w-full h-full object-cover">
+                            {% else %}
+                                <div class="w-full h-full bg-[#f5f1ea] flex items-center justify-center">
+                                    <svg class="w-12 h-12 text-[#c8b89a]/40" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Overlay Badge -->
+                            <div class="absolute inset-0 bg-[#3b2414]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
+                                <span class="bg-white/90 backdrop-blur-sm text-[#3b2414] font-montserrat text-[9px] font-bold tracking-[0.2em] uppercase px-5 py-2.5 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 shadow-xl">Explore</span>
+                            </div>
+                        </div>
+                        <div class="product-info text-center">
+                            <p class="font-montserrat text-[10px] font-bold tracking-[0.15em] text-[#a49888] uppercase mb-2">{{ item.product.category.name }}</p>
+                            <h3 class="font-cormorant text-[22px] md:text-[24px] font-medium text-[#2a2018] mb-3 leading-tight group-hover:text-[#3b2414] transition-colors line-clamp-1 px-2">{{ item.product.name }}</h3>
+                            {% if item.variant %}
+                                <div class="flex items-center justify-center gap-3">
+                                    <span class="w-6 h-[1px] bg-[#e8e2d9]"></span>
+                                    <p class="font-cormorant text-[20px] text-[#3b2414]">₹{{ item.variant.price }}</p>
+                                    <span class="w-6 h-[1px] bg-[#e8e2d9]"></span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+
+        {% elif query %}
+            <!-- No Results -->
+            <div class="flex flex-col items-center justify-center py-20 text-center reveal-up">
+                <div class="no-results-icon mb-12">
+                    <svg class="w-10 h-10 text-[#3b2414]/40" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/><path d="M11 8v6M8 11h6" class="opacity-40" transform="rotate(45 11 11)"/>
+                    </svg>
+                </div>
+                <h2 class="font-cormorant text-[36px] md:text-[48px] text-[#2a2018] mb-4">No essentials found.</h2>
+                <p class="font-montserrat text-[14px] text-[#8a7e72] font-light mb-12 max-w-[420px] leading-[1.8]">
+                    We couldn't find any products matching <span class="text-[#3b2414] font-medium">"{{ query }}"</span>. Perhaps try a more general term or browse our curated collections.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <a href="{% url 'product_listing' %}" class="font-montserrat text-[11px] font-bold tracking-[0.25em] uppercase text-white bg-[#3b2414] px-10 py-4 no-underline hover:bg-[#2a1a0e] transition-all duration-300 rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1">
+                        Browse Collection
+                    </a>
+                    <a href="{% url 'home' %}" class="font-montserrat text-[11px] font-bold tracking-[0.25em] uppercase text-[#3b2414] border border-[#3b2414] px-10 py-4 no-underline hover:bg-[#FAF8F5] transition-all duration-300 rounded-full">
+                        Back to Home
+                    </a>
+                </div>
+            </div>
+
+        {% else %}
+            <!-- Empty state -->
+            <div class="flex flex-col items-center justify-center py-20 text-center reveal-up">
+                <p class="font-montserrat text-[13px] text-[#a49888] font-light tracking-[0.05em]">Discover our skincare essentials.</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Simple Intersection Observer for reveal animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-revealed');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.reveal-up').forEach(el => {
+            observer.observe(el);
+        });
+    });
+</script>
+{% endblock %}

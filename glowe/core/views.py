@@ -44,5 +44,8 @@ def signout(request):
     logout(request)
     return redirect('signin')
 
+def contact_page(request):
+    return render(request, 'user/contact.html')
+
 def custom_404(request, exception):
     return render(request, '404.html', status=404)

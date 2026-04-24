@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'coupons',
     'wallet',
     'offer',
+    'search',
     
     
 ]

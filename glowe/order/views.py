@@ -674,6 +674,14 @@ def order_cancelled_success(request, order_id):
 @login_required
 def download_invoice(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
+    
+    # FILTER ACTIVE ITEMS ONLY
+    active_items = order.items.exclude(item_status=OrderItem.Status.CANCELLED)
+    
+    if not active_items.exists():
+        messages.error(request, "Cannot download invoice for a fully cancelled order.")
+        return redirect('order_detail', order_id=order.id)
+
     addr = order.shipping_address
     pay = getattr(order, "payment", None)
 
@@ -696,12 +704,12 @@ def download_invoice(request, order_id):
             [
                 N(order.user.get_full_name()),
                 N(addr.full_name),
-                N(pay.payment_method if pay else "—"),
+                N(pay.get_payment_method_display() if pay else "—"),
             ],
             [
                 N(order.user.email),
                 N(addr.address_line1),
-                N(pay.payment_status if pay else "—"),
+                N(pay.get_payment_status_display() if pay else "—"),
             ],
             ["", N(f"{addr.city}, {addr.state} {addr.pincode}"), ""],
             ["", N(addr.country), ""],
@@ -719,9 +727,9 @@ def download_invoice(request, order_id):
         )
     )
 
-    # Group items by variant
+    # Group items by variant (excluding cancelled)
     grouped = defaultdict(lambda: {"name": "", "qty": 0, "price": 0})
-    for item in order.items.all():
+    for item in active_items:
         key = item.variant.id
         grouped[key]["name"] = item.variant.product.name[:50]
         grouped[key]["price"] = item.price_at_time
@@ -732,24 +740,23 @@ def download_invoice(request, order_id):
     for g in grouped.values():
         qty = g["qty"]
         price = g["price"]
-        rows.append(
-            [
-                g["name"],
-                qty,
-                INR(price),
-                INR(qty * price),
-            ]
-        )
+        rows.append([g["name"], qty, INR(price), INR(qty * price)])
 
-    # Compute totals from actual line items (not stale order fields)
+    # Compute totals dynamically from active items
     computed_subtotal = sum(g["qty"] * g["price"] for g in grouped.values())
-    computed_total = computed_subtotal + order.delivery_charge
+    discount = order.discount_amount
+    shipping = order.delivery_charge
+    computed_total = max(0, computed_subtotal + shipping - discount)
 
     rows += [
         ["", "", "Subtotal", INR(computed_subtotal)],
-        ["", "", "Shipping", INR(order.delivery_charge)],
-        ["", "", B("Total"), B(INR(computed_total))],
+        ["", "", "Shipping", INR(shipping)],
     ]
+    
+    if discount > 0:
+        rows.append(["", "", "Discount", f"-{INR(discount)}"])
+        
+    rows.append(["", "", B("Total Amount"), B(INR(computed_total))])
 
     table = Table(rows, colWidths=[300, 60, 80, 100])
     table.setStyle(
@@ -760,7 +767,7 @@ def download_invoice(request, order_id):
                 ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
                 ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
                 ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.whitesmoke, colors.white]),
-                ("LINEABOVE", (0, -3), (-1, -3), 0.5, colors.grey),
+                ("LINEABOVE", (0, -3) if discount == 0 else (0, -4), (-1, -3) if discount == 0 else (-1, -4), 0.5, colors.grey),
                 ("FONTSIZE", (0, 0), (-1, -1), 9),
             ]
         )
