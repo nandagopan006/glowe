@@ -10,7 +10,7 @@ path('order-detail/<int:order_id>/',views.order_detail,name='order_detail'),
 path('order-detail/<int:order_id>/cancel/',views.cancel_order,name='cancel_order'),
 path('order-detail/item/<int:item_id>/cancel/',views.cancel_order_item,name='cancel_order_item'),
 path('order-cancelled/<int:order_id>/',views.order_cancelled_success,name='order_cancelled_success'),
-path('order/<int:order_id>/invoice/',views.download_invoice,name='download_invoice'),
+path('order/<int:order_id>/invoice/download/',views.download_invoice,name='download_invoice'),
 
 
 

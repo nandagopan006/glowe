@@ -31,6 +31,8 @@ from coupons.models import Coupon, CouponUsage
 from decimal import Decimal
 from wallet.models import WalletTransaction
 from offer.utils import get_best_offer
+from wallet.models import WalletTransaction
+from order.invoice_utils import calculate_invoice
 
 @never_cache
 @login_required
@@ -95,25 +97,19 @@ def place_order(request):
                 return redirect("cart")
 
             
-            price = Decimal("0.00")
             try:
                 price = Decimal(str(variant.price))
                 offer, offer_disc = get_best_offer(product, price)
-                
                 if offer:
                     if offer_disc > price:
-                        offer_disc = price  # Discount cannot exceed price
-                        
+                        offer_disc = price
                     final_price = price - offer_disc
-                    
                     if final_price < Decimal("0.00"):
-                        final_price = Decimal("0.00")  # No negative price
+                        final_price = Decimal("0.00")
                 else:
                     final_price = price
-                    
             except Exception:
-                # If error, use the regular price
-                final_price = price
+                final_price = Decimal(str(variant.price))
             
             item.item_total = item.quantity * final_price
             item.offer_price = final_price  # Store final price for the order item
@@ -514,7 +510,7 @@ def cancel_order(request, order_id):
             payment.payment_status = Payment.Status.FAILED
             payment.save()
 
-    # Process refund to wallet (skips COD orders that were never delivered)
+    # Process refund to wallet (skips COD orders for  delivered)
     refunded = process_refund(
         order,
         refund_amount=order.total_amount,
@@ -540,6 +536,16 @@ def cancel_order_item(request, item_id):
     item = get_object_or_404(OrderItem, id=item_id, order__user=request.user)
 
     order = item.order
+
+  
+    # If a coupon was applied to this order, individual item cancellation is NOT allowed. only allow entire order cancellation
+    
+    if order.discount_amount > 0:
+        messages.error(
+            request,
+            "A coupon was applied to this order. Please cancel the entire order instead of individual items."
+        )
+        return redirect("order_detail", order_id=order.id)
 
     if order.order_status not in [
         Order.Status.CONFIRMED,
@@ -655,8 +661,7 @@ def order_cancelled_success(request, order_id):
     # Get payment method info
     payment = getattr(order, "payment", None)
 
-    # Check if a wallet refund was issued for this cancellation
-    from wallet.models import WalletTransaction
+    
     wallet_refund = WalletTransaction.objects.filter(
         order=order,
         transaction_type='REFUND',
@@ -678,113 +683,308 @@ def order_cancelled_success(request, order_id):
 
 @login_required
 def download_invoice(request, order_id):
+
     order = get_object_or_404(Order, id=order_id, user=request.user)
-    
-    # FILTER ACTIVE ITEMS ONLY
-    active_items = order.items.exclude(item_status=OrderItem.Status.CANCELLED)
-    
-    if not active_items.exists():
-        messages.error(request, "Cannot download invoice for a fully cancelled order.")
+    invoice = calculate_invoice(order)
+
+    if not invoice['active_items'] and not invoice['cancelled_items'] and not invoice['returned_items']:
+        messages.error(request, "No items found for this invoice.")
         return redirect('order_detail', order_id=order.id)
 
-    addr = order.shipping_address
-    pay = getattr(order, "payment", None)
+    addr = getattr(order, 'shipping_address', None)
+    pay  = invoice['payment']
 
-    styles = getSampleStyleSheet()
-    B = lambda t: Paragraph(f"<b>{t}</b>", styles["Normal"])
-    N = lambda t: Paragraph(str(t), styles["Normal"])
-    INR = lambda v: f"Rs.{v:,.2f}"
-
-    buf = io.BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=A4, topMargin=30, bottomMargin=30)
-
-    meta = Table(
-        [[B("Glowe"), B(f"INVOICE # {order.order_number}")]], colWidths=[270, 270]
-    )
-    meta.setStyle(TableStyle([("ALIGN", (1, 0), (1, 0), "RIGHT")]))
-
-    info = Table(
-        [
-            [B("Bill To"), B("Ship To"), B("Payment")],
-            [
-                N(order.user.get_full_name()),
-                N(addr.full_name),
-                N(pay.get_payment_method_display() if pay else "—"),
-            ],
-            [
-                N(order.user.email),
-                N(addr.address_line1),
-                N(pay.get_payment_status_display() if pay else "—"),
-            ],
-            ["", N(f"{addr.city}, {addr.state} {addr.pincode}"), ""],
-            ["", N(addr.country), ""],
-        ],
-        colWidths=[180, 180, 180],
-    )
-    info.setStyle(
-        TableStyle(
-            [
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("LINEBELOW", (0, 0), (-1, 0), 0.5, colors.black),
-                ("FONTSIZE", (0, 0), (-1, -1), 9),
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
-            ]
-        )
-    )
-
-    # Group items by variant (excluding cancelled)
-    grouped = defaultdict(lambda: {"name": "", "qty": 0, "price": 0})
-    for item in active_items:
-        key = item.variant.id
-        grouped[key]["name"] = item.variant.product.name[:50]
-        grouped[key]["price"] = item.price_at_time
-        grouped[key]["qty"] += item.quantity
-
-    # Build item rows
-    rows = [["Product", "Qty", "Unit Price", "Amount"]]
-    for g in grouped.values():
-        qty = g["qty"]
-        price = g["price"]
-        rows.append([g["name"], qty, INR(price), INR(qty * price)])
-
-    # Compute totals dynamically from active items
-    computed_subtotal = sum(g["qty"] * g["price"] for g in grouped.values())
-    discount = order.discount_amount
-    shipping = order.delivery_charge
-    computed_total = max(0, computed_subtotal + shipping - discount)
-
-    rows += [
-        ["", "", "Subtotal", INR(computed_subtotal)],
-        ["", "", "Shipping", INR(shipping)],
+    # ── Register Unicode font (supports ₹ symbol) ───────────────────
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    import os
+    from django.conf import settings
+    
+    # Try common font locations
+    font_paths = [
+        "C:/Windows/Fonts/arial.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/TTF/DejaVuSans.ttf",
+        os.path.join(settings.BASE_DIR, "static", "fonts", "arial.ttf")
     ]
     
-    if discount > 0:
-        rows.append(["", "", "Discount", f"-{INR(discount)}"])
-        
-    rows.append(["", "", B("Total Amount"), B(INR(computed_total))])
+    font_path = None
+    for path in font_paths:
+        if os.path.exists(path):
+            font_path = path
+            break
+            
+    if font_path:
+        try:
+            pdfmetrics.registerFont(TTFont("Arial", font_path))
+            # Try to find bold version
+            bold_path = font_path.replace("arial.ttf", "arialbd.ttf") if "arial.ttf" in font_path else font_path
+            if os.path.exists(bold_path):
+                pdfmetrics.registerFont(TTFont("Arial-Bold", bold_path))
+            else:
+                pdfmetrics.registerFont(TTFont("Arial-Bold", font_path))
+            FONT = "Arial"
+            FONT_BOLD = "Arial-Bold"
+        except:
+            FONT = "Helvetica"
+            FONT_BOLD = "Helvetica-Bold"
+    else:
+        # Fallback to standard PDF fonts
+        FONT = "Helvetica"
+        FONT_BOLD = "Helvetica-Bold"
 
-    table = Table(rows, colWidths=[300, 60, 80, 100])
-    table.setStyle(
-        TableStyle(
-            [
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("BACKGROUND", (0, 0), (-1, 0), colors.black),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
-                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.whitesmoke, colors.white]),
-                ("LINEABOVE", (0, -3) if discount == 0 else (0, -4), (-1, -3) if discount == 0 else (-1, -4), 0.5, colors.grey),
-                ("FONTSIZE", (0, 0), (-1, -1), 9),
-            ]
-        )
+    def INR(v):
+        symbol = '₹' if FONT == 'Arial' else 'Rs.'
+        return f"{symbol}{float(v):,.2f}"
+
+    # ── colour palette ──────────────────────────────────────────────
+    INK      = colors.HexColor("#1a1208")
+    MUTED    = colors.HexColor("#8c7f77")
+    CREAM    = colors.HexColor("#faf8f5")
+    DIVIDER  = colors.HexColor("#e8e2db")
+    GREEN    = colors.HexColor("#16a34a")
+    RED      = colors.HexColor("#dc2626")
+    BLUE     = colors.HexColor("#2563eb")
+    AMBER    = colors.HexColor("#d97706")
+
+    # ── paragraph styles ────────────────────────────────────────────
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.lib.enums import TA_RIGHT, TA_CENTER, TA_LEFT
+
+    base = ParagraphStyle("base",  fontName=FONT,      fontSize=9,  leading=13, textColor=INK)
+    bold = ParagraphStyle("bold",  fontName=FONT_BOLD, fontSize=9,  leading=13, textColor=INK)
+    sm   = ParagraphStyle("sm",    fontName=FONT,      fontSize=8,  leading=11, textColor=MUTED)
+    smb  = ParagraphStyle("smb",   fontName=FONT_BOLD, fontSize=8,  leading=11, textColor=MUTED)
+    lg   = ParagraphStyle("lg",    fontName=FONT_BOLD, fontSize=18, leading=22, textColor=INK)
+    rgt  = ParagraphStyle("rgt",   fontName=FONT,      fontSize=9,  leading=13, textColor=INK,   alignment=TA_RIGHT)
+    rgtb = ParagraphStyle("rgtb",  fontName=FONT_BOLD, fontSize=9,  leading=13, textColor=INK,   alignment=TA_RIGHT)
+    ctr  = ParagraphStyle("ctr",   fontName=FONT,      fontSize=8,  leading=11, textColor=MUTED, alignment=TA_CENTER)
+
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buf, pagesize=A4,
+        topMargin=36, bottomMargin=36,
+        leftMargin=40, rightMargin=40
+    )
+    W = A4[0] - 80   # usable width
+
+    elems = []
+
+    # ── 1. HEADER BAND ───────────────────────────────────────────────
+    # Brand name left, invoice meta right
+    status_color = {
+        'PAID': GREEN, 'REFUNDED': BLUE,
+        'PARTIALLY REFUNDED': AMBER, 'FAILED': RED,
+    }.get(invoice['payment_label'], MUTED)
+
+    status_style = ParagraphStyle(
+        "status", fontName=FONT_BOLD, fontSize=8,
+        textColor=status_color, alignment=TA_RIGHT
     )
 
-    doc.build([meta, Spacer(1, 8), info, Spacer(1, 16), table])
+    hdr = Table([
+        [
+            Paragraph("GLOWE", lg),
+            Paragraph(
+                f"<b>INVOICE</b><br/>"
+                f"<font size='8' color='#8c7f77'>#{order.order_number}</font>",
+                ParagraphStyle("inv", fontName=FONT_BOLD, fontSize=14,
+                               leading=18, textColor=INK, alignment=TA_RIGHT)
+            )
+        ],
+        [
+            Paragraph(
+                f"<font color='#8c7f77'>{order.created_at.strftime('%d %B %Y')}</font>",
+                sm
+            ),
+            Paragraph(invoice['payment_label'], status_style)
+        ]
+    ], colWidths=[W * 0.5, W * 0.5])
+    hdr.setStyle(TableStyle([
+        ("VALIGN",       (0, 0), (-1, -1), "BOTTOM"),
+        ("BOTTOMPADDING",(0, 0), (-1, -1), 4),
+    ]))
+    elems.append(hdr)
+
+    # thin divider line
+    elems.append(Table([[""]], colWidths=[W],
+        style=[("LINEBELOW", (0,0), (-1,-1), 0.6, DIVIDER),
+               ("TOPPADDING",(0,0),(-1,-1),0),
+               ("BOTTOMPADDING",(0,0),(-1,-1),0)]))
+    elems.append(Spacer(1, 14))
+
+    # ── 2. BILL / SHIP / PAYMENT ─────────────────────────────────────
+    full_name = order.user.get_full_name()
+
+    bill_lines = [Paragraph("BILL TO", smb)]
+    if full_name:
+        # Has a real name — show name + email separately
+        bill_lines.append(Paragraph(full_name, bold))
+        bill_lines.append(Paragraph(order.user.email, sm))
+    else:
+        # No name set — show email only once
+        bill_lines.append(Paragraph(order.user.email, bold))
+
+    ship_lines = [Paragraph("SHIP TO", smb)]
+    if addr:
+        ship_lines += [
+            Paragraph(addr.full_name, bold),
+            Paragraph(addr.address_line1, sm),
+            Paragraph(f"{addr.city}, {addr.state} {addr.pincode}", sm),
+            Paragraph(addr.country, sm),
+            Paragraph(f"Ph: {addr.phone}", sm),
+        ]
+    else:
+        ship_lines.append(Paragraph("—", sm))
+
+    pay_lines = [Paragraph("PAYMENT", smb)]
+    if pay:
+        pay_lines += [
+            Paragraph(pay.get_payment_method_display(), bold),
+            Paragraph(pay.get_payment_status_display(), sm),
+        ]
+        if pay.transaction_id:
+            pay_lines.append(Paragraph(f"TXN: {pay.transaction_id}", sm))
+    else:
+        pay_lines.append(Paragraph("—", sm))
+
+    # pad all columns to same height
+    max_len = max(len(bill_lines), len(ship_lines), len(pay_lines))
+    for lst in (bill_lines, ship_lines, pay_lines):
+        while len(lst) < max_len:
+            lst.append(Paragraph("", sm))
+
+    info_data = list(zip(bill_lines, ship_lines, pay_lines))
+    info_tbl  = Table(info_data, colWidths=[W/3, W/3, W/3])
+    info_tbl.setStyle(TableStyle([
+        ("VALIGN",        (0,0), (-1,-1), "TOP"),
+        ("TOPPADDING",    (0,0), (-1,-1), 3),
+        ("BOTTOMPADDING", (0,0), (-1,-1), 3),
+        ("LEFTPADDING",   (0,0), (-1,-1), 0),
+        ("RIGHTPADDING",  (0,0), (-1,-1), 6),
+    ]))
+    elems.append(info_tbl)
+    elems.append(Spacer(1, 16))
+
+    # ── 3. ITEMS TABLE ───────────────────────────────────────────────
+    col_w = [W - 200, 35, 75, 55, 70]   # Product | Qty | Price | Status | Amount
+
+    # header row
+    rows = [[
+        Paragraph("PRODUCT",    smb),
+        Paragraph("QTY",        ParagraphStyle("c",  fontName=FONT_BOLD, fontSize=8, textColor=MUTED, alignment=TA_CENTER)),
+        Paragraph("UNIT PRICE", ParagraphStyle("r",  fontName=FONT_BOLD, fontSize=8, textColor=MUTED, alignment=TA_RIGHT)),
+        Paragraph("STATUS",     ParagraphStyle("cs", fontName=FONT_BOLD, fontSize=8, textColor=MUTED, alignment=TA_CENTER)),
+        Paragraph("AMOUNT",     ParagraphStyle("ra", fontName=FONT_BOLD, fontSize=8, textColor=MUTED, alignment=TA_RIGHT)),
+    ]]
+
+    tbl_style = [
+        # header separator
+        ("LINEBELOW",     (0,0), (-1,0), 0.6, DIVIDER),
+        ("TOPPADDING",    (0,0), (-1,-1), 7),
+        ("BOTTOMPADDING", (0,0), (-1,-1), 7),
+        ("LEFTPADDING",   (0,0), (-1,-1), 0),
+        ("RIGHTPADDING",  (0,0), (-1,-1), 0),
+        ("VALIGN",        (0,0), (-1,-1), "MIDDLE"),
+    ]
+
+    row_idx = 1
+
+    # active items
+    for item in invoice['active_items']:
+        rows.append([
+            Paragraph(item.variant.product.name[:55], base),
+            Paragraph(str(item.quantity), ParagraphStyle("c2", fontName=FONT, fontSize=9, textColor=INK, alignment=TA_CENTER)),
+            Paragraph(INR(item.price_at_time), rgt),
+            Paragraph("Active", ParagraphStyle("g", fontName=FONT, fontSize=8, textColor=GREEN, alignment=TA_CENTER)),
+            Paragraph(INR(item.line_total), rgt),
+        ])
+        tbl_style.append(("LINEBELOW", (0, row_idx), (-1, row_idx), 0.3, DIVIDER))
+        row_idx += 1
+
+    # returned items
+    for item in invoice['returned_items']:
+        label = "Return Pending" if item.item_status == 'RETURN_REQUESTED' else "Returned"
+        rows.append([
+            Paragraph(item.variant.product.name[:55], base),
+            Paragraph(str(item.quantity), ParagraphStyle("c3", fontName=FONT, fontSize=9, textColor=INK, alignment=TA_CENTER)),
+            Paragraph(INR(item.price_at_time), rgt),
+            Paragraph(label, ParagraphStyle("b", fontName=FONT, fontSize=8, textColor=BLUE, alignment=TA_CENTER)),
+            Paragraph(INR(item.line_total), rgt),
+        ])
+        tbl_style.append(("LINEBELOW", (0, row_idx), (-1, row_idx), 0.3, DIVIDER))
+        row_idx += 1
+
+    # cancelled items (faded, strikethrough not possible in reportlab — use grey)
+    for item in invoice['cancelled_items']:
+        grey   = ParagraphStyle("grey",  fontName=FONT,      fontSize=9, textColor=MUTED)
+        grey_r = ParagraphStyle("greyr", fontName=FONT,      fontSize=9, textColor=MUTED, alignment=TA_RIGHT)
+        rows.append([
+            Paragraph(item.variant.product.name[:55], grey),
+            Paragraph(str(item.quantity), ParagraphStyle("c4", fontName=FONT, fontSize=9, textColor=MUTED, alignment=TA_CENTER)),
+            Paragraph(INR(item.price_at_time), grey_r),
+            Paragraph("Cancelled", ParagraphStyle("r2", fontName=FONT, fontSize=8, textColor=RED, alignment=TA_CENTER)),
+            Paragraph(INR(item.line_total), grey_r),
+        ])
+        tbl_style.append(("LINEBELOW", (0, row_idx), (-1, row_idx), 0.3, DIVIDER))
+        row_idx += 1
+
+    items_tbl = Table(rows, colWidths=col_w)
+    items_tbl.setStyle(TableStyle(tbl_style))
+    elems.append(items_tbl)
+    elems.append(Spacer(1, 16))
+
+    # ── 4. TOTALS ────────────────────────────────────────────────────
+    def total_row(label, value, label_style=sm, value_style=rgt, line_above=False):
+        t = Table([[Paragraph(label, label_style), Paragraph(value, value_style)]],
+                  colWidths=[W - 120, 120])
+        s = [("TOPPADDING",(0,0),(-1,-1),4), ("BOTTOMPADDING",(0,0),(-1,-1),4),
+             ("LEFTPADDING",(0,0),(-1,-1),0), ("RIGHTPADDING",(0,0),(-1,-1),0)]
+        if line_above:
+            s.append(("LINEABOVE",(0,0),(-1,-1),0.6,DIVIDER))
+        t.setStyle(TableStyle(s))
+        return t
+
+    elems.append(total_row("Subtotal",  INR(invoice['active_subtotal'])))
+    elems.append(total_row(
+        "Shipping",
+        "Free" if invoice['shipping'] == 0 else INR(invoice['shipping'])
+    ))
+
+    if invoice['discount'] > 0:
+        disc_style = ParagraphStyle("ds", fontName=FONT,      fontSize=9, textColor=GREEN)
+        disc_val   = ParagraphStyle("dv", fontName=FONT,      fontSize=9, textColor=GREEN, alignment=TA_RIGHT)
+        elems.append(total_row(f"Coupon Discount", f"-{INR(invoice['discount'])}", disc_style, disc_val))
+
+    # grand total — bigger, bold
+    gt_label = ParagraphStyle("gtl", fontName=FONT_BOLD, fontSize=10, textColor=INK)
+    gt_val   = ParagraphStyle("gtv", fontName=FONT_BOLD, fontSize=10, textColor=INK, alignment=TA_RIGHT)
+    elems.append(total_row("Grand Total", INR(invoice['grand_total']), gt_label, gt_val, line_above=True))
+
+    if invoice['total_refunded'] > 0:
+        ref_label = ParagraphStyle("rl", fontName=FONT,      fontSize=9, textColor=BLUE)
+        ref_val   = ParagraphStyle("rv", fontName=FONT,      fontSize=9, textColor=BLUE, alignment=TA_RIGHT)
+        elems.append(total_row(f"Refunded to Wallet", f"-{INR(invoice['total_refunded'])}", ref_label, ref_val))
+
+    elems.append(Spacer(1, 24))
+
+    # ── 5. FOOTER ────────────────────────────────────────────────────
+    elems.append(Table([[""]], colWidths=[W],
+        style=[("LINEABOVE",(0,0),(-1,-1),0.4,DIVIDER),
+               ("TOPPADDING",(0,0),(-1,-1),0),
+               ("BOTTOMPADDING",(0,0),(-1,-1),0)]))
+    elems.append(Spacer(1, 8))
+    elems.append(Paragraph(
+        "Thank you for shopping with Glowé  ·  support@glowe.com",
+        ParagraphStyle("ft", fontName=FONT, fontSize=8, textColor=MUTED, alignment=TA_CENTER)
+    ))
+
+    doc.build(elems)
     buf.seek(0)
-    res = HttpResponse(buf, content_type="application/pdf")
-    res["Content-Disposition"] = (
-        f'attachment; filename="invoice_{order.order_number}.pdf"'
-    )
-    return res
+
+    response = HttpResponse(buf, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="Glowe_Invoice_{order.order_number}.pdf"'
+    return response
 
 
 # -------- end user side ---- -- -- - - - - - ok
@@ -842,20 +1042,25 @@ def admin_order_list(request):
     page = request.GET.get("page")
     orders = paginator.get_page(page)
 
-    # Group items  if exist need increase
-    for order in orders:
+    
+    orders_list = list(orders)
+    for order in orders_list:
         items_grouped = {}
-        for item in order.items.all().select_related("variant__product"):
+       
+        order_items = order.items.all().select_related("variant__product").prefetch_related("variant__product__images")
+        
+        for item in order_items:
+            
+            if item.item_status == OrderItem.Status.CANCELLED:
+                continue
+                
             v_id = item.variant.id
             if v_id not in items_grouped:
+                first_img = item.variant.product.images.first()
                 items_grouped[v_id] = {
                     "product_id": item.variant.product.id,
                     "name": item.variant.product.name,
-                    "image": (
-                        item.variant.product.images.first().image.url
-                        if item.variant.product.images.first()
-                        else None
-                    ),
+                    "image": first_img.image.url if first_img else None,
                     "quantity": item.quantity,
                     "price": item.price_at_time,
                 }
@@ -863,6 +1068,19 @@ def admin_order_list(request):
                 items_grouped[v_id]["quantity"] += item.quantity
 
         order.display_items = list(items_grouped.values())
+        if not order.display_items and order_items.exists():
+            # If all were cancelled, show them anyway but with a note
+            for item in order_items:
+                v_id = item.variant.id
+                if v_id not in items_grouped:
+                    first_img = item.variant.product.images.first()
+                    items_grouped[v_id] = {
+                        "name": f"{item.variant.product.name} (Cancelled)",
+                        "image": first_img.image.url if first_img else None,
+                        "quantity": item.quantity,
+                        "price": item.price_at_time,
+                    }
+            order.display_items = list(items_grouped.values())
 
     total_orders=Order.objects.count()
     pending_orders=Order.objects.filter(order_status=Order.Status.PENDING).count()
@@ -893,7 +1111,7 @@ def admin_order_detail(request, order_id):
 
     items = order.items.all()
     
-    # Calculate subtotal for each item in the view to avoid model changes
+   
     for item in items:
         item.subtotal = item.price_at_time * item.quantity
 
@@ -1042,7 +1260,7 @@ def update_order_status(request, order_id):
                 payment.payment_status = Payment.Status.SUCCESS
                 payment.save()
             
-            # Send premium Everlane-style delivery email
+            
             send_order_delivered_email(request, order)
 
         order.save()

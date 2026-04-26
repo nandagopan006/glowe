@@ -124,10 +124,21 @@
       {% if can_cancel %}
         <button type="button" onclick="openModal('cancelOrderModal')" class="px-6 py-3 border border-[#1a1208] text-[#1a1208] text-[10px] font-bold uppercase tracking-widest hover:bg-[#1a1208] hover:text-white transition-all duration-300 rounded-md">Cancel Order</button>
       {% endif %}
+
+      {% if can_cancel and order.discount_amount > 0 %}
+      <div class="mt-3 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+        <svg class="w-4 h-4 text-amber-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+        </svg>
+        <p class="font-montserrat text-[11px] text-amber-700 leading-relaxed m-0">
+          A coupon discount was applied to this order. Individual item cancellation is not allowed — please cancel the entire order.
+        </p>
+      </div>
+      {% endif %}
       
-      {% if order.order_status == 'DELIVERED' %}
+      {% if order.order_status == 'DELIVERED' or order.order_status == 'CANCELLED' or order.order_status == 'RETURNED' or order.order_status == 'PARTIALLY_RETURNED' %}
       <a href="{% url 'download_invoice' order.id %}" class="px-6 py-3 bg-[#1a1208] border border-[#1a1208] text-white text-[10px] font-bold uppercase tracking-widest hover:bg-[#2a1d0d] transition-all duration-300 rounded-md shadow-sm hover:shadow-md no-underline flex items-center gap-2">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
         Download Invoice
       </a>
       {% endif %}
@@ -546,7 +557,12 @@
                   <p class="font-montserrat text-[11px] text-[#8a7e72] font-medium m-0">Qty: {{ item.quantity }}</p>
                   <div class="text-right">
                     {% if can_cancel %}
-                    <button type="button" onclick="openCancelItemModal('{{ item.id }}', '{{ item.quantity }}', '{{ item.variant.product.name|escapejs }}', '{% if item.variant.product.images.first %}{{ item.variant.product.images.first.image.url }}{% endif %}')" class="text-[10px] text-[#cd9042] hover:text-[#1a1208] font-montserrat font-bold uppercase tracking-wider transition-colors bg-transparent border-none p-0 cursor-pointer text-right block mb-1">Cancel Item</button>
+                      {% if order.discount_amount > 0 %}
+                        {# Coupon applied — individual cancel not allowed, show tooltip info #}
+                        <span class="text-[10px] text-[#b0a49a] font-montserrat italic">Coupon applied</span>
+                      {% else %}
+                        <button type="button" onclick="openCancelItemModal('{{ item.id }}', '{{ item.quantity }}', '{{ item.variant.product.name|escapejs }}', '{% if item.variant.product.images.first %}{{ item.variant.product.images.first.image.url }}{% endif %}')" class="text-[10px] text-[#cd9042] hover:text-[#1a1208] font-montserrat font-bold uppercase tracking-wider transition-colors bg-transparent border-none p-0 cursor-pointer text-right block mb-1">Cancel Item</button>
+                      {% endif %}
                     {% endif %}
                     {% if order.order_status == 'DELIVERED' %}
                       {% if item.id in returned_item_ids %}

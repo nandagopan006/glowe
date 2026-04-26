@@ -30,38 +30,28 @@ def cart(request):
             
             stock =variant.stock
             
-            price = Decimal("0.00")
             try:
                 price = Decimal(str(variant.price))
                 offer, discount_per_unit = get_best_offer(product, price)
-                
                 if offer:
                     if discount_per_unit > price:
-                        discount_per_unit = price  # Discount cannot exceed price
-                        
+                        discount_per_unit = price
                     item_final_price = price - discount_per_unit
-                    
                     if item_final_price < Decimal("0.00"):
-                        item_final_price = Decimal("0.00")  # No negative price
-                        
+                        item_final_price = Decimal("0.00")
                     item_has_offer = True
                     item_discount = discount_per_unit
-                    
-                   
                     if offer.discount_type == "PERCENTAGE":
                         item_offer_text = f"{offer.discount_value:g}% OFF"
                     else:
                         item_offer_text = f"Flat ₹{offer.discount_value:g} OFF"
                 else:
-                    # If no offer
                     item_final_price = price
                     item_has_offer = False
                     item_discount = Decimal("0.00")
                     item_offer_text = ""
-                    
             except Exception:
-                # Default to normal price if anything fails
-                item_final_price = price
+                item_final_price = Decimal(str(variant.price))
                 item_has_offer = False
                 item_discount = Decimal("0.00")
                 item_offer_text = ""
@@ -219,40 +209,30 @@ def checkout(request):
             messages.error(request, f"{product.name} only {variant.stock} left")
             return redirect('cart')
     
-        price = Decimal("0.00")
         try:
             price = Decimal(str(variant.price))
             original_subtotal += price * item.quantity
-            
             offer, offer_disc = get_best_offer(product, price)
-            
             if offer:
                 if offer_disc > price:
-                    offer_disc = price  # Discount cannot exceed price
-                    
+                    offer_disc = price
                 item_final_price = price - offer_disc
-                
                 if item_final_price < Decimal("0.00"):
-                    item_final_price = Decimal("0.00")  # No negative price
-                    
+                    item_final_price = Decimal("0.00")
                 item_has_offer = True
                 item_discount = offer_disc
-                
                 if offer.discount_type == "PERCENTAGE":
                     item_offer_text = f"{offer.discount_value:g}% OFF"
                 else:
                     item_offer_text = f"Flat ₹{offer.discount_value:g} OFF"
             else:
-                # If no offer
                 item_final_price = price
                 item_has_offer = False
                 item_discount = Decimal("0.00")
                 item_offer_text = ""
-                
         except Exception:
-            # Default to normal price if anything fails
-            item_final_price = price if price > Decimal("0.00") else Decimal(str(variant.price))
-            original_subtotal += item_final_price * item.quantity if price == Decimal("0.00") else Decimal("0.00")
+            item_final_price = Decimal(str(variant.price))
+            original_subtotal += item_final_price * item.quantity
             item_has_offer = False
             item_discount = Decimal("0.00")
             item_offer_text = ""

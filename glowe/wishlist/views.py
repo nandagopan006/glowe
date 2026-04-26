@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404, render,redirect
+from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 
@@ -21,17 +22,26 @@ def toggle_wishlist(request, variant_id):
         messages.error(request, "Product not available")
         return redirect(request.META.get('HTTP_REFERER','wishlist'))
     
-    wishlist_item =Wishlist.objects.filter(user=request.user,variant=variant)
+    wishlist_item = Wishlist.objects.filter(user=request.user, variant=variant)
 
     if wishlist_item.exists():
         wishlist_item.delete()
-        messages.info(request, "Removed from wishlist")
+        status = "removed"
+        message = "Removed from wishlist"
     else:
-        Wishlist.objects.create(user=request.user,variant=variant)
-        messages.success(request,"Added to Wishlist")
-    
-    #for stay the same page(product detial/listing) thaneeahnn
-    return redirect(request.META.get('HTTP_REFERER','wishlist'))
+        Wishlist.objects.create(user=request.user, variant=variant)
+        status = "added"
+        message = "Added to Wishlist"
+
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return JsonResponse({"status": status, "message": message})
+
+    if status == "added":
+        messages.success(request, message)
+    else:
+        messages.info(request, message)
+
+    return redirect(request.META.get("HTTP_REFERER", "wishlist"))
 
 
 @login_required

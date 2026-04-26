@@ -122,12 +122,21 @@
     </div>
     {% endif %}
 
-    <div class="max-w-[1200px] mx-auto px-5 md:px-8 mb-6 text-[10px] font-montserrat font-bold tracking-[0.18em] uppercase text-gray-400">
-        <a href="{% url 'home' %}" class="hover:text-black transition-colors">Home</a>
-        <span class="mx-2 font-light">/</span>
-        <a href="{% url 'product_listing' %}" class="hover:text-black transition-colors">Skincare</a>
-        <span class="mx-2 font-light">/</span>
-        <span class="text-black">{{ product.name }}</span>
+    <!-- Modern Attractive Back Navigation -->
+    <div class="max-w-[1200px] mx-auto px-5 md:px-8 mb-8 mt-4 fade-in">
+        <button onclick="history.back()" class="group inline-flex items-center gap-4 transition-all duration-500">
+            <div class="relative flex items-center justify-center w-11 h-11 rounded-full bg-white border border-[#e6e0d8] shadow-sm group-hover:bg-[#1a1208] group-hover:border-[#1a1208] group-hover:shadow-[0_8px_25px_rgba(26,18,8,0.15)] transition-all duration-500">
+                <svg class="w-4 h-4 text-[#1a1208] group-hover:text-white transition-colors duration-500 z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                </svg>
+                <!-- Inner ripple effect -->
+                <div class="absolute inset-0 bg-[#1a1208] scale-0 group-hover:scale-100 transition-transform duration-500 rounded-full"></div>
+            </div>
+            <div class="flex flex-col items-start leading-tight">
+                <span class="text-[11px] font-montserrat font-bold tracking-[0.25em] uppercase text-[#1a1208] group-hover:translate-x-1 transition-transform duration-500">Back</span>
+                <div class="h-[1.5px] w-0 bg-[#1a1208] group-hover:w-full transition-all duration-500 mt-0.5"></div>
+            </div>
+        </button>
     </div>
 
     <div class="max-w-[1200px] mx-auto px-5 md:px-8 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 mb-16">
@@ -1176,7 +1185,7 @@
                     title = 'Error';
                 } else if (tags.includes('warning')) {
                     type  = 'warning';
-                    title = 'Notice';
+                    title = 'Limit Reached';
                 } else if (tags.includes('success')) {
                     type  = 'success';
                     title = 'Done!';
@@ -1184,7 +1193,6 @@
                     type  = 'info';
                     title = 'Info';
                 }
-                // Stagger multiple messages slightly
                 setTimeout(() => showToast(type, title, msg), i * 400);
             });
         }
@@ -1319,6 +1327,20 @@
         // Key for sessionStorage — store a JSON array of variant IDs that are in cart
         const CART_KEY = 'glowe_in_cart_{{ product.id }}';
 
+        // ── Sync sessionStorage with server-side cart state on load ──
+        (function syncCartState() {
+            const serverCartedIds = {{ cart_variant_ids|safe }};
+            const productVariantIds = [{% for v in variants %}{{ v.id }},{% endfor %}];
+            const currentSet = new Set();
+            
+            serverCartedIds.forEach(id => {
+                if (productVariantIds.includes(Number(id))) {
+                    currentSet.add(String(id));
+                }
+            });
+            sessionStorage.setItem(CART_KEY, JSON.stringify([...currentSet]));
+        })();
+
         function getCartedVariants() {
             try { return new Set(JSON.parse(sessionStorage.getItem(CART_KEY) || '[]')); }
             catch { return new Set(); }
@@ -1377,49 +1399,67 @@
         };
 
         if (addToCartForm && addToCartBtn && variantInput) {
-
-            // Save the variant being submitted just before form posts
-            addToCartBtn.addEventListener('click', () => {
-                if (addToCartBtn.type === 'submit') {
-                    // Store which variant was just submitted
-                    sessionStorage.setItem('glowe_pending_variant', variantInput.value);
+            addToCartForm.addEventListener('submit', async (e) => {
+                // Only use AJAX if it's an "Add to Cart" action (type="submit")
+                if (addToCartBtn.type !== 'submit') return;
+                
+                e.preventDefault();
+                
+                const formData = new FormData(addToCartForm);
+                const originalHTML = addToCartBtn.innerHTML;
+                
+                // Loading state
+                addToCartBtn.disabled = true;
+                addToCartBtn.innerHTML = 'Adding...';
+                
+                try {
+                    const response = await fetch(addToCartForm.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.status === 'success' || data.status === 'warning') {
+                        const type = data.status === 'warning' ? 'warning' : 'success';
+                        const title = data.status === 'warning' ? 'Limit Reached' : 'Added!';
+                        showToast(type, title, data.message);
+                        
+                        // Mark as carted in local state
+                        const vId = variantInput.value;
+                        markVariantCarted(vId);
+                        
+                        // Switch button to "Go to Cart"
+                        setGoToCartState();
+                        
+                        // Update cart count badge if it exists
+                        const badge = document.querySelector('.cart-count-badge');
+                        if (badge && data.cart_count !== undefined) {
+                            badge.textContent = data.cart_count;
+                            badge.classList.remove('hidden');
+                        }
+                    } else {
+                        showToast('error', 'Error', data.message);
+                        addToCartBtn.disabled = false;
+                        addToCartBtn.innerHTML = originalHTML;
+                    }
+                } catch (error) {
+                    console.error('Add to cart error:', error);
+                    showToast('error', 'Error', 'Failed to add item to cart.');
+                    addToCartBtn.disabled = false;
+                    addToCartBtn.innerHTML = originalHTML;
                 }
             });
-
-            // ── On page load: check if we just returned from a successful add ──
-            const msgContainer = document.getElementById('django-messages-data');
-            const pendingVariant = sessionStorage.getItem('glowe_pending_variant');
-
-            if (msgContainer && pendingVariant) {
-                const spans = msgContainer.querySelectorAll('[data-tags]');
-                let hasSuccess = false, hasError = false;
-
-                spans.forEach(span => {
-                    const tags = span.dataset.tags || '';
-                    if (tags.includes('success') || tags.includes('warning')) hasSuccess = true;
-                    if (tags.includes('error')) hasError = true;
-                });
-
-                sessionStorage.removeItem('glowe_pending_variant');
-
-                if (hasError) {
-                    // Cart add failed — do NOT mark as carted
-                    unmarkVariantCarted(pendingVariant);
-                } else if (hasSuccess) {
-                    // Cart add succeeded — mark this variant as carted
-                    markVariantCarted(pendingVariant);
-                }
-            } else if (pendingVariant) {
-                // Page reloaded without messages — clear pending
-                sessionStorage.removeItem('glowe_pending_variant');
-            }
 
             // ── Set initial button state for current variant ──
             const currentVariantId = variantInput.value;
             if (currentVariantId && isVariantCarted(currentVariantId)) {
                 setGoToCartState();
             }
-            // (if disabled by stock, the Django template already renders it disabled)
         }
 
 
@@ -1486,6 +1526,7 @@
 
     function updateQuantity(change) {
         const input = document.getElementById('qtyInput');
+        if (!input) return;
         let currentVal = parseInt(input.value) || 1;
         
         let maxVal = parseInt(input.getAttribute('max')) || 5;
@@ -1497,6 +1538,8 @@
         if (newVal >= 1 && newVal <= limit) {
             input.value = newVal;
             if (window.resetAddToCartState) window.resetAddToCartState();
+        } else if (newVal > limit && change > 0) {
+            showToast('warning', 'Limit Reached', 'Max quantity reached');
         }
     }
 

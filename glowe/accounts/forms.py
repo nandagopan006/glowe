@@ -48,12 +48,7 @@ class SignupForm(forms.ModelForm):
             
         return email
 
-    #phone validation
-    def clean_phone_number(self):
-        phone_number = self.cleaned_data.get('phone_number', '').strip()
-        if not re.match(r'^[6-9]\d{9}$', phone_number):
-            raise forms.ValidationError('Phone number must be 10 digits and start with 6-9.')
-        return phone_number
+ 
     
     #password vlidation
     def clean_password(self):
