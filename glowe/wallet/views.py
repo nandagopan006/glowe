@@ -18,6 +18,7 @@ from django.views.decorators.cache import never_cache
 from django.contrib import messages
 from order.models import Order, Payment, OrderStatusHistory
 from order.email_util import send_order_confirmation_email
+from product.models import Variant
 
 
 @never_cache
@@ -225,9 +226,13 @@ def process_wallet_payment(request, order_id):
             order.order_status = Order.Status.CONFIRMED
             order.save()
 
-            # Reduce stock
+            # Reduce stock 
             for item in order.items.all():
                 variant = item.variant
+                
+                variant = Variant.objects.select_for_update().get(id=variant.id)
+                if variant.stock < item.quantity:
+                    raise Exception(f"Insufficient stock for {variant.product.name}")
                 variant.stock -= item.quantity
                 variant.save()
 

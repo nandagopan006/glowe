@@ -12,6 +12,7 @@ from django.views.decorators.cache import never_cache
 from core.decorators import admin_required
 from django.contrib.auth.decorators import login_required
 
+
 @never_cache
 @admin_required
 def coupon_list(request):
@@ -223,6 +224,17 @@ def calculate_discount(request, cart_total):
         if coupon.start_date > today or coupon.end_date < today:
             del request.session['coupon_id']
             return Decimal('0.00')
+            
+        if coupon.total_usage_limit and coupon.used_count >= coupon.total_usage_limit:
+            del request.session['coupon_id']
+            return Decimal('0.00')
+            
+        if request.user.is_authenticated:
+            
+            usage = CouponUsage.objects.filter(user=request.user, coupon=coupon).first()
+            if usage and usage.used_count >= coupon.usage_limit_per_user:
+                del request.session['coupon_id']
+                return Decimal('0.00')
             
         if coupon.min_purchase and cart_total < coupon.min_purchase:
             return Decimal('0.00')

@@ -5,7 +5,8 @@ import string
 
 
 class ProfileUser(AbstractUser):
-    full_name=models.CharField(max_length=150)
+    full_name=models.CharField(max_length=60)
+    email = models.EmailField(unique=True,max_length=60)
     phone_number=models.CharField(max_length=15,unique=True,null=True,blank=True)
     profile_image=models.ImageField(upload_to='profile/',
                                     default='profile/default.png'

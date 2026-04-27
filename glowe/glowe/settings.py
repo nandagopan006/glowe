@@ -162,13 +162,14 @@ ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_EMAIL_REQUIRED = True
 
 
-#email settings
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# Email Settings
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER ='glowe639@gmail.com'               #MY GMAIL
-EMAIL_HOST_PASSWORD = 'ezxi bdzy uszx qmhq'           #MYY PASSWORD MAKED
+EMAIL_HOST_USER ='glowe639@gmail.com'
+EMAIL_HOST_PASSWORD = 'ezxi bdzy uszx qmhq'
 
 
 
@@ -181,7 +182,7 @@ AUTHENTICATION_BACKENDS = (
 LOGIN_URL = 'signin'
 SITE_ID = 1
 LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/signin/'
+LOGOUT_REDIRECT_URL = 'signin'
 SOCIALACCOUNT_LOGIN_ON_GET = True
 
 
@@ -197,6 +198,8 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     }
 }
+
+SOCIALACCOUNT_ADAPTER = 'accounts.adapter.MySocialAccountAdapter'
 
 # Razorpay Configuration
 RAZORPAY_KEY_ID = config("RAZORPAY_KEY_ID")

@@ -40,12 +40,12 @@ body { background:#f4f6f3; margin:0; }
 .thumb-actions { position:absolute; top:4px; right:4px; display:flex; gap:3px; }
 .t-btn { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; border:none; padding:0; transition:all .15s; }
 .t-del { background:rgba(0,0,0,.55); }
-.t-del:hover { background:#ef4444; }
-.t-star { background:rgba(0,0,0,.45); }
-.t-star:hover { background:#f59e0b; }
+.t-del:hover { background:#ef4444; transform:scale(1.1); }
+.t-star { background:rgba(0,0,0,.45); backdrop-filter:blur(2px); }
+.t-star:hover { background:#f59e0b; transform:scale(1.1); }
 .t-star.active { background:#f59e0b; }
-.thumb-add { border:2px dashed #d1d5db; border-radius:12px; aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; transition:all .2s; gap:4px; }
-.thumb-add:hover { border-color:#4a9050; background:#f0fdf4; }
+.thumb-add { border:2px dashed #d1d5db; border-radius:12px; aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; transition:all .2s; gap:4px; grid-column: span 1; }
+.thumb-add:hover { border-color:#4a9050; background:#f0fdf4; color:#4a9050; }
 .tgl { display:inline-flex; align-items:center; cursor:pointer; width:48px; height:26px; border-radius:999px; background:#e2e8e2; position:relative; transition:background .25s; border:none; padding:0; flex-shrink:0; }
 .tgl.tgl-on { background:#4a9050; }
 .tgl-thumb { position:absolute; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.18); transition:transform .25s cubic-bezier(.34,1.56,.64,1); }
@@ -215,12 +215,12 @@ body { background:#f4f6f3; margin:0; }
               </div>
               <span id="imgBadge" class="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-sage-50 text-sage-700 border-sage-100">{{ product.images.count }} images</span>
             </div>
-            <div id="imgGrid" class="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-4">
+            <div id="imgGrid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 mb-4">
               {% for img in product.images.all %}
-              <div class="thumb-wrap {% if img.is_primary %}thumb-primary-ring{% endif %}" id="eimg-{{ img.id }}" data-id="{{ img.id }}">
-                <img src="{{ img.image.url }}" alt="img"/>
+              <div class="thumb-wrap {% if img.is_primary %}thumb-primary-ring{% endif %} group" id="eimg-{{ img.id }}" data-id="{{ img.id }}">
+                <img src="{{ img.image.url }}" alt="img" class="transition-transform duration-500 group-hover:scale-110"/>
                 <span class="thumb-badge badge-primary" id="ebadge-{{ img.id }}" {% if not img.is_primary %}style="display:none"{% endif %}>Primary</span>
-                <div class="thumb-actions">
+                <div class="thumb-actions opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   <button type="button" class="t-btn t-star {% if img.is_primary %}active{% endif %}" id="estar-{{ img.id }}" onclick="setPrimary({{ img.id }})" title="Set as primary">
                     <svg width="10" height="10" fill="{% if img.is_primary %}#fff{% else %}none{% endif %}" id="estarsvg-{{ img.id }}" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
                   </button>
@@ -230,10 +230,14 @@ body { background:#f4f6f3; margin:0; }
                 </div>
               </div>
               {% endfor %}
-              <div id="newSlot"></div>
-              <div class="thumb-add" onclick="document.getElementById('fileInput').click()">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>
-                <span class="text-[10px] text-gray-400 font-medium">Add</span>
+              <!-- JS will inject new images here -->
+              <div id="newImgsContainer" style="display: contents;"></div>
+              
+              <div class="thumb-add group" onclick="document.getElementById('fileInput').click()">
+                <div class="w-8 h-8 rounded-full bg-gray-50 group-hover:bg-sage-100 flex items-center justify-center transition-colors">
+                  <svg class="w-5 h-5 text-gray-400 group-hover:text-sage-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>
+                </div>
+                <span class="text-[10px] text-gray-400 group-hover:text-sage-600 font-bold uppercase tracking-wider">Add Image</span>
               </div>
             </div>
             <div id="dropZone" class="upload-zone px-5 py-4 cursor-pointer" onclick="document.getElementById('fileInput').click()">
@@ -430,7 +434,6 @@ function doArchive(){hideOverlay('archiveOverlay');fetch(URLS.archiveUrl,{method
 
 /* ── DELETE IMAGE ── */
 function deleteImage(imageId,btn) {
-  if(!confirm('Remove this image?')) return;
   const dbImages=document.querySelectorAll('.thumb-wrap[data-id]');
   if(dbImages.length<=1&&newImgs.length===0){toast('error','Cannot delete','Product must have at least one image.');return;}
   btn.disabled=true;btn.style.opacity='0.5';
@@ -486,8 +489,21 @@ function applyCrop(){
 }
 function removeNewImg(i,e){e.stopPropagation();newImgs.splice(i,1);renderNewImgs();}
 function renderNewImgs(){
-  const slot=document.getElementById('newSlot');slot.innerHTML='';
-  newImgs.forEach((img,i)=>{const d=document.createElement('div');d.className='thumb-wrap fade-in';d.innerHTML=`<img src="${img.dataUrl}"/><span class="thumb-badge badge-new">New</span><div class="thumb-actions"><button type="button" class="t-btn t-del" onclick="removeNewImg(${i},event)"><svg width="10" height="10" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button></div>`;slot.appendChild(d);});
+  const container=document.getElementById('newImgsContainer');
+  container.innerHTML='';
+  newImgs.forEach((img,i)=>{
+    const d=document.createElement('div');
+    d.className='thumb-wrap fade-in group';
+    d.innerHTML=`
+      <img src="${img.dataUrl}" class="transition-transform duration-500 group-hover:scale-110"/>
+      <span class="thumb-badge badge-new">New</span>
+      <div class="thumb-actions opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <button type="button" class="t-btn t-del" onclick="removeNewImg(${i},event)">
+          <svg width="10" height="10" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>`;
+    container.appendChild(d);
+  });
   updateBadge();
 }
 function updateBadge(){const n=document.querySelectorAll('.thumb-wrap[data-id]').length+newImgs.length;document.getElementById('imgBadge').textContent=n+' image'+(n!==1?'s':'');}

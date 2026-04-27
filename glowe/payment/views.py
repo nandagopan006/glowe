@@ -11,6 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.cache import never_cache
 from django.utils import timezone
 from datetime import timedelta
+from product.models import Variant
 
 
 @never_cache
@@ -111,6 +112,11 @@ def verify_payment(request):
             # Reduce stock here
             for item in order.items.all():
                 variant = item.variant
+                
+                
+                variant = Variant.objects.select_for_update().get(id=variant.id)
+                if variant.stock < item.quantity:
+                    raise Exception(f"Insufficient stock for {variant.product.name}")
                 variant.stock -= item.quantity
                 variant.save()
 

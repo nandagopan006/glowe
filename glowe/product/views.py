@@ -59,12 +59,13 @@ def add_product(request):
                     )
 
             product = form.save()  # for save product
+            primary_index = int(request.POST.get('primary_index', 0))
             # Save images
             for i, img in enumerate(images):
                 ProductImage.objects.create(
                     product=product,
                     image=img,
-                    is_primary=(i == 0),  # first image = primary ak kumm
+                    is_primary=(i == primary_index),
                 )
 
             messages.success(request, "Product added successfully")
@@ -1079,9 +1080,9 @@ def add_to_cart(request):
 
     cart = get_user_cart(request.user)
 
-    cart_item, created = CartItem.objects.get_or_create(cart=cart, variant=variant)
+    cart_item = CartItem.objects.filter(cart=cart, variant=variant).first()
 
-    original_qty = 0 if created else cart_item.quantity
+    original_qty = cart_item.quantity if cart_item else 0
     
     if original_qty >= max_qty:
         msg = "Max quantity reached"
@@ -1104,8 +1105,11 @@ def add_to_cart(request):
         new_qty = max_qty
         limit_hit = True
 
-    cart_item.quantity = new_qty
-    cart_item.save()
+    if cart_item:
+        cart_item.quantity = new_qty
+        cart_item.save()
+    else:
+        CartItem.objects.create(cart=cart, variant=variant, quantity=new_qty)
 
     if limit_hit:
         msg = "Max quantity reached"

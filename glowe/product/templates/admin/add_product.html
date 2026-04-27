@@ -35,10 +35,10 @@ body { background:#f4f6f3; margin:0; }
 .thumb-wrap img { width:100%; height:100%; object-fit:cover; display:block; }
 .thumb-primary { box-shadow:0 0 0 3px #4a9050; }
 .thumb-badge { position:absolute; bottom:4px; left:4px; background:#4a9050; color:#fff; font-size:9px; font-weight:700; padding:2px 7px; border-radius:999px; letter-spacing:.05em; }
-.thumb-remove { position:absolute; top:4px; right:4px; width:22px; height:22px; border-radius:50%; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .15s; border:none; }
-.thumb-remove:hover { background:#ef4444; }
-.thumb-add { border:2px dashed #d1d5db; border-radius:12px; aspect-ratio:1; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .2s; }
-.thumb-add:hover { border-color:#4a9050; background:#f0fdf4; }
+.thumb-remove { position:absolute; top:4px; right:4px; width:22px; height:22px; border-radius:50%; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .15s; border:none; backdrop-filter:blur(2px); }
+.thumb-remove:hover { background:#ef4444; transform:scale(1.1); }
+.thumb-add { border:2px dashed #d1d5db; border-radius:12px; aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; transition:all .2s; gap:4px; }
+.thumb-add:hover { border-color:#4a9050; background:#f0fdf4; color:#4a9050; }
 .tgl { display:inline-flex; align-items:center; cursor:pointer; width:48px; height:26px; border-radius:999px; background:#e2e8e2; position:relative; transition:background .25s; border:none; padding:0; flex-shrink:0; }
 .tgl.tgl-on { background:#4a9050; }
 .tgl-thumb { position:absolute; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.18); transition:transform .25s cubic-bezier(.34,1.56,.64,1); }
@@ -131,8 +131,10 @@ body { background:#f4f6f3; margin:0; }
   <form id="addProductForm" method="POST" enctype="multipart/form-data" action="{% url 'add_product' %}" novalidate>
     {% csrf_token %}
     <input type="hidden" name="is_active" id="isActiveInput" value="true"/>
+    <input type="hidden" name="description" id="descHidden" value=""/>
+    <input type="hidden" name="skin_type" id="skinTypeHidden" value=""/>
+    <input type="hidden" name="primary_index" id="primaryIndexInput" value="0"/>
     <textarea name="how_to_use" id="howToUseHidden" class="hidden"></textarea>
-    <input type="hidden" name="skin_type" id="skinTypeHidden"/>
     <div id="croppedFilesContainer"></div>
 
     <div class="p-5 sm:p-8">
@@ -157,7 +159,7 @@ body { background:#f4f6f3; margin:0; }
               <p class="font-semibold text-gray-700 text-sm">Click to upload or drag & drop</p>
               <p class="text-xs text-gray-400 mt-1">JPG, PNG, WEBP (max 2MB each)</p>
             </div>
-            <div id="previewGrid" class="grid grid-cols-4 sm:grid-cols-6 gap-2.5 mb-3"></div>
+            <div id="previewGrid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 mb-3"></div>
             <div id="imageError" class="hidden flex items-center gap-2 text-red-600 text-xs font-medium bg-red-50 border border-red-100 rounded-xl px-3 py-2.5">
               <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M12 8v4M12 16h.01"/></svg>
               <span id="imageErrorText"></span>
@@ -356,19 +358,43 @@ function applyCrop() {
     const cb=window._cropOnDone; window._cropOnDone=null; if(cb) cb();
   },'image/jpeg',0.92);
 }
-function removeImage(idx) { croppedImages.splice(idx,1); renderPreviews(); }
+function setPrimary(idx) {
+  document.getElementById('primaryIndexInput').value = idx;
+  renderPreviews();
+}
+function removeImage(idx) {
+  const currentPrimary = parseInt(document.getElementById('primaryIndexInput').value);
+  croppedImages.splice(idx,1);
+  if(idx === currentPrimary) document.getElementById('primaryIndexInput').value = 0;
+  else if(idx < currentPrimary) document.getElementById('primaryIndexInput').value = currentPrimary - 1;
+  renderPreviews();
+}
 function renderPreviews() {
   const grid=document.getElementById('previewGrid');
   grid.innerHTML='';
   document.getElementById('imgCount').textContent=croppedImages.length;
   croppedImages.forEach((img,i)=>{
     const w=document.createElement('div');
-    w.className='thumb-wrap fade-in'+(i===0?' thumb-primary':'');
-    w.innerHTML=`<img src="${img.dataUrl}"/>${i===0?'<span class="thumb-badge">Primary</span>':''}<button type="button" class="thumb-remove" onclick="removeImage(${i})"><svg width="10" height="10" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg></button>`;
+    w.className='thumb-wrap fade-in group'+(i===parseInt(document.getElementById('primaryIndexInput').value)?' thumb-primary':'');
+    w.innerHTML=`
+      <img src="${img.dataUrl}" class="transition-transform duration-500 group-hover:scale-110"/>
+      ${i===parseInt(document.getElementById('primaryIndexInput').value)?'<span class="thumb-badge">Primary</span>':''}
+      <div class="thumb-actions opacity-0 group-hover:opacity-100 transition-opacity duration-200" style="position:absolute; top:4px; right:4px; display:flex; gap:3px;">
+        <button type="button" class="t-btn t-star ${i===parseInt(document.getElementById('primaryIndexInput').value)?'active':''}" onclick="setPrimary(${i})" style="width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; border:none; padding:0; transition:all .15s; background:rgba(0,0,0,.45); backdrop-filter:blur(2px);">
+          <svg width="10" height="10" fill="${i===parseInt(document.getElementById('primaryIndexInput').value)?'#fff':'none'}" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+        </button>
+        <button type="button" class="thumb-remove" onclick="removeImage(${i})" style="position:static; width:22px; height:22px; border-radius:50%; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .15s; border:none; backdrop-filter:blur(2px);">
+          <svg width="10" height="10" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>`;
     grid.appendChild(w);
   });
-  const add=document.createElement('div'); add.className='thumb-add'; add.onclick=()=>document.getElementById('fileInput').click();
-  add.innerHTML=`<svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>`;
+  const add=document.createElement('div'); add.className='thumb-add group'; add.onclick=()=>document.getElementById('fileInput').click();
+  add.innerHTML=`
+    <div class="w-8 h-8 rounded-full bg-gray-50 group-hover:bg-sage-100 flex items-center justify-center transition-colors">
+      <svg class="w-5 h-5 text-gray-400 group-hover:text-sage-600" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 4v16m8-8H4"/></svg>
+    </div>
+    <span class="text-[10px] text-gray-400 group-hover:text-sage-600 font-bold uppercase tracking-wider">Add Image</span>`;
   grid.appendChild(add);
   if(croppedImages.length>=3) setImageError(null);
 }
@@ -376,6 +402,19 @@ function setImageError(msg) {
   const el=document.getElementById('imageError'), txt=document.getElementById('imageErrorText');
   if(msg){el.classList.remove('hidden');txt.textContent=msg;} else el.classList.add('hidden');
 }
+function setPrimary(i) {
+  document.getElementById('primaryIndexInput').value = i;
+  renderPreviews();
+}
+function removeImage(i) {
+  croppedImages.splice(i, 1);
+  const pIdx = document.getElementById('primaryIndexInput');
+  let currentP = parseInt(pIdx.value);
+  if (currentP === i) pIdx.value = 0;
+  else if (currentP > i) pIdx.value = currentP - 1;
+  renderPreviews();
+}
+
 const zone=document.getElementById('uploadZone');
 zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag-over');});
 zone.addEventListener('dragleave',()=>zone.classList.remove('drag-over'));

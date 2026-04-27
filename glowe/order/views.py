@@ -1075,6 +1075,7 @@ def admin_order_list(request):
                 if v_id not in items_grouped:
                     first_img = item.variant.product.images.first()
                     items_grouped[v_id] = {
+                        "product_id": item.variant.product.id,
                         "name": f"{item.variant.product.name} (Cancelled)",
                         "image": first_img.image.url if first_img else None,
                         "quantity": item.quantity,
