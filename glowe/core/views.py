@@ -42,7 +42,7 @@ def home(request):
 
 def signout(request):
     logout(request)
-    return redirect('signin')
+    return redirect('home')
 
 def contact_page(request):
     return render(request, 'user/contact.html')
