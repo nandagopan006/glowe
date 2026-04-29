@@ -6,13 +6,14 @@ import re
 
 
 class SignupForm(forms.ModelForm):
-    password=forms.CharField(widget=forms.PasswordInput)
-    confirm_password=forms.CharField(widget=forms.PasswordInput)
+    email = forms.EmailField(required=True)
+    password = forms.CharField(widget=forms.PasswordInput)
+    confirm_password = forms.CharField(widget=forms.PasswordInput)
     referral_code = forms.CharField(required=False)
     
     class Meta:
-        model=ProfileUser
-        fields=['full_name','email','phone_number', 'referral_code']
+        model = ProfileUser
+        fields = ["full_name", "email", "referral_code"]
         
         
     #ull_name validation
@@ -33,20 +34,19 @@ class SignupForm(forms.ModelForm):
             
         return full_name
                 
-    #email valiadiation   
+    # email validation
     def clean_email(self):
-        email=self.cleaned_data.get("email",'').strip().lower()
-        if re.match(r'^\*+@gmail\.com$', email):
+        email = self.cleaned_data.get("email", "").strip().lower()
+        if re.match(r"^\*+@gmail\.com$", email):
             raise forms.ValidationError("Masked email is not allowed")
-        
-        existing =ProfileUser.objects.filter(email=email).first()
-        if existing :
-            if existing.is_verified:
-                raise forms.ValidationError('Email already registered')
-            else :
-                pass
-            
+
+        existing = ProfileUser.objects.filter(email=email).first()
+        if existing and existing.is_verified:
+            raise forms.ValidationError("Email already registered")
+
         return email
+
+
 
  
     
@@ -68,15 +68,14 @@ class SignupForm(forms.ModelForm):
         
         return password
     
+
     # Password match validation
     def clean(self):
-        
-        cleaned_data=super().clean()# Get the validated form data from Django  ,  Run the default form validation first and give me the cleaned data.(or we need to give each field self )
-        
-        password=cleaned_data.get('password') #we can use this also (password = cleaned_data.get("password")) and remove (cleaned_data=super().clean())
-        confirm_password=cleaned_data.get('confirm_password')
-        
-        if password and confirm_password and password != confirm_password:   #checking valadiation for password
+        cleaned_data = super().clean()
+        password = cleaned_data.get("password")
+        confirm_password = cleaned_data.get("confirm_password")
+
+        if password and confirm_password and password != confirm_password:
             raise forms.ValidationError("Passwords do not match")
-        
+
         return cleaned_data

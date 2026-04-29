@@ -35,26 +35,25 @@ def signup_page(request):
 
         if form.is_valid():
             email = form.cleaned_data["email"]
+            # Check for existing unverified user with this email
             existing_user = ProfileUser.objects.filter(
                 email=email, is_verified=False
             ).first()
             password = form.cleaned_data["password"]
 
             if existing_user:
+                # Reuse the existing unverified user record
                 user = existing_user
                 user.full_name = form.cleaned_data["full_name"]
                 user.username = user.email
                 user.set_password(password)
-
             else:
-                # create  new user
-                user = form.save(
-                    commit=False
-                )  # create user objet and but not save in database
-
+                # Create a new user record
+                user = form.save(commit=False)
                 user.username = user.email
                 user.set_password(password)
 
+            # Referral logic
             referral_code = form.cleaned_data.get("referral_code")
             if referral_code and not user.referred_by:
                 referrer = ProfileUser.objects.filter(
@@ -63,6 +62,7 @@ def signup_page(request):
                 if referrer and referrer != user:
                     user.referred_by = referrer
 
+            # Crucial: user remains unverified and inactive until OTP is verified
             user.is_active = False
             user.is_verified = False
             user.save()
@@ -578,16 +578,18 @@ def reset_password(request, uidb64, token):
         if is_authenticated:
             update_session_auth_hash(request, user)
             messages.success(request, "Password updated successfully.")
-            
+
             # Clean up session flag
             request.session.pop("reset_from_change_password", None)
-            
+
             # Redirect to change_password if they came from there, otherwise profile
             if from_change_password:
                 return redirect("change_password")
             return redirect("profile_overview")
 
-        messages.success(request, "Password reset successful. Please sign in with your new password.")
+        messages.success(
+            request, "Password reset successful. Please sign in with your new password."
+        )
         return redirect("signin")
 
     return render(

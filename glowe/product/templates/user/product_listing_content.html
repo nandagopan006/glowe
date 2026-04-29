@@ -1,0 +1,122 @@
+{% load static %}
+
+{% if page_obj %}
+  <div class="product-grid">
+    {% for product in page_obj %}
+      {% with variant=product.variants.all.0 image=product.images.all.0 %}
+      {% with stock=variant.stock|default:0 %}
+      {% with avg=product.avg_rating|default:0 rev=product.review_count|default:0 %}
+      <article class="pcard">
+        <a class="pcard-img-wrap" href="{% url 'product_detail_view' product.slug %}">
+          {% with imgs=product.images.all %}
+          {% if imgs.0 %}
+            <img class="img-primary" src="{{ imgs.0.image.url }}" alt="{{ product.name }}" loading="lazy">
+            {% if imgs.1 %}
+            <img class="img-secondary" src="{{ imgs.1.image.url }}" alt="{{ product.name }}" loading="lazy">
+            {% endif %}
+          {% else %}
+            <div class="img-ph" style="position:absolute;inset:0;z-index:1;">
+              <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width=".8" viewBox="0 0 64 64">
+                <rect x="8" y="8" width="48" height="48" rx="1"/>
+                <circle cx="23" cy="23" r="6"/>
+                <path d="M8 44l14-14 10 10 8-8 14 12"/>
+              </svg>
+            </div>
+          {% endif %}
+          {% endwith %}
+
+          {% if product.has_offer %}
+          <span class="offer-badge">
+            <svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            {% if product.offer.discount_type == "PERCENTAGE" %}{{ product.offer.discount_value|floatformat:"0" }}% OFF{% else %}₹{{ product.offer.discount_value|floatformat:"0" }} OFF{% endif %}
+          </span>
+          {% endif %}
+
+          {% if stock == 0 %}<div class="oos-veil"><span class="oos-label">Sold Out</span></div>{% endif %}
+
+          <button type="button" class="btn-wishlist wish-btn {% if variant.id in wishlisted_ids %}wishlisted{% endif %}"
+                  data-url="{% url 'toggle_wishlist' variant.id %}"
+                  data-variant-id="{{ variant.id }}"
+                  aria-label="{% if variant.id in wishlisted_ids %}Remove from wishlist{% else %}Add to wishlist{% endif %}">
+            <svg width="14" height="14" fill="{% if variant.id in wishlisted_ids %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          </button>
+
+          {% if stock == 0 %}
+          <span class="qa-bar" style="pointer-events:none;opacity:.55;">Unavailable</span>
+          {% else %}
+          <button type="button" class="qa-bar btn-add-to-cart" data-variant-id="{{ variant.id }}" data-url="{% url 'add_to_cart' %}">Add to Cart +</button>
+          {% endif %}
+        </a>
+
+        <div class="pcard-info">
+          {% if product.category %}<div class="pcard-cat">{{ product.category.name }}</div>{% endif %}
+          <a class="pcard-name" href="{% url 'product_detail_view' product.slug %}">{{ product.name }}</a>
+          <div class="pcard-price-row">
+            {% if product.has_offer %}
+              <span class="pcard-price">₹{{ product.final_price|floatformat:2 }}</span>
+              <span class="pcard-original-price">₹{{ variant.price|floatformat:2 }}</span>
+            {% elif variant.original_price %}
+              <span class="pcard-price">₹{{ variant.price|floatformat:2 }}</span>
+              <span class="pcard-original-price">₹{{ variant.original_price|floatformat:2 }}</span>
+            {% else %}
+              <span class="pcard-from">from</span>
+              <span class="pcard-price">₹{{ variant.price|floatformat:2 }}</span>
+            {% endif %}
+          </div>
+          {% if product.has_offer %}
+          <div class="pcard-save">You save ₹{{ product.discount|floatformat:2 }}</div>
+          {% elif variant.savings_amount > 0 %}
+          <div class="pcard-save">You save ₹{{ variant.savings_amount|floatformat:2 }}</div>
+          {% endif %}
+          {% if rev > 0 %}
+          <div class="pcard-rating">
+            <div class="stars-wrap">
+              <div class="stars-base">{% for i in "12345" %}<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>{% endfor %}</div>
+              <div class="stars-fill" style="width:{{ avg|floatformat:0 }}0%;">{% for i in "12345" %}<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>{% endfor %}</div>
+            </div>
+            <span class="rating-val">{{ avg|floatformat:1 }}</span>
+            <span class="rating-count">({{ rev }})</span>
+          </div>
+          {% endif %}
+        </div>
+      </article>
+      {% endwith %}{% endwith %}{% endwith %}
+    {% endfor %}
+  </div>
+
+  {% if page_obj.paginator.num_pages > 1 %}
+  <div class="pagination-wrap">
+    <div class="page-nums">
+      {% if page_obj.has_previous %}
+      <a class="pnum ajax-page" href="#" data-page="{{ page_obj.previous_page_number }}">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+      </a>
+      {% else %}<span class="pnum pnum--disabled"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></span>{% endif %}
+      
+      {% for num in page_obj.paginator.page_range %}
+        {% if num == page_obj.number %}<span class="pnum pnum--active">{{ num }}</span>
+        {% elif num == 1 or num == page_obj.paginator.num_pages %}<a class="pnum ajax-page" href="#" data-page="{{ num }}">{{ num }}</a>
+        {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}<a class="pnum ajax-page" href="#" data-page="{{ num }}">{{ num }}</a>
+        {% elif num == page_obj.number|add:"-3" or num == page_obj.number|add:"3" %}<span class="pnum pnum--dots">…</span>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+      <a class="pnum ajax-page" href="#" data-page="{{ page_obj.next_page_number }}">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+      </a>
+      {% else %}<span class="pnum pnum--disabled"><svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></span>{% endif %}
+    </div>
+    <div class="page-info">Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ total_count }} products</div>
+  </div>
+  {% endif %}
+
+{% else %}
+  <div class="product-grid">
+    <div class="empty-wrap">
+      <h3>No products found</h3>
+      <p>Try adjusting or clearing your filters.</p>
+      <a href="?" class="empty-btn">Reset Filters</a>
+    </div>
+  </div>
+{% endif %}
