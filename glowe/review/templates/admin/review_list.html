@@ -64,9 +64,23 @@
     <main class="px-6 py-10 lg:px-12 max-w-[1600px] mx-auto">
         
         <!-- Header Section -->
-        <div class="mb-10">
-            <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight leading-none">Product Reviews</h1>
-            <p class="text-[15px] text-gray-500 mt-2 font-medium">Manage and moderate customer feedback effectively.</p>
+        <div class="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight leading-none">Product Reviews</h1>
+                <p class="text-[15px] text-gray-500 mt-2 font-medium">Manage and moderate customer feedback effectively.</p>
+            </div>
+            
+            <!-- Live / Archived Toggle -->
+            <div class="bg-white rounded-full p-1 border border-gray-200 shadow-sm inline-flex shrink-0">
+                <a href="?is_deleted=false{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}" 
+                   class="px-6 py-2.5 text-[13px] font-bold rounded-full transition-all {% if is_deleted == 'false' %}bg-[#111827] text-white shadow-md{% else %}text-gray-500 hover:text-gray-900{% endif %}">
+                    Live
+                </a>
+                <a href="?is_deleted=true{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}" 
+                   class="px-6 py-2.5 text-[13px] font-bold rounded-full transition-all {% if is_deleted == 'true' %}bg-[#111827] text-white shadow-md{% else %}text-gray-500 hover:text-gray-900{% endif %}">
+                    Archived
+                </a>
+            </div>
         </div>
 
         <!-- Toolbar: Tabs & Search/Filter -->
@@ -92,17 +106,21 @@
                 </a>
             </div>
 
-            <!-- Search & Filter Trigger -->
             <div class="flex items-center gap-3">
                 <form method="GET" class="relative" id="quickSearchForm">
+                    <input type="hidden" name="is_deleted" value="{{ is_deleted }}">
                     {% if current_status %}<input type="hidden" name="status" value="{{ current_status }}">{% endif %}
                     {% if current_rating %}<input type="hidden" name="rating" value="{{ current_rating }}">{% endif %}
                     {% if current_sort %}<input type="hidden" name="sort" value="{{ current_sort }}">{% endif %}
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
-                    <input type="text" name="search" value="{{ search_query|default:'' }}" placeholder="Search by user, product, or content..." 
-                           class="w-full sm:w-[320px] pl-10 pr-4 py-2.5 bg-white border border-white rounded-full text-[13px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#111827] focus:border-transparent shadow-sm transition-all placeholder:text-gray-400 font-medium">
+                    <input type="text" name="search" id="searchInput" value="{{ search_query|default:'' }}" placeholder="Search by user, product, or content..." 
+                           oninput="document.getElementById('clearSearchBtn').classList.toggle('hidden', this.value === '')"
+                           class="w-full sm:w-[320px] pl-10 pr-10 py-2.5 bg-white border border-white rounded-full text-[13px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#111827] focus:border-transparent shadow-sm transition-all placeholder:text-gray-400 font-medium">
+                    <button type="button" id="clearSearchBtn" onclick="document.getElementById('searchInput').value=''; this.classList.add('hidden'); document.getElementById('quickSearchForm').submit();" class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors {% if not search_query %}hidden{% endif %}">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
                 </form>
                 <button type="button" onclick="document.getElementById('filterModal').classList.remove('hidden')" 
                         class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-white hover:border-gray-200 text-gray-700 text-[13px] font-bold rounded-full shadow-sm transition-all active:scale-95">
@@ -122,6 +140,7 @@
                     </button>
                 </div>
                 <form method="GET" class="p-8">
+                    <input type="hidden" name="is_deleted" value="{{ is_deleted }}">
                     {% if current_status %}<input type="hidden" name="status" value="{{ current_status }}">{% endif %}
                     <input type="hidden" name="search" value="{{ search_query|default:'' }}">
                     
@@ -170,47 +189,55 @@
             </div>
         </div>
 
+
+
         <!-- Main Table -->
         <div class="bg-white rounded-[32px] shadow-sm border border-gray-100 overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse whitespace-nowrap">
+                <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="bg-white border-b border-gray-50 text-[11px] font-extrabold text-gray-400 uppercase tracking-widest">
-                            <th class="py-5 px-6">SL No</th>
-                            <th class="py-5 px-6">User</th>
-                            <th class="py-5 px-6">Product</th>
-                            <th class="py-5 px-6">Rating</th>
-                            <th class="py-5 px-6 min-w-[250px]">Review Comment</th>
-                            <th class="py-5 px-6">Date</th>
-                            <th class="py-5 px-6">Status</th>
-                            <th class="py-5 px-6 text-right">Actions</th>
+                        <tr class="bg-white border-b border-gray-50 text-[11px] font-extrabold text-gray-400 uppercase tracking-widest whitespace-nowrap">
+                            <th class="py-5 px-4 whitespace-nowrap">SL No</th>
+                            <th class="py-5 px-4 whitespace-nowrap">User</th>
+                            <th class="py-5 px-4 whitespace-nowrap">Product</th>
+                            <th class="py-5 px-4 whitespace-nowrap">Rating</th>
+                            <th class="py-5 px-4">Review Comment</th>
+                            <th class="py-5 px-4 whitespace-nowrap">Date</th>
+                            <th class="py-5 px-4 whitespace-nowrap">Status</th>
+                            <th class="py-5 px-4 text-right whitespace-nowrap">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50">
                         {% for review in reviews %}
                         <tr class="group hover:bg-gray-50/50 transition-colors duration-200 {% if review.rating <= 2 %}row-low-rating{% endif %}" id="review-row-{{ review.id }}">
-                            <td class="py-4 px-6 text-[13px] font-medium text-gray-400">
+                            <td class="py-4 px-4 text-[13px] font-medium text-gray-400">
                                 {{ forloop.counter0|add:reviews.start_index|stringformat:"02d" }}
                             </td>
                             
                             <!-- User -->
-                            <td class="py-4 px-6">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-[14px]">
-                                        {{ review.user.first_name|default:review.user.username|make_list|first|upper }}
+                            <td class="py-4 px-4">
+                                <a href="{% url 'user_detail' review.user.id %}" class="flex items-center gap-3 group/user hover:opacity-80 transition-opacity">
+                                    <div class="w-9 h-9 rounded-full overflow-hidden shrink-0 border border-gray-200">
+                                        {% if review.user.profile_image %}
+                                            <img src="{{ review.user.profile_image.url }}" alt="{{ review.user.full_name }}" class="w-full h-full object-cover">
+                                        {% else %}
+                                            <div class="w-full h-full bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold text-[14px]">
+                                                {{ review.user.full_name|default:review.user.username|make_list|first|upper }}
+                                            </div>
+                                        {% endif %}
                                     </div>
                                     <div>
-                                        <p class="text-[14px] font-bold text-gray-900">{{ review.user.full_name|default:review.user.username }}</p>
+                                        <p class="text-[14px] font-bold text-gray-900 group-hover/user:underline">{{ review.user.full_name|default:review.user.username }}</p>
                                         {% if review.order %}
                                         <p class="text-[11px] font-bold text-green-600 mt-0.5">Verified Buyer</p>
                                         {% endif %}
                                     </div>
-                                </div>
+                                </a>
                             </td>
 
                             <!-- Product -->
-                            <td class="py-4 px-6">
-                                <div class="flex items-center gap-3">
+                            <td class="py-4 px-4">
+                                <a href="{% url 'product_detail' review.product.id %}" class="flex items-center gap-3 group/product hover:opacity-80 transition-opacity">
                                     <div class="w-10 h-10 rounded-xl bg-gray-100 overflow-hidden shrink-0 border border-gray-200">
                                         {% if review.product.images.all %}
                                             <img src="{{ review.product.images.all.0.image.url }}" alt="{{ review.product.name }}" class="w-full h-full object-cover">
@@ -221,14 +248,14 @@
                                         {% endif %}
                                     </div>
                                     <div>
-                                        <p class="text-[14px] font-bold text-gray-900 max-w-[150px] truncate" title="{{ review.product.name }}">{{ review.product.name }}</p>
+                                        <p class="text-[14px] font-bold text-gray-900 max-w-[150px] truncate group-hover/product:underline" title="{{ review.product.name }}">{{ review.product.name }}</p>
                                         <p class="text-[12px] font-medium text-gray-400 mt-0.5">SKU: {{ review.product.sku|default:"N/A" }}</p>
                                     </div>
-                                </div>
+                                </a>
                             </td>
 
                             <!-- Rating -->
-                            <td class="py-4 px-6">
+                            <td class="py-4 px-4">
                                 <div class="flex items-center gap-0.5">
                                     {% for i in "12345" %}
                                         {% if forloop.counter <= review.rating %}
@@ -241,11 +268,11 @@
                             </td>
 
                             <!-- Comment -->
-                            <td class="py-4 px-6">
-                                <div class="flex items-center gap-2 max-w-[250px]">
-                                    <p class="text-[13px] font-medium text-gray-600 truncate" title="{{ review.comment }}">
+                            <td class="py-4 px-4">
+                                <div class="flex items-center gap-2">
+                                    <p class="text-[13px] font-medium text-gray-600 truncate max-w-[150px] xl:max-w-[250px]" title="{{ review.comment }}">
                                         {% if review.title %}<span class="font-bold text-gray-900 mr-1">{{ review.title }} -</span>{% endif %}
-                                        {{ review.comment|truncatechars:50 }}
+                                        {{ review.comment|truncatechars:100 }}
                                     </p>
                                     {% if review.images.all %}
                                     <span title="Contains images" class="text-blue-500 shrink-0">
@@ -256,12 +283,12 @@
                             </td>
 
                             <!-- Date -->
-                            <td class="py-4 px-6 text-[13px] font-medium text-gray-500">
+                            <td class="py-4 px-4 text-[13px] font-medium text-gray-500 whitespace-nowrap">
                                 {{ review.created_at|date:"M d, Y" }}
                             </td>
 
                             <!-- Status -->
-                            <td class="py-4 px-6" id="status-cell-{{ review.id }}">
+                            <td class="py-4 px-4 whitespace-nowrap" id="status-cell-{{ review.id }}">
                                 {% if review.status == "approved" %}
                                     <span class="status-pill status-approved">Approved</span>
                                 {% elif review.status == "pending" %}
@@ -272,15 +299,15 @@
                             </td>
 
                             <!-- Actions -->
-                            <td class="py-4 px-6">
+                            <td class="py-4 px-4 whitespace-nowrap">
                                 <div class="flex items-center justify-end gap-2" id="action-cell-{{ review.id }}">
                                     <!-- Always show View button -->
-                                    <a href="{% url 'admin_review_detail' review.id %}" class="action-btn btn-view" title="View Details">
+                                    <button type="button" onclick="openReviewDetailModal('{{ review.id }}')" class="action-btn btn-view" title="View Details">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                    </a>
+                                    </button>
 
                                     <!-- Approve/Reject available for Pending -->
-                                    {% if review.status == 'pending' %}
+                                    {% if review.status == 'pending' and is_deleted == 'false' %}
                                     <form method="POST" action="{% url 'approve_review' review.id %}" class="ajax-action-form inline-block">
                                         {% csrf_token %}
                                         <button type="submit" class="action-btn btn-approve" title="Approve">
@@ -292,6 +319,30 @@
                                         {% csrf_token %}
                                         <button type="submit" class="action-btn btn-reject" title="Reject">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                    
+                                    <!-- Archive/Restore Action -->
+                                    {% if is_deleted == 'false' %}
+                                    <form method="POST" action="{% url 'archive_review' review.id %}" class="inline-block" onsubmit="event.preventDefault(); openConfirmModal(this, 'archive');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="action-btn bg-amber-50 hover:bg-amber-100 text-amber-600 transition-transform hover:scale-105" title="Archive Review">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <form method="POST" action="{% url 'restore_review' review.id %}" class="inline-block" onsubmit="event.preventDefault(); openConfirmModal(this, 'restore');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="action-btn bg-blue-50 hover:bg-blue-100 text-blue-600 transition-transform hover:scale-105" title="Restore Review">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                        </button>
+                                    </form>
+
+                                    <form method="POST" action="{% url 'permanent_delete_review' review.id %}" class="inline-block" onsubmit="event.preventDefault(); openConfirmModal(this, 'delete');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="action-btn bg-red-50 hover:bg-red-100 text-red-600 transition-transform hover:scale-105" title="Permanently Delete">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                         </button>
                                     </form>
                                     {% endif %}
@@ -322,7 +373,7 @@
             <p class="text-[13px] text-gray-500 font-medium ml-2">Showing {{ reviews.start_index }}-{{ reviews.end_index }} of {{ reviews.paginator.count }} reviews</p>
             <div class="flex items-center gap-3">
                 {% if reviews.has_previous %}
-                <a href="?page={{ reviews.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_rating %}&rating={{ current_rating }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="pg-btn shadow-sm hover:shadow-lg">
+                <a href="?page={{ reviews.previous_page_number }}&is_deleted={{ is_deleted }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_rating %}&rating={{ current_rating }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="pg-btn shadow-sm hover:shadow-lg">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
                 </a>
                 {% endif %}
@@ -331,12 +382,12 @@
                     {% if reviews.number == i %}
                     <span class="pg-btn active">{{ i }}</span>
                     {% elif i >= reviews.number|add:"-2" and i <= reviews.number|add:"2" %}
-                    <a href="?page={{ i }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_rating %}&rating={{ current_rating }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="pg-btn">{{ i }}</a>
+                    <a href="?page={{ i }}&is_deleted={{ is_deleted }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_rating %}&rating={{ current_rating }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="pg-btn">{{ i }}</a>
                     {% endif %}
                 {% endfor %}
 
                 {% if reviews.has_next %}
-                <a href="?page={{ reviews.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_rating %}&rating={{ current_rating }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="pg-btn shadow-sm hover:shadow-lg">
+                <a href="?page={{ reviews.next_page_number }}&is_deleted={{ is_deleted }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_rating %}&rating={{ current_rating }}{% endif %}{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="pg-btn shadow-sm hover:shadow-lg">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
                 </a>
                 {% endif %}
@@ -347,10 +398,276 @@
     </main>
 </div>
 
+<!-- Inline Modals for each review -->
+{% for review in reviews %}
+<div id="reviewDetailModal-{{ review.id }}" class="hidden fixed inset-0 z-[110] flex items-center justify-center bg-gray-900/40 backdrop-blur-sm px-4 transition-all duration-300 opacity-0 pointer-events-none" onclick="if(event.target === this) closeReviewDetailModal('{{ review.id }}')">
+    <div class="relative w-full max-w-2xl bg-white rounded-[24px] shadow-2xl overflow-hidden transform scale-95 opacity-0 transition-all duration-300" id="reviewDetailModalContent-{{ review.id }}">
+        <!-- Close Button -->
+        <button type="button" onclick="closeReviewDetailModal('{{ review.id }}')" class="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors z-10">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+
+        <div class="p-8 pb-6 border-b border-gray-100 flex items-center gap-4">
+            <!-- User Avatar -->
+            <div class="w-12 h-12 rounded-full bg-[#fdf5ed] flex items-center justify-center text-[#d28b5e] font-extrabold text-lg shrink-0">
+                {% if review.user.profile_image and review.user.profile_image.name %}
+                    <img src="{{ review.user.profile_image.url }}" alt="User Avatar" class="w-full h-full rounded-full object-cover">
+                {% else %}
+                    {{ review.user.first_name|default:review.user.username|make_list|first|upper }}
+                {% endif %}
+            </div>
+            
+            <div>
+                <div class="flex items-center gap-2">
+                    <h2 class="text-[17px] font-extrabold text-gray-900 tracking-tight">{{ review.user.full_name|default:review.user.username }}</h2>
+                    {% if review.order %}
+                    <span class="inline-flex items-center justify-center w-4 h-4 bg-green-500 rounded-full text-white" title="Verified Buyer">
+                        <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                    </span>
+                    {% endif %}
+                </div>
+                <p class="text-[12px] text-gray-400 font-medium">{{ review.created_at|date:"M d, Y" }}</p>
+            </div>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="p-8 max-h-[60vh] overflow-y-auto" style="scrollbar-width: thin;">
+            <!-- Product Reviewed Card -->
+            <div class="flex items-center gap-4 p-4 rounded-2xl border border-gray-100 bg-gray-50/50 mb-6 group hover:border-gray-200 transition-colors">
+                <div class="w-12 h-12 rounded-xl bg-white border border-gray-100 overflow-hidden shrink-0 shadow-sm flex items-center justify-center">
+                    {% if review.product.images.all %}
+                    <img src="{{ review.product.images.all.0.image.url }}" alt="{{ review.product.name }}" class="w-full h-full object-cover">
+                    {% else %}
+                    <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    {% endif %}
+                </div>
+                <div class="flex-1">
+                    <span class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-0.5 block">Product Reviewed</span>
+                    <p class="text-[14px] font-bold text-gray-900 leading-tight">{{ review.product.name }}</p>
+                </div>
+                <a href="{% url 'product_detail' review.product.id %}" target="_blank" class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-[#111827] bg-white border border-gray-100 rounded-lg shadow-sm hover:shadow transition-all group-hover:scale-105" title="View Product">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                </a>
+            </div>
+
+            {% if review.rating <= 2 %}
+            <!-- Warning Banner -->
+            <div class="flex items-start gap-3 p-4 rounded-xl bg-red-50 border border-red-100 text-red-800 mb-6">
+                <svg class="w-5 h-5 shrink-0 mt-0.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                <div>
+                    <p class="text-[13px] font-bold">Low Rating Review</p>
+                    <p class="text-[12px] text-red-600/80 mt-0.5">This review has a very low rating. Please review the customer's comment carefully.</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Rating Stars -->
+            <div class="flex items-center gap-1 mb-4">
+                {% for i in "12345" %}
+                    {% if forloop.counter <= review.rating %}
+                        <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                    {% else %}
+                        <svg class="w-5 h-5 text-gray-200" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                    {% endif %}
+                {% endfor %}
+                <span class="ml-2 text-[13px] font-bold text-gray-700">
+                    {% if review.rating == 5 %}Excellent
+                    {% elif review.rating == 4 %}Good
+                    {% elif review.rating == 3 %}Average
+                    {% elif review.rating == 2 %}Poor
+                    {% else %}Terrible{% endif %}
+                </span>
+            </div>
+
+            <!-- Review Comment -->
+            <h3 class="text-[18px] font-extrabold text-gray-900 mb-2 leading-tight">{{ review.title|default:"No Title Provided" }}</h3>
+            <p class="text-[14px] text-gray-600 leading-relaxed">{{ review.comment }}</p>
+
+            <!-- Images -->
+            {% if review.images.all %}
+            <div class="mt-6">
+                <h4 class="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest mb-3">Customer Images</h4>
+                <div class="flex flex-wrap gap-3">
+                    {% for img in review.images.all %}
+                    <div class="w-20 h-20 rounded-xl overflow-hidden shadow-sm border border-gray-200 cursor-pointer hover:scale-105 transition-transform" onclick="window.open('{{ img.image.url }}', '_blank')">
+                        <img src="{{ img.image.url }}" class="w-full h-full object-cover" alt="Review Image">
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Action Footer -->
+        <div class="p-6 bg-gray-50 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4">
+            
+            <!-- Left Side: Status Actions or Badges -->
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                {% if review.status == 'pending' and is_deleted == 'false' %}
+                    <form method="POST" action="{% url 'reject_review' review.id %}" class="ajax-action-form flex-1 sm:flex-none" onsubmit="handleModalAction(event, false, '{{ review.id }}')">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full sm:w-auto flex items-center justify-center gap-2 py-2.5 px-5 rounded-xl border border-red-200 bg-white text-red-600 font-bold text-[13px] hover:bg-red-50 transition-colors active:scale-95 shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Reject
+                        </button>
+                    </form>
+                    <form method="POST" action="{% url 'approve_review' review.id %}" class="ajax-action-form flex-1 sm:flex-none" onsubmit="handleModalAction(event, true, '{{ review.id }}')">
+                        {% csrf_token %}
+                        <button type="submit" class="w-full sm:w-auto flex items-center justify-center gap-2 py-2.5 px-5 rounded-xl bg-[#66A573] hover:bg-[#52895D] text-white font-bold text-[13px] transition-colors active:scale-95 shadow-sm shadow-[#66A573]/30">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Approve
+                        </button>
+                    </form>
+                {% else %}
+                    <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-bold 
+                        {% if review.status == 'approved' %}bg-green-100 text-green-700{% elif review.status == 'rejected' %}bg-red-100 text-red-700{% else %}bg-amber-100 text-amber-700{% endif %}">
+                        {% if review.status == 'approved' %}
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                            Already Approved
+                        {% elif review.status == 'rejected' %}
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            Already Rejected
+                        {% else %}
+                            Pending
+                        {% endif %}
+                    </span>
+                {% endif %}
+            </div>
+
+            <!-- Right Side: Archive / Restore / Delete Actions -->
+            <div class="flex items-center gap-3 w-full sm:w-auto sm:ml-auto justify-end">
+                {% if is_deleted == 'false' %}
+                <form method="POST" action="{% url 'archive_review' review.id %}" onsubmit="event.preventDefault(); openConfirmModal(this, 'archive');">
+                    {% csrf_token %}
+                    <button type="submit" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-bold bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors border border-gray-200 shadow-sm active:scale-95">
+                        <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                        Archive
+                    </button>
+                </form>
+                {% else %}
+                <form method="POST" action="{% url 'restore_review' review.id %}" onsubmit="event.preventDefault(); openConfirmModal(this, 'restore');">
+                    {% csrf_token %}
+                    <button type="submit" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-bold bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors border border-gray-200 shadow-sm active:scale-95">
+                        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        Restore
+                    </button>
+                </form>
+                <form method="POST" action="{% url 'permanent_delete_review' review.id %}" onsubmit="event.preventDefault(); openConfirmModal(this, 'delete');">
+                    {% csrf_token %}
+                    <button type="submit" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[13px] font-bold bg-white text-red-600 hover:bg-red-50 hover:border-red-200 transition-colors border border-gray-200 shadow-sm active:scale-95">
+                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        Delete Forever
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+
 <!-- AJAX Scripts for Approve/Reject Without Reload -->
 <script>
+function openReviewDetailModal(rowId) {
+    const modal = document.getElementById(`reviewDetailModal-${rowId}`);
+    if(!modal) return;
+    
+    modal.classList.remove('hidden');
+    // slight delay for transition
+    setTimeout(() => {
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        const content = document.getElementById(`reviewDetailModalContent-${rowId}`);
+        if(content) {
+            content.classList.remove('scale-95', 'opacity-0');
+            content.classList.add('scale-100', 'opacity-100');
+        }
+    }, 10);
+}
+
+function closeReviewDetailModal(rowId) {
+    const modal = document.getElementById(`reviewDetailModal-${rowId}`);
+    if(!modal) return;
+
+    const content = document.getElementById(`reviewDetailModalContent-${rowId}`);
+    if(content) {
+        content.classList.remove('scale-100', 'opacity-100');
+        content.classList.add('scale-95', 'opacity-0');
+    }
+    
+    setTimeout(() => {
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        setTimeout(() => modal.classList.add('hidden'), 300);
+    }, 150);
+}
+
+// Handle Approve/Reject inside the detail modal
+function handleModalAction(e, isApprove, rowId) {
+    e.preventDefault();
+    const form = e.target;
+    const url = form.action;
+    const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.status === 'success') {
+            closeReviewDetailModal(rowId);
+            
+            // Update row UI
+            const statusCell = document.getElementById(`status-cell-${rowId}`);
+            const actionCell = document.getElementById(`action-cell-${rowId}`);
+            
+            if (isApprove) {
+                statusCell.innerHTML = '<span class="status-pill status-approved">Approved</span>';
+            } else {
+                statusCell.innerHTML = '<span class="status-pill status-rejected">Rejected</span>';
+            }
+            
+            // Re-render the actions to keep the updated view button
+            actionCell.innerHTML = `
+                <button type="button" class="action-btn btn-view" title="View Details" onclick="openReviewDetailModal('${rowId}')">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                </button>
+            `;
+            
+            // Update the buttons inside the modal for future opens
+            const modalFooter = document.getElementById(`reviewDetailModalContent-${rowId}`).querySelector('.p-6.bg-gray-50');
+            if (modalFooter) {
+                modalFooter.innerHTML = `
+                    <div class="flex-1 flex justify-end">
+                        <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-bold ${isApprove ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                            ${isApprove ? 
+                                '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg> Already Approved' : 
+                                '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg> Already Rejected'
+                            }
+                        </span>
+                    </div>
+                `;
+            }
+            
+            // Trigger Global Toast
+            if (isApprove) {
+                showToast("Review approved successfully!", "success");
+            } else {
+                showToast("Review rejected.", "error");
+            }
+        } else {
+            showToast(data.message || 'Error updating review.', 'error');
+        }
+    })
+    .catch(err => console.error(err));
+}
+
 document.addEventListener("DOMContentLoaded", function() {
-    const forms = document.querySelectorAll('.ajax-action-form');
+    // Existing forms for inline quick approve/reject on the main table
+    const forms = document.querySelectorAll('td .ajax-action-form');
     
     forms.forEach(form => {
         form.addEventListener('submit', function(e) {
@@ -370,7 +687,6 @@ document.addEventListener("DOMContentLoaded", function() {
             })
             .then(response => {
                 if(response.ok) {
-                    // Update UI smoothly without reload
                     const statusCell = document.getElementById(`status-cell-${rowId}`);
                     const actionCell = document.getElementById(`action-cell-${rowId}`);
                     
@@ -380,15 +696,19 @@ document.addEventListener("DOMContentLoaded", function() {
                         statusCell.innerHTML = '<span class="status-pill status-rejected">Rejected</span>';
                     }
                     
-                    // Keep only View button
-                    const viewUrl = actionCell.querySelector('.btn-view').closest('a').href;
                     actionCell.innerHTML = `
-                        <a href="${viewUrl}" class="action-btn btn-view" title="View Details">
+                        <button type="button" class="action-btn btn-view" title="View Details" onclick="openReviewDetailModal('${rowId}')">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                        </a>
+                        </button>
                     `;
+                    // Trigger Global Toast
+                    if (isApprove) {
+                        showToast("Review approved successfully!", "success");
+                    } else {
+                        showToast("Review rejected.", "error");
+                    }
                 } else {
-                    alert("Error updating review status.");
+                    showToast("Error updating review status.", "error");
                 }
             })
             .catch(error => console.error('Error:', error));
@@ -396,6 +716,102 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 </script>
+
+    <!-- Custom Action Confirmation Modal -->
+    <div id="actionConfirmModal" class="hidden fixed inset-0 z-[200] flex items-center justify-center px-4">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm transition-opacity opacity-0 duration-300" id="confirmBackdrop" onclick="closeConfirmModal()"></div>
+        <!-- Modal -->
+        <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm p-8 transform scale-95 opacity-0 transition-all duration-300" id="confirmModalBox">
+            <div class="flex flex-col items-center text-center">
+                <div class="w-16 h-16 rounded-full flex items-center justify-center mb-5" id="confirmIconContainer">
+                    <svg id="confirmIcon" class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"></svg>
+                </div>
+                <h3 class="text-xl font-extrabold text-gray-900 mb-2" id="confirmTitle">Confirm Action</h3>
+                <p class="text-[13.5px] text-gray-500 font-medium mb-8 leading-relaxed" id="confirmMessage">Are you sure you want to proceed?</p>
+                
+                <div class="flex gap-3 w-full">
+                    <button type="button" onclick="closeConfirmModal()" class="flex-1 py-3 rounded-xl text-[13px] font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="button" id="confirmActionBtn" class="flex-1 py-3 rounded-xl text-[13px] font-bold text-white transition-colors">
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentFormToSubmit = null;
+
+        function openConfirmModal(formElement, actionType) {
+            currentFormToSubmit = formElement;
+            const modal = document.getElementById('actionConfirmModal');
+            const backdrop = document.getElementById('confirmBackdrop');
+            const box = document.getElementById('confirmModalBox');
+            
+            const iconContainer = document.getElementById('confirmIconContainer');
+            const icon = document.getElementById('confirmIcon');
+            const title = document.getElementById('confirmTitle');
+            const message = document.getElementById('confirmMessage');
+            const confirmBtn = document.getElementById('confirmActionBtn');
+            
+            if (actionType === 'archive') {
+                iconContainer.className = 'w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-amber-50 text-amber-500';
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>';
+                title.innerText = 'Archive Review';
+                message.innerText = 'This review will be hidden from the live site. You can always restore it later from the Archived tab.';
+                confirmBtn.className = 'flex-1 py-3 rounded-xl text-[13px] font-bold text-white bg-[#111827] hover:bg-black transition-colors';
+                confirmBtn.innerText = 'Archive';
+            } else if (actionType === 'restore') {
+                iconContainer.className = 'w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-blue-50 text-blue-500';
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>';
+                title.innerText = 'Restore Review';
+                message.innerText = 'This review will be restored and will appear on the live site again instantly.';
+                confirmBtn.className = 'flex-1 py-3 rounded-xl text-[13px] font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors';
+                confirmBtn.innerText = 'Restore';
+            } else if (actionType === 'delete') {
+                iconContainer.className = 'w-16 h-16 rounded-full flex items-center justify-center mb-5 bg-red-50 text-red-500';
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>';
+                title.innerText = 'Permanently Delete';
+                message.innerText = 'WARNING: This action is completely irreversible. The review will be destroyed from the database forever.';
+                confirmBtn.className = 'flex-1 py-3 rounded-xl text-[13px] font-bold text-white bg-red-600 hover:bg-red-700 transition-colors';
+                confirmBtn.innerText = 'Delete Forever';
+            }
+
+            modal.classList.remove('hidden');
+            // Animate in
+            setTimeout(() => {
+                backdrop.classList.replace('opacity-0', 'opacity-100');
+                box.classList.replace('opacity-0', 'opacity-100');
+                box.classList.replace('scale-95', 'scale-100');
+            }, 10);
+        }
+
+        function closeConfirmModal() {
+            const backdrop = document.getElementById('confirmBackdrop');
+            const box = document.getElementById('confirmModalBox');
+            
+            backdrop.classList.replace('opacity-100', 'opacity-0');
+            box.classList.replace('opacity-100', 'opacity-0');
+            box.classList.replace('scale-100', 'scale-95');
+            
+            setTimeout(() => {
+                document.getElementById('actionConfirmModal').classList.add('hidden');
+                currentFormToSubmit = null;
+            }, 300);
+        }
+
+        document.getElementById('confirmActionBtn').addEventListener('click', function() {
+            if (currentFormToSubmit) {
+                // To avoid multiple clicks
+                this.disabled = true;
+                this.innerHTML = '<svg class="animate-spin h-4 w-4 mx-auto text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+                currentFormToSubmit.submit();
+            }
+        });
+    </script>
 
 </body>
 </html>

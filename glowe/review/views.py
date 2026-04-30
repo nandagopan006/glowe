@@ -31,35 +31,33 @@ def create_review(request, product_id, order_id):
             rating = int(rating)
         except (TypeError, ValueError):
             messages.error(request, "Invalid rating")
-            return redirect('product_detail', product.slug)
+            return redirect('product_detail_view', slug=product.slug)
 
         #Rating validation
         if rating < 1 or rating > 5:
             messages.error(request, "Rating must be between 1 and 5")
-            return redirect('product_detail', product.slug)
+            return redirect('product_detail_view', slug=product.slug)
 
         #Prevent empty comment
         if not comment or not comment.strip():
             messages.error(request, "Review cannot be empty")
-            return redirect('product_detail', product.slug)
+            return redirect('product_detail_view', slug=product.slug)
         if len(comment) < 7:
             messages.error(request, "Review too short")
-            return redirect('product_detail', product.slug)
+            return redirect('product_detail_view', slug=product.slug)
         if title and len(title) < 4:
             messages.error(request, "Title must be at least 4 characters")
-            return redirect('product_detail', product.slug)
+            return redirect('product_detail_view', slug=product.slug)
         images = request.FILES.getlist('images')
 
         if len(images) > 3:
             messages.error(request, "You can upload maximum 3 images")
-            review.delete()
-            return redirect('product_detail', product.slug)
+            return redirect('product_detail_view', slug=product.slug)
 
         for img in images:
             if img.size > 2 * 1024 * 1024:  # 2MB limit
                 messages.error(request, "Each image must be under 2MB")
-                review.delete()
-                return redirect('product_detail', product.slug)
+                return redirect('product_detail_view', slug=product.slug)
         
         review = Review.objects.create(
             user=request.user,
@@ -76,7 +74,7 @@ def create_review(request, product_id, order_id):
             ReviewImage.objects.create(review=review,image=img)
         
         messages.success(request, "Review added successfully")
-        return redirect('product_detail', product.slug)
+        return redirect('product_detail_view', slug=product.slug)
     
     
 @require_POST
@@ -96,6 +94,8 @@ def delete_review(request, review_id):
 
 def admin_review_list(request):
 
+    is_deleted_filter = request.GET.get('is_deleted', 'false') == 'true'
+    
     status = request.GET.get('status')
     search = request.GET.get('search')
     rating = request.GET.get('rating')
@@ -103,7 +103,7 @@ def admin_review_list(request):
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
 
-    reviews = Review.objects.filter(is_deleted=False).select_related('user', 'product')
+    reviews = Review.objects.filter(is_deleted=is_deleted_filter).select_related('user', 'product')
 
     #Status Filter
     if status in ['pending', 'approved', 'rejected']:
@@ -143,24 +143,24 @@ def admin_review_list(request):
     page_obj = paginator.get_page(page_number)
 
     
-    review_all = Review.objects.filter(is_deleted=False).count()
-    pending = Review.objects.filter(status='pending', is_deleted=False).count()
-    approved = Review.objects.filter(status='approved', is_deleted=False).count()
-    rejected = Review.objects.filter(status='rejected', is_deleted=False).count()
+    review_all = Review.objects.filter(is_deleted=is_deleted_filter).count()
+    pending = Review.objects.filter(status='pending', is_deleted=is_deleted_filter).count()
+    approved = Review.objects.filter(status='approved', is_deleted=is_deleted_filter).count()
+    rejected = Review.objects.filter(status='rejected', is_deleted=is_deleted_filter).count()
     
-
     return render(request, 'admin/review_list.html', {
         'reviews': page_obj,
         "review_all":review_all,
         'pending':pending,
         'approved':approved,
         'rejected':rejected,
-         'current_status': status,
+        'current_status': status,
         'search_query': search,
         'current_rating': rating,
         'current_sort': sort,
         'start_date': start_date,
         'end_date': end_date,
+        'is_deleted': 'true' if is_deleted_filter else 'false',
     })
     
 def admin_review_detail(request, review_id):
@@ -231,4 +231,33 @@ def reject_review(request, review_id):
         return JsonResponse({"status": "success", "message": "Review rejected successfully"})
         
     messages.success(request, "Review rejected successfully")
+    return redirect(request.META.get('HTTP_REFERER', 'review_list'))
+
+
+@require_POST
+def archive_review(request, review_id):
+    review = get_object_or_404(Review, id=review_id, is_deleted=False)
+    with transaction.atomic():
+        review.is_deleted = True
+        review.save()
+        
+    messages.success(request, "Review archived successfully")
+    return redirect(request.META.get('HTTP_REFERER', 'review_list'))
+
+@require_POST
+def restore_review(request, review_id):
+    review = get_object_or_404(Review, id=review_id, is_deleted=True)
+    with transaction.atomic():
+        review.is_deleted = False
+        review.save()
+        
+    messages.success(request, "Review restored successfully")
+    return redirect(request.META.get('HTTP_REFERER', 'review_list'))
+
+@require_POST
+def permanent_delete_review(request, review_id):
+    review = get_object_or_404(Review, id=review_id, is_deleted=True)
+    review.delete()
+        
+    messages.success(request, "Review permanently deleted")
     return redirect(request.META.get('HTTP_REFERER', 'review_list'))

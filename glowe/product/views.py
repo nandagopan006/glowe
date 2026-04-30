@@ -6,7 +6,7 @@ from .forms import ProductForm, VariantForm
 from .models import ProductImage, Product, Variant, Category
 from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator
-from django.db.models import Q, Sum, Min
+from django.db.models import Q, Sum, Min, Avg, Count
 from django.db.models import Prefetch
 import json
 from cart.models import CartItem
@@ -17,6 +17,7 @@ from decimal import Decimal
 from offer.utils import get_best_offer
 from django.views.decorators.cache import never_cache
 from core.decorators import admin_required
+
 
 
 @never_cache
@@ -751,6 +752,12 @@ def product_listing(request):
 
     total_count = products.count()
 
+    # Annotate avg rating and review count for product cards
+    products = products.annotate(
+        avg_rating=Avg('review__rating', filter=Q(review__is_deleted=False, review__status='approved')),
+        review_count=Count('review', filter=Q(review__is_deleted=False, review__status='approved'), distinct=True),
+    )
+
     products = products.prefetch_related(
         Prefetch("images", queryset=ProductImage.objects.order_by("id")),
         Prefetch(
@@ -1010,6 +1017,49 @@ def product_detail_view(request, slug):
             )
         )
 
+    # Fetch reviews
+    from django.db.models import Avg, Count
+    reviews = product.review_set.filter(status='approved', is_deleted=False).order_by('-created_at')
+    
+    # Calculate stats
+    total_reviews = reviews.count()
+    avg_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
+    
+    # Rating distribution
+    rating_counts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+    for r in reviews.values('rating').annotate(count=Count('id')):
+        rating_counts[r['rating']] = r['count']
+        
+    rating_distribution = {}
+    if total_reviews > 0:
+        for star in range(5, 0, -1):
+            rating_distribution[star] = int((rating_counts[star] / total_reviews) * 100)
+    else:
+        rating_distribution = {5: 0, 4: 0, 3: 0, 2: 0, 1: 0}
+
+    # Combined rows for template (star, pct, count)
+    rating_rows = [
+        {'star': star, 'pct': rating_distribution[star], 'count': rating_counts[star]}
+        for star in range(5, 0, -1)
+    ]
+
+    # Find reviewable order
+    reviewable_order = None
+    if request.user.is_authenticated:
+        from order.models import Order
+        from review.models import Review
+        # Find a delivered order with this product
+        orders_with_product = Order.objects.filter(
+            user=request.user, 
+            order_status='DELIVERED', 
+            items__variant__product=product
+        ).distinct()
+        
+        for ord_obj in orders_with_product:
+            if not Review.objects.filter(user=request.user, product=product, order=ord_obj).exists():
+                reviewable_order = ord_obj
+                break
+
     return render(
         request,
         "user/product_detail_view.html",
@@ -1035,6 +1085,13 @@ def product_detail_view(request, slug):
             "offer_discount": offer_discount,
             "offer_text": offer_text,
             "offer": best_offer,
+            "reviews": reviews,
+            "total_reviews": total_reviews,
+            "avg_rating": avg_rating,
+            "rating_distribution": rating_distribution,
+            "rating_counts": rating_counts,
+            "rating_rows": rating_rows,
+            "reviewable_order": reviewable_order,
         },
     )
 

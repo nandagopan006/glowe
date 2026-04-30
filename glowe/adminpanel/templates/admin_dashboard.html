@@ -334,21 +334,56 @@
   <main class="p-6 max-w-[1400px] mx-auto">
 
     <!-- Header & Filters -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 fade-in">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 fade-in relative z-[1000]">
       <div>
         <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Dashboard Overview</h1>
         <p class="text-sm text-gray-400 mt-1">Welcome back, here is your summary.</p>
       </div>
-      <div class="flex items-center gap-2 bg-white border border-gray-200 rounded-full p-1 shadow-sm">
-        <a href="?filter=day" class="filter-btn {% if filter_type == 'day' %}active{% endif %}">Day</a>
-        <a href="?filter=week" class="filter-btn {% if filter_type == 'week' %}active{% endif %}">Week</a>
-        <a href="?filter=month" class="filter-btn {% if filter_type == 'month' %}active{% endif %}">Month</a>
-        <a href="?filter=year" class="filter-btn {% if filter_type == 'year' %}active{% endif %}">Year</a>
+      <div class="flex flex-col items-end gap-3 relative">
+        <div class="flex items-center gap-2 bg-white border border-gray-200 rounded-full p-1 shadow-sm">
+          <a href="?filter=day" class="filter-btn {% if filter_type == 'day' %}active{% endif %}">Day</a>
+          <a href="?filter=week" class="filter-btn {% if filter_type == 'week' %}active{% endif %}">Week</a>
+          <a href="?filter=month" class="filter-btn {% if filter_type == 'month' %}active{% endif %}">Month</a>
+          <a href="?filter=year" class="filter-btn {% if filter_type == 'year' %}active{% endif %}">Year</a>
+          <button type="button" onclick="toggleCustomDate(event)" class="filter-btn {% if filter_type == 'custom' %}active{% endif %}" id="custom-filter-btn">Custom</button>
+        </div>
+        
+        <!-- Custom Date Picker Form -->
+        <div id="custom-date-picker" onclick="event.stopPropagation()" class="{% if filter_type != 'custom' %}hidden{% endif %} bg-white/95 backdrop-blur-md border border-gray-100 rounded-3xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.15)] shadow-emerald-500/10 fade-in absolute top-full right-0 mt-4 z-[1000] min-w-[280px] border-t-4 border-t-[#4a9050]">
+          <!-- Arrow -->
+          <div class="absolute -top-2.5 right-8 w-4 h-4 bg-white border-l border-t border-gray-100 rotate-45"></div>
+          
+          <div class="flex items-center justify-between mb-5">
+            <h3 class="text-[11px] font-extrabold text-gray-900 uppercase tracking-[0.15em]">Select Range</h3>
+            <button type="button" onclick="toggleCustomDate(event)" class="w-6 h-6 rounded-full bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-all">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+          </div>
+
+          <form action="" method="GET" class="space-y-5">
+            <input type="hidden" name="filter" value="custom">
+            <div class="space-y-4">
+              <div>
+                <label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-2 px-1">Start Date</label>
+                <input type="date" name="start_date" value="{{ request.GET.start_date }}" required
+                  class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-xs font-bold text-gray-700 focus:bg-white focus:ring-2 focus:ring-[#4a9050]/20 focus:border-[#4a9050] outline-none transition-all cursor-pointer">
+              </div>
+              <div>
+                <label class="text-[9px] font-bold text-gray-400 uppercase tracking-widest block mb-2 px-1">End Date</label>
+                <input type="date" name="end_date" value="{{ request.GET.end_date }}" required
+                  class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-xs font-bold text-gray-700 focus:bg-white focus:ring-2 focus:ring-[#4a9050]/20 focus:border-[#4a9050] outline-none transition-all cursor-pointer">
+              </div>
+            </div>
+            <button type="submit" class="w-full bg-[#4a9050] text-white text-[11px] font-bold uppercase tracking-widest py-4 rounded-2xl hover:bg-[#3d7a42] transition-all shadow-xl shadow-emerald-200/50 mt-2 active:scale-95">
+              Update Dashboard
+            </button>
+          </form>
+        </div>
       </div>
     </div>
 
     <!-- KPI Cards Row -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 relative z-0">
       
       <!-- Revenue (Dark) -->
       <div class="kpi-card dark-card rounded-2xl p-6 fade-in d-1 shadow-lg shadow-gray-200/50">
@@ -430,6 +465,7 @@
               {% elif filter_type == 'week' %}Last 7 days performance
               {% elif filter_type == 'month' %}Daily sales this month
               {% elif filter_type == 'year' %}Monthly overview
+              {% elif filter_type == 'custom' %}Custom range: {{ start_date|date:"M d" }} - {{ end_date|date:"M d, Y" }}
               {% else %}Year to date{% endif %}
             </p>
           </div>
@@ -439,6 +475,7 @@
               {% elif filter_type == 'week' %}7 Days
               {% elif filter_type == 'month' %}This Month
               {% elif filter_type == 'year' %}This Year
+              {% elif filter_type == 'custom' %}Custom Range
               {% else %}All Time{% endif %}
             </span>
           </div>
@@ -530,29 +567,34 @@
           <span class="w-2 h-2 rounded-full bg-[#ef4444] shadow-[0_0_8px_#ef4444]"></span>
           Inventory Alerts
         </h2>
+
         <div class="grid grid-cols-2 gap-4">
-          <div class="bg-red-50 border border-red-100 rounded-xl p-4 text-center">
-            <p class="text-[11px] font-bold text-red-500 uppercase tracking-widest mb-2">Out of Stock</p>
-            <p class="text-3xl font-extrabold text-red-600">{{ out_of_stock_products }}</p>
-            <p class="text-[10px] text-red-400 mt-2">variants need restock</p>
+
+          <!-- Out of Stock Card -->
+          <div class="bg-gradient-to-br from-red-50 to-rose-50 border border-red-100 rounded-2xl p-5 text-center">
+            <p class="text-[10px] font-extrabold text-red-400 uppercase tracking-widest mb-2">Out of Stock</p>
+            <p class="text-4xl font-black text-red-600 leading-none mb-2">{{ out_of_stock_products }}</p>
+            <p class="text-[10px] text-red-400 font-medium mb-3">variants need restock</p>
+            <button id="oos-btn" onclick="invToggle('oos')"
+              class="inline-flex items-center gap-1.5 text-[11px] font-bold text-red-600 bg-red-100 hover:bg-red-200 px-3 py-1.5 rounded-full transition-colors">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              View All
+            </button>
           </div>
-          <div class="bg-orange-50 border border-orange-100 rounded-xl p-4 text-center">
-            <p class="text-[11px] font-bold text-orange-500 uppercase tracking-widest mb-2">Low Stock</p>
-            <p class="text-3xl font-extrabold text-orange-600">{{ low_stock_products }}</p>
-            <p class="text-[10px] text-orange-400 mt-2">variants running low</p>
+
+          <!-- Low Stock Card -->
+          <div class="bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-100 rounded-2xl p-5 text-center">
+            <p class="text-[10px] font-extrabold text-orange-400 uppercase tracking-widest mb-2">Low Stock</p>
+            <p class="text-4xl font-black text-orange-600 leading-none mb-2">{{ low_stock_products }}</p>
+            <p class="text-[10px] text-orange-400 font-medium mb-3">variants running low</p>
+            <button id="low-btn" onclick="invToggle('low')"
+              class="inline-flex items-center gap-1.5 text-[11px] font-bold text-orange-600 bg-orange-100 hover:bg-orange-200 px-3 py-1.5 rounded-full transition-colors">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              View All
+            </button>
           </div>
+
         </div>
-        {% if out_of_stock_products > 0 or low_stock_products > 0 %}
-        <div class="mt-6 text-center">
-          <a href="{% url 'product_management' %}" class="inline-flex items-center gap-2 bg-gray-900 text-white text-xs font-bold px-6 py-2.5 rounded-lg hover:bg-gray-800 transition-all hover:scale-105 shadow-lg shadow-gray-900/20">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-            </svg>
-            View Inventory
-          </a>
-        </div>
-        {% endif %}
       </div>
 
     </div>
@@ -647,9 +689,215 @@
 {% endblock %}
 
 {% block extra_js %}
+
+<!-- ═══ OUT OF STOCK MODAL ═══ -->
+<div id="oos-modal" style="display:none;position:fixed;z-index:99999;width:320px;border-radius:18px;box-shadow:0 24px 64px rgba(0,0,0,0.18);border:1px solid #fecaca;overflow:hidden;background:#fff;">
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:linear-gradient(135deg,#ef4444,#f43f5e);">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <svg style="width:15px;height:15px;" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+      <span style="color:#fff;font-size:13px;font-weight:700;letter-spacing:0.01em;">Out of Stock</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="background:rgba(255,255,255,0.22);color:#fff;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;">{{ out_of_stock_products }}</span>
+      <button onclick="invClose('oos')" style="background:rgba(255,255,255,0.18);border:none;cursor:pointer;width:22px;height:22px;border-radius:50%;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
+    </div>
+  </div>
+  <!-- List -->
+  <div style="overflow-y:auto;max-height:280px;">
+    {% if out_of_stock_variants %}
+      {% for variant in out_of_stock_variants %}
+      <a href="{% url 'variant_management' variant.product.id %}"
+         style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid #fef2f2;text-decoration:none;transition:background 0.15s;"
+         onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='transparent'">
+        <div style="width:40px;height:40px;border-radius:10px;overflow:hidden;flex-shrink:0;border:1px solid #fecaca;background:#fef2f2;">
+          {% with variant.product.images.all|first as img %}
+            {% if img %}<img src="{{ img.image.url }}" style="width:100%;height:100%;object-fit:cover;" alt="">
+            {% else %}<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:18px;">📦</div>
+            {% endif %}
+          {% endwith %}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <p style="font-size:13px;font-weight:600;color:#111827;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ variant.product.name }}</p>
+          <p style="font-size:11px;color:#9ca3af;margin:2px 0 0;">{{ variant.size }} &middot; {{ variant.sku }}</p>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+          <span style="font-size:11px;font-weight:800;color:#dc2626;background:#fee2e2;padding:2px 8px;border-radius:999px;">0 left</span>
+          <span style="font-size:10px;color:#dc2626;font-weight:600;">View →</span>
+        </div>
+      </a>
+      {% endfor %}
+    {% else %}
+      <div style="padding:36px 16px;text-align:center;color:#9ca3af;">
+        <div style="font-size:36px;margin-bottom:8px;">✅</div>
+        <p style="font-size:13px;font-weight:600;margin:0;">All stocked up!</p>
+      </div>
+    {% endif %}
+  </div>
+  <!-- Footer -->
+  <div style="padding:10px 16px;border-top:1px solid #fee2e2;background:#fff5f5;text-align:center;">
+    <a href="{% url 'product_management' %}" style="font-size:12px;font-weight:700;color:#dc2626;text-decoration:none;">View All Products →</a>
+  </div>
+</div>
+
+<!-- ═══ LOW STOCK MODAL ═══ -->
+<div id="low-modal" style="display:none;position:fixed;z-index:99999;width:320px;border-radius:18px;box-shadow:0 24px 64px rgba(0,0,0,0.18);border:1px solid #fed7aa;overflow:hidden;background:#fff;">
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:linear-gradient(135deg,#f97316,#f59e0b);">
+    <div style="display:flex;align-items:center;gap:8px;">
+      <svg style="width:15px;height:15px;" fill="none" stroke="white" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span style="color:#fff;font-size:13px;font-weight:700;letter-spacing:0.01em;">Low Stock</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="background:rgba(255,255,255,0.22);color:#fff;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;">{{ low_stock_products }}</span>
+      <button onclick="invClose('low')" style="background:rgba(255,255,255,0.18);border:none;cursor:pointer;width:22px;height:22px;border-radius:50%;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
+    </div>
+  </div>
+  <!-- List -->
+  <div style="overflow-y:auto;max-height:280px;">
+    {% if low_stock_variants %}
+      {% for variant in low_stock_variants %}
+      <a href="{% url 'variant_management' variant.product.id %}"
+         style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid #fff7ed;text-decoration:none;transition:background 0.15s;"
+         onmouseover="this.style.background='#fff7ed'" onmouseout="this.style.background='transparent'">
+        <div style="width:40px;height:40px;border-radius:10px;overflow:hidden;flex-shrink:0;border:1px solid #fed7aa;background:#fff7ed;">
+          {% with variant.product.images.all|first as img %}
+            {% if img %}<img src="{{ img.image.url }}" style="width:100%;height:100%;object-fit:cover;" alt="">
+            {% else %}<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:18px;">📦</div>
+            {% endif %}
+          {% endwith %}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <p style="font-size:13px;font-weight:600;color:#111827;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ variant.product.name }}</p>
+          <p style="font-size:11px;color:#9ca3af;margin:2px 0 0;">{{ variant.size }} &middot; {{ variant.sku }}</p>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+          <span style="font-size:11px;font-weight:800;color:#ea580c;background:#ffedd5;padding:2px 8px;border-radius:999px;">{{ variant.stock }} left</span>
+          <span style="font-size:10px;color:#ea580c;font-weight:600;">View →</span>
+        </div>
+      </a>
+      {% endfor %}
+    {% else %}
+      <div style="padding:36px 16px;text-align:center;color:#9ca3af;">
+        <div style="font-size:36px;margin-bottom:8px;">✅</div>
+        <p style="font-size:13px;font-weight:600;margin:0;">Stock levels look good!</p>
+      </div>
+    {% endif %}
+  </div>
+  <!-- Footer -->
+  <div style="padding:10px 16px;border-top:1px solid #fed7aa;background:#fffbf5;text-align:center;">
+    <a href="{% url 'product_management' %}" style="font-size:12px;font-weight:700;color:#ea580c;text-decoration:none;">View All Products →</a>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-  // Sales Activity Chart with Modern Design & Animations
+  /* ── Inventory Modals ─────────────────────────────────────────────── */
+  // Move both modals to <body> immediately so no overflow:hidden ancestor clips them
+  ;['oos-modal','low-modal'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(el) document.body.appendChild(el);
+  });
+
+  function invOpen(key) {
+    var modalId  = key + '-modal';
+    var btnId    = key + '-btn';
+    var otherKey = key === 'oos' ? 'low' : 'oos';
+
+    // Close the other one
+    document.getElementById(otherKey + '-modal').style.display = 'none';
+
+    var modal = document.getElementById(modalId);
+    var btn   = document.getElementById(btnId);
+    var rect  = btn.getBoundingClientRect();  // viewport-relative
+    var mw    = 320;
+
+    // position:fixed is viewport-relative — do NOT add scrollX/scrollY
+    var left = rect.left;
+    if (left + mw > window.innerWidth - 8) left = window.innerWidth - mw - 8;
+    if (left < 8) left = 8;
+
+    // Show modal temporarily to get its height
+    modal.style.display = 'block';
+    modal.style.visibility = 'hidden';
+    var modalHeight = modal.offsetHeight;
+    modal.style.visibility = 'visible';
+
+    // Position above the button with 8px gap
+    var top = rect.top - modalHeight - 8;
+    
+    // If modal would go off-screen at top, position it below instead
+    if (top < 8) {
+      top = rect.bottom + 8;
+    }
+
+    modal.style.top     = top + 'px';
+    modal.style.left    = left + 'px';
+    modal.style.display = 'block';
+  }
+
+  function invClose(key) {
+    document.getElementById(key + '-modal').style.display = 'none';
+  }
+
+  function invToggle(key) {
+    var modal = document.getElementById(key + '-modal');
+    if (modal.style.display === 'block') {
+      invClose(key);
+    } else {
+      invOpen(key);
+    }
+  }
+
+  /* ── Custom Date Picker ────────────────────────────────────────── */
+  function toggleCustomDate(e) {
+    if (e) e.stopPropagation();
+    const picker = document.getElementById('custom-date-picker');
+    picker.classList.toggle('hidden');
+  }
+
+  // Close picker when clicking outside
+  document.addEventListener('click', function(event) {
+    const picker = document.getElementById('custom-date-picker');
+    const btn = document.getElementById('custom-filter-btn');
+    if (picker && btn && !picker.contains(event.target) && !btn.contains(event.target)) {
+      if (!picker.classList.contains('hidden') && '{{ filter_type }}' !== 'custom') {
+        picker.classList.add('hidden');
+      }
+    }
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      const picker = document.getElementById('custom-date-picker');
+      if (picker && !picker.classList.contains('hidden') && '{{ filter_type }}' !== 'custom') {
+        picker.classList.add('hidden');
+      }
+    }
+  });
+
+  // Close on outside click
+  document.addEventListener('click', function(e) {
+    ['oos','low'].forEach(function(key) {
+      var modal = document.getElementById(key + '-modal');
+      var btn   = document.getElementById(key + '-btn');
+      if (!modal || modal.style.display !== 'block') return;
+      if (!modal.contains(e.target) && btn && !btn.contains(e.target)) {
+        invClose(key);
+      }
+    });
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      invClose('oos');
+      invClose('low');
+    }
+  });
+
+  /* ── Sales Chart ──────────────────────────────────────────────────── */
   const ctx = document.getElementById('salesChart').getContext('2d');
   
   const labels = [{% for item in chart_data %}"{{ item.label }}"{% if not forloop.last %},{% endif %}{% endfor %}];

@@ -82,6 +82,7 @@ def admin_dashboard(request):
     )  # Default to 'month' instead of 'all'
     now = timezone.now()
     start_date = None
+    end_date = now
 
     if filter_type == "day":
         start_date = now.replace(hour=0, minute=0, second=0)
@@ -91,15 +92,40 @@ def admin_dashboard(request):
         start_date = now.replace(day=1, hour=0, minute=0, second=0)
     elif filter_type == "year":
         start_date = now.replace(month=1, day=1, hour=0, minute=0, second=0)
+    elif filter_type == "custom":
+        start_str = request.GET.get("start_date")
+        end_str = request.GET.get("end_date")
+        if start_str and end_str:
+            try:
+                start_date = make_aware(datetime.strptime(start_str, "%Y-%m-%d"))
+                end_date = make_aware(datetime.strptime(end_str, "%Y-%m-%d"))
+                
+                #Start must be before or equal to End
+                if start_date > end_date:
+                    messages.error(request, "Invalid Date Range: End date cannot be before start date.")
+                    # Default back to month if validation fails
+                    filter_type = "month"
+                    start_date = now.replace(day=1, hour=0, minute=0, second=0)
+                    end_date = now
+                else:
+                    # Make end_date include the full day
+                    end_date = end_date.replace(hour=23, minute=59, second=59)
+            except (ValueError, TypeError):
+                filter_type = "month"
+                start_date = now.replace(day=1, hour=0, minute=0, second=0)
+        else:
+            filter_type = "month"
+            start_date = now.replace(day=1, hour=0, minute=0, second=0)
+            end_date = now
     else:
         # If invalid filter, default to month
         filter_type = "month"
         start_date = now.replace(day=1, hour=0, minute=0, second=0)
 
-    if start_date:
-        filtered_orders = Order.objects.filter(created_at__gte=start_date)
+    if filter_type == "custom":
+        filtered_orders = Order.objects.filter(created_at__range=[start_date, end_date])
     else:
-        filtered_orders = Order.objects.all()
+        filtered_orders = Order.objects.filter(created_at__gte=start_date)
 
     total_revenue = filtered_orders.aggregate(total=Sum("total_amount"))["total"] or 0
 
@@ -129,8 +155,10 @@ def admin_dashboard(request):
     cancelled_orders = filtered_orders.filter(order_status="CANCELLED").count()
     return_orders = filtered_orders.filter(order_status="RETURNED").count()
 
-    out_of_stock_products = Variant.objects.filter(stock=0).count()
-    low_stock_products = Variant.objects.filter(stock__lt=5, stock__gt=0).count()
+    out_of_stock_variants = Variant.objects.filter(stock=0, is_active=True).select_related('product')
+    low_stock_variants = Variant.objects.filter(stock__lt=5, stock__gt=0, is_active=True).select_related('product')
+    out_of_stock_products = out_of_stock_variants.count()
+    low_stock_products = low_stock_variants.count()
 
     total_users = ProfileUser.objects.filter(is_superuser=False).count()
 
@@ -173,7 +201,7 @@ def admin_dashboard(request):
     if filter_type == "day":
         # Hourly data for today
         for hour in range(24):
-            hour_start = now.replace(hour=hour, minute=0, second=0)
+            hour_start = now.replace(hour=hour, minute=0, second=0, microsecond=0)
             hour_end = hour_start + timedelta(hours=1)
             hour_revenue = (
                 filtered_orders.filter(
@@ -245,6 +273,38 @@ def admin_dashboard(request):
                 {"label": month_date.strftime("%b"), "total": float(month_revenue)}
             )
 
+    elif filter_type == "custom":
+        delta = end_date - start_date
+        if delta.days <= 3:
+            # Hourly data for short ranges (up to 3 days) to make it "perfect"
+            temp_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+            while temp_date <= end_date:
+                for hour in [0, 4, 8, 12, 16, 20]:
+                    h_start = temp_date + timedelta(hours=hour)
+                    h_end = h_start + timedelta(hours=4)
+                    if h_start > end_date: continue
+                    h_revenue = filtered_orders.filter(created_at__gte=h_start, created_at__lt=h_end).aggregate(total=Sum("total_amount"))["total"] or 0
+                    chart_data.append({"label": h_start.strftime("%b %d %H:%M"), "total": float(h_revenue)})
+                temp_date += timedelta(days=1)
+        elif delta.days <= 60:
+            # Daily data for custom range (4 to 60 days)
+            temp_date = start_date
+            while temp_date <= end_date:
+                day_start = temp_date.replace(hour=0, minute=0, second=0, microsecond=0)
+                day_end = day_start + timedelta(days=1)
+                day_revenue = filtered_orders.filter(created_at__gte=day_start, created_at__lt=day_end).aggregate(total=Sum("total_amount"))["total"] or 0
+                chart_data.append({"label": temp_date.strftime("%b %d"), "total": float(day_revenue)})
+                temp_date += timedelta(days=1)
+        else:
+            # Monthly data for ranges > 60 days
+            temp_date = start_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            while temp_date <= end_date:
+                m_start = temp_date
+                if temp_date.month == 12: m_end = temp_date.replace(year=temp_date.year + 1, month=1)
+                else: m_end = temp_date.replace(month=temp_date.month + 1)
+                m_revenue = filtered_orders.filter(created_at__gte=m_start, created_at__lt=m_end).aggregate(total=Sum("total_amount"))["total"] or 0
+                chart_data.append({"label": temp_date.strftime("%b %Y"), "total": float(m_revenue)})
+                temp_date = m_end
     else:
         # Default: show monthly data for current year
         chart_data_raw = (
@@ -275,10 +335,14 @@ def admin_dashboard(request):
         "total_users": total_users,
         "out_of_stock_products": out_of_stock_products,
         "low_stock_products": low_stock_products,
+        "out_of_stock_variants": out_of_stock_variants,
+        "low_stock_variants": low_stock_variants,
         "best_products": best_products,
         "best_categories": best_categories,
         "recent_orders": recent_orders,
         "chart_data": chart_data,
+        "start_date": start_date,
+        "end_date": end_date,
     }
 
     return render(request, "admin_dashboard.html", context)

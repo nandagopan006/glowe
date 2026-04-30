@@ -188,12 +188,24 @@
         <div class="flex flex-col pt-2 lg:pt-4 relative z-10">
             
             <div class="flex items-center gap-2 mb-3">
-                <div class="flex text-gray-800">
+                <div class="flex items-center gap-0.5">
                     {% for i in "12345" %}
-                    <svg class="w-3.5 h-3.5 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                        {% if forloop.counter <= avg_rating %}
+                        <svg class="w-3.5 h-3.5 text-[#d4a855]" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
+                        {% else %}
+                        <svg class="w-3.5 h-3.5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
+                        {% endif %}
                     {% endfor %}
                 </div>
-                <span class="text-[11px] font-montserrat font-medium text-gray-400">(128 Reviews)</span>
+                {% if total_reviews > 0 %}
+                <span class="text-[11px] font-montserrat font-medium text-gray-400">({{ total_reviews }} Review{{ total_reviews|pluralize }})</span>
+                {% else %}
+                <span class="text-[11px] font-montserrat font-medium text-gray-400">No reviews yet</span>
+                {% endif %}
             </div>
 
             <h1 class="text-[40px] leading-tight font-cormorant text-[#1a1208] tracking-tight mb-4">
@@ -442,107 +454,592 @@
         </div>
     </div>
 
+    {% if total_reviews > 0 or reviewable_order %}
     <div class="max-w-[1000px] mx-auto px-5 md:px-8 mb-24">
-        <h2 class="text-4xl font-cormorant text-[#1a1208] mb-12">Customer Stories</h2>
-        
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-10 mb-10">
-            <div class="md:col-span-4 lg:col-span-3 flex flex-col justify-center">
-                <div class="flex items-center gap-4 mb-4">
-                    <span class="text-[64px] leading-none font-cormorant text-[#1a1208]">4.8</span>
-                    <div class="flex flex-col gap-1.5">
-                        <div class="flex text-[#3b2e2a]">
-                            {% for i in "12345" %}
-                            <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-                            {% endfor %}
-                        </div>
-                        <span class="text-[9px] font-montserrat text-gray-500 uppercase tracking-widest leading-relaxed">Based on 128<br>reviews</span>
-                    </div>
+        <!-- Toggle Button for Reviews -->
+        <div class="flex flex-wrap sm:flex-nowrap items-center justify-between border-b border-gray-100 pb-5 mb-8 gap-4">
+            <button onclick="toggleReviewsSection()" class="flex-1 flex items-center justify-between sm:justify-start gap-3 group cursor-pointer transition-all outline-none">
+                <div class="flex items-center gap-2">
+                    <h2 class="text-[24px] font-medium font-cormorant text-[#1a1208] italic">Customer Stories</h2>
+                    <span class="text-xs text-gray-300 font-montserrat tracking-widest font-semibold">/ {{ total_reviews }}</span>
                 </div>
-                <button type="button" onclick="openReviewModal()" class="w-full max-w-[200px] bg-[#3b2e2a] hover:bg-[#271e1c] text-white rounded-md py-3.5 flex items-center justify-center gap-2 transition-colors">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
-                    <span class="font-montserrat text-[10px] font-bold tracking-[0.15em] uppercase">Write a Review</span>
-                </button>
-            </div>
+                <div class="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-[#1a1208] group-hover:text-white group-hover:border-[#1a1208] transition-all duration-500">
+                    <svg id="reviewsToggleIcon" class="w-3.5 h-3.5 transform transition-transform duration-700 rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+            </button>
             
-            <div class="md:col-span-8 lg:col-span-9 flex flex-col gap-2.5 justify-center pl-0 md:pl-10">
-                <div class="flex items-center gap-4">
-                    <span class="font-montserrat text-xs font-bold text-[#1a1208] w-2">5</span>
-                    <div class="flex-1 h-1.5 bg-[#eae6e1] rounded-full overflow-hidden"><div class="bg-[#3b2e2a] h-full rounded-full" style="width: 81%"></div></div>
-                    <span class="font-montserrat text-[10px] text-gray-500 w-6 text-right">81%</span>
-                </div>
-                <div class="flex items-center gap-4">
-                    <span class="font-montserrat text-xs font-bold text-[#1a1208] w-2">4</span>
-                    <div class="flex-1 h-1.5 bg-[#eae6e1] rounded-full overflow-hidden"><div class="bg-[#3b2e2a] h-full rounded-full" style="width: 12%"></div></div>
-                    <span class="font-montserrat text-[10px] text-gray-500 w-6 text-right">12%</span>
-                </div>
-                <div class="flex items-center gap-4">
-                    <span class="font-montserrat text-xs font-bold text-[#1a1208] w-2">3</span>
-                    <div class="flex-1 h-1.5 bg-[#eae6e1] rounded-full overflow-hidden"><div class="bg-[#3b2e2a] h-full rounded-full" style="width: 4%"></div></div>
-                    <span class="font-montserrat text-[10px] text-gray-500 w-6 text-right">4%</span>
-                </div>
-                <div class="flex items-center gap-4">
-                    <span class="font-montserrat text-xs font-bold text-[#1a1208] w-2">2</span>
-                    <div class="flex-1 h-1.5 bg-[#eae6e1] rounded-full overflow-hidden"><div class="bg-[#3b2e2a] h-full rounded-full" style="width: 2%"></div></div>
-                    <span class="font-montserrat text-[10px] text-gray-500 w-6 text-right">2%</span>
-                </div>
-                <div class="flex items-center gap-4">
-                    <span class="font-montserrat text-xs font-bold text-[#1a1208] w-2">1</span>
-                    <div class="flex-1 h-1.5 bg-[#eae6e1] rounded-full overflow-hidden"><div class="bg-[#3b2e2a] h-full rounded-full" style="width: 1%"></div></div>
-                    <span class="font-montserrat text-[10px] text-gray-500 w-6 text-right">1%</span>
-                </div>
-            </div>
+            {% if reviewable_order %}
+            <button type="button" onclick="openReviewModal()" class="w-full sm:w-auto bg-[#1a1208] hover:bg-[#2a2118] text-white rounded-full py-2.5 px-6 flex items-center justify-center gap-2.5 transition-all duration-300 shadow-sm hover:shadow-md active:scale-95">
+                <svg class="w-3.5 h-3.5 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
+                <span class="font-montserrat text-[10px] font-bold tracking-[0.2em] uppercase">Write a Review</span>
+            </button>
+            {% endif %}
         </div>
+
+
+        <!-- Collapsible Content Wrapper using CSS Grid -->
+        <div id="reviewsCollapsibleWrapper" class="grid grid-rows-[0fr] transition-[grid-template-rows] duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]">
+            <div class="overflow-hidden opacity-0 transition-opacity duration-700" id="reviewsCollapsibleInner">
+                <div class="pb-6">
+                    {% if total_reviews > 0 %}
+        <!-- Premium Glowe Rating Widget -->
+        <style>
+            @keyframes glowe-rise { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:none; } }
+            @keyframes glowe-pop  { from { opacity:0; transform:scale(0.4) rotate(-25deg); } to { opacity:1; transform:scale(1) rotate(0deg); } }
+            @keyframes glowe-shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+            .glowe-star-anim { opacity:0; animation: glowe-pop 0.42s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+            .glowe-rise-anim { opacity:0; animation: glowe-rise 0.55s ease forwards; }
+            .glowe-bar-fill  { position:relative; overflow:hidden; width:0%; transition: width 1.1s cubic-bezier(0.22,1,0.36,1); }
+            .glowe-bar-fill::after { content:''; position:absolute; inset:0;
+                background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
+                background-size: 300% 100%; animation: glowe-shimmer 2.5s ease-in-out infinite; }
+            .glowe-ring-fill { fill:none; stroke:url(#gloweRingGrad); stroke-width:8; stroke-linecap:round;
+                stroke-dasharray:339.3; stroke-dashoffset:339.3;
+                transition: stroke-dashoffset 1.5s cubic-bezier(0.22,1,0.36,1); }
+        </style>
+
+        <div class="py-6">
+          <div class="relative rounded-3xl border border-[#e8e2d9] bg-white overflow-hidden shadow-sm">
+            <div class="pointer-events-none absolute -top-24 -right-24 w-64 h-64 rounded-full" style="background:radial-gradient(circle,rgba(212,168,85,.13) 0%,transparent 70%)"></div>
+            <div class="pointer-events-none absolute -bottom-20 -left-20 w-48 h-48 rounded-full" style="background:radial-gradient(circle,rgba(59,46,42,.07) 0%,transparent 70%)"></div>
+            <div class="relative p-6 md:p-10">
+              <p class="font-montserrat text-[10px] tracking-[0.18em] uppercase text-[#9c8c7a] mb-7 glowe-rise-anim" style="animation-delay:.1s">Customer Reviews</p>
+              <div class="flex flex-col md:flex-row items-center md:items-stretch gap-6 md:gap-10">
+
+                <!-- LEFT: Ring + stars + badge -->
+                <div class="flex flex-col items-center gap-4 shrink-0 glowe-rise-anim" style="animation-delay:.2s">
+                  <div class="relative w-[130px] h-[130px]">
+                    <svg width="130" height="130" viewBox="0 0 130 130" style="transform:rotate(-90deg)">
+                      <defs>
+                        <linearGradient id="gloweRingGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stop-color="#3b2e2a"/>
+                          <stop offset="100%" stop-color="#d4a855"/>
+                        </linearGradient>
+                      </defs>
+                      <circle cx="65" cy="65" r="54" fill="none" stroke="#f0ece5" stroke-width="8"/>
+                      <circle id="glowe-ring-c" class="glowe-ring-fill" cx="65" cy="65" r="54" data-rating="{{ avg_rating|default:0 }}"/>
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                      <span class="font-cormorant text-[42px] font-bold text-[#1a1208] leading-none glowe-rise-anim" style="animation-delay:.9s">
+                        {% if total_reviews > 0 %}{{ avg_rating|floatformat:1 }}{% else %}&mdash;{% endif %}
+                      </span>
+                      <span class="font-montserrat text-[10px] text-[#9c8c7a]">out of 5</span>
+                    </div>
+                  </div>
+
+                  <!-- Stars -->
+                  <div class="flex items-center gap-1">
+                    {% for i in "12345" %}
+                    {% if forloop.counter <= avg_rating %}
+                    <svg class="w-5 h-5 glowe-star-anim" style="animation-delay:{{ forloop.counter0 }}00ms; color:#d4a855;" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                    </svg>
+                    {% else %}
+                    <svg class="w-5 h-5 glowe-star-anim" style="animation-delay:{{ forloop.counter0 }}00ms; color:#e8e2d9;" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                    </svg>
+                    {% endif %}
+                    {% endfor %}
+                  </div>
+
+                  <!-- Verdict badge -->
+                  <span class="font-montserrat text-[10px] font-bold uppercase tracking-widest text-white px-4 py-1.5 rounded-full glowe-rise-anim" style="background:linear-gradient(135deg,#3b2e2a,#d4a855);animation-delay:1.4s">
+                    {% if total_reviews == 0 %}No Ratings
+                    {% elif avg_rating >= 4.5 %}Excellent
+                    {% elif avg_rating >= 4.0 %}Very Good
+                    {% elif avg_rating >= 3.0 %}Good
+                    {% elif avg_rating >= 2.0 %}Average
+                    {% else %}Poor{% endif %}
+                  </span>
+                  <span class="font-montserrat text-[11px] text-[#9c8c7a] text-center glowe-rise-anim" style="animation-delay:1.5s">
+                    Based on <strong class="text-[#3b2e2a]">{{ total_reviews }}</strong> review{{ total_reviews|pluralize }}
+                  </span>
+                </div>
+
+                <!-- Divider -->
+                <div class="hidden md:block w-px bg-[#ece7df] self-stretch shrink-0"></div>
+                <div class="block md:hidden h-px bg-[#ece7df] w-full"></div>
+
+                <!-- RIGHT: Animated bars -->
+                <div class="flex-1 flex flex-col gap-3.5 justify-center w-full">
+                  {% for row in rating_rows %}
+                  <div class="flex items-center gap-3 cursor-pointer group glowe-rise-anim"
+                       onclick="filterByRating({{ row.star }})" title="Show {{ row.star }}-star reviews"
+                       style="animation-delay:{{ forloop.counter|add:3 }}00ms">
+                    <span class="font-montserrat text-[12px] font-bold text-[#5a4f43] w-4 text-right shrink-0">{{ row.star }}</span>
+                    <svg class="w-3 h-3 text-[#d4a855] shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                    </svg>
+                    <div class="flex-1 h-2.5 bg-[#f0ece5] rounded-full overflow-hidden">
+                      <div class="glowe-bar-fill h-full rounded-full group-hover:brightness-110"
+                           data-w="{{ row.pct }}"
+                           style="background:linear-gradient(90deg,{% if row.star == 5 %}#3b2e2a,#d4a855{% elif row.star == 4 %}#4a3830,#c49640{% elif row.star == 3 %}#5a4838,#b08030{% elif row.star == 2 %}#6a5840,#9c7020{% else %}#7a6848,#886010{% endif %})"></div>
+                    </div>
+                    <span class="font-montserrat text-[11px] font-semibold text-[#1a1208] w-9 text-right shrink-0">{{ row.pct }}%</span>
+                    <span class="font-montserrat text-[10px] font-semibold text-[#d4a855] bg-[#fdf8ef] border border-[#ede0c4] rounded-full px-2 py-0.5 min-w-[28px] text-center shrink-0">{{ row.count }}</span>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <!-- Summary cards row (3 cards) -->
+              <div class="grid grid-cols-3 gap-3 mt-8 pt-7 border-t border-[#ece7df]">
+                <div class="bg-[#fdf8f4] border border-[#ece7df] rounded-xl p-4 glowe-rise-anim" style="animation-delay:1.6s">
+                  <p class="font-montserrat text-[9px] uppercase tracking-[0.14em] text-[#9c8c7a] mb-2">Total Reviews</p>
+                  <p class="font-cormorant text-[30px] font-bold text-[#1a1208] leading-none">{{ total_reviews }}</p>
+                  <p class="font-montserrat text-[10px] text-[#9c8c7a] mt-1">All time</p>
+                </div>
+                <div class="bg-[#fdf8f4] border border-[#ece7df] rounded-xl p-4 glowe-rise-anim" style="animation-delay:1.7s">
+                  <p class="font-montserrat text-[9px] uppercase tracking-[0.14em] text-[#9c8c7a] mb-2">Average Score</p>
+                  <p class="font-cormorant text-[30px] font-bold text-[#1a1208] leading-none">{% if total_reviews > 0 %}{{ avg_rating|floatformat:1 }}{% else %}&mdash;{% endif %}</p>
+                  <p class="font-montserrat text-[10px] text-[#9c8c7a] mt-1">Out of 5.0</p>
+                </div>
+                <div class="bg-[#fdf8f4] border border-[#ece7df] rounded-xl p-4 glowe-rise-anim" style="animation-delay:1.8s">
+                  <p class="font-montserrat text-[9px] uppercase tracking-[0.14em] text-[#9c8c7a] mb-2">Top Rating</p>
+                  <p class="font-cormorant text-[30px] font-bold text-[#1a1208] leading-none">
+                    {% if rating_distribution.5 > 0 %}5&#9733;{% elif rating_distribution.4 > 0 %}4&#9733;{% elif rating_distribution.3 > 0 %}3&#9733;{% elif total_reviews > 0 %}2&#9733;{% else %}&mdash;{% endif %}
+                  </p>
+                  <p class="font-montserrat text-[10px] text-[#9c8c7a] mt-1">Most voted</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <script>
+        (function(){
+            var ring = document.getElementById('glowe-ring-c');
+            if (ring) {
+                var r = parseFloat(ring.dataset.rating) || 0;
+                setTimeout(function(){ ring.style.strokeDashoffset = (339.3 - (r/5*339.3)).toFixed(2); }, 650);
+            }
+            setTimeout(function(){
+                document.querySelectorAll('.glowe-bar-fill').forEach(function(el){
+                    el.style.width = (el.dataset.w || '0') + '%';
+                });
+            }, 750);
+        })();
+        </script>
 
         <hr class="border-[#eae6e1] my-8">
-
-        <div class="flex flex-wrap items-center gap-3 mb-8">
-            <button class="bg-[#3b2e2a] text-white px-6 py-2.5 rounded-full font-montserrat text-[10px] font-medium transition-colors">Most Recent</button>
-            <button class="bg-transparent border border-[#d8d2ca] text-[#1a1208] px-6 py-2.5 rounded-full font-montserrat text-[10px] font-medium hover:border-gray-400 transition-colors">With Photos</button>
-            <button class="bg-transparent border border-[#d8d2ca] text-[#1a1208] px-6 py-2.5 rounded-full font-montserrat text-[10px] font-medium hover:border-gray-400 transition-colors">Highest Rating</button>
+        <div class="flex flex-wrap items-center gap-3.5 mb-10 pb-2" id="reviewFilterButtons">
+            <button onclick="filterReviews('recent')" data-filter="recent" class="review-filter-btn bg-[#1a1208] text-white px-6 py-3 rounded-full font-montserrat text-[11px] font-bold tracking-[0.12em] uppercase transition-all shadow-[0_4px_12px_rgb(26,18,8,0.2)] hover:bg-[#2c1f17]">MOST RECENT</button>
+            <button onclick="filterReviews('photos')" data-filter="photos" class="review-filter-btn bg-white text-[#1a1208] px-6 py-3 rounded-full font-montserrat text-[11px] font-bold tracking-[0.12em] uppercase transition-all border border-gray-100/80 shadow-[0_4px_15px_rgb(0,0,0,0.03)] hover:shadow-[0_6px_20px_rgb(0,0,0,0.06)]">WITH PHOTOS</button>
+            <button onclick="filterReviews('highest')" data-filter="highest" class="review-filter-btn bg-white text-[#1a1208] px-6 py-3 rounded-full font-montserrat text-[11px] font-bold tracking-[0.12em] uppercase transition-all border border-gray-100/80 shadow-[0_4px_15px_rgb(0,0,0,0.03)] hover:shadow-[0_6px_20px_rgb(0,0,0,0.06)]">HIGHEST RATING</button>
         </div>
 
-        <div class="flex flex-col gap-5">
-            <div class="bg-white rounded-2xl p-7 md:p-9 border border-[#eae6e1] flex flex-col md:flex-row justify-between gap-8 shadow-[0_4px_20px_rgb(0,0,0,0.02)]">
-                <div class="flex-1">
-                    <div class="font-montserrat text-[13px] font-bold text-[#1a1208] mb-1.5">Sarah M.</div>
-                    <div class="flex gap-0.5 mb-4 text-[#3b2e2a]">
-                        {% for i in "12345" %}
-                        <svg class="w-3.5 h-3.5 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
-                        {% endfor %}
-                    </div>
-                    <h4 class="font-cormorant text-[22px] font-bold text-[#1a1208] mb-3">Absolutely changed my skin texture</h4>
-                    <p class="font-montserrat text-[12px] text-[#5a4f43] leading-relaxed mb-6">
-                        I've been using the Natural Radiance Serum for about three weeks now, and the difference is night and day. My skin feels so much smoother and the dullness is completely gone. It absorbs quickly and doesn't leave any sticky residue. Highly recommend for anyone looking for that natural glow!
-                    </p>
-                    <span class="font-montserrat text-[9px] font-bold tracking-widest text-gray-400 uppercase">2 Days Ago</span>
-                </div>
-                <div class="flex gap-3 shrink-0">
-                    <img src="https://via.placeholder.com/150/f0ebe2/8a7e72?text=Img" class="w-20 h-20 md:w-24 md:h-24 rounded-xl object-cover border border-gray-100" alt="Review Image">
-                    <img src="https://via.placeholder.com/150/F9D698/3b2e2a?text=Img" class="w-20 h-20 md:w-24 md:h-24 rounded-xl object-cover border border-gray-100" alt="Review Image">
-                </div>
-            </div>
+        <style>
+            /* ── Review Card Redesign ── */
+            .rv-card {
+                background: #fff;
+                border: 1px solid rgba(0,0,0,0.07);
+                border-radius: 20px;
+                padding: 1.5rem 1.6rem;
+                position: relative;
+                overflow: hidden;
+                opacity: 0;
+                transform: translateY(18px);
+                animation: rv-rise 0.5s cubic-bezier(0.22,1,0.36,1) forwards;
+                transition: box-shadow .22s ease, transform .22s ease;
+            }
+            .rv-card:hover { box-shadow: 0 8px 32px rgba(0,0,0,0.09); transform: translateY(-2px); }
+            @keyframes rv-rise { to { opacity:1; transform:translateY(0); } }
 
-            <div class="bg-white rounded-2xl p-7 md:p-9 border border-[#eae6e1] shadow-[0_4px_20px_rgb(0,0,0,0.02)]">
-                <div class="font-montserrat text-[13px] font-bold text-[#1a1208] mb-1.5">Emily R.</div>
-                <div class="flex gap-0.5 mb-4 text-[#3b2e2a]">
-                    {% for i in "12345" %}
-                    <svg class="w-3.5 h-3.5 stroke-current fill-none" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+            .rv-avatar-init {
+                width: 44px; height: 44px; border-radius: 50%;
+                background: #1a1208; color: #fff;
+                font-family: 'Cormorant Garamond', 'Cormorant', serif;
+                font-size: 18px; font-weight: 700;
+                display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            }
+            .rv-avatar-img {
+                width: 44px; height: 44px; border-radius: 50%;
+                object-fit: cover; border: 2px solid rgba(0,0,0,0.07); flex-shrink: 0;
+            }
+            .rv-name {
+                font-family: 'Montserrat', sans-serif;
+                font-size: 13.5px; font-weight: 700; color: #1a1208;
+                display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+            }
+            .rv-verified {
+                display: inline-flex; align-items: center; gap: 4px;
+                font-family: 'Montserrat', sans-serif;
+                font-size: 9.5px; font-weight: 700; letter-spacing: 0.06em;
+                color: #2d9e6b; background: #e8f7f0;
+                padding: 3px 9px; border-radius: 99px;
+            }
+            .rv-verified::before {
+                content: ''; width: 5px; height: 5px; border-radius: 50%;
+                background: #2d9e6b; flex-shrink: 0;
+            }
+            .rv-date {
+                font-family: 'Montserrat', sans-serif;
+                font-size: 11px; color: #b0ada6; font-weight: 400;
+            }
+            .rv-star-on  { color: #d4940a; font-size: 15px; line-height: 1; }
+            .rv-star-off { color: #e0ddd7; font-size: 15px; line-height: 1; }
+            .rv-verdict {
+                font-family: 'Montserrat', sans-serif;
+                font-size: 10.5px; font-weight: 500; color: #b0ada6;
+            }
+            .rv-title {
+                font-family: 'Cormorant Garamond', 'Cormorant', serif;
+                font-size: 21px; font-weight: 600; color: #1a1208;
+                line-height: 1.3; margin-bottom: 5px;
+            }
+            .rv-text {
+                font-family: 'Montserrat', sans-serif;
+                font-size: 13px; color: #6b6860; line-height: 1.7; font-weight: 300;
+            }
+            .rv-photo {
+                width: 70px; height: 70px; border-radius: 12px; object-fit: cover;
+                border: 1px solid rgba(0,0,0,0.07); cursor: pointer;
+                transition: transform .18s ease, box-shadow .18s ease; flex-shrink: 0;
+            }
+            .rv-photo:hover { transform: scale(1.07); box-shadow: 0 4px 16px rgba(0,0,0,0.14); }
+            .rv-helpful-btn {
+                display: inline-flex; align-items: center; gap: 5px;
+                padding: 5px 14px; border-radius: 99px;
+                border: 1.5px solid rgba(0,0,0,0.1);
+                background: transparent;
+                font-family: 'Montserrat', sans-serif;
+                font-size: 11.5px; font-weight: 600; color: #6b6860;
+                cursor: pointer; transition: all .18s ease; white-space: nowrap;
+            }
+            .rv-helpful-btn:hover, .rv-helpful-btn.liked {
+                background: #1a1208; color: #fff; border-color: #1a1208;
+            }
+            .rv-time {
+                font-family: 'Montserrat', sans-serif;
+                font-size: 10.5px; color: #b0ada6; font-weight: 400; letter-spacing: 0.04em;
+                white-space: nowrap;
+            }
+            /* Lightbox */
+            #rv-lightbox {
+                display: none; position: fixed; inset: 0;
+                background: rgba(0,0,0,0.75); z-index: 9999;
+                align-items: center; justify-content: center;
+                backdrop-filter: blur(5px);
+            }
+            #rv-lightbox.open { display: flex; }
+            #rv-lightbox img { max-width: 90vw; max-height: 88vh; border-radius: 16px; object-fit: contain; }
+            #rv-lightbox-close {
+                position: fixed; top: 22px; right: 26px;
+                font-size: 30px; color: #fff; cursor: pointer; opacity: 0.85; line-height: 1;
+                font-family: 'Montserrat', sans-serif; font-weight: 300;
+            }
+        </style>
+
+        <div id="reviewsContainer" class="flex flex-col gap-3.5">
+            {% for review in reviews %}
+            <div class="rv-card"
+                 style="animation-delay: {{ forloop.counter0 }}00ms"
+                 data-timestamp="{{ review.created_at|date:'U' }}"
+                 data-rating="{{ review.rating }}"
+                 data-has-photos="{{ review.images.exists|yesno:'true,false' }}">
+
+                <!-- Card Header: Avatar + Name + Stars -->
+                <div class="flex items-start justify-between gap-3 mb-4" style="flex-wrap: wrap; row-gap: 12px;">
+                    <!-- Left: Avatar + Name -->
+                    <div class="flex items-center gap-3" style="min-width:0; flex:1;">
+                        {% if review.user.profile_image and review.user.profile_image.name %}
+                            <img class="rv-avatar-img" src="{{ review.user.profile_image.url }}" alt="{{ review.user.full_name }}">
+                        {% else %}
+                            <div class="rv-avatar-init">{{ review.user.full_name|make_list|first|upper|default:"U" }}</div>
+                        {% endif %}
+                        <div style="min-width:0;">
+                            <div class="rv-name">
+                                {{ review.user.full_name|default:review.user.username }}
+                            </div>
+                            <div class="rv-date" style="margin-top:3px;">{{ review.created_at|date:"M j, Y" }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Stars + Label -->
+                    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex-shrink:0;">
+                        <div style="display:flex; gap:3px; align-items:center;">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= review.rating %}
+                                <span class="rv-star-on">★</span>
+                                {% else %}
+                                <span class="rv-star-off">★</span>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <span class="rv-verdict">
+                            {% if review.rating == 5 %}Excellent
+                            {% elif review.rating == 4 %}Very Good
+                            {% elif review.rating == 3 %}Good
+                            {% elif review.rating == 2 %}Poor
+                            {% else %}Terrible{% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Review Title -->
+                {% if review.title %}
+                <div class="rv-title">{{ review.title }}</div>
+                {% endif %}
+
+                <!-- Review Text -->
+                <p class="rv-text" style="margin-bottom: {% if review.images.exists %}14px{% else %}0{% endif %};">{{ review.comment|linebreaksbr }}</p>
+
+                <!-- Photos -->
+                {% if review.images.exists %}
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:4px;">
+                    {% for img in review.images.all %}
+                    <img class="rv-photo" src="{{ img.image.url }}" alt="Review photo" onclick="rvOpenLightbox('{{ img.image.url }}')">
                     {% endfor %}
                 </div>
-                <h4 class="font-cormorant text-[22px] font-bold text-[#1a1208] mb-3">A staple in my morning routine</h4>
-                <p class="font-montserrat text-[12px] text-[#5a4f43] leading-relaxed mb-6">
-                    This serum is everything. It's lightweight enough to wear under makeup but hydrating enough to make my skin feel plump all day. The scent is very subtle and natural, which I love.
-                </p>
-                <span class="font-montserrat text-[9px] font-bold tracking-widest text-gray-400 uppercase">1 Week Ago</span>
+                {% endif %}
+
+                <!-- Footer: Helpful + Time -->
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-top:14px; padding-top:13px; border-top:1px solid rgba(0,0,0,0.07); gap:8px; flex-wrap:wrap;">
+                    <button class="rv-helpful-btn" onclick="rvToggleLike(this)">
+                        <span style="font-size:13px;">♡</span> Helpful
+                    </button>
+                    <span class="rv-time">{{ review.created_at|timesince }} ago</span>
+                </div>
             </div>
+            {% endfor %}
+
+        </div>
+
+        <!-- Load More Button (shown by JS when needed) -->
+        <div id="rv-load-more-wrap" style="display:none; justify-content:center; margin-top:18px;">
+            <button id="rv-load-more-btn" onclick="rvLoadMore()"
+                class="inline-flex items-center gap-2 font-montserrat text-[11px] font-bold tracking-[0.15em] uppercase text-[#1a1208] border-[1.5px] border-[#1a1208] rounded-full px-7 py-3 bg-transparent hover:bg-[#1a1208] hover:text-white transition-all duration-300">
+                <svg id="rv-load-icon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                </svg>
+                <span id="rv-load-label">Load More Reviews</span>
+            </button>
+        </div>
+        <div
+        </div>
+        {% endif %}
+
+        <!-- Lightbox -->
+        <div id="rv-lightbox" onclick="rvCloseLightbox()">
+            <span id="rv-lightbox-close">✕</span>
+            <img id="rv-lightbox-img" src="" alt="Review photo">
+        </div>
+
+        <script>
+        function rvOpenLightbox(src) {
+            document.getElementById('rv-lightbox-img').src = src;
+            document.getElementById('rv-lightbox').classList.add('open');
+        }
+        function rvCloseLightbox() {
+            document.getElementById('rv-lightbox').classList.remove('open');
+        }
+        document.addEventListener('keydown', function(e){ if(e.key === 'Escape') rvCloseLightbox(); });
+
+        function rvToggleLike(btn) {
+            const isLiked = btn.classList.contains('liked');
+            btn.classList.toggle('liked');
+            const heart = btn.querySelector('span');
+            heart.textContent = isLiked ? '♡' : '♥';
+        }
+
+        // ── Load More Logic ──────────────────────────────────────────
+        const RV_PAGE_SIZE = 3;
+        let rvShownCount = 0;
+        let rvCurrentVisible = []; // all visible cards after filter
+
+        function rvInitCards() {
+            const container = document.getElementById('reviewsContainer');
+            if (!container) return;
+            rvCurrentVisible = Array.from(container.querySelectorAll('.rv-card'))
+                                   .filter(c => c.style.display !== 'none');
+            rvShownCount = 0;
+            rvCurrentVisible.forEach(c => { c.style.display = 'none'; });
+            rvRevealNext();
+        }
+
+        function rvRevealNext() {
+            const batch = rvCurrentVisible.slice(rvShownCount, rvShownCount + RV_PAGE_SIZE);
+            batch.forEach((card, i) => {
+                card.style.display = 'block';
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(16px)';
+                card.style.transition = 'none';
+                setTimeout(() => {
+                    card.style.transition = 'opacity 0.42s ease, transform 0.42s cubic-bezier(0.22,1,0.36,1)';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 40 + i * 70);
+            });
+            rvShownCount += batch.length;
+            rvUpdateLoadBtn();
+        }
+
+        function rvLoadMore() {
+            rvRevealNext();
+        }
+
+        function rvUpdateLoadBtn() {
+            const wrap = document.getElementById('rv-load-more-wrap');
+            const label = document.getElementById('rv-load-label');
+            if (!wrap) return;
+            const remaining = rvCurrentVisible.length - rvShownCount;
+            if (remaining > 0) {
+                wrap.style.display = 'flex';
+                label.textContent = 'Load ' + Math.min(remaining, RV_PAGE_SIZE) + ' More Review' + (Math.min(remaining, RV_PAGE_SIZE) > 1 ? 's' : '');
+            } else {
+                wrap.style.display = 'none';
+            }
+        }
+
+        // Run on page ready (inside collapsible, trigger when section opens)
+        document.addEventListener('DOMContentLoaded', function() {
+            rvInitCards();
+        });
+        </script>
+                
+                </div> <!-- End pt-2 pb-6 -->
+            </div> <!-- End overflow-hidden -->
+        </div> <!-- End grid-rows -->
+    </div>
+    {% endif %}
+
+
+    {% if reviewable_order %}
+    <!-- Write a Review Modal -->
+    <div id="reviewModal" class="fixed inset-0 z-[100] hidden items-center justify-center">
+        <!-- Backdrop -->
+        <div id="reviewModalBackdrop" class="absolute inset-0 bg-black/40 backdrop-blur-sm opacity-0 transition-opacity duration-300" onclick="closeReviewModal()"></div>
+        
+             <!-- Modal Content -->
+        <div id="reviewModalContent" class="relative bg-white w-full max-w-lg rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] p-8 md:p-10 transform scale-95 opacity-0 transition-all duration-500 cubic-bezier(0.34, 1.56, 0.64, 1) overflow-y-auto max-h-[90vh] m-4" style="scrollbar-width: thin;">
             
-            <div class="flex justify-center mt-10 mb-6">
-                <a href="#" class="inline-block font-montserrat text-[10px] font-bold tracking-[0.2em] text-[#1a1208] uppercase border-b-[1.5px] border-[#1a1208] pb-1.5 hover:text-gray-500 hover:border-gray-500 transition-colors">
-                    Load More Reviews
-                </a>
+            <style>
+                @keyframes starPop {
+                    0% { transform: scale(1); }
+                    40% { transform: scale(1.35); }
+                    100% { transform: scale(1.18); }
+                }
+                .star-btn { position: relative; }
+                .star-svg { transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1); }
+                .star-btn:hover .star-svg, .star-btn.active .star-svg { transform: scale(1.18); }
+                .star-btn.star-pop .star-svg { animation: starPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+                
+                .star-path { transition: fill 0.2s, stroke 0.2s; fill: #f0efe8; stroke: #ccc; stroke-width: 1.5; }
+                .star-btn.filled .star-path { fill: #F5B83D; stroke: #E8A020; stroke-width: 1; }
+                .star-btn.hovered .star-path { fill: #FACCF3; stroke: #D4537E; stroke-width: 1; }
+                
+                .spark {
+                    position: absolute; width: 4px; height: 4px; border-radius: 50%;
+                    background: #F5B83D; top: 50%; left: 50%; opacity: 0; pointer-events: none;
+                }
+                .star-btn.star-pop .spark { animation: spark 0.5s ease-out forwards; }
+                .star-btn.star-pop .spark:nth-child(1) { animation-delay: 0s;    --dx: -20px; --dy: -20px; }
+                .star-btn.star-pop .spark:nth-child(2) { animation-delay: 0.04s; --dx:  20px; --dy: -20px; }
+                .star-btn.star-pop .spark:nth-child(3) { animation-delay: 0.02s; --dx: -22px; --dy:   8px; }
+                .star-btn.star-pop .spark:nth-child(4) { animation-delay: 0.06s; --dx:  22px; --dy:   8px; }
+                .star-btn.star-pop .spark:nth-child(5) { animation-delay: 0s;    --dx:   0px; --dy: -26px; }
+                .star-btn.star-pop .spark:nth-child(6) { animation-delay: 0.03s; --dx:   0px; --dy:  24px; }
+                @keyframes spark {
+                    0%   { opacity: 1; transform: translate(-50%, -50%) translate(0, 0) scale(1); }
+                    100% { opacity: 0; transform: translate(-50%, -50%) translate(var(--dx), var(--dy)) scale(0); }
+                }
+            </style>
+
+            <!-- Close Button (Absolute Top Right) -->
+            <button type="button" onclick="closeReviewModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-[#1a1208] hover:bg-gray-100 transition-colors focus:outline-none z-50">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+
+            <!-- Header -->
+            <div class="mb-6">
+                <h3 class="font-cormorant text-3xl font-bold text-[#1a1208] mb-1 tracking-tight">Share Your Experience</h3>
+                <p class="font-montserrat text-[13px] text-gray-500">Your feedback helps others make better choices.</p>
             </div>
+
+            <!-- Product Info -->
+            <div class="flex items-center gap-4 mb-8 pb-8 border-b border-gray-100">
+                <div class="w-14 h-14 bg-gray-50 rounded-xl overflow-hidden shrink-0 border border-gray-100 flex items-center justify-center">
+                    {% if primary_image %}
+                    <img src="{{ primary_image.image.url }}" class="w-full h-full object-cover" alt="Product Image">
+                    {% endif %}
+                </div>
+                <div class="flex-1 min-w-0">
+                    <span class="font-montserrat text-[9px] font-bold tracking-[0.2em] text-[#c4b9b0] uppercase block mb-1">Reviewing</span>
+                    <p class="font-cormorant text-lg font-bold text-[#1a1208] leading-tight truncate">{{ product.name }}</p>
+                </div>
+            </div>
+
+            <!-- Form -->
+            <form id="reviewForm" method="POST" enctype="multipart/form-data" action="{% url 'add_review' product.id reviewable_order.id %}" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Rating -->
+                <div>
+                    <label class="block font-montserrat text-[11px] font-bold tracking-[0.1em] uppercase text-gray-400 mb-3">Overall Rating</label>
+                    <div class="flex items-center gap-4">
+                        <div class="flex gap-1" id="starRatingContainer">
+                            {% for i in "12345" %}
+                            <button type="button" class="star-btn flex items-center justify-center w-[44px] h-[44px] rounded-full hover:bg-gray-50 focus:outline-none bg-transparent border-none transition-colors duration-150" aria-label="Rate {{ forloop.counter }} star" data-value="{{ forloop.counter }}">
+                                <svg class="star-svg w-[32px] h-[32px]" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path class="star-path" d="M16 3l3.3 7.1 7.7.7-5.6 5.1 1.7 7.6L16 19.4l-7.1 4.1 1.7-7.6L5 10.8l7.7-.7z"/>
+                                </svg>
+                                <div class="absolute inset-0 pointer-events-none">
+                                    <span class="spark"></span><span class="spark"></span><span class="spark"></span><span class="spark"></span><span class="spark"></span><span class="spark"></span>
+                                </div>
+                            </button>
+                            {% endfor %}
+                        </div>
+                        <div class="flex flex-col justify-center">
+                            <span id="ratingText" class="opacity-0 transition-opacity duration-200 text-[#111] font-montserrat text-[14px] font-bold">Tap to rate</span>
+                            <span id="ratingSub" class="opacity-0 transition-opacity duration-200 text-gray-500 font-montserrat text-[11px]"></span>
+                        </div>
+                    </div>
+                    <input type="hidden" name="rating" id="ratingValue" value="" required>
+                    <p id="ratingError" class="hidden text-red-500 font-montserrat text-[10px] mt-2 font-semibold">Please select a rating.</p>
+                </div>
+
+                <!-- Title -->
+                <div class="relative">
+                    <label class="block font-montserrat text-[11px] font-bold tracking-[0.1em] uppercase text-gray-400 mb-2">Review Title</label>
+                    <input type="text" name="title" placeholder="Summarize your experience" class="w-full bg-[#fafafa] border border-[#e0e0e0] rounded-xl px-4 py-3.5 font-montserrat text-[14px] text-[#111] focus:outline-none focus:bg-white focus:border-[#1a1208] focus:shadow-[0_0_0_3px_rgba(26,18,8,0.06)] transition-all placeholder:text-gray-400">
+                </div>
+
+                <!-- Comment -->
+                <div class="relative">
+                    <label class="block font-montserrat text-[11px] font-bold tracking-[0.1em] uppercase text-gray-400 mb-2">Your Review</label>
+                    <textarea name="comment" id="reviewComment" rows="4" placeholder="What did you like or dislike? How was the texture and scent?" class="w-full bg-[#fafafa] border border-[#e0e0e0] rounded-xl px-4 py-3.5 font-montserrat text-[14px] text-[#111] focus:outline-none focus:bg-white focus:border-[#1a1208] focus:shadow-[0_0_0_3px_rgba(26,18,8,0.06)] transition-all placeholder:text-gray-400 resize-none"></textarea>
+                    <div class="flex justify-between mt-1.5 px-1">
+                        <p id="commentError" class="hidden text-red-500 font-montserrat text-[10px] font-semibold">Minimum 10 characters required.</p>
+                        <span id="charCount" class="font-montserrat text-[11px] text-gray-400 ml-auto transition-colors">Min. 10 characters</span>
+                    </div>
+                </div>
+
+                <!-- Image Upload -->
+                <div>
+                    <label class="block font-montserrat text-[11px] font-bold tracking-[0.1em] uppercase text-gray-400 mb-2">Add Media (Optional)</label>
+                    <div id="dropZone" class="relative w-full border border-dashed border-[#d0d0d0] bg-[#fafafa] rounded-xl py-6 px-4 flex flex-col items-center justify-center text-center hover:border-[#1a1208] hover:bg-white transition-all duration-300 cursor-pointer group overflow-hidden" onclick="document.getElementById('reviewImages').click()">
+                        <div class="w-10 h-10 bg-white shadow-sm border border-gray-100 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300 relative z-10">
+                            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        </div>
+                        <p class="font-montserrat text-[13px] font-semibold text-[#111] mb-1 relative z-10"><span class="underline decoration-gray-300 underline-offset-2">Click to upload</span> or drag and drop</p>
+                        <p class="font-montserrat text-[11px] text-gray-400 relative z-10">SVG, PNG, JPG (max. 3 images)</p>
+                        <input type="file" id="reviewImages" name="images" multiple accept="image/*" class="hidden">
+                    </div>
+                    <!-- Image Previews Container -->
+                    <div id="imagePreviewContainer" class="flex flex-wrap gap-3 mt-4 hidden"></div>
+                </div>
+
+                <!-- Submit -->
+                <div class="pt-4 border-t border-gray-100 flex justify-end">
+                    <button type="submit" id="submitReviewBtn" class="bg-[#1a1208] text-white rounded-xl px-8 py-3.5 flex items-center justify-center gap-2 transition-all hover:bg-black active:scale-[0.98] disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed disabled:active:scale-100">
+                        <span class="font-montserrat text-[12px] font-bold tracking-wide uppercase">Submit Review</span>
+                        <svg id="submitReviewSpinner" class="w-4 h-4 hidden animate-spin" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
+    {% endif %}
 
 
     {% if related_products %}
@@ -1736,6 +2233,408 @@
             svg.setAttribute('fill', btn.classList.contains('wishlisted') ? 'currentColor' : 'none');
             showToast('error', 'Error', 'Something went wrong. Please try again.');
         });
+    }
+
+    /* ── Write a Review Modal JS ── */
+    function openReviewModal() {
+        {% if not reviewable_order %}
+        showToast('error', 'Hold On', 'You can only review products you have purchased and received.');
+        return;
+        {% endif %}
+        const modal = document.getElementById('reviewModal');
+        const backdrop = document.getElementById('reviewModalBackdrop');
+        const content = document.getElementById('reviewModalContent');
+        if (!modal) return;
+        
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        requestAnimationFrame(() => {
+            backdrop.classList.remove('opacity-0');
+            backdrop.classList.add('opacity-100');
+            content.classList.remove('opacity-0', 'scale-95');
+            content.classList.add('opacity-100', 'scale-100');
+        });
+    }
+
+    function closeReviewModal() {
+        const modal = document.getElementById('reviewModal');
+        const backdrop = document.getElementById('reviewModalBackdrop');
+        const content = document.getElementById('reviewModalContent');
+        if (!modal) return;
+        
+        backdrop.classList.remove('opacity-100');
+        backdrop.classList.add('opacity-0');
+        content.classList.remove('opacity-100', 'scale-100');
+        content.classList.add('opacity-0', 'scale-95');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 300);
+    }
+
+    // Star Rating Logic
+    const stars = document.querySelectorAll('.star-btn');
+    const ratingInput = document.getElementById('ratingValue');
+    const ratingText = document.getElementById('ratingText');
+    const ratingSub = document.getElementById('ratingSub');
+    const ratingError = document.getElementById('ratingError');
+    const submitReviewBtn = document.getElementById('submitReviewBtn');
+    
+    const labels = ['', 'Terrible', 'Poor', 'Average', 'Good', 'Excellent'];
+    const sublabels = ['', 'Really bad experience', 'Below expectations', 'It was okay', 'Pretty satisfied', 'Absolutely loved it!'];
+    
+    let currentRating = 0;
+    let hoveredRating = 0;
+
+    // Initially disable submit button
+    if (submitReviewBtn && !ratingInput.value) {
+        submitReviewBtn.disabled = true;
+    }
+
+    function updateStarsUI() {
+        const active = hoveredRating || currentRating;
+        stars.forEach((btn, idx) => {
+            btn.classList.remove('filled', 'hovered', 'active');
+            if (idx < active) {
+                btn.classList.add(hoveredRating > 0 ? 'hovered' : 'filled');
+            }
+            if (idx < currentRating) btn.classList.add('active');
+        });
+        
+        if (hoveredRating > 0) {
+            ratingText.textContent = labels[hoveredRating];
+            if(ratingSub) ratingSub.textContent = sublabels[hoveredRating];
+            ratingText.classList.remove('opacity-0');
+            if(ratingSub) ratingSub.classList.remove('opacity-0');
+        } else if (currentRating > 0) {
+            ratingText.textContent = labels[currentRating];
+            if(ratingSub) ratingSub.textContent = sublabels[currentRating];
+            ratingText.classList.remove('opacity-0');
+            if(ratingSub) ratingSub.classList.remove('opacity-0');
+        } else {
+            ratingText.textContent = 'Tap to rate';
+            if(ratingSub) ratingSub.textContent = '';
+            // keep ratingText visible but reset text, or fade it out? The original code says "Tap to rate".
+            ratingText.classList.remove('opacity-0');
+        }
+    }
+
+    stars.forEach((star, index) => {
+        const rating = index + 1;
+        star.addEventListener('mouseenter', () => {
+            hoveredRating = rating;
+            updateStarsUI();
+        });
+        
+        star.addEventListener('mouseleave', () => {
+            hoveredRating = 0;
+            updateStarsUI();
+        });
+        
+        star.addEventListener('click', (e) => {
+            currentRating = rating;
+            ratingInput.value = currentRating;
+            ratingError.classList.add('hidden');
+            if (submitReviewBtn) submitReviewBtn.disabled = false;
+            
+            // Pop Animation triggers sparkles automatically via CSS
+            star.classList.remove('star-pop');
+            void star.offsetWidth; // trigger reflow
+            star.classList.add('star-pop');
+            setTimeout(() => star.classList.remove('star-pop'), 400);
+            
+            updateStarsUI();
+        });
+    });
+
+    // Char count
+    const commentArea = document.getElementById('reviewComment');
+    const charCount = document.getElementById('charCount');
+    const commentError = document.getElementById('commentError');
+    if (commentArea) {
+        commentArea.addEventListener('input', () => {
+            const len = commentArea.value.length;
+            if (len > 0) {
+                charCount.textContent = `${len} character${len !== 1 ? 's' : ''}`;
+                if (len >= 10) {
+                    charCount.classList.remove('text-gray-400');
+                    charCount.classList.add('text-green-600');
+                    commentError.classList.add('hidden');
+                } else {
+                    charCount.classList.remove('text-green-600');
+                    charCount.classList.add('text-gray-400');
+                }
+            } else {
+                charCount.textContent = 'Min. 10 characters';
+                charCount.classList.remove('text-green-600');
+                charCount.classList.add('text-gray-400');
+            }
+        });
+    }
+
+    // Enhanced Drag & Drop Multi-Image Upload Logic
+    const dropZone = document.getElementById('dropZone');
+    const imageInput = document.getElementById('reviewImages');
+    const previewContainer = document.getElementById('imagePreviewContainer');
+    let selectedFiles = [];
+
+    if (dropZone && imageInput && previewContainer) {
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // Highlight drop zone
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            dropZone.classList.add('border-[#1a1208]', 'bg-white', 'shadow-[0_0_0_4px_rgba(240,235,226,0.5)]');
+            dropZone.classList.remove('border-[#d8d2ca]', 'bg-[#faf8f5]');
+        }
+
+        function unhighlight(e) {
+            dropZone.classList.remove('border-[#1a1208]', 'bg-white', 'shadow-[0_0_0_4px_rgba(240,235,226,0.5)]');
+            dropZone.classList.add('border-[#d8d2ca]', 'bg-[#faf8f5]');
+        }
+
+        // Handle drop
+        dropZone.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+        
+        // Handle normal click selection
+        imageInput.addEventListener('change', function() {
+            handleFiles(this.files);
+        });
+    }
+
+    function handleFiles(files) {
+        const newFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+        
+        if (selectedFiles.length + newFiles.length > 3) {
+            showToast('error', 'Limit Exceeded', 'You can only upload a maximum of 3 images.');
+            return;
+        }
+        
+        selectedFiles = [...selectedFiles, ...newFiles].slice(0, 3);
+        updateInputAndPreview();
+    }
+
+    window.removeReviewFile = function(index) {
+        selectedFiles.splice(index, 1);
+        updateInputAndPreview();
+    };
+
+    function updateInputAndPreview() {
+        // Update the actual file input using DataTransfer
+        const dataTransfer = new DataTransfer();
+        selectedFiles.forEach(file => dataTransfer.items.add(file));
+        imageInput.files = dataTransfer.files;
+
+        // Render Previews
+        previewContainer.innerHTML = '';
+        
+        if (selectedFiles.length > 0) {
+            previewContainer.classList.remove('hidden');
+            
+            selectedFiles.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imgWrapper = document.createElement('div');
+                    imgWrapper.className = 'relative w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden border-2 border-transparent shadow-sm group animate-fade-in transition-all';
+                    
+                    imgWrapper.innerHTML = `
+                        <img src="${e.target.result}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                        <div class="absolute inset-0 bg-[#1a1208]/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px]">
+                            <button type="button" onclick="event.stopPropagation(); window.removeReviewFile(${index})" class="w-8 h-8 bg-white/20 hover:bg-red-500 hover:scale-110 rounded-full flex items-center justify-center text-white transition-all focus:outline-none shadow-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+                    `;
+                    previewContainer.appendChild(imgWrapper);
+                }
+                reader.readAsDataURL(file);
+            });
+        } else {
+            previewContainer.classList.add('hidden');
+        }
+    }
+
+    // Submit Validation
+    const form = document.getElementById('reviewForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            let valid = true;
+            if (!ratingInput.value) {
+                ratingError.classList.remove('hidden');
+                valid = false;
+            }
+            if (commentArea.value.length < 10) {
+                commentError.classList.remove('hidden');
+                valid = false;
+            }
+            if (!valid) e.preventDefault();
+            else {
+                document.getElementById('submitReviewBtn').disabled = true;
+                document.getElementById('submitReviewSpinner').classList.remove('hidden');
+            }
+        });
+    }
+    
+    // Zoom in on review image (dummy for now)
+    function openReviewImageModal(url) {
+        // You could hook this up to your fsModal if desired, or simply open a new tab
+        window.open(url, '_blank');
+    }
+
+    // Toggle Review Section Accordion
+    function toggleReviewsSection() {
+        const wrapper = document.getElementById('reviewsCollapsibleWrapper');
+        const inner = document.getElementById('reviewsCollapsibleInner');
+        const icon = document.getElementById('reviewsToggleIcon');
+        
+        if (wrapper.style.gridTemplateRows === '1fr') {
+            wrapper.style.gridTemplateRows = '0fr';
+            inner.classList.replace('opacity-100', 'opacity-0');
+            icon.classList.remove('rotate-180');
+        } else {
+            wrapper.style.gridTemplateRows = '1fr';
+            inner.classList.replace('opacity-0', 'opacity-100');
+            icon.classList.add('rotate-180');
+            
+            // Trigger rating widget animations + init card pagination
+            setTimeout(() => {
+                if (typeof animateRatingWidget === 'function') animateRatingWidget();
+                if (typeof rvInitCards === 'function') rvInitCards();
+            }, 300);
+
+            // Scroll a bit so the top of the section is nicely visible
+            setTimeout(() => {
+                const rect = wrapper.parentElement.getBoundingClientRect();
+                const offset = rect.top + window.scrollY - 100;
+                window.scrollTo({ top: offset, behavior: 'smooth' });
+            }, 350);
+        }
+    }
+
+    // Client-side Review Filtering & Sorting
+    function filterReviews(filterType) {
+        const container = document.getElementById('reviewsContainer');
+        if (!container) return;
+
+        const cards = Array.from(container.querySelectorAll('.rv-card'));
+
+        // Update button styles
+        document.querySelectorAll('.review-filter-btn').forEach(btn => {
+            if (btn.dataset.filter === filterType) {
+                btn.className = 'review-filter-btn bg-[#1a1208] text-white px-6 py-3 rounded-full font-montserrat text-[11px] font-bold tracking-[0.12em] uppercase transition-all shadow-[0_4px_12px_rgb(26,18,8,0.2)] hover:bg-[#2c1f17]';
+            } else {
+                btn.className = 'review-filter-btn bg-white text-[#1a1208] px-6 py-3 rounded-full font-montserrat text-[11px] font-bold tracking-[0.12em] uppercase transition-all border border-gray-100/80 shadow-[0_4px_15px_rgb(0,0,0,0.03)] hover:shadow-[0_6px_20px_rgb(0,0,0,0.06)]';
+            }
+        });
+
+        // Filter: show/hide
+        cards.forEach(card => {
+            if (filterType === 'photos') {
+                card.style.display = card.dataset.hasPhotos === 'true' ? 'block' : 'none';
+            } else {
+                card.style.display = 'block';
+            }
+        });
+
+        // Sort visible cards
+        const visibleCards = cards.filter(c => c.style.display !== 'none');
+
+        if (filterType === 'recent') {
+            visibleCards.sort((a, b) => parseInt(b.dataset.timestamp) - parseInt(a.dataset.timestamp));
+        } else if (filterType === 'highest') {
+            visibleCards.sort((a, b) => {
+                const ratingDiff = parseInt(b.dataset.rating) - parseInt(a.dataset.rating);
+                return ratingDiff !== 0 ? ratingDiff : parseInt(b.dataset.timestamp) - parseInt(a.dataset.timestamp);
+            });
+        } else if (filterType === 'photos') {
+            visibleCards.sort((a, b) => parseInt(b.dataset.timestamp) - parseInt(a.dataset.timestamp));
+        }
+
+        // Re-append visible sorted cards then hidden ones
+        const hiddenCards = cards.filter(c => c.style.display === 'none');
+        [...visibleCards, ...hiddenCards].forEach(card => {
+            card.style.display = 'none'; // hide all first; rvInitCards will reveal
+            container.appendChild(card);
+        });
+
+        // Reset pagination with new sorted/filtered set
+        rvCurrentVisible = visibleCards;
+        rvShownCount = 0;
+        rvRevealNext();
+    }
+
+    // Click on a star bar to open the reviews section filtered to that rating
+    function filterByRating(star) {
+        const wrapper = document.getElementById('reviewsCollapsibleWrapper');
+        const inner = document.getElementById('reviewsCollapsibleInner');
+        const icon = document.getElementById('reviewsToggleIcon');
+
+        // Open collapsible if not already open
+        if (wrapper.style.gridTemplateRows !== '1fr') {
+            wrapper.style.gridTemplateRows = '1fr';
+            inner.classList.replace('opacity-0', 'opacity-100');
+            icon.classList.add('rotate-180');
+        }
+
+        // Deactivate all filter buttons then filter by this rating
+        const container = document.getElementById('reviewsContainer');
+        if (!container) return;
+
+        const cards = Array.from(container.querySelectorAll('.review-card'));
+
+        // Reset filter button states
+        document.querySelectorAll('.review-filter-btn').forEach(btn => {
+            btn.className = 'review-filter-btn bg-white text-[#1a1208] px-6 py-3 rounded-full font-montserrat text-[11px] font-bold tracking-[0.12em] uppercase transition-all border border-gray-100/80 shadow-[0_4px_15px_rgb(0,0,0,0.03)] hover:shadow-[0_6px_20px_rgb(0,0,0,0.06)]';
+        });
+
+        // Show only reviews matching the selected rating
+        cards.forEach((card, index) => {
+            const matches = parseInt(card.dataset.rating) === star;
+            card.style.display = matches ? 'flex' : 'none';
+            if (matches) {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(15px)';
+                container.appendChild(card);
+                setTimeout(() => {
+                    card.style.transition = 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 50 + (index * 60));
+            } else {
+                container.appendChild(card);
+            }
+        });
+
+        // Scroll into view smoothly
+        setTimeout(() => {
+            const rect = wrapper.getBoundingClientRect();
+            const offset = rect.top + window.scrollY - 100;
+            window.scrollTo({ top: offset, behavior: 'smooth' });
+        }, 350);
     }
 </script>
 {% endblock %}
