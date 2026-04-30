@@ -4,6 +4,8 @@ from product.models import Product, Category
 from django.db.models import Q, Count, Avg
 from order.models import OrderItem
 
+from django.views.decorators.cache import never_cache
+
 # Create your views here.
 def home(request):
     
@@ -40,6 +42,7 @@ def home(request):
     
     return render(request, 'home.html', context)
 
+@never_cache
 def signout(request):
     logout(request)
     return redirect('home')

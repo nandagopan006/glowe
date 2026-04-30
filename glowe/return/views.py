@@ -10,8 +10,11 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q
+from django.views.decorators.cache import never_cache
+from core.decorators import admin_required
 
 
+@login_required
 def request_return(request, item_id):
     item = get_object_or_404(OrderItem, id=item_id, order__user=request.user)
     order = item.order
@@ -136,6 +139,7 @@ def request_return(request, item_id):
     )
 
 
+@login_required
 def request_full_return(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
     
@@ -215,6 +219,7 @@ def request_full_return(request, order_id):
     )
 
 
+@admin_required
 def admin_return_list(request):
 
     returns = ReturnRequest.objects.select_related(
@@ -284,6 +289,8 @@ def should_restock(reason, condition):
     return True
 
 
+
+@admin_required
 def admin_return_detail(request, return_id):
     r = get_object_or_404(
         ReturnRequest.objects.select_related(
@@ -312,6 +319,8 @@ def admin_return_detail(request, return_id):
     })
 
 
+
+@admin_required
 def approve_return(request, return_id):
     
     r = get_object_or_404(ReturnRequest, id=return_id)
@@ -327,6 +336,8 @@ def approve_return(request, return_id):
     return redirect("admin_return_detail", return_id)
 
 
+
+@admin_required
 def schedule_pickup(request, return_id):
     
     r = get_object_or_404(ReturnRequest, id=return_id)
@@ -344,6 +355,8 @@ def schedule_pickup(request, return_id):
     return redirect("admin_return_detail", return_id)
 
 
+@never_cache
+@admin_required
 def mark_picked(request, return_id):
     
     r = get_object_or_404(ReturnRequest, id=return_id)
@@ -369,6 +382,8 @@ def mark_picked(request, return_id):
     return redirect("admin_return_detail", return_id)
 
 
+@never_cache
+@admin_required
 def complete_return(request, return_id):
     
     r = get_object_or_404(ReturnRequest, id=return_id)
@@ -437,6 +452,8 @@ def complete_return(request, return_id):
     return redirect("admin_return_detail", return_id)
 
 
+@never_cache
+@admin_required
 def reject_return(request, return_id):
     
     r = get_object_or_404(ReturnRequest, id=return_id)

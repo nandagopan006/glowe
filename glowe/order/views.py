@@ -284,6 +284,7 @@ def order_success(request, order_id):
 
 
 
+
 @login_required
 def order_listing(request):
     orders = Order.objects.filter(user=request.user).prefetch_related(
@@ -469,6 +470,7 @@ def order_detail(request, order_id):
     )
 
 
+@never_cache
 @login_required
 def cancel_order(request, order_id):
 
@@ -527,6 +529,7 @@ def cancel_order(request, order_id):
     return redirect("order_cancelled_success", order_id=order.id)
 
 
+@never_cache
 @login_required
 def cancel_order_item(request, item_id):
 
