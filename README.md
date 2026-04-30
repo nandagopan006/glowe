@@ -1,7 +1,7 @@
-<div align="center">
+﻿<div align="center">
   <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=24&pause=1000&color=2563EB&center=true&vCenter=true&width=600&lines=Modern+Full-Stack+eCommerce+Platform;Built+with+Django+%26+Tailwind+CSS;A+Premium+Shopping+Experience" alt="Typing SVG" />
   
-  <h1>✨ Glowé eCommerce Platform</h1>
+  <h1>✨ Glowé </h1>
   
   <p><strong>A fully-featured, production-ready online shopping system designed to simulate a real-world premium brand.</strong></p>
 
