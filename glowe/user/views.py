@@ -13,6 +13,7 @@ from django.contrib.auth import update_session_auth_hash
 import random
 import re
 import os
+import uuid
 from wallet.models import Wallet
 from order.models import Order
 from wishlist.models import Wishlist
@@ -116,6 +117,34 @@ def edit_profile(request):
         if clean_phone != user.phone_number:
             user.phone_number = clean_phone
             changed = True
+
+        remove_photo = request.POST.get("remove_photo", "false") == "true"
+        profile_image = request.FILES.get("profile_image")
+
+        if remove_photo:
+            if user.profile_image and user.profile_image.name != "profile/default.png":
+                user.profile_image.delete(save=False)
+            user.profile_image = "profile/default.png"
+            changed = True
+        elif profile_image:
+            if profile_image.content_type in [
+                "image/jpeg",
+                "image/png",
+                "image/jpg",
+                "image/webp",
+            ]:
+                if user.profile_image and user.profile_image.name != "profile/default.png":
+                    user.profile_image.delete(save=False)
+                
+                # Make filename unique to prevent browser caching
+                ext = profile_image.name.split('.')[-1]
+                profile_image.name = f"avatar_{uuid.uuid4().hex[:8]}.{ext}"
+                
+                user.profile_image.save(profile_image.name, profile_image, save=False)
+                changed = True
+            else:
+                messages.error(request, "Only JPG, PNG, WEBP allowed for profile image")
+                return redirect("edit_profile")
 
         if email != user.email:
 
@@ -284,13 +313,12 @@ def add_profile_image(request):
             return redirect("edit_profile")
 
         # delete old image
-        if (
-            user.profile_image
-            and user.profile_image.name != "profile/default.png"
-        ):
-            if os.path.exists(user.profile_image.path):
-                os.remove(user.profile_image.path)
+        if user.profile_image and user.profile_image.name != "profile/default.png":
+            user.profile_image.delete(save=False)
 
+        ext = image.name.split('.')[-1]
+        image.name = f"avatar_{uuid.uuid4().hex[:8]}.{ext}"
+        
         user.profile_image = image
         user.save()
 
@@ -305,8 +333,7 @@ def remove_profile_image(request):
     user = request.user
 
     if user.profile_image and user.profile_image.name != "profile/default.png":
-        if os.path.exists(user.profile_image.path):
-            os.remove(user.profile_image.path)
+        user.profile_image.delete(save=False)
 
         user.profile_image = "profile/default.png"
         user.save()
@@ -451,7 +478,10 @@ def add_address(request):
             ).exists()
 
             if exists:
-                messages.error(request, "Address already exists")
+                messages.error(request, "⚠ Address already exists")
+                next_url = request.GET.get("next")
+                if next_url:
+                    return redirect(next_url)
                 return redirect("address")
 
             # if no addr so first will def
@@ -466,13 +496,30 @@ def add_address(request):
 
             address.save()
 
-            messages.success(request, "Address added successfully")
+            messages.success(request, "✓ Address added successfully!")
 
-            # Follow 'next' parameter if present to remain in checkout context
+           
             next_url = request.GET.get("next")
             if next_url:
                 return redirect(next_url)
 
+            return redirect("address")
+        else:
+            # Form has validation errors
+            error_messages = []
+            for field, errors in form.errors.items():
+                for error in errors:
+                    if field == '__all__':
+                        error_messages.append(error)
+                    else:
+                        field_name = field.replace('_', ' ').title()
+                        error_messages.append(f"{field_name}: {error}")
+            
+            messages.error(request, " | ".join(error_messages))
+            
+            next_url = request.GET.get("next")
+            if next_url:
+                return redirect(next_url)
             return redirect("address")
 
     else:
@@ -508,6 +555,9 @@ def edit_address(request, id):
 
             if exists:
                 messages.error(request, "This address already exists")
+                next_url = request.GET.get("next")
+                if next_url:
+                    return redirect(next_url)
                 return redirect("address")
 
             if updated.is_default:
@@ -517,7 +567,7 @@ def edit_address(request, id):
 
             updated.save()
 
-            messages.success(request, "Updated successfully")
+            messages.success(request, "✓ Address updated successfully!")
 
             next_url = request.GET.get("next")
             if next_url:
@@ -526,7 +576,22 @@ def edit_address(request, id):
             return redirect("address")
 
         else:
-            messages.error(request, "Please fix the errors  ")
+            # Form has validation errors
+            error_messages = []
+            for field, errors in form.errors.items():
+                for error in errors:
+                    if field == '__all__':
+                        error_messages.append(error)
+                    else:
+                        field_name = field.replace('_', ' ').title()
+                        error_messages.append(f"{field_name}: {error}")
+            
+            messages.error(request, " | ".join(error_messages))
+            
+            next_url = request.GET.get("next")
+            if next_url:
+                return redirect(next_url)
+            return redirect("address")
 
     else:
         form = AddressForm(instance=address)

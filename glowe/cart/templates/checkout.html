@@ -4,6 +4,7 @@
 {% block title %}Checkout — Glowé{% endblock %}
 
 {% block extra_css %}
+<style>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Montserrat:wght@300;400;500;600;700&display=swap');
 
 :root {
@@ -344,7 +345,7 @@ body { background: var(--bg); }
 .auth-overlay.open .auth-modal { transform: scale(1) translateY(0); opacity: 1; }
 
 /* Modern Address Form Fields */
-.form-group { margin-bottom: 20px; }
+.form-group { margin-bottom: 20px; position: relative; }
 .form-label {
   display: block; font-family: 'Montserrat', sans-serif; font-size: 10px;
   font-weight: 700; color: var(--brown-md); margin-bottom: 8px;
@@ -357,6 +358,28 @@ body { background: var(--bg); }
   color: var(--brown); outline: none; transition: all 0.2s ease;
 }
 .form-input:focus { border-color: var(--brown); box-shadow: 0 0 0 3px rgba(43,33,26,0.05); }
+.form-input.error { 
+  border-color: #D65A47 !important; 
+  background: #FFF7F5 !important; 
+}
+.form-error {
+  font-family: 'Montserrat', sans-serif; 
+  font-size: 10px;
+  color: #D65A47; 
+  margin-top: 6px; 
+  font-weight: 500;
+  padding-left: 4px;
+  display: none;
+  align-items: center;
+  gap: 4px;
+}
+.form-error.active {
+  display: flex;
+}
+.form-error::before {
+  content: "⚠";
+  font-size: 11px;
+}
 
 /* ── Modern Back Button ── */
 .btn-back-drawer {
@@ -463,6 +486,7 @@ body { background: var(--bg); }
 /* ── Scrollbar ── */
 .summary-scroll::-webkit-scrollbar { width: 3px; }
 .summary-scroll::-webkit-scrollbar-thumb { background: #d4c4b0; border-radius: 3px; }
+</style>
 {% endblock %}
 
 
@@ -850,45 +874,52 @@ body { background: var(--bg); }
 
         <div class="form-group">
           <label class="form-label req">Full Name</label>
-          <input type="text" name="full_name" required class="form-input" placeholder="e.g. Rahul Sharma">
+          <input type="text" name="full_name" class="form-input" placeholder="e.g. Rahul Sharma" novalidate>
+          <span class="form-error" style="display:none;"></span>
         </div>
 
         <div class="form-group">
           <label class="form-label req">Street Address</label>
-          <input type="text" name="street_address" required class="form-input" placeholder="House/Flat No., Building, Street, Area">
+          <input type="text" name="street_address" class="form-input" placeholder="House/Flat No., Building, Street, Area" novalidate>
+          <span class="form-error" style="display:none;"></span>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 form-group">
-          <div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div class="form-group">
             <label class="form-label req">Pincode</label>
-            <input type="text" name="pincode" required class="form-input" placeholder="e.g. 673001">
+            <input type="text" name="pincode" class="form-input" placeholder="e.g. 673001" maxlength="6" novalidate>
+            <span class="form-error" style="display:none;"></span>
           </div>
-          <div>
+          <div class="form-group">
             <label class="form-label req">City / Locality</label>
-            <input type="text" name="city" required class="form-input" placeholder="Enter city or locality">
+            <input type="text" name="city" class="form-input" placeholder="Enter city or locality" novalidate>
+            <span class="form-error" style="display:none;"></span>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 form-group">
-          <div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div class="form-group">
             <label class="form-label req">District</label>
-            <input type="text" name="district" required class="form-input" placeholder="Type district name">
+            <input type="text" name="district" class="form-input" placeholder="Type district name" novalidate>
+            <span class="form-error" style="display:none;"></span>
           </div>
-          <div>
+          <div class="form-group">
             <label class="form-label req">State</label>
-            <input type="text" name="state" required class="form-input" placeholder="Type to search state">
+            <input type="text" name="state" class="form-input" placeholder="Type to search state" novalidate>
+            <span class="form-error" style="display:none;"></span>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 form-group">
-          <div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div class="form-group">
             <label class="form-label req">Phone Number</label>
             <div style="position:relative; display:flex;">
               <div style="background:#F3F0EC; border:1px solid #EBE6E0; border-right:none; border-radius:8px 0 0 8px; padding:12px 14px; font-family:'Montserrat',sans-serif; font-size:11px; font-weight:700; color:var(--brown); display:flex; align-items:center;">IN +91</div>
-              <input type="text" name="phone_number" required class="form-input text-xs" style="border-radius:0 8px 8px 0; padding-left:12px;" placeholder="98765 43210">
+              <input type="text" name="phone_number" class="form-input text-xs" style="border-radius:0 8px 8px 0; padding-left:12px;" placeholder="98765 43210" maxlength="10" novalidate>
             </div>
+            <span class="form-error" style="display:none;"></span>
           </div>
-          <div>
+          <div class="form-group">
             <label class="form-label">Country</label>
             <div style="width:100%; background:#F3F0EC; border:1px solid #EBE6E0; border-radius:8px; padding:12px 16px; font-family:'Montserrat',sans-serif; font-size:12px; color:var(--brown-lt); user-select:none; display:flex; align-items:center;">
                <span style="font-size:9px; font-weight:700; margin-right:6px;">IN</span> India
@@ -906,7 +937,7 @@ body { background: var(--bg); }
 
         <div class="flex items-center justify-between mt-auto" style="border-top:1px solid var(--border); padding-top:24px;">
           <button type="button" onclick="closeAddAddressDrawer()" style="background:none; border:none; font-family:'Montserrat',sans-serif; font-size:12px; font-weight:600; color:var(--brown-lt); cursor:pointer;" class="hover:text-[var(--brown)] transition-colors">Cancel</button>
-          <button type="submit" onclick="this.classList.add('loading')" class="btn-loading-state h-[46px] hover:bg-[#3D2B1F] transition-colors" style="background:var(--brown); color:#fff; border:none; padding:12px 32px; border-radius:10px; font-family:'Montserrat',sans-serif; font-size:12px; font-weight:600; cursor:pointer;">
+          <button type="submit" class="btn-loading-state h-[46px] hover:bg-[#3D2B1F] transition-colors" style="background:var(--brown); color:#fff; border:none; padding:12px 32px; border-radius:10px; font-family:'Montserrat',sans-serif; font-size:12px; font-weight:600; cursor:pointer;">
             <span class="btn-text">Save Address</span>
             <svg class="w-3.5 h-3.5 btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
             <div class="btn-spinner"></div>
@@ -955,45 +986,52 @@ body { background: var(--bg); }
 
         <div class="form-group">
           <label class="form-label req">Full Name</label>
-          <input type="text" name="full_name" value="{{ addr.full_name }}" required class="form-input">
+          <input type="text" name="full_name" value="{{ addr.full_name }}" class="form-input" novalidate>
+          <span class="form-error" style="display:none;"></span>
         </div>
 
         <div class="form-group">
           <label class="form-label req">Street Address</label>
-          <input type="text" name="street_address" value="{{ addr.street_address }}" required class="form-input">
+          <input type="text" name="street_address" value="{{ addr.street_address }}" class="form-input" novalidate>
+          <span class="form-error" style="display:none;"></span>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 form-group">
-          <div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div class="form-group">
             <label class="form-label req">Pincode</label>
-            <input type="text" name="pincode" value="{{ addr.pincode }}" required class="form-input">
+            <input type="text" name="pincode" value="{{ addr.pincode }}" class="form-input" maxlength="6" novalidate>
+            <span class="form-error" style="display:none;"></span>
           </div>
-          <div>
+          <div class="form-group">
             <label class="form-label req">City / Locality</label>
-            <input type="text" name="city" value="{{ addr.city }}" required class="form-input">
+            <input type="text" name="city" value="{{ addr.city }}" class="form-input" novalidate>
+            <span class="form-error" style="display:none;"></span>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 form-group">
-          <div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div class="form-group">
             <label class="form-label req">District</label>
-            <input type="text" name="district" value="{{ addr.district }}" required class="form-input">
+            <input type="text" name="district" value="{{ addr.district }}" class="form-input" novalidate>
+            <span class="form-error" style="display:none;"></span>
           </div>
-          <div>
+          <div class="form-group">
             <label class="form-label req">State</label>
-            <input type="text" name="state" value="{{ addr.state }}" required class="form-input">
+            <input type="text" name="state" value="{{ addr.state }}" class="form-input" novalidate>
+            <span class="form-error" style="display:none;"></span>
           </div>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 form-group">
-          <div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div class="form-group">
             <label class="form-label req">Phone Number</label>
             <div style="position:relative; display:flex;">
               <div style="background:#F3F0EC; border:1px solid #EBE6E0; border-right:none; border-radius:8px 0 0 8px; padding:12px 14px; font-family:'Montserrat',sans-serif; font-size:11px; font-weight:700; color:var(--brown); display:flex; align-items:center;">IN +91</div>
-              <input type="text" name="phone_number" value="{{ addr.phone_number }}" required class="form-input text-xs" style="border-radius:0 8px 8px 0; padding-left:12px;">
+              <input type="text" name="phone_number" value="{{ addr.phone_number }}" class="form-input text-xs" style="border-radius:0 8px 8px 0; padding-left:12px;" maxlength="10" novalidate>
             </div>
+            <span class="form-error" style="display:none;"></span>
           </div>
-          <div>
+          <div class="form-group">
             <label class="form-label">Country</label>
             <div style="width:100%; background:#F3F0EC; border:1px solid #EBE6E0; border-radius:8px; padding:12px 16px; font-family:'Montserrat',sans-serif; font-size:12px; color:var(--brown-lt); user-select:none; display:flex; align-items:center;">
                <span style="font-size:9px; font-weight:700; margin-right:6px;">IN</span> India
@@ -1021,7 +1059,7 @@ body { background: var(--bg); }
           </div>
           <div class="flex items-center gap-4">
              <button type="button" onclick="closeEditAddressModal('{{ addr.id }}')" style="background:none; border:none; font-family:'Montserrat',sans-serif; font-size:11.5px; font-weight:600; color:var(--brown-lt); cursor:pointer;" class="hover:text-[var(--brown)] transition-colors">Cancel</button>
-             <button type="submit" onclick="this.classList.add('loading')" class="btn-loading-state h-[42px] hover:bg-[#3D2B1F] transition-colors" style="background:var(--brown); color:#fff; border:none; padding:10px 24px; border-radius:10px; font-family:'Montserrat',sans-serif; font-size:11px; font-weight:600; cursor:pointer;">
+             <button type="submit" class="btn-loading-state h-[42px] hover:bg-[#3D2B1F] transition-colors" style="background:var(--brown); color:#fff; border:none; padding:10px 24px; border-radius:10px; font-family:'Montserrat',sans-serif; font-size:11px; font-weight:600; cursor:pointer;">
                <span class="btn-text">Update</span>
                <svg class="w-3.5 h-3.5 btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                <div class="btn-spinner"></div>
@@ -1399,5 +1437,370 @@ async function removeCoupon() {
     console.error("Failed to remove coupon", error);
   }
 }
+
+// ── Address Form Validation ──
+function validateAddressForm(form) {
+  console.log('Validating form...');
+  
+  // Clear all previous errors first
+  const allInputs = form.querySelectorAll('.form-input');
+  allInputs.forEach(input => {
+    input.classList.remove('error');
+  });
+  
+  const allErrors = form.querySelectorAll('.form-error');
+  allErrors.forEach(error => {
+    error.classList.remove('active');
+    error.textContent = '';
+    error.style.display = 'none';
+  });
+  
+  let isValid = true;
+  let firstErrorField = null;
+  
+  // Get all form fields
+  const fullName = form.querySelector('[name="full_name"]');
+  const streetAddress = form.querySelector('[name="street_address"]');
+  const pincode = form.querySelector('[name="pincode"]');
+  const city = form.querySelector('[name="city"]');
+  const district = form.querySelector('[name="district"]');
+  const state = form.querySelector('[name="state"]');
+  const phone = form.querySelector('[name="phone_number"]');
+  
+  // Full Name validation
+  if (fullName) {
+    const name = fullName.value.trim();
+    if (!name) {
+      setFieldError(fullName, 'Please enter your full name');
+      isValid = false;
+      if (!firstErrorField) firstErrorField = fullName;
+    } else if (name.length < 4) {
+      setFieldError(fullName, 'Name must be at least 4 characters');
+      isValid = false;
+      if (!firstErrorField) firstErrorField = fullName;
+    } else if (!/^[A-Za-z ]+$/.test(name)) {
+      setFieldError(fullName, 'Only letters and spaces are allowed');
+      isValid = false;
+      if (!firstErrorField) firstErrorField = fullName;
+    }
+  }
+  
+  // Street Address validation
+  if (streetAddress) {
+    const address = streetAddress.value.trim();
+    if (!address) {
+      setFieldError(streetAddress, 'Please enter your street address');
+      isValid = false;
+      if (!firstErrorField) firstErrorField = streetAddress;
+    } else if (address.length < 10) {
+      setFieldError(streetAddress, 'Address must be at least 10 characters');
+      isValid = false;
+      if (!firstErrorField) firstErrorField = streetAddress;
+    }
+  }
+  
+  // Pincode validation
+  if (pincode) {
+    const pin = pincode.value.trim();
+    if (!pin) {
+      setFieldError(pincode, 'Please enter pincode');
+      isValid = false;
+      if (!firstErrorField) firstErrorField = pincode;
+    } else if (!/^\d{6}$/.test(pin)) {
+      setFieldError(pincode, 'Pincode must be exactly 6 digits');
+      isValid = false;
+      if (!firstErrorField) firstErrorField = pincode;
+    }
+  }
+  
+  // City validation
+  if (city) {
+    const cityVal = city.value.trim();
+    if (!cityVal) {
+      setFieldError(city, 'Please enter city or locality');
+      isValid = false;
+      if (!firstErrorField) firstErrorField = city;
+    } else if (cityVal.length < 2) {
+      setFieldError(city, 'City name is too short');
+      isValid = false;
+      if (!firstErrorField) firstErrorField = city;
+    }
+  }
+  
+  // District validation
+  if (district) {
+    const districtVal = district.value.trim();
+    if (!districtVal) {
+      setFieldError(district, 'Please enter district');
+      isValid = false;
+      if (!firstErrorField) firstErrorField = district;
+    } else if (districtVal.length < 2) {
+      setFieldError(district, 'District name is too short');
+      isValid = false;
+      if (!firstErrorField) firstErrorField = district;
+    }
+  }
+  
+  // State validation
+  if (state) {
+    const stateVal = state.value.trim();
+    if (!stateVal) {
+      setFieldError(state, 'Please enter state');
+      isValid = false;
+      if (!firstErrorField) firstErrorField = state;
+    } else if (stateVal.length < 2) {
+      setFieldError(state, 'State name is too short');
+      isValid = false;
+      if (!firstErrorField) firstErrorField = state;
+    }
+  }
+  
+  // Phone Number validation
+  if (phone) {
+    const phoneNum = phone.value.trim();
+    if (!phoneNum) {
+      setFieldError(phone, 'Please enter phone number');
+      isValid = false;
+      if (!firstErrorField) firstErrorField = phone;
+    } else if (!/^\d{10}$/.test(phoneNum)) {
+      setFieldError(phone, 'Phone number must be 10 digits');
+      isValid = false;
+      if (!firstErrorField) firstErrorField = phone;
+    } else if (!/^[6-9]/.test(phoneNum)) {
+      setFieldError(phone, 'Phone number must start with 6, 7, 8, or 9');
+      isValid = false;
+      if (!firstErrorField) firstErrorField = phone;
+    }
+  }
+  
+  console.log('Validation result:', isValid);
+  
+  // Scroll to first error
+  if (firstErrorField) {
+    setTimeout(() => {
+      firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  }
+  
+  return isValid;
+}
+
+function setFieldError(input, message) {
+  console.log('Setting error for', input.name, ':', message);
+  
+  // Add error class to input
+  input.classList.add('error');
+  
+  // Find the error span - it's the next sibling after the input
+  let errorSpan = input.nextElementSibling;
+  
+  // If not found, try looking in the parent's children
+  if (!errorSpan || !errorSpan.classList.contains('form-error')) {
+    const parent = input.parentElement;
+    errorSpan = parent.querySelector('.form-error');
+  }
+  
+  // If still not found, try in the form-group
+  if (!errorSpan || !errorSpan.classList.contains('form-error')) {
+    const formGroup = input.closest('.form-group');
+    if (formGroup) {
+      errorSpan = formGroup.querySelector('.form-error');
+    }
+  }
+  
+  if (errorSpan) {
+    console.log('Found error span, showing message');
+    errorSpan.textContent = message;
+    errorSpan.style.display = 'flex';
+    errorSpan.classList.add('active');
+  } else {
+    console.error('Error span not found for', input.name);
+  }
+}
+
+function clearFieldError(input) {
+  // Remove error class from input
+  input.classList.remove('error');
+  
+  // Find the error span
+  let errorSpan = input.nextElementSibling;
+  
+  if (!errorSpan || !errorSpan.classList.contains('form-error')) {
+    const parent = input.parentElement;
+    errorSpan = parent.querySelector('.form-error');
+  }
+  
+  if (!errorSpan || !errorSpan.classList.contains('form-error')) {
+    const formGroup = input.closest('.form-group');
+    if (formGroup) {
+      errorSpan = formGroup.querySelector('.form-error');
+    }
+  }
+  
+  if (errorSpan) {
+    errorSpan.classList.remove('active');
+    errorSpan.textContent = '';
+    errorSpan.style.display = 'none';
+  }
+}
+
+function validateSingleField(input) {
+  const name = input.getAttribute('name');
+  const value = input.value.trim();
+  
+  // Clear error first
+  clearFieldError(input);
+  
+  // Don't validate empty fields on blur (only on submit)
+  if (!value) return;
+  
+  let errorMessage = '';
+  
+  switch(name) {
+    case 'full_name':
+      if (value.length < 4) {
+        errorMessage = 'Name must be at least 4 characters';
+      } else if (!/^[A-Za-z ]+$/.test(value)) {
+        errorMessage = 'Only letters and spaces are allowed';
+      }
+      break;
+      
+    case 'street_address':
+      if (value.length < 10) {
+        errorMessage = 'Address must be at least 10 characters';
+      }
+      break;
+      
+    case 'pincode':
+      if (!/^\d{6}$/.test(value)) {
+        errorMessage = 'Pincode must be exactly 6 digits';
+      }
+      break;
+      
+    case 'city':
+      if (value.length < 2) {
+        errorMessage = 'City name is too short';
+      }
+      break;
+      
+    case 'district':
+      if (value.length < 2) {
+        errorMessage = 'District name is too short';
+      }
+      break;
+      
+    case 'state':
+      if (value.length < 2) {
+        errorMessage = 'State name is too short';
+      }
+      break;
+      
+    case 'phone_number':
+      if (!/^\d{10}$/.test(value)) {
+        errorMessage = 'Phone number must be 10 digits';
+      } else if (!/^[6-9]/.test(value)) {
+        errorMessage = 'Phone number must start with 6, 7, 8, or 9';
+      }
+      break;
+  }
+  
+  if (errorMessage) {
+    setFieldError(input, errorMessage);
+  }
+}
+
+// Initialize form validation
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('Initializing form validation...');
+  
+  // Add address form
+  const addAddressForm = document.querySelector('#add-address-drawer form');
+  if (addAddressForm) {
+    console.log('Found add address form');
+    addAddressForm.addEventListener('submit', function(e) {
+      console.log('Form submit triggered');
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const submitBtn = this.querySelector('button[type="submit"]');
+      
+      // Validate form
+      const isValid = validateAddressForm(this);
+      
+      if (isValid) {
+        console.log('Form is valid, submitting...');
+        // Only show loading if validation passes
+        submitBtn.classList.add('loading');
+        submitBtn.disabled = true;
+        
+        // Submit form
+        setTimeout(() => {
+          this.submit();
+        }, 100);
+      } else {
+        console.log('Form is invalid, showing errors');
+      }
+      
+      return false;
+    });
+  }
+  
+  // Edit address forms
+  document.querySelectorAll('[id^="edit-address-modal-"] form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const submitBtn = this.querySelector('button[type="submit"]');
+      
+      // Validate form
+      const isValid = validateAddressForm(this);
+      
+      if (isValid) {
+        // Only show loading if validation passes
+        submitBtn.classList.add('loading');
+        submitBtn.disabled = true;
+        
+        // Submit form
+        setTimeout(() => {
+          this.submit();
+        }, 100);
+      }
+      
+      return false;
+    });
+  });
+  
+  // Real-time validation on input fields
+  document.querySelectorAll('.form-input').forEach(input => {
+    
+    // Clear error when user starts typing
+    input.addEventListener('input', function() {
+      // Only clear if there's an error
+      if (this.classList.contains('error')) {
+        clearFieldError(this);
+      }
+      
+      // Input filtering
+      const name = this.getAttribute('name');
+      
+      // Phone and pincode: only numbers
+      if (name === 'phone_number' || name === 'pincode') {
+        this.value = this.value.replace(/[^0-9]/g, '');
+      }
+      
+      // Full name: only letters and spaces
+      if (name === 'full_name') {
+        this.value = this.value.replace(/[^A-Za-z ]/g, '');
+      }
+    });
+    
+    // Validate on blur (when user leaves the field)
+    input.addEventListener('blur', function() {
+      validateSingleField(this);
+    });
+  });
+});
+
 </script>
 {% endblock %}

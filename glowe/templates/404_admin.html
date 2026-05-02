@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,249 +6,673 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>404 – Admin Page Not Found | Glowé</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sans: ['Inter','ui-sans-serif','system-ui','sans-serif'] },
-          colors: {
-            sage: {
-              50:'#f2f7f2',100:'#e2f0e2',200:'#c3dfc3',
-              300:'#94c494',400:'#64a864',500:'#4a9050',
-              600:'#3a7a3e',700:'#2f6232',800:'#264f29',900:'#1e3e20',
-            }
-          }
-        }
-      }
-    }
-  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,200;0,300;1,200;1,300&family=DM+Sans:wght@200;300;400&display=swap" rel="stylesheet"/>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Inter', sans-serif; background: #f8faf8; min-height: 100vh; }
-
-    /* ── Page fade in ── */
-    @keyframes pageIn {
-      from { opacity: 0; transform: translateY(16px); }
-      to   { opacity: 1; transform: translateY(0); }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --f:  #0c2610;
+      --g:  #1e5e22;
+      --m:  #2e8b32;
+      --ac: #00c853;
+      --pl: #b2d9b5;
+      --bg: #f0f7f1;
     }
-    .page-in { animation: pageIn 0.65s cubic-bezier(0.16,1,0.3,1) both; }
-
-    /* ── Staggered children ── */
-    .s1 { animation: pageIn 0.65s 0.05s cubic-bezier(0.16,1,0.3,1) both; }
-    .s2 { animation: pageIn 0.65s 0.15s cubic-bezier(0.16,1,0.3,1) both; }
-    .s3 { animation: pageIn 0.65s 0.25s cubic-bezier(0.16,1,0.3,1) both; }
-    .s4 { animation: pageIn 0.65s 0.35s cubic-bezier(0.16,1,0.3,1) both; }
-    .s5 { animation: pageIn 0.65s 0.45s cubic-bezier(0.16,1,0.3,1) both; }
-
-    /* ── Floating "0" ── */
-    @keyframes floatZero {
-      0%,100% { transform: translateY(0px) scale(1); }
-      50%      { transform: translateY(-14px) scale(1.02); }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      cursor: none;
     }
-    .float-zero { animation: floatZero 4s ease-in-out infinite; display: inline-block; }
 
-    /* ── Glow pulse on "0" ── */
+    /* ── DOT GRID CANVAS (Next.js style) ── */
+    #dot-grid { position:fixed;inset:0;z-index:0;pointer-events:none; }
+
+    /* ── FLUID MOUSE BLOBS ── */
+    #fluid { position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden; }
+    .fb { position:absolute;border-radius:50%;pointer-events:none;will-change:transform; }
+
+    /* ── CUSTOM CURSOR ── */
+    #cur-ring {
+      position:fixed;z-index:9999;pointer-events:none;
+      width:36px;height:36px;border-radius:50%;
+      border:1px solid rgba(0,200,83,0.55);
+      transform:translate(-50%,-50%);
+      transition:width 0.25s,height 0.25s,border-color 0.25s,opacity 0.25s;
+      will-change:transform;
+    }
+    #cur-dot {
+      position:fixed;z-index:9999;pointer-events:none;
+      width:5px;height:5px;border-radius:50%;
+      background:var(--ac);
+      transform:translate(-50%,-50%);
+      will-change:transform;
+      box-shadow:0 0 8px rgba(0,200,83,0.9);
+    }
+    body:has(a:hover,button:hover) #cur-ring {
+      width:52px;height:52px;
+      border-color:rgba(0,200,83,0.9);
+    }
+
+    /* ── HEADER ── */
+    .hdr {
+      position:relative;z-index:50;
+      height:70px;
+      padding:0 clamp(20px,4vw,48px);
+      display:flex;align-items:center;justify-content:space-between;
+      background:transparent;
+    }
+    .logo {
+      font-family:'Cormorant Garamond',serif;
+      font-weight:200;font-size:22px;
+      color:var(--f);letter-spacing:0.06em;
+      text-decoration:none;opacity:0.85;
+      transition:opacity 0.3s;
+    }
+    .logo:hover { opacity:1; }
+
+    /* ── ENTRANCE ANIMS ── */
+    @keyframes fUp   { from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)} }
+    @keyframes fDown { from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)} }
+    @keyframes fIn   { from{opacity:0}to{opacity:1} }
+    .e0{animation:fDown 0.6s 0.00s cubic-bezier(0.16,1,0.3,1) both}
+    .e1{animation:fUp   0.9s 0.10s cubic-bezier(0.16,1,0.3,1) both}
+    .e2{animation:fUp   0.8s 0.24s cubic-bezier(0.16,1,0.3,1) both}
+    .e3{animation:fUp   0.8s 0.38s cubic-bezier(0.16,1,0.3,1) both}
+    .e4{animation:fUp   0.7s 0.52s cubic-bezier(0.16,1,0.3,1) both}
+    .e5{animation:fUp   0.7s 0.66s cubic-bezier(0.16,1,0.3,1) both}
+    .e6{animation:fIn   0.6s 0.82s both}
+
+    /* ── 404 ROW ── */
+    .num-row {
+      position:relative;
+      display:flex;align-items:center;justify-content:center;
+      gap:clamp(0px,1.2vw,10px);
+      line-height:1;
+    }
+
+    /* ── THE 4s — stroke outline with glow animation ── */
+    .digit-wrap {
+      position:relative;
+      display:inline-block;
+      cursor:none;
+    }
+    .digit {
+      font-family:'Cormorant Garamond',serif;
+      font-weight:200;
+      font-size:clamp(130px,21vw,200px);
+      letter-spacing:-0.05em;
+      line-height:0.9;
+      color:transparent;
+      -webkit-text-stroke:1px rgba(12,38,16,0.2);
+      user-select:none;
+      display:block;
+      position:relative;
+      z-index:2;
+      transition:-webkit-text-stroke-color 0.6s;
+    }
+
+    /* Glow clone behind the 4 */
+    .digit-glow {
+      position:absolute;inset:0;
+      font-family:'Cormorant Garamond',serif;
+      font-weight:200;
+      font-size:clamp(130px,21vw,200px);
+      letter-spacing:-0.05em;
+      line-height:0.9;
+      color:transparent;
+      -webkit-text-stroke:1px rgba(0,200,83,0);
+      filter:blur(12px);
+      z-index:1;
+      pointer-events:none;
+      transition:-webkit-text-stroke-color 0.5s, filter 0.5s;
+      user-select:none;
+    }
+
+    /* ── Hover: digit lights up with green glow ── */
+    .digit-wrap:hover .digit {
+      -webkit-text-stroke-color:rgba(0,200,83,0.55);
+    }
+    .digit-wrap:hover .digit-glow {
+      -webkit-text-stroke-color:rgba(0,200,83,0.7);
+      filter:blur(16px);
+      animation:glowPulse 1.8s ease-in-out infinite;
+    }
     @keyframes glowPulse {
-      0%,100% { text-shadow: 0 0 20px rgba(74,144,80,0.0); }
-      50%      { text-shadow: 0 0 40px rgba(74,144,80,0.35), 0 0 80px rgba(74,144,80,0.15); }
-    }
-    .glow-zero { animation: glowPulse 4s ease-in-out infinite; }
-
-    /* ── Subtle bg gradient ── */
-    .bg-gradient-page {
-      background: linear-gradient(145deg, #f8faf8 0%, #f0f7f0 40%, #f8faf8 100%);
+      0%,100%{filter:blur(12px);opacity:0.6}
+      50%    {filter:blur(22px);opacity:1}
     }
 
-    /* ── Glassmorphism card ── */
-    .glass-card {
-      background: rgba(255,255,255,0.75);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(148,196,148,0.2);
-      box-shadow:
-        0 1px 0 0 rgba(255,255,255,0.9) inset,
-        0 20px 60px rgba(47,98,50,0.08),
-        0 4px 16px rgba(47,98,50,0.05);
+    /* Scan line sweep on hover */
+    .digit-wrap::after {
+      content:'';
+      position:absolute;top:0;left:-120%;
+      width:60%;height:100%;
+      background:linear-gradient(90deg,transparent,rgba(0,200,83,0.07),transparent);
+      pointer-events:none;
+      z-index:3;
+      transform:skewX(-8deg);
+      opacity:0;
+      transition:opacity 0.2s;
+    }
+    .digit-wrap:hover::after {
+      opacity:1;
+      animation:scanSlide 1.2s ease-in-out infinite;
+    }
+    @keyframes scanSlide {
+      0%  {left:-60%}
+      100%{left:160%}
     }
 
-    /* ── Floating orbs ── */
-    @keyframes orbFloat {
-      0%,100% { transform: translate(0, 0); }
-      50%      { transform: translate(12px, -18px); }
+    /* Floating ghost 4 that drifts — idle animation */
+    .digit-ghost {
+      position:absolute;
+      font-family:'Cormorant Garamond',serif;
+      font-weight:200;
+      font-size:clamp(130px,21vw,200px);
+      letter-spacing:-0.05em;
+      line-height:0.9;
+      color:transparent;
+      -webkit-text-stroke:0.5px rgba(0,200,83,0.06);
+      top:0;left:0;
+      pointer-events:none;
+      z-index:0;
+      animation:ghostDrift 8s ease-in-out infinite alternate;
+      user-select:none;
     }
-    .orb { position: absolute; border-radius: 50%; filter: blur(60px); pointer-events: none; }
-    .orb-1 { animation: orbFloat 8s ease-in-out infinite; }
-    .orb-2 { animation: orbFloat 10s 2s ease-in-out infinite reverse; }
+    @keyframes ghostDrift {
+      0%  {transform:translate(-3px,-4px) scale(1.01)}
+      50% {transform:translate(5px,2px) scale(1.02)}
+      100%{transform:translate(-2px,5px) scale(0.99)}
+    }
 
-    /* ── Primary button ── */
-    .btn-primary {
-      background: linear-gradient(135deg, #3a7a3e 0%, #2f6232 100%);
-      box-shadow: 0 4px 14px rgba(47,98,50,0.3), 0 1px 3px rgba(47,98,50,0.2);
-      transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
+    /* ── BOTTLE ZERO ── */
+    .zero-wrap {
+      position:relative;
+      display:inline-flex;align-items:center;justify-content:center;
+      width:clamp(130px,21vw,200px);
+      height:clamp(117px,18.9vw,180px);
     }
-    .btn-primary:hover {
-      background: linear-gradient(135deg, #2f6232 0%, #264f29 100%);
-      box-shadow: 0 8px 24px rgba(47,98,50,0.4), 0 2px 6px rgba(47,98,50,0.25);
-      transform: translateY(-2px) scale(1.02);
+    .bottle-svg {
+      position:absolute;
+      width:46%;height:84%;
+      bottom:3%;left:50%;
+      transform:translateX(-50%);
+      animation:bfloat 6s ease-in-out infinite;
+      filter:drop-shadow(0 8px 24px rgba(12,38,16,0.1));
+      z-index:4;
     }
-    .btn-primary:active { transform: translateY(0) scale(0.99); }
+    @keyframes bfloat {
+      0%,100%{transform:translateX(-50%) translateY(0px) rotate(-0.4deg)}
+      50%    {transform:translateX(-50%) translateY(-10px) rotate(0.4deg)}
+    }
+    .liq{animation:liqA 5s ease-in-out infinite alternate}
+    @keyframes liqA{from{transform:translateY(2px)}to{transform:translateY(-5px)}}
+    .drp{animation:drpA 4s ease-in-out infinite}
+    @keyframes drpA{
+      0%,38%{opacity:0;transform:translateY(-3px) scale(0.4)}
+      50%{opacity:1;transform:translateY(0) scale(1)}
+      85%,100%{opacity:0;transform:translateY(18px) scale(0.3)}
+    }
+    .o-ring{
+      position:absolute;border-radius:50%;pointer-events:none;
+      border:1px solid rgba(0,200,83,0.14);
+      animation:oSpin linear infinite;
+    }
+    .or1{width:84%;height:84%;animation-duration:9s}
+    .or2{width:106%;height:106%;border:1px dashed rgba(178,217,181,0.18);animation-duration:15s;animation-direction:reverse}
+    @keyframes oSpin{to{transform:rotate(360deg)}}
+    .odot{
+      position:absolute;top:-3.5px;left:calc(50% - 3.5px);
+      width:7px;height:7px;border-radius:50%;
+      background:var(--ac);
+      box-shadow:0 0 10px rgba(0,200,83,0.9),0 0 4px rgba(0,200,83,1);
+    }
+    .odot2{
+      position:absolute;top:-2px;left:calc(50% - 2px);
+      width:4px;height:4px;border-radius:50%;
+      background:var(--pl);opacity:.7;
+      box-shadow:0 0 6px rgba(178,217,181,0.8);
+    }
+    .spk{position:absolute;border-radius:50%;pointer-events:none;animation:spkA ease-in-out infinite}
+    @keyframes spkA{
+      0%,100%{opacity:0.1;transform:translate(0,0) scale(1)}
+      50%    {opacity:1;transform:translate(var(--dx),var(--dy)) scale(1.8)}
+    }
 
-    /* ── Secondary button ── */
-    .btn-secondary {
-      border: 1.5px solid rgba(74,144,80,0.35);
-      background: rgba(255,255,255,0.6);
-      color: #2f6232;
-      transition: all 0.2s cubic-bezier(0.16,1,0.3,1);
-      backdrop-filter: blur(8px);
+    /* ── SUBTITLE ── */
+    .sub-row{display:flex;align-items:center;justify-content:center;gap:16px}
+    .sub-hr{flex:1;max-width:48px;height:1px;background:rgba(12,38,16,0.09)}
+    .sub-wrap{position:relative;overflow:hidden}
+    .sub-txt{
+      font-family:'Cormorant Garamond',serif;
+      font-weight:200;font-style:italic;
+      font-size:clamp(15px,2.2vw,21px);
+      color:rgba(12,38,16,0.35);
+      letter-spacing:0.1em;
+      white-space:nowrap;display:block;
+      animation:revT 1.4s 0.5s cubic-bezier(0.16,1,0.3,1) both;
     }
-    .btn-secondary:hover {
-      background: rgba(74,144,80,0.08);
-      border-color: rgba(74,144,80,0.6);
-      box-shadow: 0 4px 12px rgba(47,98,50,0.12);
-      transform: translateY(-2px) scale(1.02);
+    .sub-wrap::after{
+      content:'';position:absolute;inset:0;
+      background:var(--bg);transform-origin:left;
+      animation:wipe 1s 0.48s cubic-bezier(0.77,0,0.175,1) both;
     }
-    .btn-secondary:active { transform: translateY(0) scale(0.99); }
+    @keyframes wipe{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+    @keyframes revT{from{opacity:0}to{opacity:1}}
 
-    /* ── Error badge blink ── */
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-    .blink-dot { animation: blink 2s ease-in-out infinite; }
-
-    /* ── Top accent line ── */
-    .accent-line {
-      background: linear-gradient(90deg, transparent, #4a9050 30%, #94c494 50%, #4a9050 70%, transparent);
+    /* ── PATH PILL ── */
+    .path-pill{
+      display:inline-flex;align-items:center;gap:8px;
+      border:1px solid rgba(12,38,16,0.09);
+      border-radius:12px;padding:9px 18px;
+      background:rgba(255,255,255,0.4);
+      backdrop-filter:blur(12px);
+      max-width:100%;overflow:hidden;
     }
+
+    /* ── ERR CHIP ── */
+    .err-chip{
+      display:inline-flex;align-items:center;gap:5px;
+      background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.14);
+      border-radius:999px;padding:4px 12px;
+      font-size:10px;font-weight:300;color:#dc2626;letter-spacing:0.05em;
+    }
+    .bl{animation:bla 1.5s ease-in-out infinite}
+    @keyframes bla{0%,100%{opacity:1}50%{opacity:0.1}}
+
+    /* ── BUTTONS ── */
+    .btn-p{
+      display:inline-flex;align-items:center;justify-content:center;gap:8px;
+      background:var(--ac);color:#fff;
+      font-family:'DM Sans',sans-serif;font-weight:300;font-size:13px;letter-spacing:0.02em;
+      padding:13px 30px;border-radius:999px;text-decoration:none;border:none;cursor:none;
+      box-shadow:0 4px 28px rgba(0,200,83,0.28);
+      transition:all 0.35s cubic-bezier(0.16,1,0.3,1);
+      position:relative;overflow:hidden;
+    }
+    .btn-p::after{
+      content:'';position:absolute;inset:0;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);
+      transform:translateX(-100%);transition:transform 0.5s;
+    }
+    .btn-p:hover::after{transform:translateX(100%)}
+    .btn-p:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 12px 36px rgba(0,200,83,0.38);background:#00b347}
+    .btn-p:active{transform:scale(0.97)}
+
+    .btn-g{
+      display:inline-flex;align-items:center;justify-content:center;gap:8px;
+      background:transparent;color:rgba(12,38,16,0.36);
+      font-family:'DM Sans',sans-serif;font-weight:300;font-size:13px;
+      padding:13px 26px;border-radius:999px;text-decoration:none;
+      border:1px solid rgba(12,38,16,0.1);cursor:none;
+      transition:all 0.3s cubic-bezier(0.16,1,0.3,1);
+    }
+    .btn-g:hover{color:var(--g);border-color:rgba(30,94,34,0.28);background:rgba(30,94,34,0.04);transform:translateY(-2px)}
+    .btn-g:active{transform:scale(0.97)}
+
+    /* ── NAV ── */
+    .nav-a{
+      font-size:12px;font-weight:300;letter-spacing:0.03em;
+      color:rgba(12,38,16,0.36);text-decoration:none;
+      padding:5px 13px;border-radius:999px;border:1px solid transparent;
+      transition:all 0.22s;cursor:none;
+    }
+    .nav-a:hover{color:var(--g);border-color:rgba(30,94,34,0.18);background:rgba(30,94,34,0.05)}
+    .nd{color:rgba(180,28,28,0.4)}
+    .nd:hover{color:#dc2626;border-color:rgba(239,68,68,0.18);background:rgba(239,68,68,0.04)}
+
+    .main-inner{overflow-y:auto;max-height:calc(100vh - 58px)}
   </style>
 </head>
-<body class="bg-gradient-page min-h-screen flex flex-col overflow-hidden">
+<body>
 
-  {# ── Floating background orbs ── #}
-  <div class="orb orb-1 w-[400px] h-[400px] top-[-100px] left-[-100px] opacity-[0.06]"
-       style="background: radial-gradient(circle, #4a9050, #2f6232);"></div>
-  <div class="orb orb-2 w-[300px] h-[300px] bottom-[-60px] right-[-60px] opacity-[0.05]"
-       style="background: radial-gradient(circle, #94c494, #4a9050);"></div>
+<!-- Next.js dot grid canvas -->
+<canvas id="dot-grid"></canvas>
 
-  {# ── Top accent line ── #}
-  <div class="accent-line h-[2px] w-full fixed top-0 left-0 z-50 page-in"></div>
+<!-- Fluid blobs -->
+<div id="fluid">
+  <div class="fb" id="fb1"></div>
+  <div class="fb" id="fb2"></div>
+  <div class="fb" id="fb3"></div>
+</div>
 
-  {# ── HEADER ── #}
-  <header class="relative z-10 border-b border-sage-100/60 bg-white/60 backdrop-blur-xl s1" style="height:60px;">
-    <div class="max-w-6xl mx-auto px-4 sm:px-8 h-full flex items-center justify-between">
+<!-- Custom cursor -->
+<div id="cur-ring"></div>
+<div id="cur-dot"></div>
 
-      <a href="{% url 'admin_dashboard' %}" class="flex items-center gap-3 no-underline group">
-        <img src="{{ logo_url }}" alt="{{ site_name }} Logo" class="h-8 md:h-9 w-auto object-contain transition-transform duration-200 group-hover:scale-105">
-        <div class="flex items-baseline gap-1.5 border-l border-sage-200 pl-3">
-          <span class="font-semibold text-[15px] text-sage-900 tracking-[-0.01em]">Admin</span>
-        </div>
+<!-- HEADER -->
+<header class="hdr e0">
+  <a href="{% url 'admin_dashboard' %}" class="logo flex items-center">
+    <img src="{{ logo_url }}" alt="{{ site_name }} Logo" class="h-11 md:h-13 w-auto object-contain">
+  </a>
+  <div class="flex items-center gap-2">
+    <div class="err-chip">
+      <span class="bl w-1.5 h-1.5 rounded-full bg-red-500 inline-block flex-shrink-0"></span>
+      Error 404
+    </div>
+    {% if user.is_authenticated and user.is_superuser %}
+      <a href="{% url 'admin_dashboard' %}" class="nav-a hidden sm:inline-flex">Dashboard</a>
+      <a href="{% url 'admin_signout' %}" class="nav-a nd hidden sm:inline-flex">Sign Out</a>
+    {% endif %}
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="relative z-10 flex-1 flex items-center justify-center px-4 main-inner">
+  <div class="w-full max-w-[600px] text-center py-10 flex flex-col items-center">
+
+    <!-- 404 -->
+    <div class="num-row e1 w-full">
+
+      <!-- Left 4 -->
+      <div class="digit-wrap">
+        <span class="digit-ghost" aria-hidden="true">4</span>
+        <span class="digit-glow" aria-hidden="true">4</span>
+        <span class="digit">4</span>
+      </div>
+
+      <!-- Bottle 0 -->
+      <div class="zero-wrap">
+        <div class="o-ring or1"><div class="odot"></div></div>
+        <div class="o-ring or2"><div class="odot2"></div></div>
+        <div class="spk" style="width:5px;height:5px;background:var(--ac);top:6%;right:5%;--dx:-4px;--dy:-5px;animation-duration:2.8s;"></div>
+        <div class="spk" style="width:3px;height:3px;background:var(--pl);top:16%;left:3%;--dx:3px;--dy:-4px;animation-duration:3.5s;animation-delay:-1.2s;"></div>
+        <div class="spk" style="width:4px;height:4px;background:rgba(0,200,83,0.5);bottom:18%;right:2%;--dx:-3px;--dy:4px;animation-duration:2.2s;animation-delay:-0.5s;"></div>
+        <div class="spk" style="width:3px;height:3px;background:var(--pl);bottom:28%;left:5%;--dx:4px;--dy:3px;animation-duration:4s;animation-delay:-2s;"></div>
+
+        <svg class="bottle-svg" viewBox="0 0 80 122" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <clipPath id="bc"><rect x="22.4" y="38.4" width="35.2" height="73.6" rx="9.6"/></clipPath>
+            <linearGradient id="bG" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#eaf4eb"/>
+              <stop offset="100%" stop-color="#daeeda"/>
+            </linearGradient>
+            <linearGradient id="lG" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="rgba(0,200,83,0.25)"/>
+              <stop offset="100%" stop-color="rgba(0,200,83,0.1)"/>
+            </linearGradient>
+          </defs>
+          <rect x="30" y="0" width="20" height="9" rx="3" fill="#0c2610"/>
+          <rect x="28" y="5.5" width="24" height="5" rx="2.5" fill="#1e5e22"/>
+          <rect x="37" y="9" width="6" height="16" rx="2" fill="#1e5e22"/>
+          <path d="M25 28 Q24 23 33 23 L47 23 Q56 23 56 28 L58 38 H22 Z" fill="url(#bG)" stroke="rgba(46,139,50,0.12)" stroke-width="0.6"/>
+          <rect x="22" y="38" width="36" height="74" rx="10" fill="url(#bG)" stroke="rgba(46,139,50,0.12)" stroke-width="0.6"/>
+          <g clip-path="url(#bc)">
+            <rect class="liq" x="22" y="66" width="36" height="46" fill="url(#lG)"/>
+            <ellipse class="liq" cx="34" cy="70" rx="4" ry="1.6" fill="rgba(255,255,255,0.35)"/>
+          </g>
+          <rect x="27" y="55" width="26" height="32" rx="5" fill="rgba(255,255,255,0.48)" stroke="rgba(46,139,50,0.08)" stroke-width="0.5"/>
+          <text x="40" y="76" text-anchor="middle" font-family="Cormorant Garamond,serif" font-size="13" font-weight="200" fill="rgba(12,38,16,0.3)" letter-spacing="0.05em">g</text>
+          <ellipse cx="30" cy="50" rx="2.2" ry="6" fill="rgba(255,255,255,0.28)" transform="rotate(-10 30 50)"/>
+          <g class="drp" transform="translate(0,3)">
+            <ellipse cx="40" cy="114" rx="4" ry="4.8" fill="rgba(0,200,83,0.42)"/>
+            <ellipse cx="40" cy="111" rx="1.7" ry="1.2" fill="rgba(0,200,83,0.28)"/>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Right 4 -->
+      <div class="digit-wrap">
+        <span class="digit-ghost" aria-hidden="true">4</span>
+        <span class="digit-glow" aria-hidden="true">4</span>
+        <span class="digit">4</span>
+      </div>
+
+    </div>
+
+    <!-- Subtitle -->
+    <div class="sub-row e2 w-full mt-1 mb-8">
+      <div class="sub-hr"></div>
+      <div class="sub-wrap">
+        <span class="sub-txt">Admin Page Not Found</span>
+      </div>
+      <div class="sub-hr"></div>
+    </div>
+
+    <!-- Description -->
+    <p class="e3" style="font-size:13px;font-weight:300;color:rgba(12,38,16,0.36);line-height:2;max-width:290px;margin-bottom:30px;letter-spacing:0.01em;">
+      This admin route doesn't exist<br/>or may have been moved.
+    </p>
+
+    <!-- Path pill -->
+    <div class="e4 flex justify-center mb-10">
+      <div class="path-pill">
+        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="color:var(--pl);">
+          <path stroke-linecap="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+        </svg>
+        <code class="font-mono truncate" style="font-size:10.5px;font-weight:300;color:var(--m);">{{ request.path }}</code>
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="e5 flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
+      {% if user.is_authenticated and user.is_superuser %}
+      <a href="{% url 'admin_dashboard' %}" class="btn-p w-full sm:w-auto">
+        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M19 12H5M12 5l-7 7 7 7"/>
+        </svg>
+        Back to Dashboard
       </a>
-
-      <div class="flex items-center gap-2 sm:gap-3">
-        <div class="flex items-center gap-1.5 bg-red-50 border border-red-200/70 text-red-600 text-[10px] font-semibold px-2.5 py-1.5 rounded-full">
-          <span class="blink-dot w-1.5 h-1.5 rounded-full bg-red-500 inline-block"></span>
-          <span class="hidden sm:inline">Error</span> 404
-        </div>
-        {% if user.is_authenticated and user.is_superuser %}
-          <a href="{% url 'admin_dashboard' %}" class="hidden sm:flex items-center gap-1.5 text-sage-700 text-[13px] font-medium hover:text-sage-900 transition-colors no-underline px-3 py-1.5 rounded-lg hover:bg-sage-50/80">
-            Dashboard
-          </a>
-          <a href="{% url 'admin_signout' %}" class="hidden sm:flex items-center gap-1.5 text-red-500 text-[13px] font-medium hover:text-red-700 transition-colors no-underline px-3 py-1.5 rounded-lg hover:bg-red-50/80">
-            Sign Out
-          </a>
-        {% endif %}
-      </div>
+      {% else %}
+      <a href="{% url 'admin_signin' %}" class="btn-p w-full sm:w-auto">
+        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/>
+        </svg>
+        Sign In to Admin
+      </a>
+      {% endif %}
+      <button onclick="history.back()" class="btn-g w-full sm:w-auto">Go Back</button>
     </div>
-  </header>
 
-  {# ── MAIN ── #}
-  <main class="relative z-10 flex-1 flex items-center justify-center px-4 py-12 sm:py-16">
-    <div class="w-full max-w-[520px]">
+    <p class="e6 mt-12" style="font-size:9px;font-weight:300;letter-spacing:0.2em;text-transform:uppercase;color:rgba(12,38,16,0.16);">
+      © {% now "Y" %} {{ site_name }} Skincare · Admin
+    </p>
+  </div>
+</main>
 
-      {# Glass card #}
-      <div class="glass-card rounded-3xl overflow-hidden s2">
+<script>
+/* ══════════════════════════════════════════
+   1.  NEXT.JS DOT GRID — mouse proximity glow
+══════════════════════════════════════════ */
+(function(){
+  const cv  = document.getElementById('dot-grid');
+  const ctx = cv.getContext('2d');
+  let W, H;
+  const SPACING = 28;
+  let mx = -9999, my = -9999;
 
-        {# Top green stripe #}
-        <div class="h-[3px] w-full" style="background:linear-gradient(90deg,#94c494,#4a9050,#2f6232,#4a9050,#94c494);"></div>
+  function resize(){
+    W = cv.width  = window.innerWidth;
+    H = cv.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
 
-        <div class="px-8 sm:px-12 py-12 sm:py-14 text-center">
+  window.addEventListener('mousemove', e=>{ mx=e.clientX; my=e.clientY; });
+  window.addEventListener('touchmove', e=>{
+    mx=e.touches[0].clientX; my=e.touches[0].clientY;
+  },{passive:true});
 
-          {# Status badge #}
-          <div class="s3 inline-flex items-center gap-2 bg-sage-50 border border-sage-200/70 text-sage-700 text-[10px] font-semibold px-3 py-1.5 rounded-full tracking-[0.08em] uppercase mb-8">
-            <svg class="w-3 h-3 text-sage-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M12 8v4M12 16h.01"/></svg>
-            Page Not Found
-          </div>
+  // Target & current brightness per dot — smooth interpolation
+  const cols = () => Math.ceil(W/SPACING)+1;
+  const rows = () => Math.ceil(H/SPACING)+1;
+  let bright = [];
 
-          {# ── 404 with animated "0" ── #}
-          <div class="s3 flex items-center justify-center gap-1 mb-6" style="line-height:1;">
-            <span class="font-black text-sage-900 select-none"
-                  style="font-size:clamp(72px,16vw,110px);letter-spacing:-0.05em;background:linear-gradient(135deg,#1e3e20 0%,#3a7a3e 50%,#94c494 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
-              4
-            </span>
+  function initBright(){
+    const c=cols(), r=rows();
+    bright = new Float32Array(c*r);
+  }
+  initBright();
+  window.addEventListener('resize',initBright);
 
-            {# Animated "0" with glow #}
-            <span class="float-zero glow-zero font-black text-sage-500 select-none"
-                  style="font-size:clamp(72px,16vw,110px);letter-spacing:-0.05em;background:linear-gradient(135deg,#4a9050 0%,#94c494 50%,#4a9050 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 20px rgba(74,144,80,0.25));">
-              0
-            </span>
+  const RADIUS   = 130;   // glow radius
+  const BASE_A   = 0.08;  // resting dot opacity
+  const PEAK_A   = 0.75;  // max lit dot opacity
+  const BASE_R   = 1.3;   // resting dot radius
+  const PEAK_R   = 2.8;   // max lit dot radius
+  const LERP_IN  = 0.18;
+  const LERP_OUT = 0.06;
 
-            <span class="font-black text-sage-900 select-none"
-                  style="font-size:clamp(72px,16vw,110px);letter-spacing:-0.05em;background:linear-gradient(135deg,#1e3e20 0%,#3a7a3e 50%,#94c494 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
-              4
-            </span>
-          </div>
+  function draw(){
+    ctx.clearRect(0,0,W,H);
 
-          {# Heading #}
-          <h1 class="s4 font-bold text-sage-900 mb-3"
-              style="font-size:clamp(18px,3.5vw,24px);letter-spacing:-0.02em;line-height:1.3;">
-            Admin Page Not Found
-          </h1>
+    // soft bg gradient
+    const bg = ctx.createRadialGradient(W*.06,H*.06,0,W*.06,H*.06,W*.55);
+    bg.addColorStop(0,'rgba(178,217,181,0.22)');
+    bg.addColorStop(1,'transparent');
+    ctx.fillStyle='#f0f7f1'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+    const bg2=ctx.createRadialGradient(W*.9,H*.88,0,W*.9,H*.88,W*.4);
+    bg2.addColorStop(0,'rgba(46,139,50,0.09)');
+    bg2.addColorStop(1,'transparent');
+    ctx.fillStyle=bg2; ctx.fillRect(0,0,W,H);
 
-          <p class="s4 text-[13px] text-sage-600 font-light leading-relaxed max-w-[340px] mx-auto mb-5">
-            This admin route doesn't exist or has been moved. Double-check the URL or return to your dashboard.
-          </p>
+    const C=cols(), R=rows();
+    for(let r=0;r<R;r++){
+      for(let c=0;c<C;c++){
+        const px = c*SPACING;
+        const py = r*SPACING;
+        const dx = px - mx;
+        const dy = py - my;
+        const dist = Math.sqrt(dx*dx+dy*dy);
+        const target = dist<RADIUS ? Math.pow(1 - dist/RADIUS, 2) : 0;
+        const i = r*C+c;
+        if(i>=bright.length) continue;
+        const cur = bright[i]||0;
+        bright[i] = cur + (target - cur) * (target>cur ? LERP_IN : LERP_OUT);
+        const t = bright[i];
+        const alpha  = BASE_A  + t*(PEAK_A  - BASE_A);
+        const radius = BASE_R  + t*(PEAK_R  - BASE_R);
+        // colour: white→green as t grows
+        const g = Math.round(100 + t*55);
+        ctx.beginPath();
+        ctx.arc(px, py, radius, 0, Math.PI*2);
+        ctx.fillStyle = t>0.01
+          ? `rgba(${Math.round(10+t*0)},${g},${Math.round(40+t*20)},${alpha})`
+          : `rgba(12,38,16,${BASE_A})`;
+        ctx.fill();
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
 
-          {# Path tag #}
-          <div class="s4 inline-flex items-center gap-2 bg-sage-50/80 border border-sage-200/60 rounded-xl px-4 py-2 mb-9 max-w-full overflow-hidden">
-            <svg class="w-3 h-3 text-sage-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
-            <code class="font-mono text-[11px] text-sage-500 truncate">{{ request.path }}</code>
-          </div>
+/* ══════════════════════════════════════════
+   2.  FLUID MOUSE BLOBS
+══════════════════════════════════════════ */
+(function(){
+  const blobs=[
+    {el:document.getElementById('fb1'),size:500,lag:0.05,ox:0,oy:0,col:'rgba(0,200,83,0.065)'},
+    {el:document.getElementById('fb2'),size:300,lag:0.09,ox:0,oy:0,col:'rgba(178,217,181,0.11)'},
+    {el:document.getElementById('fb3'),size:160,lag:0.15,ox:0,oy:0,col:'rgba(0,200,83,0.1)'},
+  ];
+  blobs.forEach(b=>{
+    b.ox=window.innerWidth/2; b.oy=window.innerHeight/2;
+    Object.assign(b.el.style,{
+      width:b.size+'px',height:b.size+'px',
+      background:`radial-gradient(circle,${b.col} 0%,transparent 65%)`,
+      filter:'blur(45px)',
+      left:b.ox+'px',top:b.oy+'px',
+      transform:'translate(-50%,-50%)',
+    });
+  });
+  let mx=window.innerWidth/2, my=window.innerHeight/2;
+  window.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
+  window.addEventListener('touchmove',e=>{mx=e.touches[0].clientX;my=e.touches[0].clientY},{passive:true});
+  (function loop(){
+    blobs.forEach(b=>{
+      b.ox+=(mx-b.ox)*b.lag; b.oy+=(my-b.oy)*b.lag;
+      b.el.style.left=b.ox+'px'; b.el.style.top=b.oy+'px';
+    });
+    requestAnimationFrame(loop);
+  })();
+})();
 
-          {# Buttons #}
-          <div class="s5 flex flex-col sm:flex-row items-center justify-center gap-3">
-            {% if user.is_authenticated and user.is_superuser %}
-            <a href="{% url 'admin_dashboard' %}"
-               class="btn-primary w-full sm:w-auto flex items-center justify-center gap-2 text-white text-[12px] font-semibold tracking-[0.04em] px-7 py-3.5 rounded-2xl no-underline">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
-                <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
-              </svg>
-              Back to Dashboard
-            </a>
-            {% else %}
-            <a href="{% url 'admin_signin' %}"
-               class="btn-primary w-full sm:w-auto flex items-center justify-center gap-2 text-white text-[12px] font-semibold tracking-[0.04em] px-7 py-3.5 rounded-2xl no-underline">
-              Sign In to Admin
-            </a>
-            {% endif %}
+/* ══════════════════════════════════════════
+   3.  CUSTOM CURSOR — ring + dot
+══════════════════════════════════════════ */
+(function(){
+  const ring=document.getElementById('cur-ring');
+  const dot =document.getElementById('cur-dot');
+  let rx=0,ry=0, mx=0,my=0;
+  window.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.left=mx+'px';dot.style.top=my+'px';});
+  // Ring follows with lag
+  (function loop(){
+    rx+=(mx-rx)*0.12; ry+=(my-ry)*0.12;
+    ring.style.left=rx+'px'; ring.style.top=ry+'px';
+    requestAnimationFrame(loop);
+  })();
 
-            <button onclick="history.back()"
-                    class="btn-secondary w-full sm:w-auto flex items-center justify-center gap-2 text-[12px] font-semibold tracking-[0.04em] px-7 py-3.5 rounded-2xl cursor-pointer">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <path d="M19 12H5M12 5l-7 7 7 7"/>
-              </svg>
-              Go Back
-            </button>
-          </div>
+  // Expand on hoverable elements
+  document.querySelectorAll('a,button,.digit-wrap').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{
+      ring.style.width='54px';ring.style.height='54px';
+      ring.style.borderColor='rgba(0,200,83,0.85)';
+      ring.style.background='rgba(0,200,83,0.04)';
+    });
+    el.addEventListener('mouseleave',()=>{
+      ring.style.width='36px';ring.style.height='36px';
+      ring.style.borderColor='rgba(0,200,83,0.55)';
+      ring.style.background='';
+    });
+  });
+})();
 
-        </div>
-      </div>
+/* ══════════════════════════════════════════
+   4.  COMET PARTICLE TRAIL
+══════════════════════════════════════════ */
+(function(){
+  let last=0, trail=[];
+  window.addEventListener('mousemove',e=>{
+    const now=Date.now();
+    if(now-last<45) return;
+    last=now;
+    const p=document.createElement('div');
+    const s=1.5+Math.random()*3.5;
+    Object.assign(p.style,{
+      position:'fixed',
+      left:e.clientX+'px', top:e.clientY+'px',
+      width:s+'px', height:s+'px',
+      borderRadius:'50%',
+      background:Math.random()>.45?'rgba(0,200,83,0.55)':'rgba(178,217,181,0.65)',
+      pointerEvents:'none', zIndex:'3',
+      transform:'translate(-50%,-50%) scale(1)',
+      opacity:'1',
+      transition:'transform 0.75s ease-out, opacity 0.75s ease-out',
+    });
+    document.body.appendChild(p);
+    requestAnimationFrame(()=>{
+      const dx=(Math.random()-.5)*36;
+      const dy=(Math.random()-.5)*36-14;
+      p.style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(0.1)`;
+      p.style.opacity='0';
+    });
+    setTimeout(()=>p.remove(),800);
+  });
+})();
 
-      {# Footer hint #}
-      <p class="s5 text-center text-[11px] text-sage-400 mt-6 tracking-[0.1em] uppercase">
-        © {% now "Y" %} {{ site_name }} · Admin Panel
-      </p>
-
-    </div>
-  </main>
-
+/* ══════════════════════════════════════════
+   5.  DIGIT MAGNETIC PARALLAX
+══════════════════════════════════════════ */
+document.querySelectorAll('.digit-wrap').forEach(el=>{
+  el.addEventListener('mousemove',e=>{
+    const r=el.getBoundingClientRect();
+    const x=((e.clientX-r.left)/r.width -.5)*22;
+    const y=((e.clientY-r.top) /r.height-.5)*22;
+    el.style.transform=`translate(${x}px,${y}px)`;
+    el.style.transition='transform 0.08s';
+  });
+  el.addEventListener('mouseleave',()=>{
+    el.style.transition='transform 0.9s cubic-bezier(0.16,1,0.3,1)';
+    el.style.transform='';
+  });
+});
+</script>
 </body>
 </html>

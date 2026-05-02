@@ -69,7 +69,29 @@ function handleAvatarChange(input) {
   const reader = new FileReader();
   reader.onload = e => { document.getElementById('avatarPreview').src = e.target.result; };
   reader.readAsDataURL(file);
-  document.getElementById('imageForm').submit();
+  
+  // Unset remove flag if they choose a new photo
+  const removeFlag = document.getElementById('removePhotoFlag');
+  if (removeFlag) removeFlag.value = 'false';
+  
+  markUnsaved();
+}
+
+function handleRemovePhoto(e) {
+  e.preventDefault();
+  
+  // Set preview to default
+  document.getElementById('avatarPreview').src = '/media/profile/default.png';
+  
+  // Clear file input
+  const fileInput = document.getElementById('avatar-upload');
+  if (fileInput) fileInput.value = '';
+  
+  // Set hidden flag
+  const removeFlag = document.getElementById('removePhotoFlag');
+  if (removeFlag) removeFlag.value = 'true';
+  
+  markUnsaved();
 }
 
 // ── UNSAVED CHANGES BADGE ──

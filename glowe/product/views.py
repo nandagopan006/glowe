@@ -1012,39 +1012,46 @@ def product_detail_view(request, slug):
         category=product.category, is_active=True, is_deleted=False
     ).exclude(id=product.id)[:7]
 
-    for rel in related_products:
-        try:
-            rel_variant = (
-                rel.variants.filter(is_default=True).first()
-                or rel.variants.first()
-            )
-            rel_price = (
-                Decimal(str(rel_variant.price))
-                if rel_variant
-                else Decimal("0.00")
-            )
+    others_bought = Product.objects.filter(
+        is_active=True, is_deleted=False
+    ).exclude(category=product.category).exclude(id=product.id).order_by('?')[:9]
 
-            rel_offer, rel_disc = get_best_offer(rel, rel_price)
-            if rel_offer:
-                if rel_disc > rel_price:
-                    rel_disc = rel_price
-                rel_final = rel_price - rel_disc
-                if rel_final < Decimal("0.00"):
-                    rel_final = Decimal("0.00")
-                rel.final_price = rel_final
-                rel.discount = rel_disc
-                rel.has_offer = True
-            else:
-                rel.final_price = rel_price
+    def process_rel_products(products_list):
+        for rel in products_list:
+            try:
+                rel_variant = (
+                    rel.variants.filter(is_default=True).first()
+                    or rel.variants.first()
+                )
+                rel_price = (
+                    Decimal(str(rel_variant.price))
+                    if rel_variant
+                    else Decimal("0.00")
+                )
+
+                rel_offer, rel_disc = get_best_offer(rel, rel_price)
+                if rel_offer:
+                    if rel_disc > rel_price:
+                        rel_disc = rel_price
+                    rel_final = rel_price - rel_disc
+                    if rel_final < Decimal("0.00"):
+                        rel_final = Decimal("0.00")
+                    rel.final_price = rel_final
+                    rel.discount = rel_disc
+                    rel.has_offer = True
+                else:
+                    rel.final_price = rel_price
+                    rel.discount = Decimal("0.00")
+                    rel.has_offer = False
+                rel.original_price = rel_price
+            except Exception:
+                rel.final_price = Decimal("0.00")
                 rel.discount = Decimal("0.00")
                 rel.has_offer = False
-            rel.original_price = rel_price
+                rel.original_price = Decimal("0.00")
 
-        except Exception:
-            rel.final_price = Decimal("0.00")
-            rel.discount = Decimal("0.00")
-            rel.has_offer = False
-            rel.original_price = Decimal("0.00")
+    process_rel_products(related_products)
+    process_rel_products(others_bought)
 
     # wishlisted variant
     wishlisted_ids = []
@@ -1137,6 +1144,7 @@ def product_detail_view(request, slug):
             "images": images,
             "primary_image": primary_image,
             "related_products": related_products,
+            "others_bought": others_bought,
             "wishlisted_ids": wishlisted_ids,
             "cart_variant_ids": cart_variant_ids,
             "final_price": final_price,

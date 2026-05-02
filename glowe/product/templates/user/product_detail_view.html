@@ -106,6 +106,132 @@
         opacity: 1;
         transform: translateX(-50%) translateY(0);
     }
+
+    /* ── Product Tabs Styling ── */
+    .tab-content {
+        transition: all 0.4s ease;
+    }
+    .tab-desc-text * {
+        background-color: transparent !important; /* Remove unwanted highlighting/bg-color from pasted content */
+    }
+    .tab-desc-text {
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 400;
+        text-align: center;
+        margin-top: 2.5rem;
+        font-size: 15px;
+        color: #5a4f43;
+        line-height: 1.8;
+        letter-spacing: 0.02em;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* ── Carousel System ── */
+    .glowe-carousel-viewport {
+        overflow: visible !important; /* Allow cards to show during scroll */
+        position: relative;
+        clip-path: inset(-100px -100px -100px -100px); /* Keep shadow visible */
+    }
+    /* Re-enabling overflow hidden for the actual container */
+    .glowe-carousel-viewport-inner {
+        overflow: hidden;
+        position: relative;
+    }
+    .glowe-carousel-track {
+        display: flex;
+        gap: 16px;
+        transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
+        will-change: transform;
+        user-select: none;
+    }
+    .sp-card {
+        position: relative;
+        border-radius: 24px;
+        overflow: hidden;
+        background: #1a1208;
+        cursor: pointer;
+        flex: 0 0 auto;
+        aspect-ratio: 3/4;
+        transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                    box-shadow 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: 0 4px 20px rgba(26,18,8,0.04);
+        text-decoration: none;
+        display: block;
+    }
+    @media(hover:hover){
+        .sp-card:hover {
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 20px 50px rgba(26,18,8,0.15);
+        }
+        .sp-card:hover .sp-img  { transform: scale(1.08); }
+        .sp-card:hover .sp-cta  { opacity:1; transform:translateY(0); }
+    }
+    .sp-img {
+        position:absolute; inset:0;
+        width:100%; height:100%; object-fit:cover; 
+        transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .sp-overlay {
+        position:absolute; inset:0;
+        background: linear-gradient(to top, rgba(26,18,8,0.92) 0%, rgba(26,18,8,0.3) 50%, transparent 100%);
+        z-index:1;
+    }
+    .sp-info {
+        position:absolute; bottom:0; left:0; right:0;
+        padding:22px 20px; z-index:2;
+    }
+    .sp-cat  { font-family:'Montserrat',sans-serif; font-size:9px; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:rgba(255,255,255,0.4); margin-bottom:6px; }
+    .sp-name { 
+        font-family:'Cormorant Garamond',serif; font-size:19px; font-weight:700; color:#fff; line-height:1.1; margin-bottom:8px; 
+        text-transform:uppercase; letter-spacing:0.02em;
+        display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .sp-price-row { display:flex; align-items:baseline; gap:5px; }
+    .sp-price { font-family:'Montserrat',sans-serif; font-size:14px; font-weight:800; color:#fff; letter-spacing:0.01em; }
+    
+    .sp-arrow {
+        position:absolute; top:50%; z-index:10;
+        transform:translateY(-50%);
+        width:44px; height:44px;
+        border-radius:50%;
+        background:rgba(255,255,255,0.96);
+        backdrop-filter:blur(8px);
+        border:1px solid rgba(26,18,8,0.08);
+        box-shadow:0 4px 20px rgba(26,18,8,0.12);
+        display:flex; align-items:center; justify-content:center;
+        color:#1a1208; cursor:pointer;
+        transition:background 0.2s, box-shadow 0.2s, opacity 0.3s, transform 0.2s;
+    }
+    .sp-arrow:hover  { background:#1a1208; color:#fff; box-shadow:0 8px 28px rgba(26,18,8,0.25); }
+    .sp-arrow:active { transform:translateY(-50%) scale(0.92); }
+    .sp-arrow.hidden { opacity:0; pointer-events:none; }
+    .sp-arrow-prev { left:-22px; }
+    .sp-arrow-next { right:-22px; }
+    @media(max-width:767px){
+        .sp-arrow-prev { left:4px; }
+        .sp-arrow-next { right:4px; }
+        .sp-arrow { width:36px; height:36px; }
+    }
+    .sp-dot {
+        width:6px; height:6px; border-radius:50%;
+        background:rgba(26,18,8,0.18);
+        transition:background 0.3s, transform 0.3s, width 0.3s;
+        cursor:pointer;
+    }
+    .sp-dot.active {
+        background:#1a1208;
+        width:20px; border-radius:99px;
+    }
+    .sp-card { opacity:0; }
+    .sp-card.sp-visible {
+        animation: spIn 0.55s cubic-bezier(0.34,1.26,0.64,1) forwards;
+    }
+    @keyframes spIn {
+        from { opacity:0; transform:translateY(24px) scale(0.97); }
+        to   { opacity:1; transform:translateY(0)  scale(1);     }
+    }
 </style>
 {% endblock %}
 
@@ -403,11 +529,11 @@
             <button onclick="switchTab('tab-use', this)" class="tab-btn pb-3 font-cormorant text-[19px] font-medium text-gray-400 border-b-[3px] border-transparent hover:text-[#1a1208] transition-colors whitespace-nowrap">How to Use</button>
         </div>
 
-        <div id="tab-desc" class="tab-content font-cormorant italic font-bold text-center mt-4 text-[20px] text-[#5a4f43] leading-[1.2] fade-in">
+        <div id="tab-desc" class="tab-content tab-desc-text fade-in">
             {{ description|safe }}
         </div>
 
-        <div id="tab-ingr" class="tab-content font-cormorant italic font-bold text-center mt-4 text-[20px] text-[#5a4f43] leading-[1.2] hidden fade-in">
+        <div id="tab-ingr" class="tab-content tab-desc-text hidden fade-in">
             {{ ingredients|safe }}
         </div>
         
@@ -441,12 +567,12 @@
                             {% endfor %}
                         </div>
                     {% elif how_to_use %}
-                        <div class="font-cormorant italic text-center text-[22px] text-[#5a4f43] leading-[1.5] px-6 animate-fade-in">
+                        <div class="font-montserrat text-center text-[15px] text-[#5a4f43] leading-[1.8] tracking-[0.02em] px-6 max-w-[800px] mx-auto animate-fade-in">
                             {{ how_to_use|safe }}
                         </div>
                     {% else %}
                         <div class="text-center py-10">
-                            <p class="font-cormorant italic text-gray-400 text-lg">Instructions coming soon...</p>
+                            <p class="font-montserrat text-gray-400 text-sm tracking-widest uppercase">Instructions coming soon...</p>
                         </div>
                     {% endif %}
                 </div>
@@ -454,7 +580,6 @@
         </div>
     </div>
 
-    {% if total_reviews > 0 or reviewable_order %}
     <div class="max-w-[1000px] mx-auto px-5 md:px-8 mb-24">
         <!-- Toggle Button for Reviews -->
         <div class="flex flex-wrap sm:flex-nowrap items-center justify-between border-b border-gray-100 pb-5 mb-8 gap-4">
@@ -481,7 +606,6 @@
         <div id="reviewsCollapsibleWrapper" class="grid grid-rows-[0fr] transition-[grid-template-rows] duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]">
             <div class="overflow-hidden opacity-0 transition-opacity duration-700" id="reviewsCollapsibleInner">
                 <div class="pb-6">
-                    {% if total_reviews > 0 %}
         <!-- Premium Glowe Rating Widget -->
         <style>
             @keyframes glowe-rise { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:none; } }
@@ -621,12 +745,14 @@
         })();
         </script>
 
+        {% if total_reviews > 0 %}
         <hr class="border-[#eae6e1] my-8">
         <div class="flex flex-wrap items-center gap-3.5 mb-10 pb-2" id="reviewFilterButtons">
             <button onclick="filterReviews('recent')" data-filter="recent" class="review-filter-btn bg-[#1a1208] text-white px-6 py-3 rounded-full font-montserrat text-[11px] font-bold tracking-[0.12em] uppercase transition-all shadow-[0_4px_12px_rgb(26,18,8,0.2)] hover:bg-[#2c1f17]">MOST RECENT</button>
             <button onclick="filterReviews('photos')" data-filter="photos" class="review-filter-btn bg-white text-[#1a1208] px-6 py-3 rounded-full font-montserrat text-[11px] font-bold tracking-[0.12em] uppercase transition-all border border-gray-100/80 shadow-[0_4px_15px_rgb(0,0,0,0.03)] hover:shadow-[0_6px_20px_rgb(0,0,0,0.06)]">WITH PHOTOS</button>
             <button onclick="filterReviews('highest')" data-filter="highest" class="review-filter-btn bg-white text-[#1a1208] px-6 py-3 rounded-full font-montserrat text-[11px] font-bold tracking-[0.12em] uppercase transition-all border border-gray-100/80 shadow-[0_4px_15px_rgb(0,0,0,0.03)] hover:shadow-[0_6px_20px_rgb(0,0,0,0.06)]">HIGHEST RATING</button>
         </div>
+        {% endif %}
 
         <style>
             /* ── Review Card Redesign ── */
@@ -815,9 +941,7 @@
                 <span id="rv-load-label">Load More Reviews</span>
             </button>
         </div>
-        <div
-        </div>
-        {% endif %}
+
 
         <!-- Lightbox -->
         <div id="rv-lightbox" onclick="rvCloseLightbox()">
@@ -901,7 +1025,7 @@
             </div> <!-- End overflow-hidden -->
         </div> <!-- End grid-rows -->
     </div>
-    {% endif %}
+
 
 
     {% if reviewable_order %}
@@ -1044,127 +1168,6 @@
 
     {% if related_products %}
     <!-- ══ Similar Products Carousel ══ -->
-    <style>
-        /* ── Card ── */
-        .sp-card {
-            position: relative;
-            border-radius: 20px;
-            overflow: hidden;
-            background: #1a1208;
-            cursor: pointer;
-            flex: 0 0 auto;
-            /* width set by JS / CSS custom prop */
-            aspect-ratio: 3/4;
-            transition: transform 0.45s cubic-bezier(0.34,1.26,0.64,1),
-                        box-shadow 0.45s ease;
-            box-shadow: 0 4px 20px rgba(26,18,8,0.06);
-            text-decoration: none;
-            display: block;
-        }
-        @media(hover:hover){
-            .sp-card:hover {
-                transform: translateY(-10px) scale(1.02);
-                box-shadow: 0 24px 60px rgba(26,18,8,0.18);
-            }
-            .sp-card:hover .sp-img  { transform: scale(1.1); }
-            .sp-card:hover .sp-cta  { opacity:1; transform:translateY(0); }
-            .sp-card:hover .sp-name { transform:translateY(-3px); }
-        }
-        .sp-img {
-            position:absolute; inset:0;
-            width:100%; height:100%;
-            object-fit:cover;
-            transition: transform 0.7s cubic-bezier(0.4,0,0.2,1);
-        }
-        .sp-overlay {
-            position:absolute; inset:0;
-            background: linear-gradient(to top,
-                rgba(8,5,2,0.92) 0%,
-                rgba(8,5,2,0.55) 42%,
-                rgba(8,5,2,0.08) 72%,
-                transparent 100%);
-        }
-        .sp-info {
-            position:absolute; bottom:0; left:0; right:0;
-            padding:18px 14px 16px; z-index:2;
-        }
-        .sp-cat  { font-family:'Montserrat',sans-serif; font-size:8px; font-weight:700; letter-spacing:0.22em; text-transform:uppercase; color:rgba(255,255,255,0.42); margin-bottom:4px; }
-        .sp-name { font-family:'Cormorant Garamond',serif; font-size:17px; font-weight:500; color:#fff; line-height:1.18; margin-bottom:5px; transition:transform 0.3s ease; }
-        .sp-price-row { display:flex; align-items:baseline; gap:5px; }
-        .sp-from  { font-family:'Montserrat',sans-serif; font-size:8px; color:rgba(255,255,255,0.42); letter-spacing:0.1em; text-transform:uppercase; }
-        .sp-price { font-family:'Montserrat',sans-serif; font-size:13px; font-weight:700; color:#fff; }
-        .sp-cta {
-            position:absolute; top:12px; right:12px; z-index:3;
-            font-family:'Montserrat',sans-serif; font-size:8px; font-weight:700;
-            letter-spacing:0.16em; text-transform:uppercase;
-            color:#1a1208; background:rgba(255,255,255,0.94);
-            backdrop-filter:blur(8px); padding:5px 11px; border-radius:99px;
-            opacity:0; transform:translateY(-5px);
-            transition:opacity 0.3s,transform 0.35s cubic-bezier(0.34,1.26,0.64,1);
-            pointer-events:none; white-space:nowrap;
-        }
-        @media(hover:none){ .sp-cta{opacity:1;transform:translateY(0);} }
-
-        /* ── Track / Viewport ── */
-        #sp-viewport {
-            overflow: hidden;
-            position: relative;
-        }
-        #sp-track {
-            display: flex;
-            gap: 16px;
-            transition: transform 0.5s cubic-bezier(0.4,0,0.2,1);
-            will-change: transform;
-            user-select: none;
-        }
-        /* ── Arrow buttons ── */
-        .sp-arrow {
-            position:absolute; top:50%; z-index:10;
-            transform:translateY(-50%);
-            width:44px; height:44px;
-            border-radius:50%;
-            background:rgba(255,255,255,0.96);
-            backdrop-filter:blur(8px);
-            border:1px solid rgba(26,18,8,0.08);
-            box-shadow:0 4px 20px rgba(26,18,8,0.12);
-            display:flex; align-items:center; justify-content:center;
-            color:#1a1208; cursor:pointer;
-            transition:background 0.2s, box-shadow 0.2s, opacity 0.3s, transform 0.2s;
-        }
-        .sp-arrow:hover  { background:#1a1208; color:#fff; box-shadow:0 8px 28px rgba(26,18,8,0.25); }
-        .sp-arrow:active { transform:translateY(-50%) scale(0.92); }
-        .sp-arrow.hidden { opacity:0; pointer-events:none; }
-        #sp-prev { left:-22px; }
-        #sp-next { right:-22px; }
-        @media(max-width:767px){
-            #sp-prev { left:4px; }
-            #sp-next { right:4px; }
-            .sp-arrow { width:36px; height:36px; }
-        }
-
-        /* ── Dots ── */
-        .sp-dot {
-            width:6px; height:6px; border-radius:50%;
-            background:rgba(26,18,8,0.18);
-            transition:background 0.3s, transform 0.3s, width 0.3s;
-            cursor:pointer;
-        }
-        .sp-dot.active {
-            background:#1a1208;
-            width:20px; border-radius:99px;
-        }
-
-        /* ── Entrance ── */
-        .sp-card { opacity:0; }
-        .sp-card.sp-visible {
-            animation: spIn 0.55s cubic-bezier(0.34,1.26,0.64,1) forwards;
-        }
-        @keyframes spIn {
-            from { opacity:0; transform:translateY(24px) scale(0.97); }
-            to   { opacity:1; transform:translateY(0)  scale(1);     }
-        }
-    </style>
-
     <div class="max-w-[1200px] mx-auto px-5 md:px-10 mt-28">
 
         <!-- Header row -->
@@ -1191,22 +1194,22 @@
         </div>
 
         <!-- Carousel viewport -->
-        <div id="sp-viewport" class="relative">
+        <div id="sp-viewport" class="glowe-carousel-viewport-inner">
 
             <!-- Mobile floating arrows -->
-            <button id="sp-prev" class="sp-arrow hidden" aria-label="Previous">
+            <button id="sp-prev" class="sp-arrow sp-arrow-prev hidden md:!hidden" aria-label="Previous">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/>
                 </svg>
             </button>
-            <button id="sp-next" class="sp-arrow" aria-label="Next">
+            <button id="sp-next" class="sp-arrow sp-arrow-next md:!hidden" aria-label="Next">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
                 </svg>
             </button>
 
             <!-- Track -->
-            <div id="sp-track">
+            <div id="sp-track" class="glowe-carousel-track">
                 {% for rel in related_products %}
                 <a href="{% url 'product_detail_view' rel.slug %}"
                    class="sp-card"
@@ -1228,7 +1231,83 @@
                         <p class="sp-cat">{{ rel.category.name|default:"Skincare" }}</p>
                         <h3 class="sp-name">{{ rel.name }}</h3>
                         <div class="sp-price-row">
-                            <span class="sp-from">from</span>
+                            <span class="sp-price">₹{{ rel.variants.first.price|floatformat:2|default:"199.00" }}</span>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+    {% endif %}
+    <div class="mb-24"></div>
+
+    {% if others_bought %}
+    <!-- ══ Others Also Bought Carousel ══ -->
+    <div class="max-w-[1200px] mx-auto px-5 md:px-10 mt-36">
+
+        <!-- Header row -->
+        <div class="flex items-center justify-between mb-8 gap-4">
+            <div>
+                <p class="font-montserrat text-[9px] font-bold tracking-[0.28em] uppercase text-[#a8a196] mb-1">Recommended for you</p>
+                <h2 class="font-cormorant text-[32px] md:text-[40px] text-[#1a1208] leading-none">Others Also Bought</h2>
+            </div>
+            <!-- Arrows (desktop right-aligned) -->
+            <div class="hidden md:flex items-center gap-3">
+                <button id="ob-prev-top" aria-label="Previous"
+                        class="w-10 h-10 rounded-full border border-[#d4c4b0] flex items-center justify-center text-[#1a1208] hover:bg-[#1a1208] hover:text-white hover:border-[#1a1208] transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/>
+                    </svg>
+                </button>
+                <button id="ob-next-top" aria-label="Next"
+                        class="w-10 h-10 rounded-full border border-[#d4c4b0] flex items-center justify-center text-[#1a1208] hover:bg-[#1a1208] hover:text-white hover:border-[#1a1208] transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Carousel viewport -->
+        <div id="ob-viewport" class="glowe-carousel-viewport-inner">
+
+            <!-- Mobile floating arrows -->
+            <button id="ob-prev" class="sp-arrow sp-arrow-prev hidden md:!hidden" aria-label="Previous">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/>
+                </svg>
+            </button>
+            <button id="ob-next" class="sp-arrow sp-arrow-next md:!hidden" aria-label="Next">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
+                </svg>
+            </button>
+
+            <!-- Track -->
+            <div id="ob-track" class="glowe-carousel-track">
+                {% for rel in others_bought %}
+                <a href="{% url 'product_detail_view' rel.slug %}"
+                   class="sp-card"
+                   style="animation-delay:{{ forloop.counter0 }}00ms;">
+
+                    {% with fi=rel.images.first %}
+                    {% if fi %}
+                    <img src="{{ fi.image.url }}" alt="{{ rel.name }}" class="sp-img">
+                    {% else %}
+                    <div class="absolute inset-0 bg-gradient-to-br from-[#3b2e2a] to-[#1a1208] flex items-center justify-center">
+                        <span class="font-cormorant text-7xl text-white/10 select-none">{{ rel.name|first|upper }}</span>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+
+                    <div class="sp-overlay"></div>
+                    <div class="sp-cta">View →</div>
+                    <div class="sp-info">
+                        <p class="sp-cat">{{ rel.category.name|default:"Skincare" }}</p>
+                        <h3 class="sp-name">{{ rel.name }}</h3>
+                        <div class="sp-price-row">
                             <span class="sp-price">₹{{ rel.variants.first.price|floatformat:2|default:"199.00" }}</span>
                         </div>
                     </div>
@@ -1238,27 +1317,27 @@
         </div>
 
         <!-- Dot indicators -->
-        <div id="sp-dots" class="flex items-center justify-center gap-2 mt-6"></div>
+        <div id="ob-dots" class="flex md:hidden items-center justify-center gap-2 mt-6"></div>
     </div>
     <div class="mb-24"></div>
+    {% endif %}
 
     <script>
-    (function(){
-        const track    = document.getElementById('sp-track');
-        const viewport = document.getElementById('sp-viewport');
-        const dotsWrap = document.getElementById('sp-dots');
-        if (!track) return;
+    function initGloweCarousel(prefix) {
+        const track    = document.getElementById(prefix + '-track');
+        const viewport = document.getElementById(prefix + '-viewport');
+        const dotsWrap = document.getElementById(prefix + '-dots');
+        if (!track || !viewport) return;
 
         const cards = Array.from(track.querySelectorAll('.sp-card'));
         const total = cards.length;
         if (!total) return;
 
-        // ── Card width responsive ────────────────────────────────
         function cardW() {
             const vw = viewport.clientWidth;
-            if (vw >= 1024) return Math.floor((vw - 16*3) / 3.5);  // ~3.5 cards desktop
-            if (vw >= 640)  return Math.floor((vw - 16*2) / 2.4);  // ~2.4 cards tablet
-            return Math.floor((vw - 16)   / 1.5);                  // ~1.5 cards mobile
+            if (vw >= 1024) return Math.floor((vw - 16*3) / 3.5);
+            if (vw >= 640)  return Math.floor((vw - 16*2) / 2.4);
+            return Math.floor((vw - 16)   / 1.5);
         }
 
         let cw = cardW();
@@ -1274,12 +1353,10 @@
             buildDots();
         }
 
-        // ── Navigate ─────────────────────────────────────────────
         function goTo(idx, animate) {
             cur = Math.max(0, Math.min(idx, maxIdx));
             const offset = cur * (cw + gap);
-            track.style.transition = animate !== false
-                ? 'transform 0.5s cubic-bezier(0.4,0,0.2,1)' : 'none';
+            track.style.transition = animate !== false ? 'transform 0.5s cubic-bezier(0.4,0,0.2,1)' : 'none';
             track.style.transform = `translateX(-${offset}px)`;
             updateArrows();
             updateDots();
@@ -1288,45 +1365,41 @@
         function prev() { goTo(cur - 1, true); }
         function next() { goTo(cur + 1, true); }
 
-        // ── Arrow buttons ─────────────────────────────────────────
         function updateArrows() {
-            ['sp-prev','sp-prev-top'].forEach(id => {
+            [prefix + '-prev', prefix + '-prev-top'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.classList.toggle('hidden', cur === 0);
-                if (el && id === 'sp-prev') el.classList.toggle('hidden', cur === 0);
             });
-            ['sp-next','sp-next-top'].forEach(id => {
+            [prefix + '-next', prefix + '-next-top'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.classList.toggle('hidden', cur >= maxIdx);
             });
         }
 
-        document.getElementById('sp-prev')?.addEventListener('click', prev);
-        document.getElementById('sp-next')?.addEventListener('click', next);
-        document.getElementById('sp-prev-top')?.addEventListener('click', prev);
-        document.getElementById('sp-next-top')?.addEventListener('click', next);
+        document.getElementById(prefix + '-prev')?.addEventListener('click', prev);
+        document.getElementById(prefix + '-next')?.addEventListener('click', next);
+        document.getElementById(prefix + '-prev-top')?.addEventListener('click', prev);
+        document.getElementById(prefix + '-next-top')?.addEventListener('click', next);
 
-        // ── Dots ──────────────────────────────────────────────────
         function buildDots() {
+            if (!dotsWrap) return;
             dotsWrap.innerHTML = '';
             if (maxIdx < 1) return;
             for (let i = 0; i <= maxIdx; i++) {
                 const d = document.createElement('button');
                 d.className = 'sp-dot' + (i === cur ? ' active' : '');
-                d.setAttribute('aria-label', 'Go to slide ' + (i+1));
                 d.addEventListener('click', () => goTo(i, true));
                 dotsWrap.appendChild(d);
             }
         }
         function updateDots() {
+            if (!dotsWrap) return;
             dotsWrap.querySelectorAll('.sp-dot').forEach((d,i) => {
                 d.classList.toggle('active', i === cur);
             });
         }
 
-        // ── Touch / mouse drag ────────────────────────────────────
         let startX = 0, startOffset = 0, dragging = false, moved = false;
-
         function dragStart(x) {
             startX = x;
             startOffset = cur * (cw + gap);
@@ -1348,31 +1421,22 @@
             else                     { goTo(cur, true); }
         }
 
-        // Touch
         track.addEventListener('touchstart', e => dragStart(e.touches[0].clientX), {passive:true});
         track.addEventListener('touchmove',  e => dragMove(e.touches[0].clientX), {passive:true});
         track.addEventListener('touchend',   e => dragEnd(e.changedTouches[0].clientX));
-
-        // Mouse
         track.addEventListener('mousedown', e => { dragStart(e.clientX); });
         window.addEventListener('mousemove', e => { if(dragging) { e.preventDefault(); dragMove(e.clientX); } });
         window.addEventListener('mouseup',   e => dragEnd(e.clientX));
 
-        // Prevent link click when dragged
         track.querySelectorAll('a').forEach(a => {
             a.addEventListener('click', e => { if (moved) e.preventDefault(); });
         });
 
-        // ── Keyboard ─────────────────────────────────────────────
-        viewport.addEventListener('keydown', e => {
-            if (e.key === 'ArrowLeft')  prev();
-            if (e.key === 'ArrowRight') next();
+        window.addEventListener('resize', () => { 
+            clearTimeout(window['_rz_' + prefix]); 
+            window['_rz_' + prefix] = setTimeout(setWidths, 150); 
         });
 
-        // ── Resize ───────────────────────────────────────────────
-        window.addEventListener('resize', () => { clearTimeout(window._spRz); window._spRz = setTimeout(setWidths, 150); });
-
-        // ── Scroll-triggered entrance animation ───────────────────
         const io = new IntersectionObserver(entries => {
             entries.forEach(en => {
                 if (en.isIntersecting) { en.target.classList.add('sp-visible'); io.unobserve(en.target); }
@@ -1380,11 +1444,15 @@
         }, { threshold: 0.1 });
         cards.forEach(c => io.observe(c));
 
-        // ── Init ─────────────────────────────────────────────────
         setWidths();
-    })();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initGloweCarousel('sp');
+        initGloweCarousel('ob');
+    });
     </script>
-    {% endif %}
+
 
 
 

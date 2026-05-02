@@ -6,17 +6,7 @@
 {% block extra_css %}
 body { background:#F5F1EC !important; }
 
-@keyframes toastIn  { to { transform:translateY(0); opacity:1; } }
-@keyframes toastOut { to { transform:translateY(-80px); opacity:0; } }
-@keyframes toastProg { from{width:100%;} to{width:0%;} }
-.addr-toast {
-  pointer-events:all; display:flex; align-items:center;
-  width:300px; border-radius:14px; overflow:hidden; position:relative;
-  box-shadow:0 10px 32px rgba(42,31,20,0.2),0 2px 8px rgba(42,31,20,0.10);
-  animation:toastIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards;
-  transform:translateY(-80px); opacity:0;
-}
-.addr-toast.hide { animation:toastOut 0.35s cubic-bezier(0.4,0,1,1) forwards; }
+
 
 .address-card { transition:transform 0.25s ease, box-shadow 0.25s ease; }
 .address-card:hover { transform:translateY(-3px); box-shadow:0 12px 32px rgba(26,18,8,0.1); }
@@ -45,8 +35,7 @@ body { background:#F5F1EC !important; }
 
 {% block content %}
 
-<!-- ── TOAST CONTAINER ── -->
-<div id="addrToastContainer" class="fixed top-5 z-[9999] flex flex-col gap-2 pointer-events-none" style="left:50%;transform:translateX(-50%);align-items:center;width:max-content;"></div>
+
 
 <!-- ── MOBILE NAV OVERLAY ── -->
 <div id="mobileNavOverlay" class="mobile-nav-overlay" onclick="closeMobileNav()"></div>
@@ -237,23 +226,6 @@ body { background:#F5F1EC !important; }
 
 {% block extra_js %}
 <script>
-const ADDR_CONFIGS = {
-  success: { bg:'#1e3d2f', blobBg:'#172f24', iconBg:'radial-gradient(circle,#3aaa72,#1a6644)', icon:'✓', label:'#6ee7a8', titleC:'#f0fdf4', msgC:'#bbf7d0', prog:'#4ade80', typeLabel:'success', blobs:['#3aaa72','#1a6644','#0d4a30'] },
-  error:   { bg:'#3d1e1e', blobBg:'#2f1717', iconBg:'radial-gradient(circle,#e05050,#a82020)', icon:'✕', label:'#fca5a5', titleC:'#fff1f2', msgC:'#fecaca', prog:'#f87171', typeLabel:'error',   blobs:['#e05050','#a82020','#7a1010'] },
-  warning: { bg:'#3d2000', blobBg:'#2e1800', iconBg:'radial-gradient(circle,#f59e0b,#b45309)', icon:'!', label:'#fcd34d', titleC:'#fff8e1', msgC:'#fde68a', prog:'#f59e0b', typeLabel:'warning', blobs:['#f59e0b','#b45309','#7c2d00'] },
-};
-function _bsvg(b){return `<svg viewBox="0 0 50 70" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;width:100%;height:100%;"><ellipse cx="12" cy="12" rx="20" ry="16" fill="${b[0]}" opacity="0.45"/><ellipse cx="40" cy="52" rx="16" ry="14" fill="${b[1]}" opacity="0.35"/><ellipse cx="24" cy="34" rx="11" ry="9" fill="${b[2]}" opacity="0.3"/><ellipse cx="6" cy="56" rx="10" ry="8" fill="${b[0]}" opacity="0.22"/></svg>`;}
-function showToast(type,title,message){
-  const c=ADDR_CONFIGS[type]||ADDR_CONFIGS.success;
-  const container=document.getElementById('addrToastContainer');
-  const toast=document.createElement('div');
-  toast.className='addr-toast'; toast.style.background=c.bg;
-  toast.innerHTML=`<div style="width:54px;min-width:54px;align-self:stretch;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:${c.blobBg};">${_bsvg(c.blobs)}<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;z-index:2;position:relative;background:${c.iconBg};flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,0.2);">${c.icon}</div></div><div style="flex:1;padding:10px 6px 10px 10px;"><p style="font-family:'Montserrat',sans-serif;font-size:7px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;margin:0 0 2px;color:${c.label};opacity:0.85;">${c.typeLabel}</p><p style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;line-height:1.2;margin:0 0 2px;color:${c.titleC};">${title}</p><p style="font-family:'Montserrat',sans-serif;font-size:9px;font-weight:400;line-height:1.5;margin:0;color:${c.msgC};opacity:0.85;">${message}</p></div><button onclick="_addrDismiss(this.parentElement)" style="background:none;border:none;cursor:pointer;font-size:10px;padding:6px 10px 0 0;align-self:flex-start;color:#fff;opacity:0.4;">✕</button><div style="position:absolute;bottom:0;left:0;height:2px;border-radius:0 2px 0 0;background:${c.prog};animation:toastProg 5s linear forwards;"></div>`;
-  container.appendChild(toast);
-  toast._t=setTimeout(()=>_addrDismiss(toast),5000);
-}
-function _addrDismiss(t){if(!t||t._d)return;t._d=true;clearTimeout(t._t);t.classList.add('hide');setTimeout(()=>t.remove(),350);}
-
 function toggleMobileNav(){
   const sheet=document.getElementById('mobileNavSheet'), overlay=document.getElementById('mobileNavOverlay'), fab=document.getElementById('mobileNavFab');
   const isOpen=sheet.classList.contains('open');
@@ -269,14 +241,7 @@ function closeMobileNav(){
 document.addEventListener('keydown',e=>{ if(e.key==='Escape')closeMobileNav(); });
 
 document.addEventListener('DOMContentLoaded',()=>{
-  {% if messages %}
-    {% for message in messages %}
-      {% if 'success' in message.tags %}showToast('success','Done!','{{ message|escapejs }}');
-      {% elif 'error' in message.tags %}showToast('error','Error','{{ message|escapejs }}');
-      {% elif 'warning' in message.tags %}showToast('warning','Notice','{{ message|escapejs }}');
-      {% endif %}
-    {% endfor %}
-  {% endif %}
+  // Toast notifications are handled globally by base.html
 });
 </script>
 {% endblock %}
