@@ -53,27 +53,4 @@ def contact_page(request):
 
 
 def custom_404(request, exception):
-  
-    ADMIN_PREFIXES = (
-        
-        "/admin-signin/",
-        "/admin-dashboard/",
-        "/admin-signout/",
-        "/admin-forget-password/",
-        "/admin-otp-verification/",
-        "/admin-reset-password/",
-        "/admin-resent-otp/",
-        "/user-management/",
-        "/user-detail/",
-        "/admin-panel/",
-        "/adminpanel/categories/",
-        "/categories/restore/",
-        "/adminpanel/products/",
-        "/offers/",
-    )
-
-    if any(request.path.startswith(prefix) for prefix in ADMIN_PREFIXES):
-        return render(request, "404_admin.html", status=404)
-
     return render(request, "404.html", status=404)
-
