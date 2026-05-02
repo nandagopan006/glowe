@@ -90,6 +90,11 @@
         <form action="{% url 'signin' %}" method="POST" id="signin-form">
           {% csrf_token %}
 
+          <!-- (Spam protection) -->
+          <div style="display:none;">
+            <input type="text" name="website_url" tabindex="-1" autocomplete="off">
+          </div>
+
           <!-- Email — keep value on error -->
           <div class="anim-3 w-full mb-3 lg:mb-4">
             <label for="email" class="block text-[9.5px] font-semibold tracking-[0.14em] text-brand-label uppercase mb-1.5">

@@ -76,6 +76,11 @@
       <form action="{% url 'signup' %}" method="POST" id="signup-form">
         {% csrf_token %}
 
+        <!--(Spam protection) -->
+        <div style="display:none;">
+          <input type="text" name="website_url" tabindex="-1" autocomplete="off">
+        </div>
+
         <!-- Full Name -->
         <div class="anim-3 mb-2">
           <label for="full_name" class="block text-[9px] font-semibold tracking-[0.14em] text-brand-label uppercase mb-1">Full Name</label>

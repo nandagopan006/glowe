@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 import random
 import string
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 class ProfileUser(AbstractUser):
@@ -21,26 +23,12 @@ class ProfileUser(AbstractUser):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # Referral logic (Kept in main model as requested)
     referral_code = models.CharField(max_length=10, blank=True, null=True)
     referred_by = models.ForeignKey(
         "self", on_delete=models.SET_NULL, null=True, blank=True
     )
     referral_count = models.IntegerField(default=0)
-
-    resend_count = models.IntegerField(default=0)
-    resend_blocked_until = models.DateTimeField(null=True, blank=True)
-
-    # Password reset fields
-    reset_token = models.CharField(
-        max_length=255, null=True, blank=True
-    )  # stores latest valid token
-    reset_requested_at = models.DateTimeField(null=True, blank=True)  # when re
-    reset_block_until = models.DateTimeField(
-        null=True, blank=True
-    )  # set was requested
-    reset_attempts = models.IntegerField(
-        default=0
-    )  # resend attempt count block end time
 
     def save(self, *args, **kwargs):
         if not self.referral_code:
@@ -53,6 +41,33 @@ class ProfileUser(AbstractUser):
                     break
         super().save(*args, **kwargs)
 
+    def __str__(self):
+        return self.email
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["email"]),
+            models.Index(fields=["created_at"]),
+        ]
+
+
+class UserSecurity(models.Model):
+    user = models.OneToOneField(
+        ProfileUser, on_delete=models.CASCADE, related_name="security"
+    )
+    # OTP tracking
+    resend_count = models.IntegerField(default=0)
+    resend_blocked_until = models.DateTimeField(null=True, blank=True)
+
+    # Password reset tracking
+    reset_token = models.CharField(max_length=255, null=True, blank=True)
+    reset_requested_at = models.DateTimeField(null=True, blank=True)
+    reset_block_until = models.DateTimeField(null=True, blank=True)
+    reset_attempts = models.IntegerField(default=0)
+
+    class Meta:
+        verbose_name_plural = "User Security"
+
 
 class OTPVerification(models.Model):
     user = models.ForeignKey(
@@ -64,5 +79,31 @@ class OTPVerification(models.Model):
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
+class LoginAttempt(models.Model):
+    ip_address = models.GenericIPAddressField()
+    username = models.EmailField(max_length=255, null=True, blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    is_successful = models.BooleanField(default=False)
+
     class Meta:
-        ordering = ["-created_at"]
+        ordering = ["-timestamp"]
+        indexes = [
+            models.Index(fields=["ip_address", "timestamp"]),
+        ]
+
+    def __str__(self):
+        status = "Success" if self.is_successful else "Failed"
+        return f"{status} login from {self.ip_address} for {self.username} at {self.timestamp}"
+
+
+@receiver(post_save, sender=ProfileUser)
+def create_user_profiles(sender, instance, created, **kwargs):
+    if created:
+        UserSecurity.objects.create(user=instance)
+
+
+@receiver(post_save, sender=ProfileUser)
+def save_user_profiles(sender, instance, **kwargs):
+    # Check if security exists before saving
+    if hasattr(instance, "security"):
+        instance.security.save()

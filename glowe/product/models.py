@@ -101,3 +101,10 @@ class Variant(models.Model):
             ).update(is_default=False)
 
         super().save(*args, **kwargs)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["sku"]),
+            models.Index(fields=["price"]),
+            models.Index(fields=["created_at"]),
+        ]

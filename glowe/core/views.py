@@ -26,6 +26,7 @@ def home(request):
         Product.objects.filter(is_deleted=False, is_active=True)
         .annotate(order_count=Count("variants__orderitem"))
         .filter(order_count__gt=0)
+        .prefetch_related("images", "variants")
         .order_by("-order_count")[:4]
     )
 

@@ -5,7 +5,7 @@ from datetime import timedelta
 import random
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import ProfileUser, OTPVerification
+from .models import ProfileUser, OTPVerification, LoginAttempt, UserSecurity
 from .email_utils import send_otp_email, send_password_reset_email
 from django.contrib.auth import authenticate, login, update_session_auth_hash
 from django.urls import reverse
@@ -19,6 +19,15 @@ from django.views.decorators.cache import never_cache
 from core.decorators import unauthenticated_user
 
 
+def get_client_ip(request):
+    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(",")[0]
+    else:
+        ip = request.META.get("REMOTE_ADDR")
+    return ip
+
+
 @never_cache
 @unauthenticated_user
 def signup_page(request):
@@ -27,6 +36,10 @@ def signup_page(request):
         return redirect("home")
 
     if request.method == "POST":
+        # (Spam protection)
+        if request.POST.get("website_url"):
+           
+            return redirect("signup")
 
         # take the data sent from the signup form
         form = SignupForm(request.POST)
@@ -98,6 +111,8 @@ def signup_otp_verify(request):
 
     try:
         user = ProfileUser.objects.get(email=email)
+        # Ensure security profile exists
+        UserSecurity.objects.get_or_create(user=user)
     except ProfileUser.DoesNotExist:
         return redirect("signup")
 
@@ -145,8 +160,9 @@ def signup_otp_verify(request):
                 if not user.is_verified:
                     user.is_verified = True
                     user.is_active = True
-                    user.resend_count = 0  # reset resend count
-                    user.resend_blocked_until = None  # reset block
+                    user.security.resend_count = 0  # reset resend count
+                    user.security.resend_blocked_until = None  # reset block
+                    user.security.save()
                     user.save()
 
                     # Create wallet automatically
@@ -201,16 +217,18 @@ def signup_resend_otp(request):
 
     try:
         user = ProfileUser.objects.get(email=email)
+        # Ensure security profile exists
+        UserSecurity.objects.get_or_create(user=user)
     except ProfileUser.DoesNotExist:
         return redirect("signup")
 
     # check if blocked
     if (
-        user.resend_blocked_until
-        and timezone.now() < user.resend_blocked_until
+        user.security.resend_blocked_until
+        and timezone.now() < user.security.resend_blocked_until
     ):
         remaining = round(
-            (user.resend_blocked_until - timezone.now()).total_seconds() / 60
+            (user.security.resend_blocked_until - timezone.now()).total_seconds() / 60
         )
         return render(
             request,
@@ -223,16 +241,17 @@ def signup_resend_otp(request):
 
     # Check if currently block and reset
     if (
-        user.resend_blocked_until
-        and timezone.now() >= user.resend_blocked_until
+        user.security.resend_blocked_until
+        and timezone.now() >= user.security.resend_blocked_until
     ):
-        user.resend_blocked_until = None
-        user.resend_count = 0
+        user.security.resend_blocked_until = None
+        user.security.resend_count = 0
+        user.security.save()
 
-    if user.resend_count >= 3:
-        user.resend_blocked_until = timezone.now() + timedelta(minutes=10)
-        user.resend_count = 0
-        user.save()
+    if user.security.resend_count >= 3:
+        user.security.resend_blocked_until = timezone.now() + timedelta(minutes=10)
+        user.security.resend_count = 0
+        user.security.save()
 
         return render(
             request,
@@ -253,7 +272,8 @@ def signup_resend_otp(request):
     )
 
     user.is_active = False
-    user.resend_count += 1
+    user.security.resend_count += 1
+    user.security.save()
     user.save()
 
     send_otp_email(request, user, otp_code)
@@ -271,8 +291,31 @@ def signin_page(request):
     success_msg = request.session.pop("success_msg", None)
     update_password = request.session.pop("update_password", None)
     if request.method == "POST":
+        # 1. Honeypot check (Spam protection)
+        if request.POST.get("website_url"):
+            # If this hidden field is filled, it's a bot
+            return redirect("signin")
+
         email = request.POST.get("email", "").strip().lower()
         password = request.POST.get("password")
+        client_ip = get_client_ip(request)
+
+        # 2. Rate Limiting Check (Brute-force protection)
+        # Check failed attempts from this IP in the last 15 minutes
+        time_threshold = timezone.now() - timedelta(minutes=15)
+        failed_attempts = LoginAttempt.objects.filter(
+            ip_address=client_ip, is_successful=False, timestamp__gte=time_threshold
+        ).count()
+
+        if failed_attempts >= 5:
+            return render(
+                request,
+                "signin.html",
+                {
+                    "error": "Too many failed attempts from this IP. Please try again in 15 minutes.",
+                    "submitted_email": email,
+                },
+            )
 
         if not email:
             return render(
@@ -291,6 +334,8 @@ def signin_page(request):
 
         try:  # check ifexist or not
             user_obb = ProfileUser.objects.get(email=email)
+            # Ensure security profile exists for the user trying to sign in
+            UserSecurity.objects.get_or_create(user=user_obb)
         except ProfileUser.DoesNotExist:
             return render(
                 request,
@@ -325,11 +370,19 @@ def signin_page(request):
         user = authenticate(request, username=email, password=password)
 
         if user:
+            # 3. Log successful attempt
+            LoginAttempt.objects.create(
+                ip_address=client_ip, username=email, is_successful=True
+            )
             # if  everything is correct   login
             login(request, user)  # it create the seesion
             request.session["welcome"] = "Welcome to Glowé.  !"
             return redirect("home")
         else:
+            # 4. Log failed attempt
+            LoginAttempt.objects.create(
+                ip_address=client_ip, username=email, is_successful=False
+            )
             return render(
                 request,
                 "signin.html",
@@ -353,22 +406,29 @@ def forget_password(request):
     prefill_email = request.user.email if request.user.is_authenticated else ""
 
     if request.method == "POST":
+        # Honeypot check (Spam protection)
+        if request.POST.get("website_url"):
+            # If this hidden field is filled, it's a bot
+            return redirect("forget_password")
+
         email = request.POST.get("email")
 
         try:
             user = ProfileUser.objects.get(email=email)
+            # Ensure security profile exists
+            UserSecurity.objects.get_or_create(user=user)
 
             if user.is_active and user.is_verified:  # both checks
                 # check block FIRST before anything else
                 if (
-                    user.reset_block_until
-                    and timezone.now() < user.reset_block_until
+                    user.security.reset_block_until
+                    and timezone.now() < user.security.reset_block_until
                 ):
 
                     # still blocked  do not send email
                     remaining_minutes = round(
                         (
-                            user.reset_block_until - timezone.now()
+                            user.security.reset_block_until - timezone.now()
                         ).total_seconds()
                         / 60
                     )
@@ -382,18 +442,18 @@ def forget_password(request):
                     )
 
                 # save user first before generating token
-                user.reset_attempts = 0
-                user.reset_block_until = (
+                user.security.reset_attempts = 0
+                user.security.reset_block_until = (
                     None  # fresh request remove any existing block
                 )
-                user.save()
+                user.security.save()
 
                 uid = urlsafe_base64_encode(force_bytes(user.pk))
                 token = default_token_generator.make_token(user)
 
-                user.reset_token = token
-                user.reset_requested_at = timezone.now()
-                user.save()
+                user.security.reset_token = token
+                user.security.reset_requested_at = timezone.now()
+                user.security.save()
 
                 #  reset link
                 reset_link = request.build_absolute_uri(
@@ -453,19 +513,19 @@ def forget_password_link(request):
     max_reached = False
 
     # check if a block exists in the database for this user
-    if user.reset_block_until:
-        if timezone.now() < user.reset_block_until:
+    if user.security.reset_block_until:
+        if timezone.now() < user.security.reset_block_until:
 
             is_blocked = True
             remaining_minutes = round(
-                (user.reset_block_until - timezone.now()).total_seconds() / 60
+                (user.security.reset_block_until - timezone.now()).total_seconds() / 60
             )
             max_reached = True
         else:
 
-            user.reset_attempts = 0
-            user.reset_block_until = None
-            user.save()
+            user.security.reset_attempts = 0
+            user.security.reset_block_until = None
+            user.security.save()
 
     return render(
         request,
@@ -474,7 +534,7 @@ def forget_password_link(request):
             "email": email,
             "is_blocked": is_blocked,
             "remaining_minutes": remaining_minutes,
-            "resent_count": user.reset_attempts,
+            "resent_count": user.security.reset_attempts,
             "max_reached": max_reached,
         },
     )
@@ -491,11 +551,11 @@ def resend_reset_email(request):
     except ProfileUser.DoesNotExist:
         return redirect("forget_password")
 
-    if user.reset_block_until:
-        if timezone.now() < user.reset_block_until:
+    if user.security.reset_block_until:
+        if timezone.now() < user.security.reset_block_until:
 
             remaining_minutes = round(
-                (user.reset_block_until - timezone.now()).total_seconds() / 60
+                (user.security.reset_block_until - timezone.now()).total_seconds() / 60
             )
             messages.warning(
                 request,
@@ -504,29 +564,29 @@ def resend_reset_email(request):
             return redirect("forget_password_link")
         else:
 
-            user.reset_attempts = 0
-            user.reset_block_until = None
-            user.save()
+            user.security.reset_attempts = 0
+            user.security.reset_block_until = None
+            user.security.save()
 
-    if user.reset_attempts >= 3:
-        user.reset_block_until = timezone.now() + timedelta(minutes=15)
-        user.reset_attempts = 0
-        user.save()
+    if user.security.reset_attempts >= 3:
+        user.security.reset_block_until = timezone.now() + timedelta(minutes=15)
+        user.security.reset_attempts = 0
+        user.security.save()
         messages.warning(
             request, "Too many attempts. Try again after 15 minutes."
         )
         return redirect("forget_password_link")
 
-    user.reset_attempts += 1
-    user.save()
+    user.security.reset_attempts += 1
+    user.security.save()
 
     # generate new token and save in database
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
 
-    user.reset_token = token
-    user.reset_requested_at = timezone.now()
-    user.save()
+    user.security.reset_token = token
+    user.security.reset_requested_at = timezone.now()
+    user.security.save()
 
     # reset link new
     reset_link = request.build_absolute_uri(
@@ -549,18 +609,18 @@ def reset_password(request, uidb64, token):
     except ProfileUser.DoesNotExist:
         return redirect("reset_password_invalid")
 
-    if user.reset_token is None or user.reset_token != token:
+    if user.security.reset_token is None or user.security.reset_token != token:
         return redirect("reset_password_invalid")
 
-    if user.reset_requested_at is None:
+    if user.security.reset_requested_at is None:
         return redirect("reset_password_invalid")
 
-    expiry_time = user.reset_requested_at + timedelta(minutes=15)
+    expiry_time = user.security.reset_requested_at + timedelta(minutes=15)
     if timezone.now() > expiry_time:
 
-        user.reset_token = None
-        user.reset_requested_at = None
-        user.save()
+        user.security.reset_token = None
+        user.security.reset_requested_at = None
+        user.security.save()
         return redirect("reset_password_invalid")
 
     if request.method == "POST":
@@ -601,10 +661,11 @@ def reset_password(request, uidb64, token):
         user.set_password(new_password)
 
         # clear reset token
-        user.reset_token = None
-        user.reset_requested_at = None
-        user.reset_attempts = 0
-        user.reset_block_until = None
+        user.security.reset_token = None
+        user.security.reset_requested_at = None
+        user.security.reset_attempts = 0
+        user.security.reset_block_until = None
+        user.security.save()
         user.save()
 
         # If user was authenticated, keep them logged in (password change invalidates session otherwise)  # noqa: E501
