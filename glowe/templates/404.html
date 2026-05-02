@@ -2,390 +2,333 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>404 – Page Not Found | Glowé</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
 
-  <style>
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-    :root {
-      --bg: #0a0a0a;
-      --bg2: #111111;
-      --border: rgba(255,255,255,0.08);
-      --border-hover: rgba(255,255,255,0.15);
-      --text: #ededed;
-      --text-muted: #888;
-      --text-subtle: #555;
-      --accent: #fff;
-      --accent-green: #22c55e;
-      --accent-green-dim: rgba(34,197,94,0.15);
-      --accent-red: #ef4444;
-      --accent-red-dim: rgba(239,68,68,0.12);
-      --glow: rgba(34,197,94,0.08);
+  {% if 'admin' in request.path or 'management' in request.path or 'offers' in request.path %}
+  {# ── ADMIN FONTS ── #}
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter','ui-sans-serif','system-ui','sans-serif'] },
+          colors: {
+            sage: {
+              50:'#f2f7f2',100:'#e2f0e2',200:'#c3dfc3',
+              300:'#94c494',400:'#64a864',500:'#4a9050',
+              600:'#3a7a3e',700:'#2f6232',800:'#264f29',900:'#1e3e20',
+            }
+          },
+          animation: {
+            'float': 'float 5s ease-in-out infinite',
+            'fade-up': 'fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both',
+            'fade-up-d1': 'fadeUp 0.7s 0.1s cubic-bezier(0.16,1,0.3,1) both',
+            'fade-up-d2': 'fadeUp 0.7s 0.2s cubic-bezier(0.16,1,0.3,1) both',
+            'fade-up-d3': 'fadeUp 0.7s 0.35s cubic-bezier(0.16,1,0.3,1) both',
+            'fade-up-d4': 'fadeUp 0.7s 0.5s cubic-bezier(0.16,1,0.3,1) both',
+            'spin-slow': 'spin 12s linear infinite',
+            'pulse-dot': 'pulseDot 2s ease-in-out infinite',
+          },
+          keyframes: {
+            float: { '0%,100%': {transform:'translateY(0)'}, '50%': {transform:'translateY(-12px)'} },
+            fadeUp: { from:{opacity:'0',transform:'translateY(20px)'}, to:{opacity:'1',transform:'translateY(0)'} },
+            pulseDot: { '0%,100%': {opacity:'1',transform:'scale(1)'}, '50%': {opacity:'0.4',transform:'scale(0.8)'} },
+          }
+        }
+      }
     }
-
-    .user-mode {
-      --bg: #faf9f7;
-      --bg2: #f4f1ed;
-      --border: rgba(0,0,0,0.07);
-      --border-hover: rgba(0,0,0,0.15);
-      --text: #1a1310;
-      --text-muted: #7a6a5a;
-      --text-subtle: #b0a090;
-      --accent: #1a1310;
-      --glow: rgba(0,0,0,0.03);
+  </script>
+  {% else %}
+  {# ── USER FONTS ── #}
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            cormorant: ['"Cormorant Garamond"','serif'],
+            montserrat: ['Montserrat','sans-serif'],
+          },
+          animation: {
+            'float': 'float 6s ease-in-out infinite',
+            'fade-up': 'fadeUp 0.8s cubic-bezier(0.16,1,0.3,1) both',
+            'fade-up-d1': 'fadeUp 0.8s 0.12s cubic-bezier(0.16,1,0.3,1) both',
+            'fade-up-d2': 'fadeUp 0.8s 0.24s cubic-bezier(0.16,1,0.3,1) both',
+            'fade-up-d3': 'fadeUp 0.8s 0.38s cubic-bezier(0.16,1,0.3,1) both',
+            'fade-up-d4': 'fadeUp 0.8s 0.52s cubic-bezier(0.16,1,0.3,1) both',
+            'shimmer': 'shimmer 2.5s linear infinite',
+          },
+          keyframes: {
+            float: { '0%,100%': {transform:'translateY(0)'}, '50%': {transform:'translateY(-14px)'} },
+            fadeUp: { from:{opacity:'0',transform:'translateY(24px)'}, to:{opacity:'1',transform:'translateY(0)'} },
+            shimmer: { '0%':{backgroundPosition:'-200% center'}, '100%':{backgroundPosition:'200% center'} },
+          }
+        }
+      }
     }
-
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      overflow-x: hidden;
-      transition: background 0.3s;
-    }
-
-    /* ─── Noise texture ─── */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-      pointer-events: none;
-      z-index: 0;
-      opacity: 0.6;
-    }
-
-    /* ─── Radial glow background ─── */
-    .glow-bg {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-    }
-    .glow-orb {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(120px);
-      opacity: 0.35;
-      animation: pulse-orb 6s ease-in-out infinite alternate;
-    }
-    .glow-orb.g1 { width: 500px; height: 500px; background: radial-gradient(circle, rgba(34,197,94,0.2), transparent); top: -100px; left: -100px; animation-delay: 0s; }
-    .glow-orb.g2 { width: 400px; height: 400px; background: radial-gradient(circle, rgba(99,102,241,0.15), transparent); bottom: -80px; right: -80px; animation-delay: 2s; }
-
-    @keyframes pulse-orb { from { transform: scale(1); } to { transform: scale(1.15); } }
-
-    /* ─── ADMIN HEADER ─── */
-    .admin-header {
-      position: relative; z-index: 10;
-      border-bottom: 1px solid var(--border);
-      background: rgba(10,10,10,0.8);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      padding: 0 32px;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .admin-logo {
-      display: flex; align-items: center; gap: 10px;
-      text-decoration: none;
-    }
-    .admin-logo-icon {
-      width: 32px; height: 32px;
-      background: #22c55e;
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-    }
-    .admin-logo-icon svg { width: 16px; height: 16px; color: #fff; }
-    .admin-logo-text {
-      font-size: 14px; font-weight: 600;
-      color: var(--text); letter-spacing: 0.02em;
-    }
-    .admin-logo-text span {
-      font-size: 10px; font-weight: 500;
-      color: var(--text-muted); letter-spacing: 0.1em;
-      text-transform: uppercase; margin-left: 6px;
-    }
-    .admin-nav { display: flex; align-items: center; gap: 8px; }
-    .admin-badge {
-      display: flex; align-items: center; gap: 6px;
-      background: var(--accent-red-dim);
-      border: 1px solid rgba(239,68,68,0.2);
-      color: var(--accent-red);
-      font-size: 11px; font-weight: 600;
-      padding: 4px 10px; border-radius: 100px;
-      letter-spacing: 0.04em;
-    }
-    .admin-badge .dot { width: 5px; height: 5px; background: var(--accent-red); border-radius: 50%; animation: blink 1.5s ease-in-out infinite; }
-    @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
-    .nav-link {
-      font-size: 13px; font-weight: 500; color: var(--text-muted);
-      text-decoration: none; padding: 6px 12px; border-radius: 8px;
-      transition: all 0.2s; border: 1px solid transparent;
-    }
-    .nav-link:hover { color: var(--text); background: rgba(255,255,255,0.05); border-color: var(--border); }
-    .nav-link.danger { color: var(--accent-red); }
-    .nav-link.danger:hover { background: var(--accent-red-dim); border-color: rgba(239,68,68,0.2); }
-
-    /* ─── MAIN CONTENT ─── */
-    main {
-      flex: 1; display: flex;
-      align-items: center; justify-content: center;
-      padding: 40px 24px;
-      position: relative; z-index: 1;
-    }
-
-    .container {
-      width: 100%; max-width: 560px;
-      text-align: center;
-      animation: fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
-    }
-
-    @keyframes fade-up {
-      from { opacity: 0; transform: translateY(24px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ─── Error code number ─── */
-    .error-number {
-      font-size: clamp(100px, 20vw, 160px);
-      font-weight: 900;
-      line-height: 1;
-      letter-spacing: -0.05em;
-      color: transparent;
-      -webkit-text-stroke: 1px rgba(255,255,255,0.08);
-      position: relative;
-      margin-bottom: -10px;
-      user-select: none;
-    }
-    .user-mode .error-number { -webkit-text-stroke: 1px rgba(0,0,0,0.07); }
-
-    /* ─── Divider line ─── */
-    .divider {
-      width: 40px; height: 1px;
-      background: var(--border-hover);
-      margin: 20px auto;
-    }
-
-    /* ─── Status pill ─── */
-    .status-pill {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: var(--accent-green-dim);
-      border: 1px solid rgba(34,197,94,0.2);
-      color: var(--accent-green);
-      font-size: 11px; font-weight: 600;
-      padding: 5px 14px 5px 10px;
-      border-radius: 100px; letter-spacing: 0.06em;
-      text-transform: uppercase; margin-bottom: 24px;
-    }
-    .status-pill .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent-green); animation: blink 2s ease-in-out infinite; }
-
-    /* ─── Heading ─── */
-    h1 {
-      font-family: 'Inter', sans-serif;
-      font-size: clamp(26px, 5vw, 36px);
-      font-weight: 700;
-      color: var(--text);
-      letter-spacing: -0.02em;
-      margin-bottom: 14px;
-      line-height: 1.15;
-    }
-    p.sub {
-      font-size: 15px; line-height: 1.7;
-      color: var(--text-muted); font-weight: 400;
-      max-width: 400px; margin: 0 auto 32px;
-    }
-
-    /* ─── Path display ─── */
-    .path-tag {
-      display: inline-block;
-      font-family: 'SF Mono', 'Fira Code', monospace;
-      font-size: 12px; color: var(--text-subtle);
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--border);
-      padding: 6px 14px; border-radius: 8px;
-      margin-bottom: 36px;
-      letter-spacing: 0.02em;
-      max-width: 100%; overflow: hidden;
-      text-overflow: ellipsis; white-space: nowrap;
-    }
-    .user-mode .path-tag { background: rgba(0,0,0,0.03); }
-
-    /* ─── Buttons ─── */
-    .btn-group { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
-
-    .btn-primary {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 12px 24px; border-radius: 12px;
-      font-size: 14px; font-weight: 600;
-      background: var(--text); color: var(--bg);
-      text-decoration: none; border: none; cursor: pointer;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      letter-spacing: -0.01em;
-      font-family: 'Inter', sans-serif;
-    }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(255,255,255,0.12); opacity: 0.9; }
-    .user-mode .btn-primary:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
-
-    .btn-secondary {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 12px 24px; border-radius: 12px;
-      font-size: 14px; font-weight: 500;
-      background: transparent; color: var(--text-muted);
-      border: 1px solid var(--border); cursor: pointer;
-      text-decoration: none;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      letter-spacing: -0.01em;
-      font-family: 'Inter', sans-serif;
-    }
-    .btn-secondary:hover { color: var(--text); border-color: var(--border-hover); background: rgba(255,255,255,0.04); transform: translateY(-2px); }
-    .user-mode .btn-secondary:hover { background: rgba(0,0,0,0.04); }
-
-    /* ─── USER HEADER ─── */
-    .user-header {
-      position: relative; z-index: 10;
-      padding: 20px 32px;
-      display: flex; align-items: center; justify-content: center;
-      border-bottom: 1px solid var(--border);
-    }
-    .user-logo {
-      display: flex; align-items: center; gap: 8px;
-      text-decoration: none;
-    }
-    .user-logo svg { width: 18px; height: 18px; color: var(--text); }
-    .user-logo-text {
-      font-family: 'Playfair Display', serif;
-      font-size: 20px; font-weight: 600;
-      color: var(--text); letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
-
-    /* ─── USER footer hint ─── */
-    .footer-hint {
-      position: relative; z-index: 10;
-      padding: 20px;
-      text-align: center;
-    }
-    .footer-hint p { font-size: 12px; color: var(--text-subtle); margin-bottom: 4px; }
-    .footer-hint a { font-size: 12px; color: var(--text-muted); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; transition: color 0.2s; }
-    .footer-hint a:hover { color: var(--text); }
-    .footer-copy { font-size: 11px; color: var(--text-subtle); margin-top: 12px; letter-spacing: 0.08em; text-transform: uppercase; }
-
-    /* ─── Admin Footer ─── */
-    .admin-footer { position: relative; z-index: 10; text-align: center; padding: 20px; }
-    .admin-footer p { font-size: 11px; color: var(--text-subtle); letter-spacing: 0.1em; text-transform: uppercase; }
-
-    /* ─── Responsive ─── */
-    @media (max-width: 480px) {
-      .admin-header { padding: 0 16px; }
-      .admin-badge { display: none; }
-      main { padding: 32px 16px; }
-      .btn-group { flex-direction: column; width: 100%; }
-      .btn-primary, .btn-secondary { width: 100%; justify-content: center; }
-    }
-  </style>
+  </script>
+  {% endif %}
 </head>
 
 {% if 'admin' in request.path or 'management' in request.path or 'offers' in request.path %}
-{# ═══════════════ ADMIN 404 ═══════════════ #}
-<body>
-  <div class="glow-bg">
-    <div class="glow-orb g1"></div>
-    <div class="glow-orb g2"></div>
-  </div>
+{# ═══════════════════════════════════════════════════════════
+   ADMIN 404  — Matches admin_base.html (Inter / Sage Green / #F6F7F5)
+═══════════════════════════════════════════════════════════ #}
+<body class="bg-[#F6F7F5] font-sans min-h-screen flex flex-col overflow-x-hidden">
 
-  <header class="admin-header">
-    <a href="{% url 'admin_dashboard' %}" class="admin-logo">
-      <div class="admin-logo-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  {# ── decorative grid bg ── #}
+  <div class="pointer-events-none fixed inset-0 z-0"
+       style="background-image:linear-gradient(rgba(74,144,80,0.045) 1px,transparent 1px),linear-gradient(90deg,rgba(74,144,80,0.045) 1px,transparent 1px);background-size:28px 28px;"></div>
+
+  {# ── subtle glow ── #}
+  <div class="pointer-events-none fixed top-[-120px] left-[-120px] w-[480px] h-[480px] rounded-full z-0"
+       style="background:radial-gradient(circle,rgba(74,144,80,0.10),transparent 70%);filter:blur(40px);"></div>
+  <div class="pointer-events-none fixed bottom-[-80px] right-[-80px] w-[360px] h-[360px] rounded-full z-0"
+       style="background:radial-gradient(circle,rgba(74,144,80,0.07),transparent 70%);filter:blur(40px);"></div>
+
+  {# ── HEADER (matches admin panel exactly) ── #}
+  <header class="relative z-10 bg-white/80 backdrop-blur-md border-b border-sage-100 h-[60px] flex items-center px-4 sm:px-8 animate-fade-up">
+    <a href="{% url 'admin_dashboard' %}" class="flex items-center gap-2.5 no-underline group mr-auto">
+      <div class="w-8 h-8 rounded-lg bg-sage-600 flex items-center justify-center group-hover:bg-sage-700 transition-colors">
+        <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 2C8 6 4 9 4 13a8 8 0 0016 0c0-4-4-7-8-11z"/>
         </svg>
       </div>
-      <span class="admin-logo-text">Glowé<span>Admin</span></span>
+      <span class="font-semibold text-[15px] text-sage-900 tracking-wide">Glowé</span>
+      <span class="text-sage-500 font-sans text-[10px] font-medium tracking-widest uppercase">Admin</span>
     </a>
-    <nav class="admin-nav">
-      <div class="admin-badge"><span class="dot"></span> Error 404</div>
+
+    <div class="flex items-center gap-2 sm:gap-3">
+      {# error badge #}
+      <div class="flex items-center gap-1.5 bg-red-50 border border-red-200 text-red-600 text-[10px] font-semibold px-3 py-1.5 rounded-full">
+        <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse-dot inline-block"></span>
+        Error 404
+      </div>
       {% if user.is_authenticated and user.is_superuser %}
-        <a href="{% url 'admin_dashboard' %}" class="nav-link">Dashboard</a>
-        <a href="{% url 'admin_signout' %}" class="nav-link danger">Sign Out</a>
+        <a href="{% url 'admin_dashboard' %}" class="hidden sm:block text-sage-700 text-[13px] font-medium hover:text-sage-900 transition-colors no-underline px-3 py-1.5 rounded-lg hover:bg-sage-50">Dashboard</a>
+        <a href="{% url 'admin_signout' %}" class="hidden sm:block text-red-500 text-[13px] font-medium hover:text-red-700 transition-colors no-underline px-3 py-1.5 rounded-lg hover:bg-red-50">Sign Out</a>
       {% else %}
-        <a href="{% url 'admin_signin' %}" class="nav-link">Sign In</a>
+        <a href="{% url 'admin_signin' %}" class="text-sage-700 text-[13px] font-medium hover:text-sage-900 transition-colors no-underline px-3 py-1.5 rounded-lg hover:bg-sage-50">Sign In</a>
       {% endif %}
-    </nav>
+    </div>
   </header>
 
-  <main>
-    <div class="container">
-      <div class="error-number">404</div>
-      <div class="divider"></div>
-      <div class="status-pill"><span class="dot"></span> Page not found</div>
-      <h1>Admin page doesn't exist</h1>
-      <p class="sub">The admin route you're looking for has been moved, deleted, or never existed. Check the URL and try again.</p>
-      <div class="path-tag">{{ request.path }}</div>
-      <div class="btn-group">
+  {# ── MAIN ── #}
+  <main class="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-12 sm:py-20">
+    <div class="w-full max-w-[560px] text-center">
+
+      {# floating bottle icon #}
+      <div class="animate-float mb-8 animate-fade-up">
+        <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-white shadow-[0_4px_24px_rgba(74,144,80,0.12)] border border-sage-100">
+          <svg class="w-10 h-10 text-sage-600" viewBox="0 0 40 50" fill="none">
+            <rect x="14" y="2" width="12" height="6" rx="2" stroke="currentColor" stroke-width="1.5"/>
+            <rect x="16" y="8" width="8" height="4" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M9 14 Q8 20 8 30 Q8 40 20 41 Q32 40 32 30 Q32 20 31 14 Z" stroke="currentColor" stroke-width="1.5" fill="currentColor" fill-opacity="0.06"/>
+            <path d="M20 22 C20 22 17 26 17 28.5 C17 30.2 18.3 31.5 20 31.5 C21.7 31.5 23 30.2 23 28.5 C23 26 20 22 20 22Z" stroke="currentColor" stroke-width="1.2" fill="none"/>
+          </svg>
+        </div>
+      </div>
+
+      {# 404 number #}
+      <div class="animate-fade-up-d1 mb-2">
+        <span class="font-black text-[clamp(80px,18vw,140px)] leading-none tracking-[-0.04em] text-sage-900 select-none"
+              style="background:linear-gradient(135deg,#2f6232 0%,#4a9050 50%,#94c494 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
+          404
+        </span>
+      </div>
+
+      {# thin line separator #}
+      <div class="animate-fade-up-d1 flex items-center gap-3 mb-6 justify-center">
+        <div class="h-px flex-1 max-w-[80px] bg-gradient-to-r from-transparent to-sage-200"></div>
+        <div class="w-1.5 h-1.5 rounded-full bg-sage-400"></div>
+        <div class="h-px flex-1 max-w-[80px] bg-gradient-to-l from-transparent to-sage-200"></div>
+      </div>
+
+      {# heading #}
+      <h1 class="animate-fade-up-d2 text-[clamp(22px,4vw,30px)] font-semibold text-sage-900 tracking-[-0.02em] mb-3">
+        Admin Page Not Found
+      </h1>
+      <p class="animate-fade-up-d2 text-[14px] text-sage-600 font-light leading-relaxed max-w-[380px] mx-auto mb-5">
+        This admin route doesn't exist or may have been moved. Check the URL and try again.
+      </p>
+
+      {# path tag #}
+      <div class="animate-fade-up-d3 inline-flex items-center gap-2 bg-white border border-sage-200 rounded-xl px-4 py-2 mb-8 shadow-sm max-w-full overflow-hidden">
+        <svg class="w-3.5 h-3.5 text-sage-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+        <code class="font-mono text-[11px] text-sage-500 truncate">{{ request.path }}</code>
+      </div>
+
+      {# buttons #}
+      <div class="animate-fade-up-d4 flex flex-col sm:flex-row items-center justify-center gap-3">
         {% if user.is_authenticated and user.is_superuser %}
-          <a href="{% url 'admin_dashboard' %}" class="btn-primary">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-            Back to Dashboard
-          </a>
+        <a href="{% url 'admin_dashboard' %}" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-sage-700 hover:bg-sage-800 text-white text-[12px] font-semibold tracking-[0.08em] uppercase px-7 py-3.5 rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-lg no-underline">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Back to Dashboard
+        </a>
         {% else %}
-          <a href="{% url 'admin_signin' %}" class="btn-primary">Sign In to Admin</a>
+        <a href="{% url 'admin_signin' %}" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-sage-700 hover:bg-sage-800 text-white text-[12px] font-semibold tracking-[0.08em] uppercase px-7 py-3.5 rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-lg no-underline">
+          Sign In to Admin
+        </a>
         {% endif %}
-        <button onclick="history.back()" class="btn-secondary">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        <button onclick="history.back()" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-white hover:bg-sage-50 border border-sage-200 hover:border-sage-400 text-sage-700 text-[12px] font-semibold tracking-[0.08em] uppercase px-7 py-3.5 rounded-xl transition-all duration-200 hover:scale-[1.02] cursor-pointer">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
           Go Back
         </button>
       </div>
+
     </div>
   </main>
 
-  <footer class="admin-footer">
-    <p>© 2025 Glowé Skincare · Admin Panel</p>
+  <footer class="relative z-10 text-center py-5">
+    <p class="text-[10px] text-sage-400 tracking-[0.12em] uppercase">© 2025 Glowé Skincare · Admin Panel</p>
   </footer>
+
 </body>
 
 {% else %}
-{# ═══════════════ USER 404 ═══════════════ #}
-<body class="user-mode">
-  <header class="user-header">
-    <a href="{% url 'home' %}" class="user-logo">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+{# ═══════════════════════════════════════════════════════════
+   USER 404  — Matches base.html (Cormorant + Montserrat / #FAF8F5 warm beige)
+═══════════════════════════════════════════════════════════ #}
+<body class="bg-[#FAF8F5] min-h-screen flex flex-col overflow-x-hidden">
+
+  <style>
+    body { font-family: 'Montserrat', sans-serif; }
+    .font-cormorant { font-family: 'Cormorant Garamond', serif; }
+
+    /* subtle grain texture */
+    body::after {
+      content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+      opacity:0.7;
+    }
+
+    /* shimmer button */
+    .btn-shimmer {
+      background: linear-gradient(90deg, #1a1208 0%, #3b2414 40%, #6b4226 60%, #3b2414 80%, #1a1208 100%);
+      background-size: 200% auto;
+      animation: shimmer 3s linear infinite;
+    }
+    @keyframes shimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
+
+    /* float */
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
+    .animate-float { animation: float 6s ease-in-out infinite; }
+
+    /* fade up */
+    @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+    .au   { animation: fadeUp 0.8s cubic-bezier(0.16,1,0.3,1) both; }
+    .au-1 { animation: fadeUp 0.8s 0.10s cubic-bezier(0.16,1,0.3,1) both; }
+    .au-2 { animation: fadeUp 0.8s 0.22s cubic-bezier(0.16,1,0.3,1) both; }
+    .au-3 { animation: fadeUp 0.8s 0.36s cubic-bezier(0.16,1,0.3,1) both; }
+    .au-4 { animation: fadeUp 0.8s 0.50s cubic-bezier(0.16,1,0.3,1) both; }
+
+    /* line draw */
+    @keyframes drawLine { from{width:0} to{width:100%} }
+    .draw-line { animation: drawLine 1.2s 0.4s cubic-bezier(0.16,1,0.3,1) both; }
+  </style>
+
+  {# ── warm radial overlay ── #}
+  <div class="pointer-events-none fixed inset-0 z-0"
+       style="background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(200,184,154,0.12),transparent 70%);"></div>
+
+  {# ── HEADER — same style as base.html navbar ── #}
+  <header class="relative z-10 bg-[#FAF8F5]/90 backdrop-blur-md border-b border-[#e6e0d8] h-16 flex items-center justify-center au">
+    <a href="{% url 'home' %}" class="flex items-center gap-2 no-underline group">
+      <svg class="w-5 h-5 text-[#1a1208] group-hover:opacity-70 transition-opacity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 2C8 6 4 9 4 13a8 8 0 0016 0c0-4-4-7-8-11z"/>
         <path d="M12 12v4"/>
       </svg>
-      <span class="user-logo-text">Glowé</span>
+      <span class="font-cormorant text-[22px] font-semibold tracking-[0.2em] text-[#1a1208] uppercase">Glowé</span>
     </a>
   </header>
 
-  <main>
-    <div class="container">
-      <div class="error-number">404</div>
-      <div class="divider"></div>
-      <h1>Page not found</h1>
-      <p class="sub">The page you're looking for might have been moved, removed, or never existed. Let's get your glow back on track.</p>
-      <div class="btn-group">
-        <a href="{% url 'home' %}" class="btn-primary">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+  {# ── MAIN ── #}
+  <main class="relative z-10 flex-1 flex flex-col items-center justify-center px-4 py-12 sm:py-20">
+    <div class="w-full max-w-[580px] text-center">
+
+      {# animated perfume bottle ── keeps brand identity #}
+      <div class="animate-float au mb-10">
+        <div class="inline-flex items-center justify-center">
+          <svg class="w-[90px] sm:w-[110px]" viewBox="0 0 80 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="28" y="4" width="24" height="12" rx="4" stroke="#1a1208" stroke-width="1.8" stroke-opacity="0.4"/>
+            <rect x="32" y="16" width="16" height="8" stroke="#1a1208" stroke-width="1.8" stroke-opacity="0.4"/>
+            <path d="M18 28 Q16 40 16 60 Q16 80 40 82 Q64 80 64 60 Q64 40 62 28 Z" stroke="#1a1208" stroke-width="1.8" stroke-opacity="0.5" fill="#1a1208" fill-opacity="0.03"/>
+            <path d="M40 45 C40 45 34 52 34 57 C34 60.3 36.7 63 40 63 C43.3 63 46 60.3 46 57 C46 52 40 45 40 45Z" stroke="#1a1208" stroke-width="1.5" stroke-opacity="0.4" fill="none"/>
+            <text x="40" y="76" text-anchor="middle" font-family="Montserrat" font-size="6.5" fill="#1a1208" fill-opacity="0.25" letter-spacing="2.5">EMPTY</text>
+            {# sparkle dots #}
+            <circle cx="66" cy="28" r="2" fill="#c8b89a" opacity="0.6"/>
+            <circle cx="70" cy="42" r="1.2" fill="#c8b89a" opacity="0.4"/>
+            <circle cx="13" cy="35" r="1.5" fill="#c8b89a" opacity="0.45"/>
+          </svg>
+        </div>
+      </div>
+
+      {# 404 digits #}
+      <div class="au-1 flex items-center justify-center gap-4 sm:gap-6 mb-2">
+        <span class="font-cormorant font-bold text-[clamp(72px,18vw,120px)] text-[#1a1208] leading-none select-none" style="letter-spacing:-0.04em;">4</span>
+        <span class="font-cormorant font-bold text-[clamp(72px,18vw,120px)] text-[#1a1208] leading-none select-none opacity-20" style="letter-spacing:-0.04em;">0</span>
+        <span class="font-cormorant font-bold text-[clamp(72px,18vw,120px)] text-[#1a1208] leading-none select-none" style="letter-spacing:-0.04em;">4</span>
+      </div>
+
+      {# thin animated rule #}
+      <div class="au-1 flex justify-center mb-7">
+        <div class="h-px bg-[#1a1208] opacity-[0.08] draw-line" style="max-width:220px;width:100%;"></div>
+      </div>
+
+      {# heading #}
+      <h1 class="au-2 font-cormorant text-[clamp(28px,5vw,40px)] font-normal text-[#1a1208] mb-4" style="line-height:1.2;letter-spacing:-0.01em;">
+        Page Not Found
+      </h1>
+      <p class="au-2 font-montserrat text-[12px] sm:text-[13px] font-light text-[#7a6e62] leading-[1.85] max-w-[400px] mx-auto mb-8" style="letter-spacing:0.02em;">
+        The page you're looking for may have been moved or no longer exists.<br class="hidden sm:block"/>Let's get your glow back on track.
+      </p>
+
+      {# CTA buttons — match base.html btn-dark style #}
+      <div class="au-3 flex flex-col sm:flex-row items-center justify-center gap-3 mb-12">
+        <a href="{% url 'home' %}"
+           class="btn-shimmer w-full sm:w-auto flex items-center justify-center gap-2 text-white font-montserrat text-[10px] font-bold tracking-[0.22em] uppercase px-8 py-4 no-underline transition-all duration-200 hover:scale-[1.02] hover:shadow-xl"
+           style="border-radius:0;">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
           Back to Home
         </a>
-        <a href="{% url 'product_listing' %}" class="btn-secondary">
+        <a href="{% url 'product_listing' %}"
+           class="w-full sm:w-auto flex items-center justify-center gap-2 border border-[#1a1208] text-[#1a1208] hover:bg-[#1a1208] hover:text-white font-montserrat text-[10px] font-bold tracking-[0.22em] uppercase px-8 py-4 no-underline transition-all duration-200 hover:scale-[1.02]"
+           style="border-radius:0;">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
           Shop Collections
         </a>
       </div>
+
+      {# subtle divider #}
+      <div class="au-4 flex items-center gap-4 max-w-[320px] mx-auto mb-6">
+        <div class="flex-1 h-px bg-[#1a1208] opacity-[0.07]"></div>
+        <span class="font-montserrat text-[9px] tracking-[0.2em] uppercase text-[#b0a090]">Or</span>
+        <div class="flex-1 h-px bg-[#1a1208] opacity-[0.07]"></div>
+      </div>
+
+      {# help hint — matches base.html footer aesthetic #}
+      <div class="au-4">
+        <p class="font-montserrat text-[11px] font-light text-[#9a8878] mb-2" style="letter-spacing:0.04em;">
+          Lost? Our skin experts are here to help.
+        </p>
+        <a href="{% url 'contact_page' %}" class="font-montserrat text-[11px] font-semibold text-[#1a1208] underline underline-offset-4 hover:opacity-60 transition-opacity" style="letter-spacing:0.04em;">
+          Contact Support
+        </a>
+      </div>
+
     </div>
   </main>
 
-  <footer class="footer-hint">
-    <p>Lost? Our skin experts are here to help.</p>
-    <a href="{% url 'home' %}">Visit Help Center</a>
-    <p class="footer-copy">© Glowé Skincare</p>
+  {# ── FOOTER — matches base.html footer color #}
+  <footer class="relative z-10 bg-[#3b2414] py-5 text-center">
+    <p class="font-montserrat text-[9px] font-light text-white/30 tracking-[0.15em] uppercase">
+      © 2025 Glowé Skincare. All rights reserved.
+    </p>
   </footer>
+
 </body>
 {% endif %}
 
