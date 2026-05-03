@@ -285,121 +285,103 @@ def signup_resend_otp(request):
 @never_cache
 @unauthenticated_user
 def signin_page(request):
-    try:
-        if request.user.is_authenticated:
+    if request.user.is_authenticated:
+        return redirect("home")
+
+    success_msg = request.session.pop("success_msg", None)
+    update_password = request.session.pop("update_password", None)
+
+    if request.method == "POST":
+        # 1. Honeypot check (Spam protection)
+        if request.POST.get("website_url"):
+            return redirect("signin")
+
+        email = request.POST.get("email", "").strip().lower()
+        password = request.POST.get("password")
+        client_ip = get_client_ip(request)
+
+        # 2. Rate Limiting Check (Brute-force protection)
+        time_threshold = timezone.now() - timedelta(minutes=15)
+        failed_attempts = LoginAttempt.objects.filter(
+            ip_address=client_ip, is_successful=False, timestamp__gte=time_threshold
+        ).count()
+
+        if failed_attempts >= 5:
+            return render(
+                request,
+                "signin.html",
+                {
+                    "error": "Too many failed attempts from this IP. Please try again in 15 minutes.",
+                    "submitted_email": email,
+                },
+            )
+
+        if not email:
+            return render(
+                request, "signin.html", {"error": "Please enter your email."}
+            )
+
+        if not password:
+            return render(
+                request,
+                "signin.html",
+                {"error": "Please enter your password.", "submitted_email": email},
+            )
+
+        try:
+            user_obb = ProfileUser.objects.get(email=email)
+            UserSecurity.objects.get_or_create(user=user_obb)
+        except ProfileUser.DoesNotExist:
+            return render(
+                request,
+                "signin.html",
+                {"error": "No account found with this email.", "submitted_email": email},
+            )
+
+        if not user_obb.is_verified:
+            return render(
+                request,
+                "signin.html",
+                {
+                    "error": "Your email is not verified. Please complete signup first.",
+                    "submitted_email": email,
+                },
+            )
+
+        if not user_obb.is_active:
+            return render(
+                request,
+                "signin.html",
+                {
+                    "error": "Your account is disabled. Please contact support.",
+                    "submitted_email": email,
+                },
+            )
+
+        user = authenticate(request, username=email, password=password)
+
+        if user:
+            LoginAttempt.objects.create(
+                ip_address=client_ip, username=email, is_successful=True
+            )
+            login(request, user)
+            request.session["welcome"] = "Welcome to Glowé.  !"
             return redirect("home")
-        success_msg = request.session.pop("success_msg", None)
-        update_password = request.session.pop("update_password", None)
-        if request.method == "POST":
-            # 1. Honeypot check (Spam protection)
-            if request.POST.get("website_url"):
-                # If this hidden field is filled, it's a bot
-                return redirect("signin")
+        else:
+            LoginAttempt.objects.create(
+                ip_address=client_ip, username=email, is_successful=False
+            )
+            return render(
+                request,
+                "signin.html",
+                {"error": "Invalid credentials.", "submitted_email": email},
+            )
 
-            email = request.POST.get("email", "").strip().lower()
-            password = request.POST.get("password")
-            client_ip = get_client_ip(request)
-
-            # 2. Rate Limiting Check (Brute-force protection)
-            # Check failed attempts from this IP in the last 15 minutes
-            time_threshold = timezone.now() - timedelta(minutes=15)
-            failed_attempts = LoginAttempt.objects.filter(
-                ip_address=client_ip, is_successful=False, timestamp__gte=time_threshold
-            ).count()
-
-            if failed_attempts >= 5:
-                return render(
-                    request,
-                    "signin.html",
-                    {
-                        "error": "Too many failed attempts from this IP. Please try again in 15 minutes.",
-                        "submitted_email": email,
-                    },
-                )
-
-            if not email:
-                return render(
-                    request, "signin.html", {"error": "Please enter your email."}
-                )
-
-            if not password:
-                return render(
-                    request,
-                    "signin.html",
-                    {
-                        "error": "Please enter your password.",
-                        "submitted_email": email,
-                    },
-                )
-
-            try:  # check ifexist or not
-                user_obb = ProfileUser.objects.get(email=email)
-                # Ensure security profile exists for the user trying to sign in
-                UserSecurity.objects.get_or_create(user=user_obb)
-            except ProfileUser.DoesNotExist:
-                return render(
-                    request,
-                    "signin.html",
-                    {
-                        "error": "No account found with this email.",
-                        "submitted_email": email,
-                    },
-                )
-
-            # email
-            if not user_obb.is_verified:
-                return render(
-                    request,
-                    "signin.html",
-                    {
-                        "error": "Your email is not verified. Please complete signup first.",  # noqa: E501
-                        "submitted_email": email,
-                    },
-                )
-
-            if not user_obb.is_active:
-                return render(
-                    request,
-                    "signin.html",
-                    {
-                        "error": "Your account is disabled. Please contact support.",  # noqa: E501
-                        "submitted_email": email,
-                    },
-                )
-
-            user = authenticate(request, username=email, password=password)
-
-            if user:
-                # 3. Log successful attempt
-                LoginAttempt.objects.create(
-                    ip_address=client_ip, username=email, is_successful=True
-                )
-                # if  everything is correct   login
-                login(request, user)  # it create the seesion
-                request.session["welcome"] = "Welcome to Glowé.  !"
-                return redirect("home")
-            else:
-                # 4. Log failed attempt
-                LoginAttempt.objects.create(
-                    ip_address=client_ip, username=email, is_successful=False
-                )
-                return render(
-                    request,
-                    "signin.html",
-                    {
-                        "error": "Invalid credentials.",
-                        "submitted_email": email,
-                    },
-                )
-
-        return render(
-            request,
-            "signin.html",
-            {"success_msg": success_msg, "update_password": update_password},
-        )
-    except Exception as e:
-        import traceback
-        return render(request, "signin.html", {"error": f"SYSTEM ERROR: {str(e)} | {traceback.format_exc()}"})
+    return render(
+        request,
+        "signin.html",
+        {"success_msg": success_msg, "update_password": update_password},
+    )
 
 
 @never_cache
