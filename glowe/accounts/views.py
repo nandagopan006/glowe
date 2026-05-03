@@ -409,7 +409,7 @@ def forget_password(request):
     prefill_email = request.user.email if request.user.is_authenticated else ""
 
     if request.method == "POST":
-        # Honeypot check (Spam protection)
+        #(Spam protection)
         if request.POST.get("website_url"):
             # If this hidden field is filled, it's a bot
             return redirect("forget_password")
