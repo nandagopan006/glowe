@@ -19,6 +19,7 @@ def home(request):
         Product.objects.filter(
             is_deleted=False,
             is_active=True,
+            category__isnull=False,
             category__is_deleted=False,
             category__is_active=True,
         )
@@ -31,6 +32,7 @@ def home(request):
         Product.objects.filter(
             is_deleted=False,
             is_active=True,
+            category__isnull=False,
             category__is_deleted=False,
             category__is_active=True,
         )

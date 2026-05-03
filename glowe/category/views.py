@@ -125,18 +125,26 @@ def toggle_category(request, id):
 @admin_required
 def soft_delete_category(request, id):
     if request.method == "POST":
-        category = get_object_or_404(
-            Category,
-            id=id,
-        )
+        category = get_object_or_404(Category, id=id)
         if category.is_deleted:
             messages.error(request, "Category already archived")
             return redirect("category_management")
 
+        # Count affected active products
+        affected = category.products.filter(is_deleted=False, is_active=True).count()
+
         category.is_deleted = True
+        category.is_active = False  # Also deactivate so it disappears from nav
         category.save()
 
-        messages.success(request, f"{category.name}  has been archived. ")
+        if affected > 0:
+            messages.warning(
+                request,
+                f"'{category.name}' archived. {affected} product(s) are now hidden from the storefront. "
+                f"Restore the category to make them visible again."
+            )
+        else:
+            messages.success(request, f"'{category.name}' has been archived.")
         return redirect("category_management")
     return redirect("category_management")
 
@@ -146,11 +154,39 @@ def soft_delete_category(request, id):
 def restore_category(request, id):
     if request.method == "POST":
         category = get_object_or_404(Category, id=id, is_deleted=True)
+
         category.is_deleted = False
+        category.is_active = True  # Re-activate when restoring
         category.save()
-        messages.success(
-            request, f"{category.name}  has been successfully restored"
+
+        # Count products now visible again
+        restored_products = category.products.filter(
+            is_deleted=False, is_active=True
+        ).count()
+
+        # Trigger stock notifications for any subscribers
+        # (products become visible again when category is restored)
+        from product.signals import _send_stock_notifications
+        from product.models import Variant
+        active_variants = Variant.objects.filter(
+            product__category=category,
+            product__is_active=True,
+            product__is_deleted=False,
+            is_active=True,
+            stock__gt=0,
         )
+        for variant in active_variants:
+            _send_stock_notifications(variant)
+
+        if restored_products > 0:
+            messages.success(
+                request,
+                f"'{category.name}' restored! {restored_products} product(s) are now live on the storefront again."
+            )
+        else:
+            messages.success(
+                request, f"'{category.name}' has been successfully restored."
+            )
         return redirect("category_management")
 
     return redirect("category_management")
@@ -165,18 +201,26 @@ def permanent_delete_category(request, id):
         if not category.is_deleted:
             messages.error(
                 request,
-                "Please soft delete the category first then only allow",
+                "Please archive the category first before permanently deleting.",
             )
             return redirect("category_management")
 
-        if category.products.exists():
-            messages.error(request, "Cannot delete category with products")
-            return redirect("category_management")
+        # Count products that will become uncategorized
+        affected = category.products.filter(is_deleted=False).count()
 
-        category.delete()  # permanent deleete
+        category.delete()  # permanent delete — products become category=NULL (uncategorized)
 
-        messages.success(request, "category permanently deleted")
+        if affected > 0:
+            messages.warning(
+                request,
+                f"Category permanently deleted. {affected} product(s) are now uncategorized — "
+                f"go to Product Management to reassign them."
+            )
+        else:
+            messages.success(request, "Category permanently deleted.")
         return redirect("category_management")
+
+    return redirect("category_management")
 
 
 # Create your views here.

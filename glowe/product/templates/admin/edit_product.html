@@ -191,6 +191,7 @@ body { background:#f4f6f3; margin:0; }
     <input type="hidden" name="description"      id="descInput"      value=""/>
     <input type="hidden" name="skin_type"        id="skinTypeHidden" value="{{ product.skin_type }}"/>
     <input type="hidden" name="primary_image_id" id="primaryIdInput" value=""/>
+    <input type="hidden" name="deleted_image_ids" id="deletedIdsInput" value=""/>
     <textarea name="how_to_use" id="howToUseHidden" class="hidden">{{ product.how_to_use }}</textarea>
     <div id="newFilesContainer"></div>
 
@@ -250,6 +251,10 @@ body { background:#f4f6f3; margin:0; }
                   <p class="text-xs text-gray-400">JPG, PNG, WEBP · Max 2MB each</p>
                 </div>
               </div>
+            </div>
+            <div id="imageError" class="hidden flex items-center gap-2 text-red-600 text-xs font-medium bg-red-50 border border-red-100 rounded-xl px-3 py-2.5 mt-3">
+              <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M12 8v4M12 16h.01"/></svg>
+              <span id="imageErrorText"></span>
             </div>
           </div>
 
@@ -433,34 +438,47 @@ document.querySelectorAll('.overlay').forEach(el=>el.addEventListener('click',e=
 function doArchive(){hideOverlay('archiveOverlay');fetch(URLS.archiveUrl,{method:'POST',headers:{'X-CSRFToken':CSRF}}).then(r=>{window.location.href=r.url||'/adminpanel/products/';});}
 
 /* ── DELETE IMAGE ── */
+let deletedImageIds = [];
 function deleteImage(imageId,btn) {
   const dbImages=document.querySelectorAll('.thumb-wrap[data-id]');
   if(dbImages.length<=1&&newImgs.length===0){toast('error','Cannot delete','Product must have at least one image.');return;}
-  btn.disabled=true;btn.style.opacity='0.5';
-  const url=URLS.deleteBase.replace(/\/0\/$/, '/'+imageId+'/').replace(/\/0$/,'/'+imageId);
-  fetch(url,{method:'POST',headers:{'X-CSRFToken':CSRF}}).then(response=>{
-    if(response.ok||response.redirected){
-      const wrap=document.getElementById('eimg-'+imageId);if(wrap)wrap.remove();
-      const remaining=document.querySelectorAll('.thumb-wrap[data-id]');
-      const anyPrimary=document.querySelector('.thumb-wrap[data-id] .t-star.active');
-      if(!anyPrimary&&remaining.length>0)setPrimary(parseInt(remaining[0].dataset.id));
-      const pi=document.getElementById('primaryIdInput');
-      if(pi.value==imageId){pi.value='';const r2=document.querySelectorAll('.thumb-wrap[data-id]');if(r2.length>0)setPrimary(parseInt(r2[0].dataset.id));}
-      updateBadge();toast('success','Deleted','Image removed successfully.');
-    } else{btn.disabled=false;btn.style.opacity='1';toast('error','Error','Could not delete image.');}
-  }).catch(()=>{btn.disabled=false;btn.style.opacity='1';toast('error','Error','Network error.');});
+  const wrap=document.getElementById('eimg-'+imageId);if(wrap)wrap.remove();
+  deletedImageIds.push(imageId);
+  document.getElementById('deletedIdsInput').value=JSON.stringify(deletedImageIds);
+  const remaining=document.querySelectorAll('.thumb-wrap[data-id]');
+  const anyPrimary=document.querySelector('.thumb-wrap .t-star.active');
+  if(!anyPrimary) {
+    if(remaining.length>0) setPrimary(parseInt(remaining[0].dataset.id));
+    else if(newImgs.length>0) setPrimary('new_0');
+  }
+  const pi=document.getElementById('primaryIdInput');
+  if(pi.value==imageId){
+    pi.value='';
+    const r2=document.querySelectorAll('.thumb-wrap[data-id]');
+    if(r2.length>0) setPrimary(parseInt(r2[0].dataset.id));
+    else if(newImgs.length>0) setPrimary('new_0');
+  }
+  updateBadge();
 }
 
 /* ── SET PRIMARY ── */
 function setPrimary(imageId) {
-  document.querySelectorAll('.thumb-wrap[data-id]').forEach(wrap=>{
-    const id=parseInt(wrap.dataset.id);wrap.classList.remove('thumb-primary-ring');
-    const badge=document.getElementById('ebadge-'+id),star=document.getElementById('estar-'+id),svg=document.getElementById('estarsvg-'+id);
+  document.querySelectorAll('.thumb-wrap').forEach(wrap=>{
+    wrap.classList.remove('thumb-primary-ring');
+    const badge=wrap.querySelector('.thumb-badge');
+    const star=wrap.querySelector('.t-star');
+    const svg=wrap.querySelector('.t-star svg');
     if(badge)badge.style.display='none';if(star)star.classList.remove('active');if(svg)svg.setAttribute('fill','none');
   });
-  const wrap=document.getElementById('eimg-'+imageId);if(wrap)wrap.classList.add('thumb-primary-ring');
-  const badge=document.getElementById('ebadge-'+imageId),star=document.getElementById('estar-'+imageId),svg=document.getElementById('estarsvg-'+imageId);
-  if(badge)badge.style.display='';if(star)star.classList.add('active');if(svg)svg.setAttribute('fill','#fff');
+  let wrapId = typeof imageId === 'string' && imageId.startsWith('new_') ? imageId : 'eimg-'+imageId;
+  const wrap=document.getElementById(wrapId);if(wrap)wrap.classList.add('thumb-primary-ring');
+  if(wrap) {
+    const badge=wrap.querySelector('.thumb-badge');
+    const star=wrap.querySelector('.t-star');
+    const svg=wrap.querySelector('.t-star svg');
+    if(badge){badge.style.display=''; badge.textContent='Primary'; badge.className='thumb-badge badge-primary';}
+    if(star)star.classList.add('active');if(svg)svg.setAttribute('fill','#fff');
+  }
   document.getElementById('primaryIdInput').value=imageId;
 }
 
@@ -487,17 +505,34 @@ function applyCrop(){
     const cb=window._cropCb;window._cropCb=null;if(cb)cb();
   },'image/jpeg',0.92);
 }
-function removeNewImg(i,e){e.stopPropagation();newImgs.splice(i,1);renderNewImgs();}
+function removeNewImg(i,e){
+  e.stopPropagation();
+  newImgs.splice(i,1);
+  const pId = document.getElementById('primaryIdInput').value;
+  if(pId === 'new_'+i) {
+    document.getElementById('primaryIdInput').value = '';
+  } else if(pId.startsWith('new_')) {
+    const idx = parseInt(pId.split('_')[1]);
+    if(idx > i) document.getElementById('primaryIdInput').value = 'new_'+(idx-1);
+  }
+  renderNewImgs();
+}
 function renderNewImgs(){
   const container=document.getElementById('newImgsContainer');
   container.innerHTML='';
+  const primaryId = document.getElementById('primaryIdInput').value;
   newImgs.forEach((img,i)=>{
     const d=document.createElement('div');
-    d.className='thumb-wrap fade-in group';
+    const isPrimary = primaryId === 'new_'+i;
+    d.className='thumb-wrap fade-in group'+(isPrimary?' thumb-primary-ring':'');
+    d.id='new_'+i;
     d.innerHTML=`
       <img src="${img.dataUrl}" class="transition-transform duration-500 group-hover:scale-110"/>
-      <span class="thumb-badge badge-new">New</span>
+      <span class="thumb-badge ${isPrimary?'badge-primary':'badge-new'}" style="${!isPrimary?'display:none;':''}">${isPrimary?'Primary':'New'}</span>
       <div class="thumb-actions opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <button type="button" class="t-btn t-star ${isPrimary?'active':''}" onclick="setPrimary('new_${i}')" title="Set as primary">
+          <svg width="10" height="10" fill="${isPrimary?'#fff':'none'}" stroke="#fff" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+        </button>
         <button type="button" class="t-btn t-del" onclick="removeNewImg(${i},event)">
           <svg width="10" height="10" fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
@@ -600,21 +635,48 @@ function initHtu(){
 }
 
 /* ══ SAVE ══ */
-function saveProduct(){
+function setImageError(msg) {
+  const el=document.getElementById('imageError'), txt=document.getElementById('imageErrorText');
+  if(msg){el.classList.remove('hidden');txt.textContent=msg;} else el.classList.add('hidden');
+}
+
+async function saveProduct(){
   let ok=true;
   const name=document.getElementById('nameInput').value.trim(),nameErr=document.getElementById('nameErr');
   if(!name||name.length<3){nameErr.textContent=name?'Name too short (min 3 chars)':'Product name is required';nameErr.classList.remove('hidden');ok=false;}else nameErr.classList.add('hidden');
+  
   const descTxt=(editor.innerText||'').trim(),descErr=document.getElementById('descErr');
   if(!descTxt||descTxt.length<10){descErr.textContent=descTxt?'Description too short':'Description is required';descErr.classList.remove('hidden');editor.style.borderColor='#f87171';ok=false;}else{descErr.classList.add('hidden');editor.style.borderColor='';}
+  
   const dbImgCount=document.querySelectorAll('.thumb-wrap[data-id]').length;
-  if(dbImgCount+newImgs.length<3){toast('error','Not enough images','Please add at least 3 images total.');ok=false;}
-  if(!ok){toast('error','Fix errors','Please correct the highlighted fields.');return;}
+  if(dbImgCount+newImgs.length<3){ setImageError(`Minimum 3 images required. You have ${dbImgCount+newImgs.length}.`); ok=false; } else setImageError(null);
+  
+  if(!ok){toast('error','Validation Failed','Please fix the highlighted errors before saving.');return;}
+  
   document.getElementById('descInput').value=editor.innerHTML;
   htuSerialize();
-  const container=document.getElementById('newFilesContainer');container.innerHTML='';
-  if(newImgs.length>0){const dt=new DataTransfer();newImgs.forEach((img,i)=>dt.items.add(new File([img.blob],'new_'+i+'.jpg',{type:'image/jpeg'})));const fi=document.createElement('input');fi.type='file';fi.name='images';fi.multiple=true;fi.style.display='none';fi.files=dt.files;container.appendChild(fi);}
-  document.getElementById('saveSpin').classList.remove('hidden');document.getElementById('saveIcon').classList.add('hidden');document.getElementById('saveTxt').textContent='Saving...';document.getElementById('saveBtn').disabled=true;
-  document.getElementById('editForm').submit();
+  
+  const form=document.getElementById('editForm');
+  const formData=new FormData(form);
+  formData.delete('images');
+  for(let i=0;i<newImgs.length;i++) formData.append('images',newImgs[i].blob,`new_${i}.jpg`);
+  formData.set('description',editor.innerHTML);
+  
+  const btn=document.getElementById('saveBtn'), txt=document.getElementById('saveTxt'), sp=document.getElementById('saveSpin'), ic=document.getElementById('saveIcon');
+  btn.disabled=true; btn.style.opacity='0.75'; txt.textContent='Saving...'; sp.classList.remove('hidden'); ic.classList.add('hidden');
+  
+  try {
+    const resp=await fetch(form.action,{method:'POST',body:formData});
+    if(resp.redirected||(resp.ok&&resp.url&&resp.url!==window.location.href)){
+      toast('success','Saved!','Product updated successfully.');
+      setTimeout(()=>window.location.href=resp.url||"{% url 'product_management' %}",800);
+      return;
+    }
+    toast('error','Server Error','Please check the form errors.');
+  } catch(e){
+    toast('error','Network Error','Please check your connection.');
+  }
+  btn.disabled=false; btn.style.opacity='1'; txt.textContent='Save Changes'; sp.classList.add('hidden'); ic.classList.remove('hidden');
 }
 
 /* ══ INIT ══ */

@@ -98,8 +98,18 @@ def edit_product(request, id):
         primary_image_id = request.POST.get("primary_image_id", "").strip()
 
         if form.is_valid():
-            # Count existing images + new ones
-            existing_count = product.images.count()
+            # Handle deletions
+            deleted_ids_str = request.POST.get("deleted_image_ids", "")
+            deleted_ids = []
+            if deleted_ids_str:
+                try:
+                    import json
+                    deleted_ids = json.loads(deleted_ids_str)
+                except Exception:
+                    pass
+
+            # Calculate total images after deletions and additions
+            existing_count = product.images.exclude(id__in=deleted_ids).count() if deleted_ids else product.images.count()
             new_count = len(images)
             total_images = existing_count + new_count
 
@@ -147,21 +157,36 @@ def edit_product(request, id):
                         },
                     )
 
+            # Apply deletions now that validation passed
+            if deleted_ids:
+                product.images.filter(id__in=deleted_ids).delete()
+
             product = form.save(commit=False)
             product.is_active = is_active
             product.save()
 
+            new_image_objects = []
             for img in images:
-                ProductImage.objects.create(
+                new_img = ProductImage.objects.create(
                     product=product, image=img, is_primary=False
                 )
+                new_image_objects.append(new_img)
 
             # Set primary image if one was chosen
             if primary_image_id:
                 product.images.update(is_primary=False)
-                ProductImage.objects.filter(
-                    id=primary_image_id, product=product
-                ).update(is_primary=True)
+                if str(primary_image_id).startswith("new_"):
+                    try:
+                        idx = int(primary_image_id.split("_")[1])
+                        if 0 <= idx < len(new_image_objects):
+                            new_image_objects[idx].is_primary = True
+                            new_image_objects[idx].save()
+                    except Exception:
+                        pass
+                else:
+                    ProductImage.objects.filter(
+                        id=primary_image_id, product=product
+                    ).update(is_primary=True)
 
             # Ensure at least one image is primary
             if not product.images.filter(is_primary=True).exists():
@@ -325,7 +350,7 @@ def product_management(request):
     category = request.GET.get("category", "")
     status = request.GET.get("status", "live")
     active_status = request.GET.get("active_status", "")
-    products = Product.objects.all()
+    products = Product.objects.select_related("category").all()
 
     if status == "archived":
         products = products.filter(is_deleted=True)
@@ -350,25 +375,30 @@ def product_management(request):
     products = paginator.get_page(page)
 
     all_products = Product.objects.all()
-
     total_products = all_products.count()
-    active_products = all_products.filter(
-        is_active=True, is_deleted=False
-    ).count()
+    active_products = all_products.filter(is_active=True, is_deleted=False).count()
     archived_products = all_products.filter(is_deleted=True).count()
+    uncategorized_count = all_products.filter(is_deleted=False, category__isnull=True).count()
 
     for p in products:
         default_variant = p.variants.filter(is_default=True).first()
         p.display_price = default_variant.price if default_variant else 0
-
         p.total_stock = p.variants.aggregate(total=Sum("stock"))["total"] or 0
-
         primary_image = p.images.filter(is_primary=True).first()
         p.display_image = (
             primary_image.image.url
             if primary_image and primary_image.image
             else None
-        )  # primary_image is object and primary_image.image is file
+        )
+        # Flag: product has no category (category was permanently deleted)
+        p.is_uncategorized = p.category is None
+        # Flag: product is active but hidden because category is inactive/archived
+        p.is_hidden_by_category = (
+            not p.is_deleted
+            and p.is_active
+            and p.category is not None
+            and (p.category.is_deleted or not p.category.is_active)
+        )
 
     categories = Category.objects.all()
 
@@ -379,6 +409,7 @@ def product_management(request):
             "total_products": total_products,
             "active_products": active_products,
             "archived_products": archived_products,
+            "uncategorized_count": uncategorized_count,
             "products": products,
             "categories": categories,
             "query": q,
@@ -676,8 +707,9 @@ def product_listing(request):
     products = Product.objects.filter(
         is_active=True,
         is_deleted=False,
-        category__is_deleted=False,
-        category__is_active=True,
+        category__isnull=False,        # must have a category
+        category__is_deleted=False,    # category must not be archived
+        category__is_active=True,      # category must be active
         variants__is_active=True,
         variants__is_default=True,
     ).distinct()

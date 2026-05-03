@@ -12,7 +12,11 @@ class Product(models.Model):
     slug = models.SlugField(unique=True)
 
     category = models.ForeignKey(
-        Category, on_delete=models.CASCADE, related_name="products"
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="products",
     )
 
     description = models.TextField()
