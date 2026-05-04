@@ -46,7 +46,7 @@ class SignupForm(forms.ModelForm):
 
         existing = ProfileUser.objects.filter(email=email).first()
         if existing and existing.is_verified:
-            raise forms.ValidationError("Email already registered")
+            raise forms.ValidationError("An account with this email already exists. Please sign in.")
 
         return email
 
