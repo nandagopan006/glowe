@@ -138,7 +138,7 @@ def signup_otp_verify(request):
     if request.method == "POST":
         entered_otp = request.POST.get("otp")  # get otp entered by user
 
-        # check if OTP  expired ayyo — current time
+        # Check if the OTP has expired
         if timezone.now() > otp_record.expires_at:
             return render(
                 request,

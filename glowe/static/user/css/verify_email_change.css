@@ -1,0 +1,81 @@
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; font-family: 'Montserrat', sans-serif; background: #F5F1EC; color: #1a1208; }
+
+/* ── PAGE ANIMATION ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.5s ease both; }
+
+/* ── OTP INPUTS ── */
+.otp-input {
+  width: 52px;
+  height: 56px;
+  border: 1.5px solid #e8e0d8;
+  border-radius: 10px;
+  background: #faf8f5;
+  text-align: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: #1a1208;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  caret-color: #4A2E24;
+}
+.otp-input:focus  { border-color: #4A2E24; background: #fff; box-shadow: 0 0 0 3px rgba(74,46,36,0.07); }
+.otp-input.filled { border-color: #4A2E24; background: #fff; }
+.otp-input.error  { border-color: #e05050; box-shadow: 0 0 0 3px rgba(224,80,80,0.07); }
+
+/* ── BUTTON LOADING ── */
+@keyframes otpSpin {
+  to { transform: rotate(360deg); }
+}
+@keyframes shimmer {
+  0%   { transform: translateX(-100%) skewX(-12deg); }
+  100% { transform: translateX(200%)  skewX(-12deg); }
+}
+.btn-loading {
+  position: relative;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.9;
+}
+.btn-loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.14) 50%, transparent 70%);
+  animation: shimmer 1.3s ease-in-out infinite;
+}
+.btn-spinner {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 1.8px solid rgba(245,242,237,0.3);
+  border-top-color: #f5f2ed;
+  border-radius: 50%;
+  animation: otpSpin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ── TOAST ── */
+@keyframes tIn   { to { transform: translateY(0); opacity: 1; } }
+@keyframes tOut  { to { transform: translateY(-80px); opacity: 0; } }
+@keyframes tProg { from { width: 100%; } to { width: 0%; } }
+
+.toast {
+  pointer-events: all;
+  display: flex;
+  align-items: center;
+  width: min(248px, 90vw);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 8px 28px rgba(42,31,20,0.2);
+  animation: tIn 0.45s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  transform: translateY(-80px);
+  opacity: 0;
+}
+.toast.hide { animation: tOut 0.3s ease forwards; }

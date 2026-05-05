@@ -87,10 +87,8 @@ def place_order(request):
 
     with transaction.atomic():
         for item in cart_items:
-            # lock variant ,,if one user bbuy same other USER aslo nedd lock  --oveerselling block  # noqa: E501
-            variant = Variant.objects.select_for_update().get(
-                id=item.variant.id
-            )
+            # Implement pessimistic locking to prevent overselling
+            variant = Variant.objects.select_for_update().get(id=item.variant.id)
             product = variant.product
 
             if not product.is_active or product.is_deleted:
@@ -110,9 +108,7 @@ def place_order(request):
 
             if item.quantity > variant.stock:
                 request.session["order_processing"] = False
-                messages.error(
-                    request, f"{product.name}: only {variant.stock} left"
-                )
+                messages.error(request, f"{product.name}: only {variant.stock} left")
                 return redirect("cart")
 
             try:
@@ -130,14 +126,10 @@ def place_order(request):
                 final_price = Decimal(str(variant.price))
 
             item.item_total = item.quantity * final_price
-            item.offer_price = (
-                final_price  # Store final price for the order item
-            )
+            item.offer_price = final_price  # Store final price for the order item
             subtotal += Decimal(item.item_total)
 
-        shipping = (
-            Decimal("0.00") if subtotal > Decimal("999") else Decimal("100.00")
-        )
+        shipping = Decimal("0.00") if subtotal > Decimal("999") else Decimal("100.00")
 
         # Calculate discount
         discount = calculate_discount(request, subtotal)
@@ -192,9 +184,7 @@ def place_order(request):
             request.session[f"order_coupon_{order.id}"] = coupon_id
 
         # Initial status history
-        OrderStatusHistory.objects.create(
-            order=order, status=Order.Status.PENDING
-        )
+        OrderStatusHistory.objects.create(order=order, status=Order.Status.PENDING)
 
         # If COD, confirm immediately and reduce stock
         if payment_method == Payment.Method.COD:
@@ -217,12 +207,12 @@ def place_order(request):
 
         cart_items.delete()
 
-    # for geting the current
+    # Store current order ID for the success page
     request.session["last_order_id"] = order.id
 
     request.session["order_processing"] = False
 
-    # redirect bases on pyment
+    # Redirect based on payment method
     if payment_method == Payment.Method.COD:
         return redirect("order_success", order_id=order.id)
     elif payment_method == Payment.Method.WALLET:
@@ -239,9 +229,7 @@ def order_success(request, order_id):
 
     # only confirmed order can see success page
     if order.order_status != Order.Status.CONFIRMED:
-        messages.warning(
-            request, "Your order is currently pending confirmation."
-        )
+        messages.warning(request, "Your order is currently pending confirmation.")
         return redirect("order_listing")
 
     # onlyy the now done order
@@ -251,9 +239,9 @@ def order_success(request, order_id):
 
     # if coupon used increment count
     # Check for order-specific coupon first, then fallback to current session
-    coupon_id = request.session.get(
-        f"order_coupon_{order.id}"
-    ) or request.session.get("coupon_id")
+    coupon_id = request.session.get(f"order_coupon_{order.id}") or request.session.get(
+        "coupon_id"
+    )
 
     if coupon_id and order.discount_amount > 0:
         try:
@@ -347,11 +335,7 @@ def order_listing(request):
         order.delivery_end = order.created_at + timedelta(days=7)
 
         # cancelled items  the item count or create duplicate images
-        active = [
-            item
-            for item in order.items.all()
-            if item.item_status != "CANCELLED"
-        ]
+        active = [item for item in order.items.all() if item.item_status != "CANCELLED"]
         order.display_items = active if active else list(order.items.all())
 
         order.return_badge = None
@@ -446,24 +430,18 @@ def order_detail(request, order_id):
     payment = getattr(order, "payment", None)
 
     expiration_time = order.created_at + timedelta(minutes=5)
-    time_left_seconds = max(
-        0, int((expiration_time - timezone.now()).total_seconds())
-    )
+    time_left_seconds = max(0, int((expiration_time - timezone.now()).total_seconds()))
 
     # Auto-cancel if pending and time exceeded
     if order.order_status == Order.Status.PENDING and time_left_seconds <= 0:
         order.order_status = Order.Status.CANCELLED
         order.save()
-        OrderStatusHistory.objects.create(
-            order=order, status=Order.Status.CANCELLED
-        )
+        OrderStatusHistory.objects.create(order=order, status=Order.Status.CANCELLED)
         if payment and payment.payment_status == Payment.Status.PENDING:
             payment.payment_status = Payment.Status.FAILED
             payment.save()
 
-    retry_allowed = (
-        order.order_status == Order.Status.PENDING and time_left_seconds > 0
-    )
+    retry_allowed = order.order_status == Order.Status.PENDING and time_left_seconds > 0
 
     # cancelled_items
     if all_cancelled:
@@ -540,9 +518,7 @@ def cancel_order(request, order_id):
     reason = request.POST.get("reason", "")
 
     with transaction.atomic():
-        for item in order.items.filter(
-            ~Q(item_status=OrderItem.Status.CANCELLED)
-        ):
+        for item in order.items.filter(~Q(item_status=OrderItem.Status.CANCELLED)):
             variant = item.variant
             variant.stock += item.quantity
             variant.save()
@@ -568,9 +544,7 @@ def cancel_order(request, order_id):
     refund_amount = order.total_amount if refunded else None
 
     # Status history
-    OrderStatusHistory.objects.create(
-        order=order, status=Order.Status.CANCELLED
-    )
+    OrderStatusHistory.objects.create(order=order, status=Order.Status.CANCELLED)
     # Cancellation email
     send_order_cancellation_email(
         request, order, is_full_cancel=True, refund_amount=refund_amount
@@ -809,15 +783,11 @@ def download_invoice(request, order_id):
     from reportlab.lib.styles import ParagraphStyle
     from reportlab.lib.enums import TA_RIGHT, TA_CENTER
 
-    base = ParagraphStyle(
-        "base", fontName=FONT, fontSize=9, leading=13, textColor=INK
-    )
+    base = ParagraphStyle("base", fontName=FONT, fontSize=9, leading=13, textColor=INK)
     bold = ParagraphStyle(
         "bold", fontName=FONT_BOLD, fontSize=9, leading=13, textColor=INK
     )
-    sm = ParagraphStyle(
-        "sm", fontName=FONT, fontSize=8, leading=11, textColor=MUTED
-    )
+    sm = ParagraphStyle("sm", fontName=FONT, fontSize=8, leading=11, textColor=MUTED)
     smb = ParagraphStyle(
         "smb", fontName=FONT_BOLD, fontSize=8, leading=11, textColor=MUTED
     )
@@ -1068,17 +1038,13 @@ def download_invoice(request, order_id):
                 Paragraph(INR(item.line_total), rgt),
             ]
         )
-        tbl_style.append(
-            ("LINEBELOW", (0, row_idx), (-1, row_idx), 0.3, DIVIDER)
-        )
+        tbl_style.append(("LINEBELOW", (0, row_idx), (-1, row_idx), 0.3, DIVIDER))
         row_idx += 1
 
     # returned items
     for item in invoice["returned_items"]:
         label = (
-            "Return Pending"
-            if item.item_status == "RETURN_REQUESTED"
-            else "Returned"
+            "Return Pending" if item.item_status == "RETURN_REQUESTED" else "Returned"
         )
         rows.append(
             [
@@ -1107,16 +1073,12 @@ def download_invoice(request, order_id):
                 Paragraph(INR(item.line_total), rgt),
             ]
         )
-        tbl_style.append(
-            ("LINEBELOW", (0, row_idx), (-1, row_idx), 0.3, DIVIDER)
-        )
+        tbl_style.append(("LINEBELOW", (0, row_idx), (-1, row_idx), 0.3, DIVIDER))
         row_idx += 1
 
     # cancelled items (faded, strikethrough not possible in reportlab — use grey)  # noqa: E501
     for item in invoice["cancelled_items"]:
-        grey = ParagraphStyle(
-            "grey", fontName=FONT, fontSize=9, textColor=MUTED
-        )
+        grey = ParagraphStyle("grey", fontName=FONT, fontSize=9, textColor=MUTED)
         grey_r = ParagraphStyle(
             "greyr",
             fontName=FONT,
@@ -1151,9 +1113,7 @@ def download_invoice(request, order_id):
                 Paragraph(INR(item.line_total), grey_r),
             ]
         )
-        tbl_style.append(
-            ("LINEBELOW", (0, row_idx), (-1, row_idx), 0.3, DIVIDER)
-        )
+        tbl_style.append(("LINEBELOW", (0, row_idx), (-1, row_idx), 0.3, DIVIDER))
         row_idx += 1
 
     items_tbl = Table(rows, colWidths=col_w)
@@ -1162,9 +1122,7 @@ def download_invoice(request, order_id):
     elems.append(Spacer(1, 16))
 
     # ── 4. TOTALS ────────────────────────────────────────────────────
-    def total_row(
-        label, value, label_style=sm, value_style=rgt, line_above=False
-    ):
+    def total_row(label, value, label_style=sm, value_style=rgt, line_above=False):
         t = Table(
             [[Paragraph(label, label_style), Paragraph(value, value_style)]],
             colWidths=[W - 120, 120],
@@ -1189,9 +1147,7 @@ def download_invoice(request, order_id):
     )
 
     if invoice["discount"] > 0:
-        disc_style = ParagraphStyle(
-            "ds", fontName=FONT, fontSize=9, textColor=GREEN
-        )
+        disc_style = ParagraphStyle("ds", fontName=FONT, fontSize=9, textColor=GREEN)
         disc_val = ParagraphStyle(
             "dv",
             fontName=FONT,
@@ -1209,9 +1165,7 @@ def download_invoice(request, order_id):
         )
 
     # grand total — bigger, bold
-    gt_label = ParagraphStyle(
-        "gtl", fontName=FONT_BOLD, fontSize=10, textColor=INK
-    )
+    gt_label = ParagraphStyle("gtl", fontName=FONT_BOLD, fontSize=10, textColor=INK)
     gt_val = ParagraphStyle(
         "gtv",
         fontName=FONT_BOLD,
@@ -1230,9 +1184,7 @@ def download_invoice(request, order_id):
     )
 
     if invoice["total_refunded"] > 0:
-        ref_label = ParagraphStyle(
-            "rl", fontName=FONT, fontSize=9, textColor=BLUE
-        )
+        ref_label = ParagraphStyle("rl", fontName=FONT, fontSize=9, textColor=BLUE)
         ref_val = ParagraphStyle(
             "rv", fontName=FONT, fontSize=9, textColor=BLUE, alignment=TA_RIGHT
         )
@@ -1300,8 +1252,7 @@ def admin_order_list(request):
 
     if search:
         orders = orders.filter(
-            Q(order_number__icontains=search)
-            | Q(user__full_name__icontains=search)
+            Q(order_number__icontains=search) | Q(user__full_name__icontains=search)
         )
 
     status = request.GET.get("status", "")
@@ -1384,12 +1335,8 @@ def admin_order_list(request):
             order.display_items = list(items_grouped.values())
 
     total_orders = Order.objects.count()
-    pending_orders = Order.objects.filter(
-        order_status=Order.Status.PENDING
-    ).count()
-    completed_orders = Order.objects.filter(
-        order_status=Order.Status.DELIVERED
-    ).count()
+    pending_orders = Order.objects.filter(order_status=Order.Status.PENDING).count()
+    completed_orders = Order.objects.filter(order_status=Order.Status.DELIVERED).count()
 
     return render(
         request,
@@ -1437,18 +1384,16 @@ def admin_order_detail(request, order_id):
 
     # Check for returns associated with this order
     ReturnRequest = apps.get_model("return", "ReturnRequest")
-    all_returns = ReturnRequest.objects.filter(
-        order_item__order=order
-    ).select_related("order_item__variant__product")
+    all_returns = ReturnRequest.objects.filter(order_item__order=order).select_related(
+        "order_item__variant__product"
+    )
 
     has_any_return = False
     is_fully_returned = True
 
     for item in items:
         # If this item was returned, mark it correctly
-        if all_returns.filter(
-            order_item=item, return_status="COMPLETED"
-        ).exists():
+        if all_returns.filter(order_item=item, return_status="COMPLETED").exists():
             if item.item_status != OrderItem.Status.RETURNED:
                 item.item_status = OrderItem.Status.RETURNED
                 item.save()
@@ -1568,9 +1513,9 @@ def update_order_status(request, order_id):
             order.delivered_date = timezone.now()
 
             # Sync item statuses to DELIVERED
-            order.items.filter(
-                ~Q(item_status=OrderItem.Status.CANCELLED)
-            ).update(item_status=OrderItem.Status.DELIVERED)
+            order.items.filter(~Q(item_status=OrderItem.Status.CANCELLED)).update(
+                item_status=OrderItem.Status.DELIVERED
+            )
 
             # cod pyment update
             payment = getattr(order, "payment", None)
