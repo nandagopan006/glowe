@@ -33,8 +33,16 @@ def add_product(request):
         if form.is_valid():
 
             if len(images) < 3:
-                if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.headers.get('Accept', '').find('application/json') != -1:
-                    return JsonResponse({"success": False, "errors": {"images": ["Please upload at least 3 images"]}})
+                if (
+                    request.headers.get("x-requested-with") == "XMLHttpRequest"
+                    or request.headers.get("Accept", "").find("application/json") != -1
+                ):
+                    return JsonResponse(
+                        {
+                            "success": False,
+                            "errors": {"images": ["Please upload at least 3 images"]},
+                        }
+                    )
                 messages.error(request, "Please upload at least 3 images")
                 return render(
                     request,
@@ -51,8 +59,17 @@ def add_product(request):
 
             for img in images:
                 if img.content_type not in valid_types:
-                    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.headers.get('Accept', '').find('application/json') != -1:
-                        return JsonResponse({"success": False, "errors": {"images": ["Only JPG, PNG, WEBP allowed"]}})
+                    if (
+                        request.headers.get("x-requested-with") == "XMLHttpRequest"
+                        or request.headers.get("Accept", "").find("application/json")
+                        != -1
+                    ):
+                        return JsonResponse(
+                            {
+                                "success": False,
+                                "errors": {"images": ["Only JPG, PNG, WEBP allowed"]},
+                            }
+                        )
                     messages.error(request, "Only JPG, PNG, WEBP allowed")
                     return render(
                         request,
@@ -61,8 +78,17 @@ def add_product(request):
                     )
 
                 if img.size > 2 * 1024 * 1024:
-                    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.headers.get('Accept', '').find('application/json') != -1:
-                        return JsonResponse({"success": False, "errors": {"images": ["Each image must be under 2MB"]}})
+                    if (
+                        request.headers.get("x-requested-with") == "XMLHttpRequest"
+                        or request.headers.get("Accept", "").find("application/json")
+                        != -1
+                    ):
+                        return JsonResponse(
+                            {
+                                "success": False,
+                                "errors": {"images": ["Each image must be under 2MB"]},
+                            }
+                        )
                     messages.error(request, "Each image must be under 2MB")
                     return render(
                         request,
@@ -80,13 +106,21 @@ def add_product(request):
                     is_primary=(i == primary_index),
                 )
 
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.headers.get('Accept', '').find('application/json') != -1:
-                return JsonResponse({"success": True, "message": "Product added successfully"})
+            if (
+                request.headers.get("x-requested-with") == "XMLHttpRequest"
+                or request.headers.get("Accept", "").find("application/json") != -1
+            ):
+                return JsonResponse(
+                    {"success": True, "message": "Product added successfully"}
+                )
 
             messages.success(request, "Product added successfully")
             return redirect("product_management")
         else:
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.headers.get('Accept', '').find('application/json') != -1:
+            if (
+                request.headers.get("x-requested-with") == "XMLHttpRequest"
+                or request.headers.get("Accept", "").find("application/json") != -1
+            ):
                 return JsonResponse({"success": False, "errors": form.errors})
 
     else:
@@ -118,12 +152,17 @@ def edit_product(request, id):
             if deleted_ids_str:
                 try:
                     import json
+
                     deleted_ids = json.loads(deleted_ids_str)
                 except Exception:
                     pass
 
             # Calculate total images after deletions and additions
-            existing_count = product.images.exclude(id__in=deleted_ids).count() if deleted_ids else product.images.count()
+            existing_count = (
+                product.images.exclude(id__in=deleted_ids).count()
+                if deleted_ids
+                else product.images.count()
+            )
             new_count = len(images)
             total_images = existing_count + new_count
 
@@ -147,9 +186,7 @@ def edit_product(request, id):
             ]
             for img in images:
                 if img.content_type not in valid_types:
-                    messages.error(
-                        request, f"{img.name} is not a valid image type."
-                    )
+                    messages.error(request, f"{img.name} is not a valid image type.")
                     return render(
                         request,
                         "admin/edit_product.html",
@@ -209,14 +246,22 @@ def edit_product(request, id):
                     first.is_primary = True
                     first.save()
 
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.headers.get('Accept', '').find('application/json') != -1:
-                return JsonResponse({"success": True, "message": "Product updated successfully."})
+            if (
+                request.headers.get("x-requested-with") == "XMLHttpRequest"
+                or request.headers.get("Accept", "").find("application/json") != -1
+            ):
+                return JsonResponse(
+                    {"success": True, "message": "Product updated successfully."}
+                )
 
             messages.success(request, "Product updated successfully.")
             return redirect("product_management")
 
         else:
-            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.headers.get('Accept', '').find('application/json') != -1:
+            if (
+                request.headers.get("x-requested-with") == "XMLHttpRequest"
+                or request.headers.get("Accept", "").find("application/json") != -1
+            ):
                 return JsonResponse({"success": False, "errors": form.errors})
             # Form has errors – show them
             for errors in form.errors.values():
@@ -397,7 +442,9 @@ def product_management(request):
     total_products = all_products.count()
     active_products = all_products.filter(is_active=True, is_deleted=False).count()
     archived_products = all_products.filter(is_deleted=True).count()
-    uncategorized_count = all_products.filter(is_deleted=False, category__isnull=True).count()
+    uncategorized_count = all_products.filter(
+        is_deleted=False, category__isnull=True
+    ).count()
 
     for p in products:
         default_variant = p.variants.filter(is_default=True).first()
@@ -405,9 +452,7 @@ def product_management(request):
         p.total_stock = p.variants.aggregate(total=Sum("stock"))["total"] or 0
         primary_image = p.images.filter(is_primary=True).first()
         p.display_image = (
-            primary_image.image.url
-            if primary_image and primary_image.image
-            else None
+            primary_image.image.url if primary_image and primary_image.image else None
         )
         # Flag: product has no category (category was permanently deleted)
         p.is_uncategorized = p.category is None
@@ -461,14 +506,10 @@ def product_detail(request, id):
 
     low_stock = total_stock < 10
     skin_types_list = (
-        [s.strip() for s in product.skin_type.split(",")]
-        if product.skin_type
-        else []
+        [s.strip() for s in product.skin_type.split(",")] if product.skin_type else []
     )
     skin_types_list = (
-        [s.strip() for s in product.skin_type.split(",")]
-        if product.skin_type
-        else []
+        [s.strip() for s in product.skin_type.split(",")] if product.skin_type else []
     )
     how_to_use_steps = []
 
@@ -513,9 +554,7 @@ def add_variant(request, product_id):
 
             # if select as default true  and change pervies default false
             if variant.is_default:
-                product.variants.filter(is_default=True).update(
-                    is_default=False
-                )
+                product.variants.filter(is_default=True).update(is_default=False)
 
             if not product.variants.filter(is_default=True).exists():
                 variant.is_default = True
@@ -558,9 +597,9 @@ def edit_variant(request, id):
 
             #  if user select default remove other defaults
             if updated_variant.is_default:
-                product.variants.exclude(id=variant.id).filter(
-                    is_default=True
-                ).update(is_default=False)
+                product.variants.exclude(id=variant.id).filter(is_default=True).update(
+                    is_default=False
+                )
 
             # if no default exists so that make this default
             if (
@@ -674,8 +713,7 @@ def variant_management(request, product_id):
     q = request.GET.get("q", "").strip()
     variants = product.variants.all()
     primary_image = (
-        product.images.filter(is_primary=True).first()
-        or product.images.first()
+        product.images.filter(is_primary=True).first() or product.images.first()
     )
 
     if q:
@@ -726,9 +764,9 @@ def product_listing(request):
     products = Product.objects.filter(
         is_active=True,
         is_deleted=False,
-        category__isnull=False,        # must have a category
-        category__is_deleted=False,    # category must not be archived
-        category__is_active=True,      # category must be active
+        category__isnull=False,  # must have a category
+        category__is_deleted=False,  # category must not be archived
+        category__is_active=True,  # category must be active
         variants__is_active=True,
         variants__is_default=True,
     ).distinct()
@@ -821,14 +859,14 @@ def product_listing(request):
     sort = request.GET.get("sort", "").strip()
 
     if sort == "price_low":
-        products = products.annotate(
-            min_price=Min("variants__price")
-        ).order_by("min_price")
+        products = products.annotate(min_price=Min("variants__price")).order_by(
+            "min_price"
+        )
 
     elif sort == "price_high":
-        products = products.annotate(
-            min_price=Min("variants__price")
-        ).order_by("-min_price")
+        products = products.annotate(min_price=Min("variants__price")).order_by(
+            "-min_price"
+        )
 
     elif sort == "a_z":
         products = products.order_by("name")
@@ -895,9 +933,7 @@ def product_listing(request):
 
         except Exception:
             product.final_price = (
-                product_price
-                if "product_price" in locals()
-                else Decimal("0.00")
+                product_price if "product_price" in locals() else Decimal("0.00")
             )
             product.discount = Decimal("0.00")
             product.has_offer = False
@@ -947,13 +983,12 @@ def product_listing(request):
     )
 
 
-
 # HELPER FUNCTIONS for product_detail_view
-
 
 
 # --- Helper Functions for product_detail_view ---
 # These small functions handle specific tasks to keep the main view clean and easy to read.
+
 
 def get_variant_offer_data(variant, product):
     """
@@ -967,13 +1002,13 @@ def get_variant_offer_data(variant, product):
             # Make sure discount doesn't exceed the actual price
             best_discount = min(best_discount, price)
             final_price = max(price - best_discount, Decimal("0.00"))
-            
+
             # Create a nice text for the offer (like '10% OFF' or 'Flat ₹50 OFF')
             if best_offer.discount_type == "PERCENTAGE":
                 offer_text = f"{best_offer.discount_value:g}% OFF"
             else:
                 offer_text = f"Flat ₹{best_offer.discount_value:g} OFF"
-                
+
             return {
                 "final_price": final_price,
                 "has_offer": True,
@@ -1017,9 +1052,13 @@ def annotate_related_products(products_list):
     for rel in products_list:
         try:
             # Use the default variant or the first one available
-            rel_variant = rel.variants.filter(is_default=True).first() or rel.variants.first()
-            rel_price = Decimal(str(rel_variant.price)) if rel_variant else Decimal("0.00")
-            
+            rel_variant = (
+                rel.variants.filter(is_default=True).first() or rel.variants.first()
+            )
+            rel_price = (
+                Decimal(str(rel_variant.price)) if rel_variant else Decimal("0.00")
+            )
+
             rel_offer, rel_disc = get_best_offer(rel, rel_price)
             if rel_offer:
                 rel_disc = min(rel_disc, rel_price)
@@ -1046,7 +1085,7 @@ def get_user_cart_wishlist_ids(user):
     """
     if not user.is_authenticated:
         return [], []
-        
+
     wishlisted_ids = list(
         Wishlist.objects.filter(user=user).values_list("variant_id", flat=True)
     )
@@ -1066,9 +1105,9 @@ def get_review_data(product, user):
     from review.models import Review
 
     # Get all approved reviews for this product
-    reviews = product.review_set.filter(
-        status="approved", is_deleted=False
-    ).order_by("-created_at")
+    reviews = product.review_set.filter(status="approved", is_deleted=False).order_by(
+        "-created_at"
+    )
 
     total_reviews = reviews.count()
     avg_rating = reviews.aggregate(Avg("rating"))["rating__avg"] or 0
@@ -1080,7 +1119,9 @@ def get_review_data(product, user):
 
     # Calculate percentage for each star level (for the UI progress bars)
     rating_distribution = {
-        star: int((rating_counts[star] / total_reviews) * 100) if total_reviews > 0 else 0
+        star: (
+            int((rating_counts[star] / total_reviews) * 100) if total_reviews > 0 else 0
+        )
         for star in range(1, 6)
     }
 
@@ -1098,19 +1139,29 @@ def get_review_data(product, user):
             order_status="DELIVERED",
             items__variant__product=product,
         ).distinct()
-        
+
         for ord_obj in orders_with_product:
-            if not Review.objects.filter(user=user, product=product, order=ord_obj).exists():
+            if not Review.objects.filter(
+                user=user, product=product, order=ord_obj
+            ).exists():
                 reviewable_order = ord_obj
                 break
 
-    return reviews, total_reviews, avg_rating, rating_distribution, rating_counts, rating_rows, reviewable_order
+    return (
+        reviews,
+        total_reviews,
+        avg_rating,
+        rating_distribution,
+        rating_counts,
+        rating_rows,
+        reviewable_order,
+    )
 
 
 def product_detail_view(request, slug):
     """Show the product detail page with pricing, offers, reviews, and related products."""
 
-    #Get product or 404
+    # Get product or 404
     product = get_object_or_404(
         Product.objects.prefetch_related("images", "variants"),
         slug=slug,
@@ -1126,26 +1177,32 @@ def product_detail_view(request, slug):
         return redirect("product_listing")
 
     variant_id = request.GET.get("variant")
-    selected_variant = active_variants.filter(id=variant_id).first() if variant_id else None
+    selected_variant = (
+        active_variants.filter(id=variant_id).first() if variant_id else None
+    )
     if not selected_variant:
         selected_variant = active_variants.first()  # fallback to first
 
-  
     stock = selected_variant.stock if selected_variant else 0
     low_stock_count = stock if 0 < stock <= 5 else None
     all_out_of_stock = not active_variants.filter(stock__gt=0).exists()
 
-
     # 4. Offer and pricing for the currently selected variant
-    offer_data = get_variant_offer_data(selected_variant, product) if selected_variant else {
-        "final_price": Decimal("0.00"), "has_offer": False,
-        "offer_discount": Decimal("0.00"), "offer_text": "", "offer_obj": None,
-    }
+    offer_data = (
+        get_variant_offer_data(selected_variant, product)
+        if selected_variant
+        else {
+            "final_price": Decimal("0.00"),
+            "has_offer": False,
+            "offer_discount": Decimal("0.00"),
+            "offer_text": "",
+            "offer_obj": None,
+        }
+    )
 
     # 5. Attach offer data to every variant (for size switcher UI)
     annotate_variants_with_offers(all_variants, product)
 
- 
     how_to_use = product.how_to_use
     how_to_use_steps = []
     if how_to_use:
@@ -1154,11 +1211,9 @@ def product_detail_view(request, slug):
         except Exception:
             how_to_use_steps = []
 
-
     images = product.images.all()
     primary_image = images.filter(is_primary=True).first()
 
-   
     related_products = Product.objects.filter(
         category=product.category,
         category__is_deleted=False,
@@ -1167,13 +1222,17 @@ def product_detail_view(request, slug):
         is_deleted=False,
     ).exclude(id=product.id)[:7]
 
-    others_bought = Product.objects.filter(
-        is_active=True,
-        is_deleted=False,
-        category__is_deleted=False,
-        category__is_active=True,
-    ).exclude(category=product.category).exclude(id=product.id).order_by("?")[:9]
-
+    others_bought = (
+        Product.objects.filter(
+            is_active=True,
+            is_deleted=False,
+            category__is_deleted=False,
+            category__is_active=True,
+        )
+        .exclude(category=product.category)
+        .exclude(id=product.id)
+        .order_by("?")[:9]
+    )
 
     annotate_related_products(related_products)
     annotate_related_products(others_bought)
@@ -1182,8 +1241,15 @@ def product_detail_view(request, slug):
     wishlisted_ids, cart_variant_ids = get_user_cart_wishlist_ids(request.user)
 
     # 10. Reviews and rating data
-    reviews, total_reviews, avg_rating, rating_distribution, rating_counts, rating_rows, reviewable_order = \
-        get_review_data(product, request.user)
+    (
+        reviews,
+        total_reviews,
+        avg_rating,
+        rating_distribution,
+        rating_counts,
+        rating_rows,
+        reviewable_order,
+    ) = get_review_data(product, request.user)
 
     return render(
         request,
@@ -1222,13 +1288,18 @@ def product_detail_view(request, slug):
     )
 
 
-
 def add_to_cart(request):
 
     # Manual auth check — return JSON redirect for AJAX callers
     if not request.user.is_authenticated:
         if request.headers.get("x-requested-with") == "XMLHttpRequest":
-            return JsonResponse({"status": "redirect", "redirect_url": "/signin/", "message": "Please sign in to add items to your cart."})
+            return JsonResponse(
+                {
+                    "status": "redirect",
+                    "redirect_url": "/signin/",
+                    "message": "Please sign in to add items to your cart.",
+                }
+            )
         messages.info(request, "Please sign in to add items to your cart.")
         return redirect("signin")
 
@@ -1342,6 +1413,7 @@ def check_cart_status(request):
 
 # --- Search Features ---
 
+
 def search_products(request):
     """
     Search page view. Uses the ProductManager to handle business logic.
@@ -1361,11 +1433,13 @@ def search_products(request):
             if not variant:
                 variant = product.variants.filter(is_active=True).first()
 
-            results.append({
-                "product": product,
-                "image": image,
-                "variant": variant,
-            })
+            results.append(
+                {
+                    "product": product,
+                    "image": image,
+                    "variant": variant,
+                }
+            )
 
     context = {
         "query": query,

@@ -46,20 +46,18 @@ from order.invoice_utils import calculate_invoice
 import logging
 
 # Set up loggers
-logger = logging.getLogger('project')
-payment_logger = logging.getLogger('payment')
-
-
-
+logger = logging.getLogger("project")
+payment_logger = logging.getLogger("payment")
 
 
 # --- Helper Functions for place_order ---
+
 
 def get_cart_items(user):
     """
     Retrieves the user's cart and its items.
     """
-    cart = user.cart 
+    cart = user.cart
     return cart.items.select_related("variant", "variant__product")
 
 
@@ -78,7 +76,7 @@ def get_item_final_price(variant, product):
             final_price = price
     except Exception:
         # If offer calculation fails, use the original price
-        final_price = price  
+        final_price = price
     return final_price
 
 
@@ -112,23 +110,25 @@ def calculate_order_totals(cart_items, request):
         variant = Variant.objects.select_for_update().get(id=item.variant.id)
         product = variant.product
         final_price = get_item_final_price(variant, product)
-        
+
         item.item_total = item.quantity * final_price
-        item.offer_price = final_price # Remember the price at the time of purchase
+        item.offer_price = final_price  # Remember the price at the time of purchase
         subtotal += item.item_total
 
     # Shipping is free for orders over ₹999, otherwise it's ₹100
     shipping = Decimal("0.00") if subtotal > Decimal("999") else Decimal("100.00")
-    
+
     # Calculate any coupon discounts
     discount = calculate_discount(request, subtotal)
-    
+
     total = max(subtotal + shipping - discount, Decimal("0.00"))
 
     return subtotal, shipping, discount, total
 
 
-def create_order_record(user, address, payment_method, subtotal, shipping, discount, total):
+def create_order_record(
+    user, address, payment_method, subtotal, shipping, discount, total
+):
     """
     Saves the new order details, the delivery address snapshot, and the payment status to the database.
     """
@@ -191,8 +191,6 @@ def confirm_cod_order(order, request):
         pass
 
 
-
-
 @never_cache
 @login_required
 def place_order(request):
@@ -205,9 +203,8 @@ def place_order(request):
         return redirect("cart")
     request.session["order_processing"] = True
 
-
     try:
-        # 1. Get the items in the user's cart
+        # Get the items in the user's cart
         try:
             cart_items = get_cart_items(request.user)
         except Cart.DoesNotExist:
@@ -220,7 +217,7 @@ def place_order(request):
             messages.error(request, "Cart is empty")
             return redirect("cart")
 
-        #Validate address and payment method from the form
+        # Validate address and payment method from the form
         address_id = request.POST.get("address_id")
         payment_method = request.POST.get("payment_method")
 
@@ -236,9 +233,8 @@ def place_order(request):
 
         address = get_object_or_404(Address, id=address_id, user=request.user)
 
-
         with transaction.atomic():
-            # 3. Check every item to see if it is still in stock
+            # Check every item to see if it is still in stock
             for item in cart_items:
                 error_msg = validate_cart_item(item, request)
                 if error_msg:
@@ -246,16 +242,23 @@ def place_order(request):
                     messages.error(request, error_msg)
                     return redirect("cart")
 
-            # 4. Calculate prices, shipping, and total
-            subtotal, shipping, discount, total = calculate_order_totals(cart_items, request)
-
-            # 5. Create the main Order record in the database
-            order = create_order_record(
-                request.user, address, payment_method,
-                subtotal, shipping, discount, total
+            # Calculate prices, shipping, and total
+            subtotal, shipping, discount, total = calculate_order_totals(
+                cart_items, request
             )
 
-            #Link cart items to the order
+            # Create the main Order record in the database
+            order = create_order_record(
+                request.user,
+                address,
+                payment_method,
+                subtotal,
+                shipping,
+                discount,
+                total,
+            )
+
+            # Link cart items to the order
             for item in cart_items:
                 OrderItem.objects.create(
                     order=order,
@@ -264,17 +267,16 @@ def place_order(request):
                     quantity=item.quantity,
                 )
 
-
-            # 7. Remember any coupon used for this order
+            # Remember any coupon used for this order
             coupon_id = request.session.get("coupon_id")
             if coupon_id and discount > 0:
                 request.session[f"order_coupon_{order.id}"] = coupon_id
 
-            # 8. If it's a Cash on Delivery order, finalize it immediately
+            # If it's a Cash on Delivery order, finalize it immediately
             if payment_method == Payment.Method.COD:
                 confirm_cod_order(order, request)
 
-            # 9. Clear the cart since the order is placed
+            # Clear the cart since the order is placed
             cart_items.delete()
 
         # Done! Release the "processing" lock and redirect to success or payment
@@ -282,21 +284,30 @@ def place_order(request):
         request.session["order_processing"] = False
 
         if payment_method == Payment.Method.COD:
-            payment_logger.info(f"ORDER SUCCESS: COD order {order.order_number} for {request.user}")
+            payment_logger.info(
+                f"ORDER SUCCESS: COD order {order.order_number} for {request.user}"
+            )
             return redirect("order_success", order_id=order.id)
         elif payment_method == Payment.Method.WALLET:
-            payment_logger.info(f"ORDER PENDING: Wallet order {order.order_number} for {request.user}")
+            payment_logger.info(
+                f"ORDER PENDING: Wallet order {order.order_number} for {request.user}"
+            )
             return redirect("process_wallet_payment", order_id=order.id)
         else:
-            payment_logger.info(f"ORDER PENDING: Online order {order.order_number} for {request.user}")
+            payment_logger.info(
+                f"ORDER PENDING: Online order {order.order_number} for {request.user}"
+            )
             return redirect("payment_page", order_id=order.id)
 
     except Exception as e:
         request.session["order_processing"] = False
-        payment_logger.exception(f"ORDER CRITICAL FAILURE: {str(e)} for user {request.user}")
-        messages.error(request, "Something went wrong while placing your order. Please try again.")
+        payment_logger.exception(
+            f"ORDER CRITICAL FAILURE: {str(e)} for user {request.user}"
+        )
+        messages.error(
+            request, "Something went wrong while placing your order. Please try again."
+        )
         return redirect("checkout")
-
 
 
 @never_cache
@@ -347,7 +358,6 @@ def order_success(request, order_id):
         except Coupon.DoesNotExist:
             pass
 
- 
     order_items = order.items.select_related("variant", "variant__product")
 
     # direct access not not alllow  like not place order
@@ -643,12 +653,12 @@ def cancel_order_item(request, item_id):
 
     order = item.order
 
-    # If a coupon was applied to this order, individual item cancellation is NOT allowed. only allow entire order cancellation  # noqa: E501
+    # If a coupon was applied to this order, individual item cancellation is NOT allowed. only allow entire order cancellation  
 
     if order.discount_amount > 0:
         messages.error(
             request,
-            "A coupon was applied to this order. Please cancel the entire order instead of individual items.",  # noqa: E501
+            "A coupon was applied to this order. Please cancel the entire order instead of individual items.",
         )
         return redirect("order_detail", order_id=order.id)
 
