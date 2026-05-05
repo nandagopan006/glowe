@@ -88,4 +88,11 @@ urlpatterns = [
     path(
         "check-cart-status/", views.check_cart_status, name="check_cart_status"
     ),
+    # Search Endpoints
+    path("search/", views.search_products, name="search"),
+    path(
+        "search/suggestions/",
+        views.search_suggestions,
+        name="search_suggestions",
+    ),
 ]
