@@ -51,25 +51,165 @@ payment_logger = logging.getLogger('payment')
 
 
 
+
+
+# --- Helper Functions for place_order ---
+
+def get_cart_items(user):
+    """
+    Retrieves the user's cart and its items.
+    """
+    cart = user.cart 
+    return cart.items.select_related("variant", "variant__product")
+
+
+def get_item_final_price(variant, product):
+    """
+    Calculates the price for a variant after checking for any active offers.
+    """
+    price = Decimal(str(variant.price))
+    try:
+        offer, offer_disc = get_best_offer(product, price)
+        if offer:
+            # Discount should never be more than the price
+            offer_disc = min(offer_disc, price)
+            final_price = max(price - offer_disc, Decimal("0.00"))
+        else:
+            final_price = price
+    except Exception:
+        # If offer calculation fails, use the original price
+        final_price = price  
+    return final_price
+
+
+def validate_cart_item(item, request):
+    """
+    Checks if an item is still available for purchase (in stock and active).
+    """
+    # select_for_update() prevents other people from changing the stock while we are processing
+    variant = Variant.objects.select_for_update().get(id=item.variant.id)
+    product = variant.product
+
+    if not product.is_active or product.is_deleted:
+        return f"{product.name} is unavailable"
+    if not variant.is_active:
+        return f"{product.name} is not available"
+    if variant.stock == 0:
+        return f"{product.name} is out of stock"
+    if item.quantity > variant.stock:
+        return f"{product.name}: only {variant.stock} left"
+
+    return None  # No errors found
+
+
+def calculate_order_totals(cart_items, request):
+    """
+    Calculates subtotal, shipping, coupons, and final total for the order.
+    """
+    subtotal = Decimal("0.00")
+
+    for item in cart_items:
+        variant = Variant.objects.select_for_update().get(id=item.variant.id)
+        product = variant.product
+        final_price = get_item_final_price(variant, product)
+        
+        item.item_total = item.quantity * final_price
+        item.offer_price = final_price # Remember the price at the time of purchase
+        subtotal += item.item_total
+
+    # Shipping is free for orders over ₹999, otherwise it's ₹100
+    shipping = Decimal("0.00") if subtotal > Decimal("999") else Decimal("100.00")
+    
+    # Calculate any coupon discounts
+    discount = calculate_discount(request, subtotal)
+    
+    total = max(subtotal + shipping - discount, Decimal("0.00"))
+
+    return subtotal, shipping, discount, total
+
+
+def create_order_record(user, address, payment_method, subtotal, shipping, discount, total):
+    """
+    Saves the new order details, the delivery address snapshot, and the payment status to the database.
+    """
+    order = Order.objects.create(
+        user=user,
+        order_number="ORD-" + get_random_string(10).upper(),
+        address=address,
+        subtotal=subtotal,
+        delivery_charge=shipping,
+        discount_amount=discount,
+        total_amount=total,
+        order_status=Order.Status.PENDING,
+    )
+
+    # Save the address separately so it stays the same even if the user edits their profile later
+    ShippingAddress.objects.create(
+        order=order,
+        user=user,
+        full_name=address.full_name,
+        phone=address.phone_number,
+        address_line1=address.street_address,
+        city=address.city,
+        district=address.district,
+        state=address.state,
+        country=address.country,
+        pincode=address.pincode,
+    )
+
+    Payment.objects.create(
+        order=order,
+        amount=total,
+        payment_method=payment_method,
+        payment_status=Payment.Status.PENDING,
+    )
+
+    # Log the first status history entry
+    OrderStatusHistory.objects.create(order=order, status=Order.Status.PENDING)
+    return order
+
+
+def confirm_cod_order(order, request):
+    """
+    Special logic for Cash On Delivery (COD) orders:
+    Updates status, reduces stock immediately, and sends a confirmation email.
+    """
+    order.order_status = Order.Status.CONFIRMED
+    order.save()
+    OrderStatusHistory.objects.create(order=order, status=Order.Status.CONFIRMED)
+
+    # Deduct purchased quantity from the warehouse stock
+    for item in order.items.all():
+        v = item.variant
+        v.stock -= item.quantity
+        v.save()
+
+    # Try to send an email notification
+    try:
+        send_order_confirmation_email(request, order)
+    except Exception:
+        pass
+
+
+
+
 @never_cache
 @login_required
 def place_order(request):
-    """
-    Handle the order placement process, including stock validation
-    and payment initialization.
-    """
+    """Handle order placement. Validates cart, creates order, and redirects to payment."""
     if request.method != "POST":
         return redirect("checkout")
 
-    # prevent double order --   not allow dulpi oder
+    # Block duplicate submissions (e.g. double-clicking the button)
     if request.session.get("order_processing"):
         return redirect("cart")
     request.session["order_processing"] = True
 
+
     try:
+        # 1. Get the items in the user's cart
         try:
-            cart = request.user.cart
-            cart_items = cart.items.select_related("variant", "variant__product")
+            cart_items = get_cart_items(request.user)
         except Cart.DoesNotExist:
             request.session["order_processing"] = False
             messages.error(request, "Cart not found")
@@ -80,6 +220,7 @@ def place_order(request):
             messages.error(request, "Cart is empty")
             return redirect("cart")
 
+        #Validate address and payment method from the form
         address_id = request.POST.get("address_id")
         payment_method = request.POST.get("payment_method")
 
@@ -87,7 +228,7 @@ def place_order(request):
             request.session["order_processing"] = False
             messages.error(request, "Please select a delivery address")
             return redirect("checkout")
-            
+
         if not payment_method:
             request.session["order_processing"] = False
             messages.error(request, "Please select a payment method")
@@ -95,72 +236,26 @@ def place_order(request):
 
         address = get_object_or_404(Address, id=address_id, user=request.user)
 
-        subtotal = Decimal("0.00")
 
         with transaction.atomic():
+            # 3. Check every item to see if it is still in stock
             for item in cart_items:
-                # Implement pessimistic locking to prevent overselling
-                variant = Variant.objects.select_for_update().get(id=item.variant.id)
-                product = variant.product
-
-                if not product.is_active or product.is_deleted:
+                error_msg = validate_cart_item(item, request)
+                if error_msg:
                     request.session["order_processing"] = False
-                    messages.error(request, f"{product.name} is unavailable")
+                    messages.error(request, error_msg)
                     return redirect("cart")
 
-                if not variant.is_active:
-                    request.session["order_processing"] = False
-                    messages.error(request, f"{product.name} is not available")
-                    return redirect("cart")
+            # 4. Calculate prices, shipping, and total
+            subtotal, shipping, discount, total = calculate_order_totals(cart_items, request)
 
-                if variant.stock == 0:
-                    request.session["order_processing"] = False
-                    messages.error(request, f"{product.name} is out of stock")
-                    return redirect("cart")
-
-                if item.quantity > variant.stock:
-                    request.session["order_processing"] = False
-                    messages.error(request, f"{product.name}: only {variant.stock} left")
-                    return redirect("cart")
-
-                try:
-                    price = Decimal(str(variant.price))
-                    offer, offer_disc = get_best_offer(product, price)
-                    if offer:
-                        if offer_disc > price:
-                            offer_disc = price
-                        final_price = price - offer_disc
-                        if final_price < Decimal("0.00"):
-                            final_price = Decimal("0.00")
-                    else:
-                        final_price = price
-                except Exception:
-                    final_price = Decimal(str(variant.price))
-
-                item.item_total = item.quantity * final_price
-                item.offer_price = final_price  # Store final price for the order item
-                subtotal += Decimal(item.item_total)
-
-            shipping = Decimal("0.00") if subtotal > Decimal("999") else Decimal("100.00")
-
-            # Calculate discount
-            discount = calculate_discount(request, subtotal)
-            total = subtotal + shipping - discount
-            if total < 0:
-                total = Decimal("0.00")
-
-            order = Order.objects.create(
-                user=request.user,
-                order_number="ORD-" + get_random_string(10).upper(),
-                address=address,
-                subtotal=subtotal,
-                delivery_charge=shipping,
-                discount_amount=discount,
-                total_amount=total,
-                order_status=Order.Status.PENDING,
+            # 5. Create the main Order record in the database
+            order = create_order_record(
+                request.user, address, payment_method,
+                subtotal, shipping, discount, total
             )
 
-            # create order items + reduce stock
+            #Link cart items to the order
             for item in cart_items:
                 OrderItem.objects.create(
                     order=order,
@@ -169,69 +264,31 @@ def place_order(request):
                     quantity=item.quantity,
                 )
 
-            # save the ordered address
-            ShippingAddress.objects.create(
-                order=order,
-                user=request.user,
-                full_name=address.full_name,
-                phone=address.phone_number,
-                address_line1=address.street_address,
-                city=address.city,
-                district=address.district,
-                state=address.state,
-                country=address.country,
-                pincode=address.pincode,
-            )
 
-            Payment.objects.create(
-                order=order,
-                amount=total,
-                payment_method=payment_method,
-                payment_status=Payment.Status.PENDING,
-            )
-
-            # Store coupon ID specifically for THIS order to prevent multi-tab issues
+            # 7. Remember any coupon used for this order
             coupon_id = request.session.get("coupon_id")
             if coupon_id and discount > 0:
                 request.session[f"order_coupon_{order.id}"] = coupon_id
 
-            # Initial status history
-            OrderStatusHistory.objects.create(order=order, status=Order.Status.PENDING)
-
-            # If COD, confirm immediately and reduce stock
+            # 8. If it's a Cash on Delivery order, finalize it immediately
             if payment_method == Payment.Method.COD:
-                order.order_status = Order.Status.CONFIRMED
-                order.save()
+                confirm_cod_order(order, request)
 
-                OrderStatusHistory.objects.create(
-                    order=order, status=Order.Status.CONFIRMED
-                )
-
-                for item in order.items.all():
-                    v = item.variant
-                    v.stock -= item.quantity
-                    v.save()
-
-                try:
-                    send_order_confirmation_email(request, order)
-                except Exception:
-                    pass
-
+            # 9. Clear the cart since the order is placed
             cart_items.delete()
 
-        # Store current order ID for the success page
+        # Done! Release the "processing" lock and redirect to success or payment
         request.session["last_order_id"] = order.id
         request.session["order_processing"] = False
 
-        # Redirect based on payment method
         if payment_method == Payment.Method.COD:
-            payment_logger.info(f"ORDER SUCCESS: Created COD order {order.order_number} for user {request.user}")
+            payment_logger.info(f"ORDER SUCCESS: COD order {order.order_number} for {request.user}")
             return redirect("order_success", order_id=order.id)
         elif payment_method == Payment.Method.WALLET:
-            payment_logger.info(f"ORDER PENDING: Created Wallet order {order.order_number} for user {request.user}")
+            payment_logger.info(f"ORDER PENDING: Wallet order {order.order_number} for {request.user}")
             return redirect("process_wallet_payment", order_id=order.id)
         else:
-            payment_logger.info(f"ORDER PENDING: Created Online order {order.order_number} for user {request.user}")
+            payment_logger.info(f"ORDER PENDING: Online order {order.order_number} for {request.user}")
             return redirect("payment_page", order_id=order.id)
 
     except Exception as e:
@@ -239,6 +296,7 @@ def place_order(request):
         payment_logger.exception(f"ORDER CRITICAL FAILURE: {str(e)} for user {request.user}")
         messages.error(request, "Something went wrong while placing your order. Please try again.")
         return redirect("checkout")
+
 
 
 @never_cache
@@ -289,7 +347,7 @@ def order_success(request, order_id):
         except Coupon.DoesNotExist:
             pass
 
-    # get all items this order
+ 
     order_items = order.items.select_related("variant", "variant__product")
 
     # direct access not not alllow  like not place order

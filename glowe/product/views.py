@@ -947,108 +947,205 @@ def product_listing(request):
     )
 
 
-def product_detail_view(request, slug):
 
+# HELPER FUNCTIONS for product_detail_view
+
+
+
+# --- Helper Functions for product_detail_view ---
+# These small functions handle specific tasks to keep the main view clean and easy to read.
+
+def get_variant_offer_data(variant, product):
+    """
+    Calculate the final price and offer details for a single variant.
+    Returns a dictionary with pricing information.
+    """
+    try:
+        price = Decimal(str(variant.price))
+        best_offer, best_discount = get_best_offer(product, price)
+        if best_offer:
+            # Make sure discount doesn't exceed the actual price
+            best_discount = min(best_discount, price)
+            final_price = max(price - best_discount, Decimal("0.00"))
+            
+            # Create a nice text for the offer (like '10% OFF' or 'Flat ₹50 OFF')
+            if best_offer.discount_type == "PERCENTAGE":
+                offer_text = f"{best_offer.discount_value:g}% OFF"
+            else:
+                offer_text = f"Flat ₹{best_offer.discount_value:g} OFF"
+                
+            return {
+                "final_price": final_price,
+                "has_offer": True,
+                "offer_discount": best_discount,
+                "offer_text": offer_text,
+                "offer_obj": best_offer,
+            }
+    except Exception:
+        # If anything goes wrong, just skip the offer calculation
+        pass
+
+    # Default return if no offer is found or an error occurs
+    price = Decimal(str(variant.price))
+    return {
+        "final_price": price,
+        "has_offer": False,
+        "offer_discount": Decimal("0.00"),
+        "offer_text": "",
+        "offer_obj": None,
+    }
+
+
+def annotate_variants_with_offers(variants, product):
+    """
+    Adds offer and pricing info directly to each variant object.
+    This makes it easy to use in the HTML template.
+    """
+    for v in variants:
+        data = get_variant_offer_data(v, product)
+        v.final_price = data["final_price"]
+        v.discount = data["offer_discount"]
+        v.has_offer = data["has_offer"]
+        v.offer_text = data["offer_text"]
+        v.offer_name = data["offer_obj"].name if data["offer_obj"] else ""
+
+
+def annotate_related_products(products_list):
+    """
+    Calculates prices and offers for a list of products (like 'Related Products').
+    """
+    for rel in products_list:
+        try:
+            # Use the default variant or the first one available
+            rel_variant = rel.variants.filter(is_default=True).first() or rel.variants.first()
+            rel_price = Decimal(str(rel_variant.price)) if rel_variant else Decimal("0.00")
+            
+            rel_offer, rel_disc = get_best_offer(rel, rel_price)
+            if rel_offer:
+                rel_disc = min(rel_disc, rel_price)
+                rel.final_price = max(rel_price - rel_disc, Decimal("0.00"))
+                rel.discount = rel_disc
+                rel.has_offer = True
+            else:
+                rel.final_price = rel_price
+                rel.discount = Decimal("0.00")
+                rel.has_offer = False
+            rel.original_price = rel_price
+        except Exception:
+            # Safety fallback values
+            rel.final_price = Decimal("0.00")
+            rel.discount = Decimal("0.00")
+            rel.has_offer = False
+            rel.original_price = Decimal("0.00")
+
+
+def get_user_cart_wishlist_ids(user):
+    """
+    Checks what items the user already has in their cart or wishlist.
+    Returns two lists of IDs.
+    """
+    if not user.is_authenticated:
+        return [], []
+        
+    wishlisted_ids = list(
+        Wishlist.objects.filter(user=user).values_list("variant_id", flat=True)
+    )
+    cart_variant_ids = list(
+        CartItem.objects.filter(cart__user=user).values_list("variant_id", flat=True)
+    )
+    return wishlisted_ids, cart_variant_ids
+
+
+def get_review_data(product, user):
+    """
+    Collects all review stats like average rating and star distribution.
+    Also checks if the user can write a new review.
+    """
+    from django.db.models import Avg, Count
+    from order.models import Order
+    from review.models import Review
+
+    # Get all approved reviews for this product
+    reviews = product.review_set.filter(
+        status="approved", is_deleted=False
+    ).order_by("-created_at")
+
+    total_reviews = reviews.count()
+    avg_rating = reviews.aggregate(Avg("rating"))["rating__avg"] or 0
+
+    # Initialize counts for each star (1 to 5)
+    rating_counts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+    for r in reviews.values("rating").annotate(count=Count("id")):
+        rating_counts[r["rating"]] = r["count"]
+
+    # Calculate percentage for each star level (for the UI progress bars)
+    rating_distribution = {
+        star: int((rating_counts[star] / total_reviews) * 100) if total_reviews > 0 else 0
+        for star in range(1, 6)
+    }
+
+    # Prepare rows for the stars section in the template
+    rating_rows = [
+        {"star": star, "pct": rating_distribution[star], "count": rating_counts[star]}
+        for star in range(5, 0, -1)
+    ]
+
+    # Find a delivered order that hasn't been reviewed yet
+    reviewable_order = None
+    if user.is_authenticated:
+        orders_with_product = Order.objects.filter(
+            user=user,
+            order_status="DELIVERED",
+            items__variant__product=product,
+        ).distinct()
+        
+        for ord_obj in orders_with_product:
+            if not Review.objects.filter(user=user, product=product, order=ord_obj).exists():
+                reviewable_order = ord_obj
+                break
+
+    return reviews, total_reviews, avg_rating, rating_distribution, rating_counts, rating_rows, reviewable_order
+
+
+def product_detail_view(request, slug):
+    """Show the product detail page with pricing, offers, reviews, and related products."""
+
+    #Get product or 404
     product = get_object_or_404(
         Product.objects.prefetch_related("images", "variants"),
         slug=slug,
         is_deleted=False,
     )
-
     if not product.is_active:
         return redirect("product_listing")
 
+    # Get variants and pick the selected one
     all_variants = product.variants.all().order_by("size")
     active_variants = all_variants.filter(is_active=True)
-
     if not active_variants.exists():
         return redirect("product_listing")
 
     variant_id = request.GET.get("variant")
-    # get selected variant
-    selected_variant = None
-    if variant_id:
-        selected_variant = active_variants.filter(id=variant_id).first()
-
-    # If fallback.. to first variant
+    selected_variant = active_variants.filter(id=variant_id).first() if variant_id else None
     if not selected_variant:
-        selected_variant = active_variants.first()
+        selected_variant = active_variants.first()  # fallback to first
 
+  
     stock = selected_variant.stock if selected_variant else 0
     low_stock_count = stock if 0 < stock <= 5 else None
     all_out_of_stock = not active_variants.filter(stock__gt=0).exists()
 
-    sv_price = Decimal("0.00")
 
-    try:
-        if selected_variant:
-            sv_price = Decimal(str(selected_variant.price))
-            best_offer, best_discount = get_best_offer(product, sv_price)
+    # 4. Offer and pricing for the currently selected variant
+    offer_data = get_variant_offer_data(selected_variant, product) if selected_variant else {
+        "final_price": Decimal("0.00"), "has_offer": False,
+        "offer_discount": Decimal("0.00"), "offer_text": "", "offer_obj": None,
+    }
 
-            if best_offer:
-                if best_discount > sv_price:
-                    best_discount = sv_price
-                final_price = sv_price - best_discount
-                if final_price < Decimal("0.00"):
-                    final_price = Decimal("0.00")
-                has_offer = True
-                offer_discount = best_discount
-                if best_offer.discount_type == "PERCENTAGE":
-                    offer_text = f"{best_offer.discount_value:g}% OFF"
-                else:
-                    offer_text = f"Flat ₹{best_offer.discount_value:g} OFF"
-            else:
-                final_price = sv_price
-                has_offer = False
-                offer_discount = Decimal("0.00")
-                offer_text = ""
-                best_offer = None
-        else:
-            final_price = Decimal("0.00")
-            has_offer = False
-            offer_discount = Decimal("0.00")
-            offer_text = ""
-            best_offer = None
-    except Exception:
-        final_price = sv_price
-        has_offer = False
-        offer_discount = Decimal("0.00")
-        offer_text = ""
-        best_offer = None
+    # 5. Attach offer data to every variant (for size switcher UI)
+    annotate_variants_with_offers(all_variants, product)
 
-    for v in all_variants:
-        try:
-            v_price = Decimal(str(v.price))
-            v_offer, v_disc = get_best_offer(product, v_price)
-            if v_offer:
-                if v_disc > v_price:
-                    v_disc = v_price
-                v_final = v_price - v_disc
-                if v_final < Decimal("0.00"):
-                    v_final = Decimal("0.00")
-                v.final_price = v_final
-                v.discount = v_disc
-                v.has_offer = True
-                if v_offer.discount_type == "PERCENTAGE":
-                    v.offer_text = f"{v_offer.discount_value:g}% OFF"
-                else:
-                    v.offer_text = f"Flat ₹{v_offer.discount_value:g} OFF"
-                v.offer_name = v_offer.name
-            else:
-                v.final_price = v_price
-                v.discount = Decimal("0.00")
-                v.has_offer = False
-                v.offer_text = ""
-                v.offer_name = ""
-        except Exception:
-            v.final_price = v.price
-            v.discount = Decimal("0.00")
-            v.has_offer = False
-            v.offer_text = ""
-            v.offer_name = ""
-    skin_type = product.skin_type if product.skin_type else "All Skin Types"
-    description = product.description
-    ingredients = product.ingredients
+ 
     how_to_use = product.how_to_use
     how_to_use_steps = []
     if how_to_use:
@@ -1057,17 +1154,17 @@ def product_detail_view(request, slug):
         except Exception:
             how_to_use_steps = []
 
-    # not use now  ok appo venda
 
     images = product.images.all()
     primary_image = images.filter(is_primary=True).first()
 
+   
     related_products = Product.objects.filter(
         category=product.category,
         category__is_deleted=False,
         category__is_active=True,
         is_active=True,
-        is_deleted=False
+        is_deleted=False,
     ).exclude(id=product.id)[:7]
 
     others_bought = Product.objects.filter(
@@ -1075,117 +1172,18 @@ def product_detail_view(request, slug):
         is_deleted=False,
         category__is_deleted=False,
         category__is_active=True,
-    ).exclude(category=product.category).exclude(id=product.id).order_by('?')[:9]
+    ).exclude(category=product.category).exclude(id=product.id).order_by("?")[:9]
 
-    def process_rel_products(products_list):
-        for rel in products_list:
-            try:
-                rel_variant = (
-                    rel.variants.filter(is_default=True).first()
-                    or rel.variants.first()
-                )
-                rel_price = (
-                    Decimal(str(rel_variant.price))
-                    if rel_variant
-                    else Decimal("0.00")
-                )
 
-                rel_offer, rel_disc = get_best_offer(rel, rel_price)
-                if rel_offer:
-                    if rel_disc > rel_price:
-                        rel_disc = rel_price
-                    rel_final = rel_price - rel_disc
-                    if rel_final < Decimal("0.00"):
-                        rel_final = Decimal("0.00")
-                    rel.final_price = rel_final
-                    rel.discount = rel_disc
-                    rel.has_offer = True
-                else:
-                    rel.final_price = rel_price
-                    rel.discount = Decimal("0.00")
-                    rel.has_offer = False
-                rel.original_price = rel_price
-            except Exception:
-                rel.final_price = Decimal("0.00")
-                rel.discount = Decimal("0.00")
-                rel.has_offer = False
-                rel.original_price = Decimal("0.00")
+    annotate_related_products(related_products)
+    annotate_related_products(others_bought)
 
-    process_rel_products(related_products)
-    process_rel_products(others_bought)
+    # 9. Wishlist and cart state for the current user
+    wishlisted_ids, cart_variant_ids = get_user_cart_wishlist_ids(request.user)
 
-    # wishlisted variant
-    wishlisted_ids = []
-    cart_variant_ids = []
-
-    if request.user.is_authenticated:
-        wishlisted_ids = list(
-            Wishlist.objects.filter(user=request.user).values_list(
-                "variant_id", flat=True
-            )
-        )
-
-        # Get variants already in cart
-        cart_variant_ids = list(
-            CartItem.objects.filter(cart__user=request.user).values_list(
-                "variant_id", flat=True
-            )
-        )
-
-    # Fetch reviews
-    from django.db.models import Avg, Count
-
-    reviews = product.review_set.filter(
-        status="approved", is_deleted=False
-    ).order_by("-created_at")
-
-    # Calculate stats
-    total_reviews = reviews.count()
-    avg_rating = reviews.aggregate(Avg("rating"))["rating__avg"] or 0
-
-    # Rating distribution
-    rating_counts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
-    for r in reviews.values("rating").annotate(count=Count("id")):
-        rating_counts[r["rating"]] = r["count"]
-
-    rating_distribution = {}
-    if total_reviews > 0:
-        for star in range(5, 0, -1):
-            rating_distribution[star] = int(
-                (rating_counts[star] / total_reviews) * 100
-            )
-    else:
-        rating_distribution = {5: 0, 4: 0, 3: 0, 2: 0, 1: 0}
-
-    # Combined rows for template (star, pct, count)
-    rating_rows = [
-        {
-            "star": star,
-            "pct": rating_distribution[star],
-            "count": rating_counts[star],
-        }
-        for star in range(5, 0, -1)
-    ]
-
-    # Find reviewable order
-    reviewable_order = None
-    if request.user.is_authenticated:
-        from order.models import Order
-        from review.models import Review
-
-        # Find a delivered order with this product
-        orders_with_product = Order.objects.filter(
-            user=request.user,
-            order_status="DELIVERED",
-            items__variant__product=product,
-        ).distinct()
-
-        for ord_obj in orders_with_product:
-            if not Review.objects.filter(
-                user=request.user, product=product, order=ord_obj
-            ).exists():
-                reviewable_order = ord_obj
-                break
+    # 10. Reviews and rating data
+    reviews, total_reviews, avg_rating, rating_distribution, rating_counts, rating_rows, reviewable_order = \
+        get_review_data(product, request.user)
 
     return render(
         request,
@@ -1197,9 +1195,9 @@ def product_detail_view(request, slug):
             "stock": stock,
             "low_stock_count": low_stock_count,
             "all_out_of_stock": all_out_of_stock,
-            "skin_type": skin_type,
-            "description": description,
-            "ingredients": ingredients,
+            "skin_type": product.skin_type or "All Skin Types",
+            "description": product.description,
+            "ingredients": product.ingredients,
             "how_to_use": how_to_use,
             "how_to_use_steps": how_to_use_steps,
             "images": images,
@@ -1208,11 +1206,11 @@ def product_detail_view(request, slug):
             "others_bought": others_bought,
             "wishlisted_ids": wishlisted_ids,
             "cart_variant_ids": cart_variant_ids,
-            "final_price": final_price,
-            "has_offer": has_offer,
-            "offer_discount": offer_discount,
-            "offer_text": offer_text,
-            "offer": best_offer,
+            "final_price": offer_data["final_price"],
+            "has_offer": offer_data["has_offer"],
+            "offer_discount": offer_data["offer_discount"],
+            "offer_text": offer_data["offer_text"],
+            "offer": offer_data["offer_obj"],
             "reviews": reviews,
             "total_reviews": total_reviews,
             "avg_rating": avg_rating,
@@ -1222,6 +1220,7 @@ def product_detail_view(request, slug):
             "reviewable_order": reviewable_order,
         },
     )
+
 
 
 def add_to_cart(request):
