@@ -185,7 +185,7 @@ body { background:#f4f6f3; margin:0; }
     <p class="text-sm md:text-[15px] text-gray-500 mt-2 font-medium">Updating: <span class="text-sage-600">{{ product.name }}</span></p>
   </div>
 
-  <form id="editForm" method="POST" enctype="multipart/form-data" action="{% url 'edit_product' product.id %}">
+  <form id="editForm" method="POST" enctype="multipart/form-data" action="{% url 'edit_product' product.id %}" novalidate>
     {% csrf_token %}
     <input type="hidden" name="is_active"       id="isActiveInput"  value="{{ product.is_active|yesno:'true,false' }}"/>
     <input type="hidden" name="description"      id="descInput"      value=""/>

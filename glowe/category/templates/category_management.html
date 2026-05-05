@@ -727,7 +727,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
-    <form id="addCategoryForm" method="POST" action="{% url 'add_category' %}" class="p-7 space-y-6">
+    <form id="addCategoryForm" method="POST" action="{% url 'add_category' %}" class="p-7 space-y-6" novalidate>
       {% csrf_token %}
       <div>
         <label class="block text-[10.5px] font-bold text-gray-400 uppercase tracking-[0.15em] mb-2.5">Category Name</label>
@@ -762,7 +762,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
-    <form id="editForm" method="POST" class="p-7 space-y-6">
+    <form id="editForm" method="POST" class="p-7 space-y-6" novalidate>
       {% csrf_token %}
       <div>
         <label class="block text-[10.5px] font-bold text-gray-400 uppercase tracking-[0.15em] mb-2.5">Category Name</label>

@@ -212,7 +212,7 @@
                                             </button>
                                         </div>
                                         
-                                        <form id="editForm{{ data.offer.id }}" method="POST" action="{% url 'edit_offer' data.offer.id %}" class="p-10 pt-8 edit-offer-form">
+                                        <form id="editForm{{ data.offer.id }}" method="POST" action="{% url 'edit_offer' data.offer.id %}" class="p-10 pt-8 edit-offer-form" novalidate>
                                             {% csrf_token %}
                                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
                                                 
@@ -336,7 +336,7 @@
             </button>
         </div>
         
-        <form id="addForm" method="POST" action="{% url 'add_offer' %}" class="p-10 pt-8">
+        <form id="addForm" method="POST" action="{% url 'add_offer' %}" class="p-10 pt-8" novalidate>
             {% csrf_token %}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
                 
@@ -665,11 +665,23 @@
                     for (const [field, errors] of Object.entries(data.errors)) {
                         const inputEl = f.querySelector(`[name="${field}"]`);
                         if (inputEl) {
-                            inputEl.classList.add('border-red-500');
+                            if (inputEl.type !== 'hidden' && inputEl.type !== 'radio') {
+                                inputEl.classList.add('border-red-500');
+                            }
+                            
                             const newErr = document.createElement('p');
                             newErr.className = 'text-red-500 text-xs mt-1 font-medium';
                             newErr.textContent = errors[0];
-                            inputEl.parentNode.insertBefore(newErr, inputEl.nextSibling);
+                            
+                            if (inputEl.type === 'hidden') {
+                                // Usually hidden inputs are inside custom dropdowns, append to parent
+                                inputEl.parentElement.appendChild(newErr);
+                            } else if (inputEl.type === 'radio') {
+                                // For custom radio buttons, append to the container of all radios
+                                inputEl.closest('.flex.items-center.gap-3').parentElement.appendChild(newErr);
+                            } else {
+                                inputEl.parentNode.insertBefore(newErr, inputEl.nextSibling);
+                            }
                         } else {
                             // If field input is not found, fallback to generic error div
                             let errorDiv = f.querySelector('.form-error-msg');

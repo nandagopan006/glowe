@@ -245,7 +245,7 @@
                                             </button>
                                         </div>
                                         
-                                        <form id="editForm{{ coupon.id }}" method="POST" action="{% url 'edit_coupon' coupon.id %}" class="p-10 pt-8">
+                                        <form id="editForm{{ coupon.id }}" method="POST" action="{% url 'edit_coupon' coupon.id %}" class="p-10 pt-8" novalidate>
                                             {% csrf_token %}
                                             
                                             <!-- Non-field errors container -->
@@ -464,7 +464,7 @@
             </button>
         </div>
         
-        <form id="addForm" method="POST" action="{% url 'create_coupon' %}" class="p-10 pt-8">
+        <form id="addForm" method="POST" action="{% url 'create_coupon' %}" class="p-10 pt-8" novalidate>
             {% csrf_token %}
             
             <!-- Non-field errors container -->

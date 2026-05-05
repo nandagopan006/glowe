@@ -76,8 +76,14 @@ class CouponForm(forms.ModelForm):
         start = self.cleaned_data.get("start_date")
         today = timezone.now().date()
 
-        if start and start < today:
-            raise forms.ValidationError("Start date cannot be in the past")
+        if start:
+            if self.instance.pk:
+                # When editing, only check if the date was changed
+                if start != self.instance.start_date and start < today:
+                    raise forms.ValidationError("Start date cannot be changed to a past date")
+            else:
+                if start < today:
+                    raise forms.ValidationError("Start date cannot be in the past")
         
         return start
 
@@ -86,8 +92,13 @@ class CouponForm(forms.ModelForm):
         end = self.cleaned_data.get("end_date")
         today = timezone.now().date()
 
-        if end and end < today:
-            raise forms.ValidationError("End date cannot be in the past")
+        if end:
+            if self.instance.pk:
+                if end != self.instance.end_date and end < today:
+                    raise forms.ValidationError("End date cannot be changed to a past date")
+            else:
+                if end < today:
+                    raise forms.ValidationError("End date cannot be in the past")
         
         return end
 
