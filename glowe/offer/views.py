@@ -35,22 +35,22 @@ def add_offer(request):
         category_id = request.POST.get("category_id")
 
         # error return (changed)
-        def error(msg):
-            return JsonResponse({"success": False, "error": msg})
+        def error(field, msg):
+            return JsonResponse({"success": False, "errors": {field: [msg]}})
 
         # validation (same)
         if not name:
-            return error("Offer name required")
+            return error("name", "Offer name required")
 
         # Validation for numbers
         try:
             discount_value = Decimal(discount_value)
             if discount_value <= 0:
-                return error("Discount must be greater than 0")
+                return error("discount_value", "Discount must be greater than 0")
             if discount_type == "PERCENTAGE" and discount_value > 100:
-                return error("Percentage discount cannot exceed 100%")
+                return error("discount_value", "Percentage discount cannot exceed 100%")
         except Exception:
-            return error("Invalid discount value")
+            return error("discount_value", "Invalid discount value")
 
         # Convert optional fields to None if empty
         max_d_val = None
@@ -58,24 +58,24 @@ def add_offer(request):
             try:
                 max_d_val = Decimal(max_discount)
                 if max_d_val <= 0:
-                    return error("Max discount must be greater than 0")
+                    return error("max_discount", "Max discount must be greater than 0")
             except Exception:
-                return error("Invalid max discount")
+                return error("max_discount", "Invalid max discount")
 
         min_p_val = None
         if min_purchase:
             try:
                 min_p_val = Decimal(min_purchase)
                 if min_p_val < 0:
-                    return error("Min purchase cannot be negative")
+                    return error("min_purchase", "Min purchase cannot be negative")
             except Exception:
-                return error("Invalid min purchase")
+                return error("min_purchase", "Invalid min purchase")
 
         try:
             start_date = datetime.strptime(start_date, "%Y-%m-%d")
             end_date = datetime.strptime(end_date, "%Y-%m-%d")
         except Exception:
-            return error("Invalid date format")
+            return error("start_date", "Invalid date format")
 
         today = timezone.localtime().date()
         start_date_only = (
@@ -86,27 +86,27 @@ def add_offer(request):
         )
 
         if start_date_only < today:
-            return error(
+            return error("start_date",
                 "Start date cannot be in the past. Please select today or a future date."  # noqa: E501
             )
 
         if end_date_only <= start_date_only:
-            return error(
+            return error("end_date",
                 "End date must be at least one day after the start date."
             )
 
         duration = (end_date_only - start_date_only).days
         if duration < 1:
-            return error("Offer must run for at least 1 day.")
+            return error("end_date", "Offer must run for at least 1 day.")
 
         if duration > 365:
-            return error("Offer duration cannot exceed 1 year (365 days).")
+            return error("end_date", "Offer duration cannot exceed 1 year (365 days).")
 
         if apply_to == "PRODUCT" and not product_id:
-            return error("Select a product")
+            return error("product_id", "Select a product")
 
         if apply_to == "CATEGORY" and not category_id:
-            return error("Select a category")
+            return error("category_id", "Select a category")
 
         now = timezone.now()
 
@@ -120,7 +120,7 @@ def add_offer(request):
             ).exists()
 
             if exists:
-                return error("This product already has an active offer")
+                return error("product_id", "This product already has an active offer")
 
         if apply_to == "CATEGORY":
             exists = OfferItem.objects.filter(
@@ -132,7 +132,7 @@ def add_offer(request):
             ).exists()
 
             if exists:
-                return error("This category already has an active offer")
+                return error("category_id", "This category already has an active offer")
 
         is_active = (
             request.POST.get("is_active") == "true"
@@ -189,42 +189,42 @@ def edit_offer(request, id):
         end_date = request.POST.get("end_date")
 
         # error return
-        def error(msg):
-            return JsonResponse({"success": False, "error": msg})
+        def error(field, msg):
+            return JsonResponse({"success": False, "errors": {field: [msg]}})
 
         # Validation for numbers
         try:
             d_val = Decimal(discount_value)
             if d_val <= 0:
-                return error("Discount must be greater than 0")
+                return error("discount_value", "Discount must be greater than 0")
             if discount_type == "PERCENTAGE" and d_val > 100:
-                return error("Percentage discount cannot exceed 100%")
+                return error("discount_value", "Percentage discount cannot exceed 100%")
         except Exception:
-            return error("Invalid discount value")
+            return error("discount_value", "Invalid discount value")
 
         m_val = None
         if max_discount:
             try:
                 m_val = Decimal(max_discount)
                 if m_val <= 0:
-                    return error("Max discount must be greater than 0")
+                    return error("max_discount", "Max discount must be greater than 0")
             except Exception:
-                return error("Invalid max discount")
+                return error("max_discount", "Invalid max discount")
 
         p_val = None
         if min_purchase:
             try:
                 p_val = Decimal(min_purchase)
                 if p_val < 0:
-                    return error("Min purchase cannot be negative")
+                    return error("min_purchase", "Min purchase cannot be negative")
             except Exception:
-                return error("Invalid min purchase")
+                return error("min_purchase", "Invalid min purchase")
 
         try:
             start_date = datetime.strptime(start_date, "%Y-%m-%d")
             end_date = datetime.strptime(end_date, "%Y-%m-%d")
         except Exception:
-            return error("Invalid date format")
+            return error("start_date", "Invalid date format")
 
         # Get today's date
         today = timezone.localtime().date()
@@ -246,13 +246,13 @@ def edit_offer(request, id):
         if original_start_date > today:
 
             if start_date_only < today:
-                return error(
+                return error("start_date",
                     "Start date cannot be in the past. Please select today or a future date."  # noqa: E501
                 )
         else:
 
             if start_date_only < original_start_date:
-                return error(
+                return error("start_date",
                     "Cannot change start date to an earlier date for an active or past offer."  # noqa: E501
                 )
 
@@ -260,26 +260,26 @@ def edit_offer(request, id):
                 start_date_only != original_start_date
                 and start_date_only < today
             ):
-                return error("New start date cannot be in the past.")
+                return error("start_date", "New start date cannot be in the past.")
 
         if end_date_only <= start_date_only:
-            return error(
+            return error("end_date",
                 "End date must be at least one day after the start date."
             )
 
         if end_date_only < today:
-            return error(
+            return error("end_date",
                 "End date cannot be in the past. The offer would be expired immediately."  # noqa: E501
             )
 
         # Minimum offer duration (at least 1 day)
         duration = (end_date_only - start_date_only).days
         if duration < 1:
-            return error("Offer must run for at least 1 day.")
+            return error("end_date", "Offer must run for at least 1 day.")
 
         # Maximum offer duration (1 year)
         if duration > 365:
-            return error("Offer duration cannot exceed 1 year (365 days).")
+            return error("end_date", "Offer duration cannot exceed 1 year (365 days).")
 
         # save
         offer.name = name

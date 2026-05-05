@@ -647,6 +647,71 @@ function showToast(type,title,msg){
 {% if messages %}{% for message in messages %}
   showToast('{{ message.tags }}', '{{ message.tags|title }}', '{{ message|escapejs }}');
 {% endfor %}{% endif %}
+
+/* AJAX FORM SUBMISSION */
+function handleAjaxFormSubmit(formId, errorPrefix) {
+  const form = document.getElementById(formId);
+  if (!form) return;
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Clear previous errors
+    form.querySelectorAll('.error-text').forEach(el => {
+      el.textContent = '';
+      el.classList.add('hidden');
+    });
+    form.querySelectorAll('input').forEach(el => el.classList.remove('border-red-500', 'ring-red-50'));
+
+    const formData = new FormData(form);
+
+    fetch(form.action, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json'
+      }
+    })
+    .then(response => {
+      if (response.redirected) {
+         window.location.href = response.url;
+         return;
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (!data) return;
+      if (data.success) {
+        showToast('success', 'Success', data.message);
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else if (data.errors) {
+        // Show validation errors inline
+        for (const [field, errorList] of Object.entries(data.errors)) {
+          const errorEl = document.getElementById(`error_${field}_${errorPrefix}`);
+          const inputEl = form.querySelector(`[name="${field}"]`);
+          
+          if (errorEl) {
+            errorEl.textContent = errorList[0]; // Show first error
+            errorEl.classList.remove('hidden');
+          }
+          if (inputEl) {
+            inputEl.classList.add('border-red-500', 'ring-red-50');
+            inputEl.classList.remove('border-sage-400', 'ring-sage-50');
+          }
+        }
+      }
+    })
+    .catch(error => console.error('Error:', error));
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  handleAjaxFormSubmit('addCategoryForm', 'add');
+  handleAjaxFormSubmit('editForm', 'edit');
+});
 </script>
 
 <!-- MODALS HTML -->
@@ -662,11 +727,12 @@ function showToast(type,title,msg){
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
-    <form method="POST" action="{% url 'add_category' %}" class="p-7 space-y-6">
+    <form id="addCategoryForm" method="POST" action="{% url 'add_category' %}" class="p-7 space-y-6">
       {% csrf_token %}
       <div>
         <label class="block text-[10.5px] font-bold text-gray-400 uppercase tracking-[0.15em] mb-2.5">Category Name</label>
-        <input type="text" name="name" required class="w-full px-4 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-sage-400 focus:ring-4 focus:ring-sage-50 transition-all outline-none text-sm font-semibold text-gray-900 placeholder-gray-300" placeholder="e.g. Premium Skincare">
+        <input type="text" id="addNameInput" name="name" class="w-full px-4 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-sage-400 focus:ring-4 focus:ring-sage-50 transition-all outline-none text-sm font-semibold text-gray-900 placeholder-gray-300" placeholder="e.g. Premium Skincare">
+        <div class="error-text text-red-500 text-xs mt-1.5 font-medium hidden" id="error_name_add"></div>
       </div>
       <div class="flex items-center justify-between p-5 bg-gray-50 rounded-2xl border border-gray-100/50">
         <div>
@@ -700,7 +766,8 @@ function showToast(type,title,msg){
       {% csrf_token %}
       <div>
         <label class="block text-[10.5px] font-bold text-gray-400 uppercase tracking-[0.15em] mb-2.5">Category Name</label>
-        <input type="text" id="editName" name="name" required class="w-full px-4 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-sage-400 focus:ring-4 focus:ring-sage-50 transition-all outline-none text-sm font-semibold text-gray-900">
+        <input type="text" id="editName" name="name" class="w-full px-4 py-3.5 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-sage-400 focus:ring-4 focus:ring-sage-50 transition-all outline-none text-sm font-semibold text-gray-900">
+        <div class="error-text text-red-500 text-xs mt-1.5 font-medium hidden" id="error_name_edit"></div>
       </div>
       <div class="flex items-center justify-between p-5 bg-gray-50 rounded-2xl border border-gray-100/50">
         <div>

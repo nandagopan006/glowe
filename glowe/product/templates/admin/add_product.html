@@ -536,10 +536,56 @@ async function submitProduct() {
   const btn=document.getElementById('publishBtn'), txt=document.getElementById('publishBtnText'), sp=document.getElementById('publishSpinner'), ic=document.getElementById('publishIcon');
   btn.disabled=true; btn.style.opacity='0.75'; txt.textContent='Publishing...'; sp.classList.remove('hidden'); ic.classList.add('hidden');
   try {
-    const resp=await fetch(form.action,{method:'POST',body:formData});
-    if(resp.redirected||(resp.ok&&resp.url&&resp.url!==window.location.href)){ showToast('success','Published!','Product added successfully.'); setTimeout(()=>window.location.href=resp.url||"{% url 'product_management' %}",800); return; }
-    showToast('error','Server Error','Please check the form errors.');
-  } catch(e){ showToast('error','Network Error','Please check your connection.'); }
+    const resp=await fetch(form.action,{
+      method:'POST',
+      body:formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json'
+      }
+    });
+    
+    const data = await resp.json();
+    
+    if (data.success) {
+        showToast('success', 'Published!', data.message);
+        setTimeout(() => window.location.href="{% url 'product_management' %}", 800);
+        return;
+    } else if (data.errors) {
+        showToast('error', 'Validation Failed', 'Please check the form errors.');
+        
+        // Loop through errors and display them
+        for (const [field, errors] of Object.entries(data.errors)) {
+            if (field === 'name') {
+                document.getElementById('nameError').textContent = errors[0];
+                document.getElementById('nameError').classList.remove('hidden');
+                document.getElementById('productName').classList.add('border-red-500', 'ring-red-50');
+            } else if (field === 'images') {
+                setImageError(errors[0]);
+            } else if (field === 'description') {
+                document.getElementById('descError').textContent = errors[0];
+                document.getElementById('descError').classList.remove('hidden');
+            } else {
+                // Generic handling for other fields like category
+                const inputEl = form.querySelector(`[name="${field}"]`);
+                if (inputEl) {
+                    inputEl.classList.add('border-red-500');
+                    const errP = inputEl.nextElementSibling;
+                    if (errP && errP.tagName === 'P' && errP.classList.contains('text-red-500')) {
+                        errP.textContent = errors[0];
+                    } else {
+                        const newErr = document.createElement('p');
+                        newErr.className = 'text-red-500 text-xs mt-1';
+                        newErr.textContent = errors[0];
+                        inputEl.parentNode.insertBefore(newErr, inputEl.nextSibling);
+                    }
+                }
+            }
+        }
+    }
+  } catch(e) {
+    showToast('error','Network Error','Please check your connection.'); 
+  }
   btn.disabled=false; btn.style.opacity='1'; txt.textContent='Publish Product'; sp.classList.add('hidden'); ic.classList.remove('hidden');
 }
 

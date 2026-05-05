@@ -7,6 +7,7 @@ from django.db.models import Count
 from django.core.paginator import Paginator
 from django.views.decorators.cache import never_cache
 from core.decorators import admin_required
+from django.http import JsonResponse
 
 
 @never_cache
@@ -59,6 +60,8 @@ def category_management(request):
     return render(request, "category_management.html", context)
 
 
+
+
 @never_cache
 @admin_required
 def add_category(request):
@@ -68,10 +71,15 @@ def add_category(request):
 
         if form.is_valid():
             form.save()
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.headers.get('Accept', '').find('application/json') != -1:
+                return JsonResponse({"success": True, "message": "Category created successfully."})
+            
             messages.success(request, "category is created successfully")
             return redirect("category_management")
 
         else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.headers.get('Accept', '').find('application/json') != -1:
+                return JsonResponse({"success": False, "errors": form.errors})
 
             # If form invalid, show errors
             for errors in form.errors.values():
@@ -92,8 +100,15 @@ def edit_category(request, id):
 
         if form.is_valid():
             form.save()
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.headers.get('Accept', '').find('application/json') != -1:
+                return JsonResponse({"success": True, "message": "Category successfully updated."})
+                
             messages.success(request, "category successfully updated....")
+            return redirect("category_management")
         else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.headers.get('Accept', '').find('application/json') != -1:
+                return JsonResponse({"success": False, "errors": form.errors})
+                
             for errors in form.errors.values():
                 for e in errors:
                     messages.error(request, e)

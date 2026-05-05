@@ -245,13 +245,25 @@
                                             </button>
                                         </div>
                                         
-                                        <form method="POST" action="{% url 'edit_coupon' coupon.id %}" class="p-10 pt-8">
+                                        <form id="editForm{{ coupon.id }}" method="POST" action="{% url 'edit_coupon' coupon.id %}" class="p-10 pt-8">
                                             {% csrf_token %}
+                                            
+                                            <!-- Non-field errors container -->
+                                            <div id="editNonFieldErrors{{ coupon.id }}" class="hidden mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl">
+                                                <div class="flex items-start gap-3">
+                                                    <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                    <div class="flex-1">
+                                                        <p class="text-[13px] font-bold text-red-800" id="editNonFieldErrorText{{ coupon.id }}"></p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
                                                 
                                                 <div class="space-y-2.5 md:col-span-2">
                                                     <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Coupon Code</label>
-                                                    <input type="text" name="code" value="{{ coupon.code }}" required class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold uppercase outline-none placeholder:text-gray-300">
+                                                    <input type="text" name="code" value="{{ coupon.code }}" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold uppercase outline-none placeholder:text-gray-300">
+                                                    <div class="error-message text-[12px] font-semibold text-red-600 ml-2 mt-1.5 hidden" id="edit_error_code_{{ coupon.id }}"></div>
                                                 </div>
 
                                                 <div class="space-y-3">
@@ -271,42 +283,49 @@
                                                 <div class="space-y-2.5">
                                                     <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Discount Amount</label>
                                                     <div class="relative">
-                                                        <input type="number" step="0.01" name="discount_value" value="{{ coupon.discount_value|stringformat:'.2f' }}" required class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold outline-none">
+                                                        <input type="number" step="0.01" name="discount_value" value="{{ coupon.discount_value|stringformat:'.2f' }}" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold outline-none">
                                                         <div class="absolute inset-y-0 right-0 pr-6 flex items-center pointer-events-none">
                                                             <span class="text-[14px] font-extrabold text-gray-300 tracking-tighter" id="editDiscountUnitLabel{{ coupon.id }}">{% if coupon.discount_type == 'percentage' %}%{% else %}₹{% endif %}</span>
                                                         </div>
                                                     </div>
+                                                    <div class="error-message text-[12px] font-semibold text-red-600 ml-2 mt-1.5 hidden" id="edit_error_discount_value_{{ coupon.id }}"></div>
                                                 </div>
 
                                                 <div class="space-y-2.5">
                                                     <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Min Order (₹)</label>
                                                     <input type="number" step="0.01" name="min_purchase" value="{% if coupon.min_purchase %}{{ coupon.min_purchase|stringformat:'.2f' }}{% endif %}" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold outline-none">
+                                                    <div class="error-message text-[12px] font-semibold text-red-600 ml-2 mt-1.5 hidden" id="edit_error_min_purchase_{{ coupon.id }}"></div>
                                                 </div>
 
                                                 <div class="space-y-2.5">
                                                     <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Max Cap (₹)</label>
                                                     <input type="number" step="0.01" name="max_discount" value="{% if coupon.max_discount %}{{ coupon.max_discount|stringformat:'.2f' }}{% endif %}" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold outline-none">
+                                                    <div class="error-message text-[12px] font-semibold text-red-600 ml-2 mt-1.5 hidden" id="edit_error_max_discount_{{ coupon.id }}"></div>
                                                 </div>
 
                                                 <div class="space-y-2.5">
                                                     <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Total Usage Limit</label>
                                                     <input type="number" name="total_usage_limit" value="{% if coupon.total_usage_limit %}{{ coupon.total_usage_limit }}{% endif %}" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold outline-none">
+                                                    <div class="error-message text-[12px] font-semibold text-red-600 ml-2 mt-1.5 hidden" id="edit_error_total_usage_limit_{{ coupon.id }}"></div>
                                                 </div>
 
                                                 <div class="space-y-2.5">
                                                     <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Limit Per User</label>
-                                                    <input type="number" name="usage_limit_per_user" value="{{ coupon.usage_limit_per_user }}" required class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold outline-none">
+                                                    <input type="number" name="usage_limit_per_user" value="{{ coupon.usage_limit_per_user }}" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold outline-none">
+                                                    <div class="error-message text-[12px] font-semibold text-red-600 ml-2 mt-1.5 hidden" id="edit_error_usage_limit_per_user_{{ coupon.id }}"></div>
                                                 </div>
 
                                                 <div class="md:col-span-2 space-y-2.5">
                                                     <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Validity Window</label>
                                                     <div class="flex items-center gap-4">
                                                         <div class="relative flex-1">
-                                                            <input type="date" name="start_date" value="{{ coupon.start_date|date:'Y-m-d' }}" required class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[13px] font-bold uppercase outline-none cursor-pointer">
+                                                            <input type="date" name="start_date" value="{{ coupon.start_date|date:'Y-m-d' }}" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[13px] font-bold uppercase outline-none cursor-pointer">
+                                                            <div class="error-message text-[12px] font-semibold text-red-600 ml-2 mt-1.5 hidden" id="edit_error_start_date_{{ coupon.id }}"></div>
                                                         </div>
                                                         <span class="text-gray-300 font-bold">—</span>
                                                         <div class="relative flex-1">
-                                                            <input type="date" name="end_date" value="{{ coupon.end_date|date:'Y-m-d' }}" required class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[13px] font-bold uppercase outline-none cursor-pointer">
+                                                            <input type="date" name="end_date" value="{{ coupon.end_date|date:'Y-m-d' }}" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[13px] font-bold uppercase outline-none cursor-pointer">
+                                                            <div class="error-message text-[12px] font-semibold text-red-600 ml-2 mt-1.5 hidden" id="edit_error_end_date_{{ coupon.id }}"></div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -324,8 +343,17 @@
                                             </div>
 
                                             <div class="mt-12 flex items-center justify-end gap-4">
-                                                <button type="button" onclick="document.getElementById('editModal{{ coupon.id }}').classList.add('hidden')" class="px-8 py-3.5 text-[14px] font-bold text-gray-500 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-all">Discard</button>
-                                                <button type="submit" class="px-10 py-3.5 text-[14px] font-bold text-white bg-[#1a1a1a] hover:bg-black rounded-2xl shadow-xl shadow-black/10 transition-all duration-300 hover:-translate-y-0.5 active:scale-95">Update</button>
+                                                <button type="button" onclick="closeEditModal('{{ coupon.id }}')" class="px-8 py-3.5 text-[14px] font-bold text-gray-500 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-all">Discard</button>
+                                                <button type="submit" id="editSubmitBtn{{ coupon.id }}" class="px-10 py-3.5 text-[14px] font-bold text-white bg-[#1a1a1a] hover:bg-black rounded-2xl shadow-xl shadow-black/10 transition-all duration-300 hover:-translate-y-0.5 active:scale-95">
+                                                    <span id="editSubmitText{{ coupon.id }}">Update</span>
+                                                    <span id="editSubmitLoader{{ coupon.id }}" class="hidden">
+                                                        <svg class="inline w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                        </svg>
+                                                        Updating...
+                                                    </span>
+                                                </button>
                                             </div>
                                         </form>
                                     </div>
@@ -438,11 +466,23 @@
         
         <form id="addForm" method="POST" action="{% url 'create_coupon' %}" class="p-10 pt-8">
             {% csrf_token %}
+            
+            <!-- Non-field errors container -->
+            <div id="addNonFieldErrors" class="hidden mb-6 p-4 bg-red-50 border border-red-200 rounded-2xl">
+                <div class="flex items-start gap-3">
+                    <svg class="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <div class="flex-1">
+                        <p class="text-[13px] font-bold text-red-800" id="addNonFieldErrorText"></p>
+                    </div>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8">
                 
                 <div class="space-y-2.5 md:col-span-2">
                     <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Coupon Code</label>
-                    <input type="text" name="code" required class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold uppercase outline-none placeholder:text-gray-300" placeholder="E.G. FESTIVE20">
+                    <input type="text" id="addCode" name="code" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold uppercase outline-none placeholder:text-gray-300" placeholder="E.G. FESTIVE20">
+                    <div class="error-message text-[12px] font-semibold text-red-600 ml-2 mt-1.5 hidden" id="error_code"></div>
                 </div>
 
                 <div class="space-y-3">
@@ -462,42 +502,49 @@
                 <div class="space-y-2.5">
                     <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Discount Amount</label>
                     <div class="relative">
-                        <input type="number" step="0.01" name="discount_value" required class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold outline-none" placeholder="0.00">
+                        <input type="number" step="0.01" id="addDiscountValue" name="discount_value" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold outline-none" placeholder="0.00">
                         <div class="absolute inset-y-0 right-0 pr-6 flex items-center pointer-events-none">
                             <span class="text-[14px] font-extrabold text-gray-300 tracking-tighter" id="discountUnitLabel">%</span>
                         </div>
                     </div>
+                    <div class="error-message text-[12px] font-semibold text-red-600 ml-2 mt-1.5 hidden" id="error_discount_value"></div>
                 </div>
 
                 <div class="space-y-2.5">
                     <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Min Order (₹)</label>
-                    <input type="number" step="0.01" name="min_purchase" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold outline-none" placeholder="₹ 0.00">
+                    <input type="number" step="0.01" id="addMinPurchase" name="min_purchase" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold outline-none" placeholder="₹ 0.00">
+                    <div class="error-message text-[12px] font-semibold text-red-600 ml-2 mt-1.5 hidden" id="error_min_purchase"></div>
                 </div>
 
                 <div class="space-y-2.5">
                     <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Max Cap (₹)</label>
-                    <input type="number" step="0.01" name="max_discount" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold outline-none" placeholder="₹ 0.00">
+                    <input type="number" step="0.01" id="addMaxDiscount" name="max_discount" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold outline-none" placeholder="₹ 0.00">
+                    <div class="error-message text-[12px] font-semibold text-red-600 ml-2 mt-1.5 hidden" id="error_max_discount"></div>
                 </div>
 
                 <div class="space-y-2.5">
                     <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Total Usage Limit</label>
-                    <input type="number" name="total_usage_limit" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold outline-none" placeholder="Unlimited if blank">
+                    <input type="number" id="addTotalUsageLimit" name="total_usage_limit" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold outline-none" placeholder="Unlimited if blank">
+                    <div class="error-message text-[12px] font-semibold text-red-600 ml-2 mt-1.5 hidden" id="error_total_usage_limit"></div>
                 </div>
 
                 <div class="space-y-2.5">
                     <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Limit Per User</label>
-                    <input type="number" name="usage_limit_per_user" value="1" required class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold outline-none">
+                    <input type="number" id="addUsageLimitPerUser" name="usage_limit_per_user" value="1" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[15px] font-bold outline-none">
+                    <div class="error-message text-[12px] font-semibold text-red-600 ml-2 mt-1.5 hidden" id="error_usage_limit_per_user"></div>
                 </div>
 
                 <div class="md:col-span-2 space-y-2.5">
                     <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Validity Window</label>
                     <div class="flex items-center gap-4">
                         <div class="relative flex-1">
-                            <input type="date" name="start_date" required class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[13px] font-bold uppercase outline-none cursor-pointer">
+                            <input type="date" id="addStartDate" name="start_date" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[13px] font-bold uppercase outline-none cursor-pointer">
+                            <div class="error-message text-[12px] font-semibold text-red-600 ml-2 mt-1.5 hidden" id="error_start_date"></div>
                         </div>
                         <span class="text-gray-300 font-bold">—</span>
                         <div class="relative flex-1">
-                            <input type="date" name="end_date" required class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[13px] font-bold uppercase outline-none cursor-pointer">
+                            <input type="date" id="addEndDate" name="end_date" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[13px] font-bold uppercase outline-none cursor-pointer">
+                            <div class="error-message text-[12px] font-semibold text-red-600 ml-2 mt-1.5 hidden" id="error_end_date"></div>
                         </div>
                     </div>
                 </div>
@@ -515,8 +562,17 @@
             </div>
 
             <div class="mt-12 flex items-center justify-end gap-4">
-                <button type="button" onclick="document.getElementById('addModal').classList.add('hidden')" class="px-8 py-3.5 text-[14px] font-bold text-gray-500 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-all">Discard</button>
-                <button type="submit" class="px-10 py-3.5 text-[14px] font-bold text-white bg-[#1a1a1a] hover:bg-black rounded-2xl shadow-xl shadow-black/10 transition-all duration-300 hover:-translate-y-0.5 active:scale-95">Save</button>
+                <button type="button" id="addCancelBtn" onclick="closeAddModal()" class="px-8 py-3.5 text-[14px] font-bold text-gray-500 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 rounded-2xl transition-all">Discard</button>
+                <button type="submit" id="addSubmitBtn" class="px-10 py-3.5 text-[14px] font-bold text-white bg-[#1a1a1a] hover:bg-black rounded-2xl shadow-xl shadow-black/10 transition-all duration-300 hover:-translate-y-0.5 active:scale-95">
+                    <span id="addSubmitText">Save</span>
+                    <span id="addSubmitLoader" class="hidden">
+                        <svg class="inline w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Saving...
+                    </span>
+                </button>
             </div>
         </form>
     </div>
@@ -637,6 +693,272 @@
         }
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // AJAX FORM SUBMISSION FOR ADD COUPON
+    // ═══════════════════════════════════════════════════════════
+    function clearAddFormErrors() {
+        // Hide all error messages
+        document.querySelectorAll('#addForm .error-message').forEach(el => {
+            el.classList.add('hidden');
+            el.textContent = '';
+        });
+        
+        // Hide non-field errors
+        const nonFieldErrors = document.getElementById('addNonFieldErrors');
+        if (nonFieldErrors) {
+            nonFieldErrors.classList.add('hidden');
+        }
+        
+        // Remove error styling from inputs
+        document.querySelectorAll('#addForm input').forEach(input => {
+            input.classList.remove('border-red-300', 'bg-red-50/30');
+        });
+    }
+
+    function displayAddFormErrors(errors) {
+        // Display field-specific errors
+        for (const [field, messages] of Object.entries(errors)) {
+            if (field === 'non_field_errors') {
+                // Display non-field errors at the top
+                const nonFieldErrors = document.getElementById('addNonFieldErrors');
+                const nonFieldErrorText = document.getElementById('addNonFieldErrorText');
+                if (nonFieldErrors && nonFieldErrorText) {
+                    nonFieldErrorText.textContent = messages.join(', ');
+                    nonFieldErrors.classList.remove('hidden');
+                }
+            } else {
+                // Display field-specific errors
+                const errorContainer = document.getElementById(`error_${field}`);
+                const inputField = document.querySelector(`#addForm [name="${field}"]`);
+                
+                if (errorContainer) {
+                    errorContainer.textContent = messages.join(', ');
+                    errorContainer.classList.remove('hidden');
+                }
+                
+                if (inputField) {
+                    inputField.classList.add('border-red-300', 'bg-red-50/30');
+                }
+            }
+        }
+        
+        // Scroll to first error
+        const firstError = document.querySelector('#addForm .error-message:not(.hidden)');
+        if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    function closeAddModal() {
+        document.getElementById('addModal').classList.add('hidden');
+        document.getElementById('addForm').reset();
+        clearAddFormErrors();
+    }
+
+    function handleAddFormSubmit(e) {
+        e.preventDefault();
+        
+        // Clear previous errors
+        clearAddFormErrors();
+        
+        const form = e.target;
+        const formData = new FormData(form);
+        const submitBtn = document.getElementById('addSubmitBtn');
+        const submitText = document.getElementById('addSubmitText');
+        const submitLoader = document.getElementById('addSubmitLoader');
+        const cancelBtn = document.getElementById('addCancelBtn');
+        
+        // Disable submit button and show loader
+        submitBtn.disabled = true;
+        submitText.classList.add('hidden');
+        submitLoader.classList.remove('hidden');
+        cancelBtn.disabled = true;
+        
+        // Get CSRF token
+        const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        // Submit via AJAX
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrfToken
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Success - reload page to show new coupon
+                window.location.reload();
+            } else {
+                // Display errors
+                if (data.errors) {
+                    displayAddFormErrors(data.errors);
+                }
+                
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitText.classList.remove('hidden');
+                submitLoader.classList.add('hidden');
+                cancelBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            
+            // Show generic error
+            const nonFieldErrors = document.getElementById('addNonFieldErrors');
+            const nonFieldErrorText = document.getElementById('addNonFieldErrorText');
+            if (nonFieldErrors && nonFieldErrorText) {
+                nonFieldErrorText.textContent = 'An unexpected error occurred. Please try again.';
+                nonFieldErrors.classList.remove('hidden');
+            }
+            
+            // Re-enable submit button
+            submitBtn.disabled = false;
+            submitText.classList.remove('hidden');
+            submitLoader.classList.add('hidden');
+            cancelBtn.disabled = false;
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // AJAX FORM SUBMISSION FOR EDIT COUPON
+    // ═══════════════════════════════════════════════════════════
+    function clearEditFormErrors(couponId) {
+        // Hide all error messages for this specific edit form
+        document.querySelectorAll(`#editForm${couponId} .error-message`).forEach(el => {
+            el.classList.add('hidden');
+            el.textContent = '';
+        });
+        
+        // Hide non-field errors
+        const nonFieldErrors = document.getElementById(`editNonFieldErrors${couponId}`);
+        if (nonFieldErrors) {
+            nonFieldErrors.classList.add('hidden');
+        }
+        
+        // Remove error styling from inputs
+        document.querySelectorAll(`#editForm${couponId} input`).forEach(input => {
+            input.classList.remove('border-red-300', 'bg-red-50/30');
+        });
+    }
+
+    function displayEditFormErrors(couponId, errors) {
+        // Display field-specific errors
+        for (const [field, messages] of Object.entries(errors)) {
+            if (field === 'non_field_errors') {
+                // Display non-field errors at the top
+                const nonFieldErrors = document.getElementById(`editNonFieldErrors${couponId}`);
+                const nonFieldErrorText = document.getElementById(`editNonFieldErrorText${couponId}`);
+                if (nonFieldErrors && nonFieldErrorText) {
+                    nonFieldErrorText.textContent = messages.join(', ');
+                    nonFieldErrors.classList.remove('hidden');
+                }
+            } else {
+                // Display field-specific errors
+                const errorContainer = document.getElementById(`edit_error_${field}_${couponId}`);
+                const inputField = document.querySelector(`#editForm${couponId} [name="${field}"]`);
+                
+                if (errorContainer) {
+                    errorContainer.textContent = messages.join(', ');
+                    errorContainer.classList.remove('hidden');
+                }
+                
+                if (inputField) {
+                    inputField.classList.add('border-red-300', 'bg-red-50/30');
+                }
+            }
+        }
+        
+        // Scroll to first error
+        const firstError = document.querySelector(`#editForm${couponId} .error-message:not(.hidden)`);
+        if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
+    function closeEditModal(couponId) {
+        document.getElementById(`editModal${couponId}`).classList.add('hidden');
+        clearEditFormErrors(couponId);
+    }
+
+    function handleEditFormSubmit(e, couponId) {
+        e.preventDefault();
+        
+        // Clear previous errors
+        clearEditFormErrors(couponId);
+        
+        const form = e.target;
+        const formData = new FormData(form);
+        const submitBtn = document.getElementById(`editSubmitBtn${couponId}`);
+        const submitText = document.getElementById(`editSubmitText${couponId}`);
+        const submitLoader = document.getElementById(`editSubmitLoader${couponId}`);
+        
+        // Disable submit button and show loader
+        submitBtn.disabled = true;
+        submitText.classList.add('hidden');
+        submitLoader.classList.remove('hidden');
+        
+        // Get CSRF token
+        const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        // Submit via AJAX
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrfToken
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Success - reload page to show updated coupon
+                window.location.reload();
+            } else {
+                // Display errors
+                if (data.errors) {
+                    displayEditFormErrors(couponId, data.errors);
+                }
+                
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitText.classList.remove('hidden');
+                submitLoader.classList.add('hidden');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            
+            // Show generic error
+            const nonFieldErrors = document.getElementById(`editNonFieldErrors${couponId}`);
+            const nonFieldErrorText = document.getElementById(`editNonFieldErrorText${couponId}`);
+            if (nonFieldErrors && nonFieldErrorText) {
+                nonFieldErrorText.textContent = 'An unexpected error occurred. Please try again.';
+                nonFieldErrors.classList.remove('hidden');
+            }
+            
+            // Re-enable submit button
+            submitBtn.disabled = false;
+            submitText.classList.remove('hidden');
+            submitLoader.classList.add('hidden');
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // ATTACH EDIT FORM HANDLERS
+    // ═══════════════════════════════════════════════════════════
+    function attachEditFormHandlers() {
+        // Find all edit forms and attach AJAX handlers
+        document.querySelectorAll('[id^="editForm"]').forEach(form => {
+            const couponId = form.id.replace('editForm', '');
+            form.addEventListener('submit', (e) => handleEditFormSubmit(e, couponId));
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         // Search Clear Logic
         const searchInput = document.getElementById('searchInput');
@@ -662,6 +984,15 @@
         // Modals
         const addBtn = document.getElementById('openAddModal');
         if (addBtn) addBtn.onclick = () => document.getElementById('addModal').classList.remove('hidden');
+        
+        // Attach AJAX handler to Add Form
+        const addForm = document.getElementById('addForm');
+        if (addForm) {
+            addForm.addEventListener('submit', handleAddFormSubmit);
+        }
+        
+        // Attach AJAX handlers to all Edit Forms
+        attachEditFormHandlers();
     });
 
     // Archive / Restore / Perm Delete Logic
@@ -693,6 +1024,9 @@
     window.toggleEditDiscountType = (id, type) => {
         document.getElementById(`editDiscountUnitLabel${id}`).innerText = type === 'percentage' ? '%' : '₹';
     };
+    
+    // Expose closeEditModal globally for onclick handlers
+    window.closeEditModal = closeEditModal;
 </script>
 
 </body>

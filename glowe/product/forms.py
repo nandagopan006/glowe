@@ -17,22 +17,36 @@ class ProductForm(forms.ModelForm):
         ]
 
     def clean_name(self):
-
         name = self.cleaned_data.get("name", "").strip()
         if not name:
             raise forms.ValidationError("Product name is required.")
+
+        # Must start with a letter
+        import re
+        if not re.match(r'^[a-zA-Z]', name):
+            raise forms.ValidationError("Product name must start with a letter.")
+
+        # Must NOT be only numbers
+        if name.isdigit():
+            raise forms.ValidationError("Product name cannot be only numbers.")
+
+        # Only letters + numbers + spaces allowed, No special characters
+        if not re.match(r'^[a-zA-Z0-9\s]+$', name):
+            raise forms.ValidationError("Product name can only contain letters, numbers, and spaces.")
 
         qs = Product.objects.filter(name__iexact=name)
         if self.instance.id:  # editing existing product
             qs = qs.exclude(pk=self.instance.id)  # ignore itself
         if qs.exists():
-            raise forms.ValidationError(
-                "Product with this name already exists."
-            )
-        if len(name) < 3:
-            raise forms.ValidationError("Product name too short")
-
+            raise forms.ValidationError("Product with this name already exists.")
+            
         return name
+
+    def clean_category(self):
+        category = self.cleaned_data.get("category")
+        if not category:
+            raise forms.ValidationError("Category is required.")
+        return category
 
     def clean_description(self):
         description = self.cleaned_data.get("description", "").strip()

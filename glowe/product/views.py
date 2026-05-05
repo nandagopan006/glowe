@@ -33,6 +33,8 @@ def add_product(request):
         if form.is_valid():
 
             if len(images) < 3:
+                if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.headers.get('Accept', '').find('application/json') != -1:
+                    return JsonResponse({"success": False, "errors": {"images": ["Please upload at least 3 images"]}})
                 messages.error(request, "Please upload at least 3 images")
                 return render(
                     request,
@@ -49,6 +51,8 @@ def add_product(request):
 
             for img in images:
                 if img.content_type not in valid_types:
+                    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.headers.get('Accept', '').find('application/json') != -1:
+                        return JsonResponse({"success": False, "errors": {"images": ["Only JPG, PNG, WEBP allowed"]}})
                     messages.error(request, "Only JPG, PNG, WEBP allowed")
                     return render(
                         request,
@@ -57,6 +61,8 @@ def add_product(request):
                     )
 
                 if img.size > 2 * 1024 * 1024:
+                    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.headers.get('Accept', '').find('application/json') != -1:
+                        return JsonResponse({"success": False, "errors": {"images": ["Each image must be under 2MB"]}})
                     messages.error(request, "Each image must be under 2MB")
                     return render(
                         request,
@@ -74,8 +80,15 @@ def add_product(request):
                     is_primary=(i == primary_index),
                 )
 
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.headers.get('Accept', '').find('application/json') != -1:
+                return JsonResponse({"success": True, "message": "Product added successfully"})
+
             messages.success(request, "Product added successfully")
             return redirect("product_management")
+        else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.headers.get('Accept', '').find('application/json') != -1:
+                return JsonResponse({"success": False, "errors": form.errors})
+
     else:
         form = ProductForm()
 
@@ -196,10 +209,15 @@ def edit_product(request, id):
                     first.is_primary = True
                     first.save()
 
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.headers.get('Accept', '').find('application/json') != -1:
+                return JsonResponse({"success": True, "message": "Product updated successfully."})
+
             messages.success(request, "Product updated successfully.")
             return redirect("product_management")
 
         else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.headers.get('Accept', '').find('application/json') != -1:
+                return JsonResponse({"success": False, "errors": form.errors})
             # Form has errors – show them
             for errors in form.errors.values():
                 for e in errors:

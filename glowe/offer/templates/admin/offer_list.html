@@ -633,7 +633,6 @@
         });
     };
 
-    // Form AJAX
     function handleForm(id) {
         const f = document.getElementById(id);
         if(!f) return;
@@ -643,6 +642,8 @@
             // Clear previous errors
             const prevError = f.querySelector('.form-error-msg');
             if (prevError) prevError.classList.add('hidden');
+            f.querySelectorAll('.border-red-500').forEach(el => el.classList.remove('border-red-500'));
+            f.querySelectorAll('p.text-red-500').forEach(el => el.remove());
 
             const btn = f.querySelector('button[type="submit"]');
             const old = btn.innerText;
@@ -652,11 +653,38 @@
                 const res = await fetch(f.action, {
                     method: "POST",
                     body: new FormData(f),
-                    headers: { "X-CSRFToken": "{{ csrf_token }}", "X-Requested-With": "XMLHttpRequest" }
+                    headers: { "X-CSRFToken": "{{ csrf_token }}", "X-Requested-With": "XMLHttpRequest", 'Accept': 'application/json' }
                 });
                 const data = await res.json();
-                if(data.success) location.reload();
-                else throw new Error(data.error);
+                if(data.success) {
+                    location.reload();
+                } else if (data.errors) {
+                    btn.disabled = false;
+                    btn.innerText = old;
+                    
+                    for (const [field, errors] of Object.entries(data.errors)) {
+                        const inputEl = f.querySelector(`[name="${field}"]`);
+                        if (inputEl) {
+                            inputEl.classList.add('border-red-500');
+                            const newErr = document.createElement('p');
+                            newErr.className = 'text-red-500 text-xs mt-1 font-medium';
+                            newErr.textContent = errors[0];
+                            inputEl.parentNode.insertBefore(newErr, inputEl.nextSibling);
+                        } else {
+                            // If field input is not found, fallback to generic error div
+                            let errorDiv = f.querySelector('.form-error-msg');
+                            if (!errorDiv) {
+                                errorDiv = document.createElement('div');
+                                errorDiv.className = 'form-error-msg mt-4 p-4 bg-red-50 text-red-600 text-[13px] font-bold rounded-2xl border border-red-100 animate-in fade-in slide-in-from-top-2 duration-300';
+                                btn.parentElement.before(errorDiv);
+                            }
+                            errorDiv.innerText = errors[0];
+                            errorDiv.classList.remove('hidden');
+                        }
+                    }
+                } else if (data.error) {
+                    throw new Error(data.error);
+                }
             } catch(e) {
                 btn.disabled = false;
                 btn.innerText = old;
@@ -668,7 +696,7 @@
                     errorDiv.className = 'form-error-msg mt-4 p-4 bg-red-50 text-red-600 text-[13px] font-bold rounded-2xl border border-red-100 animate-in fade-in slide-in-from-top-2 duration-300';
                     btn.parentElement.before(errorDiv);
                 }
-                errorDiv.innerText = e.message;
+                errorDiv.innerText = e.message || 'An error occurred';
                 errorDiv.classList.remove('hidden');
             }
         };
