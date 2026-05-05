@@ -378,18 +378,50 @@
                   class="flex flex-col sm:flex-row gap-4 items-center relative z-10 w-full"
                   onsubmit="handleStatusUpdate(event)">
               {% csrf_token %}
-              <div class="w-full sm:flex-1 relative group/select">
-                <select id="status-select" name="status" class="w-full appearance-none bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold text-sm rounded-xl px-5 py-4 outline-none focus:border-sage-300 focus:bg-white/20 focus:ring-4 focus:ring-sage-400/20 transition-all cursor-pointer shadow-inner tracking-wide">
-                  <option value="" disabled class="text-gray-900 font-normal">── Select Next Lifecycle Step ──</option>
-                  <option value="PENDING"          class="text-gray-900 font-bold py-2" {% if order.order_status == 'PENDING' %}selected{% endif %}>Pending</option>
-                  <option value="CONFIRMED"         class="text-gray-900 font-bold py-2" {% if order.order_status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
-                  <option value="PROCESSING"        class="text-gray-900 font-bold py-2" {% if order.order_status == 'PROCESSING' %}selected{% endif %}>Processing</option>
-                  <option value="SHIPPED"           class="text-gray-900 font-bold py-2" {% if order.order_status == 'SHIPPED' %}selected{% endif %}>Shipped</option>
-                  <option value="OUT_FOR_DELIVERY"  class="text-gray-900 font-bold py-2" {% if order.order_status == 'OUT_FOR_DELIVERY' %}selected{% endif %}>Out for Delivery</option>
-                  <option value="DELIVERED"         class="text-gray-900 font-bold py-2" {% if order.order_status == 'DELIVERED' %}selected{% endif %}>Delivered</option>
+              <div class="w-full sm:flex-1 relative" id="custom-select-container">
+                <!-- Hidden native select for form submission -->
+                <select id="status-select" name="status" class="hidden" required>
+                  <option value="" disabled {% if not order.order_status %}selected{% endif %}>── Select Next Lifecycle Step ──</option>
+                  <option value="PENDING" {% if order.order_status == 'PENDING' %}selected{% endif %}>Pending</option>
+                  <option value="CONFIRMED" {% if order.order_status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
+                  <option value="PROCESSING" {% if order.order_status == 'PROCESSING' %}selected{% endif %}>Processing</option>
+                  <option value="SHIPPED" {% if order.order_status == 'SHIPPED' %}selected{% endif %}>Shipped</option>
+                  <option value="OUT_FOR_DELIVERY" {% if order.order_status == 'OUT_FOR_DELIVERY' %}selected{% endif %}>Out for Delivery</option>
+                  <option value="DELIVERED" {% if order.order_status == 'DELIVERED' %}selected{% endif %}>Delivered</option>
                 </select>
-                <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-sage-200 group-hover/select:text-white transition-colors">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+
+                <!-- Custom Trigger Button -->
+                <button type="button" id="custom-select-trigger" class="w-full bg-white/10 backdrop-blur-md border border-white/20 text-white font-bold text-sm rounded-xl px-5 py-4 outline-none hover:bg-white/20 focus:bg-white/20 focus:ring-4 focus:ring-white/10 transition-all cursor-pointer shadow-inner flex justify-between items-center text-left">
+                  <span id="custom-select-label" class="flex items-center gap-3">
+                    <span class="w-2.5 h-2.5 rounded-full bg-white/50 shadow-sm" id="custom-select-dot"></span>
+                    <span id="custom-select-text">{% if order.order_status %}{{ order.get_order_status_display }}{% else %}Select Next Lifecycle Step{% endif %}</span>
+                  </span>
+                  <svg id="custom-select-icon" class="w-5 h-5 text-sage-200 transition-transform duration-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+
+                <!-- Custom Dropdown Menu -->
+                <div id="custom-select-dropdown" class="absolute left-0 right-0 z-50 mt-2 bg-white rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.12)] border border-gray-100 overflow-hidden opacity-0 pointer-events-none transform -translate-y-2 transition-all duration-200 origin-top">
+                  <div class="py-2 max-h-60 overflow-y-auto">
+                    <div class="px-5 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-50 mb-1">Status Options</div>
+                    <button type="button" class="select-option w-full text-left px-5 py-3 text-sm font-bold text-gray-700 hover:bg-sage-50 hover:text-sage-700 transition-colors flex items-center gap-3" data-value="PENDING">
+                      <span class="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-sm"></span>Pending
+                    </button>
+                    <button type="button" class="select-option w-full text-left px-5 py-3 text-sm font-bold text-gray-700 hover:bg-sage-50 hover:text-sage-700 transition-colors flex items-center gap-3" data-value="CONFIRMED">
+                      <span class="w-2.5 h-2.5 rounded-full bg-blue-400 shadow-sm"></span>Confirmed
+                    </button>
+                    <button type="button" class="select-option w-full text-left px-5 py-3 text-sm font-bold text-gray-700 hover:bg-sage-50 hover:text-sage-700 transition-colors flex items-center gap-3" data-value="PROCESSING">
+                      <span class="w-2.5 h-2.5 rounded-full bg-indigo-400 shadow-sm"></span>Processing
+                    </button>
+                    <button type="button" class="select-option w-full text-left px-5 py-3 text-sm font-bold text-gray-700 hover:bg-sage-50 hover:text-sage-700 transition-colors flex items-center gap-3" data-value="SHIPPED">
+                      <span class="w-2.5 h-2.5 rounded-full bg-purple-400 shadow-sm"></span>Shipped
+                    </button>
+                    <button type="button" class="select-option w-full text-left px-5 py-3 text-sm font-bold text-gray-700 hover:bg-sage-50 hover:text-sage-700 transition-colors flex items-center gap-3" data-value="OUT_FOR_DELIVERY">
+                      <span class="w-2.5 h-2.5 rounded-full bg-orange-400 shadow-sm"></span>Out for Delivery
+                    </button>
+                    <button type="button" class="select-option w-full text-left px-5 py-3 text-sm font-bold text-gray-700 hover:bg-sage-50 hover:text-sage-700 transition-colors flex items-center gap-3" data-value="DELIVERED">
+                      <span class="w-2.5 h-2.5 rounded-full bg-green-400 shadow-sm"></span>Delivered
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -681,9 +713,75 @@
   </div>
 
   <script>
+    // Custom Select Dropdown Logic
+    document.addEventListener('DOMContentLoaded', function() {
+      const trigger = document.getElementById('custom-select-trigger');
+      const dropdown = document.getElementById('custom-select-dropdown');
+      const icon = document.getElementById('custom-select-icon');
+      const textLabel = document.getElementById('custom-select-text');
+      const dotLabel = document.getElementById('custom-select-dot');
+      const nativeSelect = document.getElementById('status-select');
+      const options = document.querySelectorAll('.select-option');
+
+      if (!trigger) return;
+
+      // Toggle dropdown
+      trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = dropdown.classList.contains('opacity-100');
+        if (isOpen) {
+          closeDropdown();
+        } else {
+          openDropdown();
+        }
+      });
+
+      // Close when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!trigger.contains(e.target) && !dropdown.contains(e.target)) {
+          closeDropdown();
+        }
+      });
+
+      // Option click
+      options.forEach(option => {
+        option.addEventListener('click', () => {
+          const value = option.getAttribute('data-value');
+          const text = option.textContent.trim();
+          const dotColorClass = option.querySelector('span').className;
+          
+          // Update native select
+          nativeSelect.value = value;
+          
+          // Update custom UI
+          textLabel.textContent = text;
+          dotLabel.className = dotColorClass;
+          
+          closeDropdown();
+        });
+      });
+
+      function openDropdown() {
+        dropdown.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-2');
+        dropdown.classList.add('opacity-100', 'pointer-events-auto', 'translate-y-0');
+        icon.classList.add('rotate-180');
+      }
+
+      function closeDropdown() {
+        dropdown.classList.remove('opacity-100', 'pointer-events-auto', 'translate-y-0');
+        dropdown.classList.add('opacity-0', 'pointer-events-none', '-translate-y-2');
+        icon.classList.remove('rotate-180');
+      }
+    });
+
     function handleStatusUpdate(event) {
-      // Read the selected status label for a friendly message
-      const select  = document.getElementById('status-select');
+      const select = document.getElementById('status-select');
+      if (!select.value) {
+        event.preventDefault();
+        alert("Please select a status before updating.");
+        return;
+      }
+      
       const btn     = document.getElementById('status-submit-btn');
       const overlay = document.getElementById('status-loading-overlay');
       const label   = document.getElementById('overlay-status-label');
