@@ -39,14 +39,56 @@
     }
     .badge-dot { width:5px; height:5px; border-radius:50%; }
     .badge-pending { background:#fef08a; color:#854d0e; } .badge-pending .badge-dot { background:#eab308; }
-    .badge-confirmed { background:#dbeafe; color:#1e40af; } .badge-confirmed .badge-dot { background:#3b82f6; } /* Blue */
-    .badge-processing { background:#e0e7ff; color:#3730a3; } .badge-processing .badge-dot { background:#4f46e5; } /* Indigo */
-    .badge-shipped { background:#f3e8ff; color:#6b21a8; } .badge-shipped .badge-dot { background:#a855f7; } /* Purple */
-    .badge-out_for_delivery { background:#ffedd5; color:#c2410c; } .badge-out_for_delivery .badge-dot { background:#f97316; } /* Orange */
-    .badge-delivered { background:#dcfce3; color:#166534; } .badge-delivered .badge-dot { background:#22c55e; } /* Green */
-    .badge-cancelled { background:#fee2e2; color:#991b1b; } .badge-cancelled .badge-dot { background:#ef4444; } /* Red */
-    .badge-returned { background:#fef3c7; color:#92400e; } .badge-returned .badge-dot { background:#f59e0b; } /* Amber */
-    .badge-partially_returned { background:#fff7ed; color:#9a3412; } .badge-partially_returned .badge-dot { background:#ea580c; } /* Dark Orange/Amber */
+    .badge-confirmed { background:#dbeafe; color:#1e40af; } .badge-confirmed .badge-dot { background:#3b82f6; }
+    .badge-processing { background:#e0e7ff; color:#3730a3; } .badge-processing .badge-dot { background:#4f46e5; }
+    .badge-shipped { background:#f3e8ff; color:#6b21a8; } .badge-shipped .badge-dot { background:#a855f7; }
+    .badge-out_for_delivery { background:#ffedd5; color:#c2410c; } .badge-out_for_delivery .badge-dot { background:#f97316; }
+    .badge-delivered { background:#dcfce3; color:#166534; } .badge-delivered .badge-dot { background:#22c55e; }
+    .badge-cancelled { background:#fee2e2; color:#991b1b; } .badge-cancelled .badge-dot { background:#ef4444; }
+    .badge-returned { background:#fef3c7; color:#92400e; } .badge-returned .badge-dot { background:#f59e0b; }
+    .badge-partially_returned { background:#fff7ed; color:#9a3412; } .badge-partially_returned .badge-dot { background:#ea580c; }
+
+    /* ── Loading Overlay ───────────────────────────────── */
+    #status-loading-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(15, 25, 35, 0.65);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 20px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    #status-loading-overlay.active {
+      opacity: 1; pointer-events: all;
+    }
+    .loader-ring {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      border: 4px solid rgba(74, 144, 80, 0.2);
+      border-top-color: #4a9050;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Button loading state ──────────────────────────── */
+    #status-submit-btn.loading {
+      opacity: 0.85;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    .btn-spinner {
+      display: none;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      animation: spin 0.7s linear infinite;
+    }
+    #status-submit-btn.loading .btn-spinner { display: inline-block; }
+    #status-submit-btn.loading .btn-label { display: none; }
+    #status-submit-btn.loading .btn-loading-label { display: inline; }
+    #status-submit-btn .btn-loading-label { display: none; }
   </style>
 </head>
 <body class="flex min-h-screen font-sans antialiased">
@@ -271,24 +313,34 @@
           <div class="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-gray-100 relative overflow-hidden group">
             <div class="absolute inset-0 bg-gradient-to-r from-sage-50/50 to-transparent pointer-events-none"></div>
             <h2 class="text-[10px] font-bold text-sage-600 uppercase tracking-widest border-b border-sage-100 pb-3 mb-5 relative z-10">Action Required: Update Status</h2>
-            <form method="POST" action="{% url 'update_order_status' order.id %}" class="flex flex-col sm:flex-row gap-4 items-center relative z-10 w-full lg:w-3/4">
+            <form id="status-update-form"
+                  method="POST"
+                  action="{% url 'update_order_status' order.id %}"
+                  class="flex flex-col sm:flex-row gap-4 items-center relative z-10 w-full lg:w-3/4"
+                  onsubmit="handleStatusUpdate(event)">
               {% csrf_token %}
               <div class="w-full sm:flex-1 relative">
-                <select name="status" class="w-full appearance-none bg-white border-2 border-sage-100 text-gray-700 font-bold text-[13px] rounded-xl px-5 py-3 outline-none focus:border-sage-400 focus:ring-4 focus:ring-sage-50 transition-all cursor-pointer shadow-sm tracking-wide">
+                <select id="status-select" name="status" class="w-full appearance-none bg-white border-2 border-sage-100 text-gray-700 font-bold text-[13px] rounded-xl px-5 py-3 outline-none focus:border-sage-400 focus:ring-4 focus:ring-sage-50 transition-all cursor-pointer shadow-sm tracking-wide">
                   <option value="" disabled class="text-gray-400 font-normal">── Select Next Lifecycle Step ──</option>
-                  <option value="PENDING" class="font-bold py-1" {% if order.order_status == 'PENDING' %}selected{% endif %}>Pending</option>
-                  <option value="CONFIRMED" class="font-bold py-1" {% if order.order_status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
-                  <option value="PROCESSING" class="font-bold py-1" {% if order.order_status == 'PROCESSING' %}selected{% endif %}>Processing</option>
-                  <option value="SHIPPED" class="font-bold py-1" {% if order.order_status == 'SHIPPED' %}selected{% endif %}>Shipped</option>
-                  <option value="OUT_FOR_DELIVERY" class="font-bold py-1" {% if order.order_status == 'OUT_FOR_DELIVERY' %}selected{% endif %}>Out for Delivery</option>
-                  <option value="DELIVERED" class="font-bold py-1" {% if order.order_status == 'DELIVERED' %}selected{% endif %}>Delivered</option>
+                  <option value="PENDING"          class="font-bold py-1" {% if order.order_status == 'PENDING' %}selected{% endif %}>Pending</option>
+                  <option value="CONFIRMED"         class="font-bold py-1" {% if order.order_status == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
+                  <option value="PROCESSING"        class="font-bold py-1" {% if order.order_status == 'PROCESSING' %}selected{% endif %}>Processing</option>
+                  <option value="SHIPPED"           class="font-bold py-1" {% if order.order_status == 'SHIPPED' %}selected{% endif %}>Shipped</option>
+                  <option value="OUT_FOR_DELIVERY"  class="font-bold py-1" {% if order.order_status == 'OUT_FOR_DELIVERY' %}selected{% endif %}>Out for Delivery</option>
+                  <option value="DELIVERED"         class="font-bold py-1" {% if order.order_status == 'DELIVERED' %}selected{% endif %}>Delivered</option>
                 </select>
                 <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-sage-600 bg-white pl-2">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
                 </div>
               </div>
-              <button type="submit" class="w-full sm:w-auto px-8 py-3.5 bg-sage-600 text-white font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-sage-700 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-sage-600/20 transition-all duration-200">
-                Update Status
+
+              <!-- Submit button with loading state -->
+              <button id="status-submit-btn"
+                      type="submit"
+                      class="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 bg-sage-600 text-white font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-sage-700 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-sage-600/20 transition-all duration-200">
+                <span class="btn-spinner"></span>
+                <span class="btn-label">Update Status</span>
+                <span class="btn-loading-label">Updating…</span>
               </button>
             </form>
           </div>
@@ -530,5 +582,50 @@
       
     </main>
   </div>
+
+  <!-- ── STATUS UPDATE LOADING OVERLAY ─────────────────────────────── -->
+  <div id="status-loading-overlay" role="status" aria-live="polite" aria-label="Updating order status">
+    <!-- Card -->
+    <div class="bg-white rounded-2xl shadow-2xl px-10 py-8 flex flex-col items-center gap-5 border border-gray-100" style="min-width:220px;">
+      <!-- Ring Spinner -->
+      <div class="relative">
+        <div class="loader-ring"></div>
+        <!-- Inner icon -->
+        <div class="absolute inset-0 flex items-center justify-center">
+          <svg class="w-5 h-5 text-sage-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+        </div>
+      </div>
+      <!-- Status text -->
+      <div class="text-center">
+        <p class="text-sm font-bold text-gray-800 tracking-wide">Updating Order Status</p>
+        <p id="overlay-status-label" class="text-xs text-gray-400 font-medium mt-1">Please wait…</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function handleStatusUpdate(event) {
+      // Read the selected status label for a friendly message
+      const select  = document.getElementById('status-select');
+      const btn     = document.getElementById('status-submit-btn');
+      const overlay = document.getElementById('status-loading-overlay');
+      const label   = document.getElementById('overlay-status-label');
+
+      const selectedText = select.options[select.selectedIndex]?.text || 'New Status';
+
+      // Update overlay message
+      label.textContent = 'Changing to: ' + selectedText;
+
+      // Activate button loading state
+      btn.classList.add('loading');
+
+      // Show the overlay
+      overlay.classList.add('active');
+
+      // Allow the form to submit normally (no event.preventDefault)
+    }
+  </script>
 </body>
 </html>
