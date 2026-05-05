@@ -1203,9 +1203,19 @@ def export_sales_excel(request):
     return response
 
 
+
 @never_cache
 @admin_required
 def export_sales_pdf(request):
+    """
+    Generates a modern, professional Sales Report PDF.
+    Includes: Order Number, Date, Qty, Subtotal, Discount, Payment Method, Total.
+    """
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
+    from reportlab.platypus import HRFlowable, KeepTogether
+
+    # ── 1. Resolve date range ──────────────────────────────────────────────
     filter_type = request.GET.get("filter", "month")
     now = timezone.localtime(timezone.now())
     today_midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
@@ -1224,119 +1234,263 @@ def export_sales_pdf(request):
                 end_date = make_aware(datetime.strptime(end, "%Y-%m-%d")).replace(
                     hour=23, minute=59, second=59
                 )
-                # Validation
                 if end_date < start_date or start_date > now or end_date > now:
                     start_date, end_date = now.replace(day=1, hour=0, minute=0, second=0), now
             except Exception:
                 start_date, end_date = now.replace(day=1, hour=0, minute=0, second=0), now
         else:
             start_date, end_date = now.replace(day=1, hour=0, minute=0, second=0), now
-    else:
+    else:  # month (default)
         start_date, end_date = now.replace(day=1, hour=0, minute=0, second=0), now
 
+    # ── 2. Fetch data ──────────────────────────────────────────────────────
     orders = (
         Order.objects.filter(
-            created_at__range=[start_date, end_date], order_status="DELIVERED"
+            created_at__range=[start_date, end_date],
+            order_status="DELIVERED",
         )
         .select_related("payment")
+        .prefetch_related("items")
         .order_by("-created_at")
     )
 
-    total_revenue = sum(float(o.total_amount) for o in orders)
-    total_discount = sum(float(o.discount_amount) for o in orders)
+    total_orders    = orders.count()
+    total_revenue   = sum(float(o.total_amount)    for o in orders)
+    total_discount  = sum(float(o.discount_amount) for o in orders)
+    total_qty       = sum(
+        sum(item.quantity for item in o.items.all()) for o in orders
+    )
 
+    # ── 3. HTTP response ──────────────────────────────────────────────────
     response = HttpResponse(content_type="application/pdf")
     response["Content-Disposition"] = (
         f'attachment; filename="Glowe_Sales_{filter_type}.pdf"'
     )
 
+    # ── 4. Document setup ──────────────────────────────────────────────────
     doc = SimpleDocTemplate(
         response,
         pagesize=A4,
-        rightMargin=30,
-        leftMargin=30,
-        topMargin=30,
-        bottomMargin=30,
+        rightMargin=36,
+        leftMargin=36,
+        topMargin=36,
+        bottomMargin=36,
     )
-    styles = getSampleStyleSheet()
 
-    title_style = styles["Title"]
-    title_style.textColor = colors.HexColor("#1A2E1A")
-    title_style.fontSize = 20
-    title_style.spaceAfter = 20
+    # ── 5. Colour palette ──────────────────────────────────────────────────
+    C_DARK      = colors.HexColor("#0f1923")   # deep navy-black
+    C_GREEN     = colors.HexColor("#16a34a")   # brand green
+    C_LIGHT_BG  = colors.HexColor("#f0fdf4")   # very light green tint
+    C_STRIPE    = colors.HexColor("#f8fafc")   # alternate row
+    C_BORDER    = colors.HexColor("#e2e8f0")   # subtle border
+    C_MUTED     = colors.HexColor("#64748b")   # muted text
+    C_WHITE     = colors.white
+    C_HEADER_BG = colors.HexColor("#1e3a2f")   # dark green header
 
+    # ── 6. Paragraph styles ────────────────────────────────────────────────
+    brand_style = ParagraphStyle(
+        "brand", fontName="Helvetica-Bold", fontSize=26,
+        textColor=C_DARK, leading=30,
+    )
+    report_title_style = ParagraphStyle(
+        "report_title", fontName="Helvetica-Bold", fontSize=11,
+        textColor=C_MUTED, leading=14, spaceAfter=2,
+    )
+    period_style = ParagraphStyle(
+        "period", fontName="Helvetica", fontSize=9,
+        textColor=C_MUTED, leading=12,
+    )
+    footer_style = ParagraphStyle(
+        "footer", fontName="Helvetica", fontSize=8,
+        textColor=C_MUTED, alignment=TA_CENTER,
+    )
+    summary_label_style = ParagraphStyle(
+        "slabel", fontName="Helvetica", fontSize=8,
+        textColor=C_MUTED, alignment=TA_CENTER, leading=10,
+    )
+    summary_value_style = ParagraphStyle(
+        "svalue", fontName="Helvetica-Bold", fontSize=14,
+        textColor=C_DARK, alignment=TA_CENTER, leading=18,
+    )
+
+    # ── 7. Build flowables ─────────────────────────────────────────────────
     elements = []
 
-    elements.append(Paragraph("GLOWÉ — SALES REPORT", title_style))
-    elements.append(
-        Paragraph(
-            f"Period: {start_date.strftime('%b %d, %Y')} to {end_date.strftime('%b %d, %Y')}",  # noqa: E501
-            styles["Normal"],
-        )
-    )
-    elements.append(Spacer(1, 20))
+    # --- HEADER ACCENT BAR ---
+    elements.append(HRFlowable(
+        width="100%", thickness=5, color=C_GREEN, spaceAfter=14,
+    ))
 
-    summary_data = [
-        ["Total Orders", "Total Revenue", "Total Savings"],
-        [
-            str(orders.count()),
-            f"₹{total_revenue:,.2f}",
-            f"₹{total_discount:,.2f}",
-        ],
+    # --- BRAND + PERIOD HEADER TABLE ---
+    period_str = (
+        f"{start_date.strftime('%d %b %Y')}  →  {end_date.strftime('%d %b %Y')}"
+    )
+    filter_label = {
+        "day": "Daily Report", "week": "Weekly Report",
+        "month": "Monthly Report", "year": "Annual Report",
+        "custom": "Custom Period Report",
+    }.get(filter_type, "Sales Report")
+
+    header_data = [[
+        Paragraph("GLOWÉ", brand_style),
+        Table(
+            [
+                [Paragraph(filter_label.upper(), report_title_style)],
+                [Paragraph(f"Period: {period_str}", period_style)],
+                [Paragraph(f"Generated: {now.strftime('%d %b %Y, %I:%M %p')}", period_style)],
+            ],
+            colWidths=[280],
+        ),
+    ]]
+    header_table = Table(header_data, colWidths=[190, 320])
+    header_table.setStyle(TableStyle([
+        ("VALIGN",  (0, 0), (-1, -1), "TOP"),
+        ("ALIGN",   (1, 0), (1, 0),   "RIGHT"),
+    ]))
+    elements.append(header_table)
+    elements.append(Spacer(1, 18))
+
+    # --- SUMMARY CARDS (4 metrics) ---
+    def summary_cell(label, value):
+        return Table(
+            [
+                [Paragraph(label, summary_label_style)],
+                [Paragraph(value, summary_value_style)],
+            ],
+            colWidths=[116],
+            rowHeights=[14, 28],
+        )
+
+    card_table = Table(
+        [[
+            summary_cell("TOTAL ORDERS",   str(total_orders)),
+            summary_cell("TOTAL REVENUE",  f"Rs.{total_revenue:,.2f}"),
+            summary_cell("TOTAL DISCOUNT", f"Rs.{total_discount:,.2f}"),
+            summary_cell("UNITS SOLD",     str(total_qty)),
+        ]],
+        colWidths=[118, 118, 118, 118],
+    )
+    card_table.setStyle(TableStyle([
+        ("BACKGROUND",    (0, 0), (-1, -1), C_LIGHT_BG),
+        ("BOX",           (0, 0), (-1, -1), 0.5, C_BORDER),
+        ("INNERGRID",     (0, 0), (-1, -1), 0.5, C_BORDER),
+        ("TOPPADDING",    (0, 0), (-1, -1), 10),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+        ("LEFTPADDING",   (0, 0), (-1, -1), 8),
+        ("RIGHTPADDING",  (0, 0), (-1, -1), 8),
+        ("ALIGN",         (0, 0), (-1, -1), "CENTER"),
+        ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
+        ("ROUNDEDCORNERS", [4]),
+    ]))
+    elements.append(card_table)
+    elements.append(Spacer(1, 22))
+
+    # --- SECTION TITLE ---
+    elements.append(HRFlowable(width="100%", thickness=0.5, color=C_BORDER, spaceAfter=6))
+    elements.append(Paragraph("Order Details", ParagraphStyle(
+        "sec_title", fontName="Helvetica-Bold", fontSize=10,
+        textColor=C_DARK, spaceBefore=2, spaceAfter=8,
+    )))
+
+    # --- MAIN ORDERS TABLE ---
+    col_headers = [
+        "#", "Order Number", "Date", "Qty",
+        "Subtotal", "Discount", "Payment", "Total"
     ]
-    summary_table = Table(summary_data, colWidths=[150, 150, 150])
-    summary_table.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#F3F4F6")),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#6B7280")),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                ("FONTSIZE", (0, 1), (-1, 1), 14),
-                ("FONTNAME", (0, 1), (-1, 1), "Helvetica-Bold"),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
-            ]
-        )
-    )
-    elements.append(summary_table)
-    elements.append(Spacer(1, 30))
+    col_widths = [20, 110, 68, 28, 68, 58, 60, 68]
 
-    table_data = [
-        ["Order Number", "Date", "Subtotal", "Discount", "Total Amount"]
-    ]
-    for o in orders:
-        table_data.append(
-            [
-                o.order_number,
-                o.created_at.strftime("%Y-%m-%d"),
-                f"₹{float(o.subtotal):.2f}",
-                f"₹{float(o.discount_amount):.2f}",
-                f"₹{float(o.total_amount):.2f}",
-            ]
-        )
+    table_data = [col_headers]
 
-    main_table = Table(table_data, colWidths=[120, 90, 100, 100, 100])
-    main_table.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#4A9050")),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, -1), 9),
-                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-                ("ALIGN", (2, 1), (-1, -1), "RIGHT"),
-                (
-                    "ROWBACKGROUNDS",
-                    (0, 1),
-                    (-1, -1),
-                    [colors.white, colors.HexColor("#F9FAFB")],
-                ),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-                ("TOPPADDING", (0, 0), (-1, -1), 6),
-            ]
-        )
-    )
+    for idx, o in enumerate(orders, start=1):
+        qty = sum(item.quantity for item in o.items.all())
+        pm  = getattr(o.payment, "payment_method", "N/A")
+        # Make payment method friendly
+        pm_display = {
+            "COD":    "Cash",
+            "ONLINE": "Online",
+            "WALLET": "Wallet",
+        }.get(pm, pm)
+
+        table_data.append([
+            str(idx),
+            o.order_number,
+            o.created_at.strftime("%d %b %Y"),
+            str(qty),
+            f"Rs.{float(o.subtotal):,.2f}",
+            f"Rs.{float(o.discount_amount):,.2f}",
+            pm_display,
+            f"Rs.{float(o.total_amount):,.2f}",
+        ])
+
+    # Grand Total row
+    table_data.append([
+        "", "GRAND TOTAL", "", str(total_qty),
+        "", f"Rs.{total_discount:,.2f}", "",
+        f"Rs.{total_revenue:,.2f}",
+    ])
+
+    main_table = Table(table_data, colWidths=col_widths, repeatRows=1)
+
+    last_row = len(table_data) - 1
+
+    main_table.setStyle(TableStyle([
+        # Header row
+        ("BACKGROUND",    (0, 0), (-1, 0),        C_HEADER_BG),
+        ("TEXTCOLOR",     (0, 0), (-1, 0),        C_WHITE),
+        ("FONTNAME",      (0, 0), (-1, 0),        "Helvetica-Bold"),
+        ("FONTSIZE",      (0, 0), (-1, 0),        8),
+        ("ALIGN",         (0, 0), (-1, 0),        "CENTER"),
+        ("TOPPADDING",    (0, 0), (-1, 0),        8),
+        ("BOTTOMPADDING", (0, 0), (-1, 0),        8),
+
+        # Data rows
+        ("FONTNAME",      (0, 1), (-1, last_row - 1), "Helvetica"),
+        ("FONTSIZE",      (0, 1), (-1, last_row - 1), 8),
+        ("TOPPADDING",    (0, 1), (-1, last_row - 1), 5),
+        ("BOTTOMPADDING", (0, 1), (-1, last_row - 1), 5),
+
+        # Zebra stripes
+        ("ROWBACKGROUNDS", (0, 1), (-1, last_row - 1), [C_WHITE, C_STRIPE]),
+
+        # Number column — centre
+        ("ALIGN",         (0, 1), (0, last_row - 1), "CENTER"),
+        # Qty column — centre
+        ("ALIGN",         (3, 1), (3, last_row - 1), "CENTER"),
+        # Payment — centre
+        ("ALIGN",         (6, 1), (6, last_row - 1), "CENTER"),
+        # Money columns — right
+        ("ALIGN",         (4, 1), (4, last_row - 1), "RIGHT"),
+        ("ALIGN",         (5, 1), (5, last_row - 1), "RIGHT"),
+        ("ALIGN",         (7, 1), (7, last_row - 1), "RIGHT"),
+
+        # Grid
+        ("GRID",          (0, 0), (-1, last_row - 1), 0.4, C_BORDER),
+        ("LINEBELOW",     (0, last_row - 1), (-1, last_row - 1), 0.8, C_DARK),
+
+        # Grand Total row
+        ("BACKGROUND",    (0, last_row), (-1, last_row), C_LIGHT_BG),
+        ("FONTNAME",      (0, last_row), (-1, last_row), "Helvetica-Bold"),
+        ("FONTSIZE",      (0, last_row), (-1, last_row), 9),
+        ("TEXTCOLOR",     (0, last_row), (-1, last_row), C_DARK),
+        ("ALIGN",         (1, last_row), (1, last_row),  "LEFT"),
+        ("ALIGN",         (3, last_row), (3, last_row),  "CENTER"),
+        ("ALIGN",         (5, last_row), (5, last_row),  "RIGHT"),
+        ("ALIGN",         (7, last_row), (7, last_row),  "RIGHT"),
+        ("TOPPADDING",    (0, last_row), (-1, last_row), 8),
+        ("BOTTOMPADDING", (0, last_row), (-1, last_row), 8),
+        ("BOX",           (0, last_row), (-1, last_row), 0.8, C_GREEN),
+    ]))
+
     elements.append(main_table)
+    elements.append(Spacer(1, 24))
 
+    # --- FOOTER ---
+    elements.append(HRFlowable(width="100%", thickness=0.5, color=C_BORDER, spaceAfter=6))
+    elements.append(Paragraph(
+        f"GLOWÉ · Sales Report · {now.strftime('%d %b %Y, %I:%M %p')} · Confidential",
+        footer_style,
+    ))
+
+    # ── 8. Build PDF ──────────────────────────────────────────────────────
     doc.build(elements)
     return response
