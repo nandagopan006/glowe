@@ -746,24 +746,6 @@ def sales_report(request):
                     filter_type = "month"
                     start_date = now.replace(day=1, hour=0, minute=0, second=0)
                     end_date = now
-                #Start date cannot be in the future
-                elif start_date > now:
-                    messages.error(
-                        request,
-                        "Invalid Date Range: Start date cannot be in the future.",
-                    )
-                    filter_type = "month"
-                    start_date = now.replace(day=1, hour=0, minute=0, second=0)
-                    end_date = now
-                #End date cannot be in the future
-                elif end_date > now:
-                    messages.error(
-                        request,
-                        "Invalid Date Range: End date cannot be in the future.",
-                    )
-                    filter_type = "month"
-                    start_date = now.replace(day=1, hour=0, minute=0, second=0)
-                    end_date = now
                 #Date range cannot exceed 1 year
                 elif (end_date - start_date).days > 365:
                     messages.error(
@@ -1113,10 +1095,6 @@ def export_sales_excel(request):
                     messages.error(request, "Invalid Date Range: Start date cannot be after end date.")
                     filter_type = "month"
                     start_date, end_date = now.replace(day=1, hour=0, minute=0, second=0), now
-                elif start_date > now or end_date > now:
-                    messages.error(request, "Invalid Date Range: Dates cannot be in the future.")
-                    filter_type = "month"
-                    start_date, end_date = now.replace(day=1, hour=0, minute=0, second=0), now
             except Exception:
                 messages.error(request, "Invalid date format provided.")
                 filter_type = "month"
@@ -1245,10 +1223,6 @@ def export_sales_pdf(request):
                 # Validation
                 if start_date > end_date:
                     messages.error(request, "Invalid Date Range: Start date cannot be after end date.")
-                    filter_type = "month"
-                    start_date, end_date = now.replace(day=1, hour=0, minute=0, second=0), now
-                elif start_date > now or end_date > now:
-                    messages.error(request, "Invalid Date Range: Dates cannot be in the future.")
                     filter_type = "month"
                     start_date, end_date = now.replace(day=1, hour=0, minute=0, second=0), now
             except Exception:
