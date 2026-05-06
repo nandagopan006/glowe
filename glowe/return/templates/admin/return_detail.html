@@ -6,218 +6,301 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Glowé Admin — Return #RET-{{ return_request.id }}</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['DM Sans', 'sans-serif'],
+            serif: ['Playfair Display', 'serif'],
+            grotesk: ['Space Grotesk', 'sans-serif'],
+          },
+          colors: {
+            sage: {
+              50: '#f2f7f2', 100: '#e2f0e2', 200: '#c3dfc3',
+              300: '#94c494', 400: '#64a864', 500: '#4a9050',
+              600: '#3a7a3e', 700: '#2f6232', 800: '#264f29', 900: '#1e3e20',
+            }
+          }
+        }
+      }
+    }
+  </script>
   <style>
-    body { font-family: 'DM Sans', sans-serif; background-color: #f8f9fa; }
-    .admin-main-content { margin-left: 0; transition: margin-left .3s ease-in-out; }
-    @media (min-width: 1024px) { .admin-main-content { margin-left: 240px; } }
+    body { background-color: #f9fafb; color: #0f172a; }
   </style>
 </head>
-<body>
+<body class="flex min-h-screen font-sans antialiased">
 
 {% include 'admin_sidebar.html' %}
 
-<div class="admin-main-content min-h-screen admin-mobile-offset">
-  <main class="px-5 sm:px-8 py-7 max-w-6xl mx-auto">
+<div class="flex-1 flex flex-col min-w-0 transition-all duration-300 md:ml-64 w-full admin-mobile-offset">
+  <main class="p-4 lg:p-8 max-w-[1400px] mx-auto w-full">
 
-    <!-- 1. HEADER & 2. STATUS BADGE -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-      <div>
-        <h1 class="text-[22px] font-bold text-gray-900">Return Details</h1>
-        <p class="text-sm text-gray-500 mt-1">Manage and review this return request</p>
-      </div>
+    <!-- PAGE HEADER — Gradient Hero -->
+    <div class="relative rounded-3xl overflow-hidden mb-8 shadow-lg">
+      <div class="absolute inset-0 bg-gradient-to-br from-[#1e3a2f] via-[#2d5a3d] to-[#3a7a3e]"></div>
+      <div class="absolute inset-0 opacity-10" style="background-image:radial-gradient(circle, #fff 1px, transparent 1px);background-size:24px 24px;"></div>
 
-      <div>
-        {% if return_request.return_status == "REQUESTED" %}
-          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-yellow-50 text-yellow-700 border border-yellow-200 shadow-sm">
-            <span class="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></span> Pending Review
-          </span>
-        {% elif return_request.return_status == "APPROVED" %}
-          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200 shadow-sm">
-            <span class="w-2 h-2 rounded-full bg-green-500"></span> Approved
-          </span>
-        {% elif return_request.return_status == "PICKUP_SCHEDULED" %}
-          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 shadow-sm">
-            <span class="w-2 h-2 rounded-full bg-blue-500"></span> Pickup Scheduled
-          </span>
-        {% elif return_request.return_status == "PICKED_UP" %}
-          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200 shadow-sm">
-            <span class="w-2 h-2 rounded-full bg-purple-500"></span> Picked Up
-          </span>
-        {% elif return_request.return_status == "COMPLETED" %}
-          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-300 shadow-sm">
-            <span class="w-2 h-2 rounded-full bg-gray-500"></span> Completed
-          </span>
-        {% elif return_request.return_status == "REJECTED" %}
-          <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-red-50 text-red-700 border border-red-200 shadow-sm">
-            <span class="w-2 h-2 rounded-full bg-red-500"></span> Rejected
-          </span>
-        {% endif %}
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 p-8 md:p-10">
+        <div>
+          <div class="flex items-center gap-2 text-[10px] text-white/50 font-bold uppercase tracking-wider mb-3">
+            <a href="{% url 'admin_order_list' %}" class="hover:text-white/80 transition-colors">Orders</a>
+            <span class="text-white/30">/</span>
+            <a href="{% url 'admin_order_detail' return_request.order_item.order.id %}" class="hover:text-white/80 transition-colors">#{{ return_request.order_item.order.order_number }}</a>
+            <span class="text-white/30">/</span>
+            <span class="text-white/70">RET-{{ return_request.id }}</span>
+          </div>
+          <h1 class="text-3xl md:text-4xl font-bold text-white mb-1" style="font-family:'Playfair Display',serif;">Return Details</h1>
+          <p class="text-white/60 text-sm font-medium">Manage and review return request</p>
+        </div>
+
+        <div class="flex flex-col items-start md:items-end gap-4">
+          {% if return_request.return_status == "REQUESTED" %}
+            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold bg-amber-400/20 text-amber-200 border border-amber-300/20 shadow-inner backdrop-blur-sm">
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span> Pending Review
+            </span>
+          {% elif return_request.return_status == "APPROVED" %}
+            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold bg-green-400/20 text-green-200 border border-green-300/20 shadow-inner backdrop-blur-sm">
+              <span class="w-2 h-2 rounded-full bg-green-400"></span> Approved
+            </span>
+          {% elif return_request.return_status == "PICKUP_SCHEDULED" %}
+            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold bg-blue-400/20 text-blue-200 border border-blue-300/20 shadow-inner backdrop-blur-sm">
+              <span class="w-2 h-2 rounded-full bg-blue-400"></span> Pickup Scheduled
+            </span>
+          {% elif return_request.return_status == "PICKED_UP" %}
+            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold bg-purple-400/20 text-purple-200 border border-purple-300/20 shadow-inner backdrop-blur-sm">
+              <span class="w-2 h-2 rounded-full bg-purple-400"></span> Picked Up
+            </span>
+          {% elif return_request.return_status == "COMPLETED" %}
+            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold bg-white/20 text-white border border-white/20 shadow-inner backdrop-blur-sm">
+              <span class="w-2 h-2 rounded-full bg-white"></span> Completed
+            </span>
+          {% elif return_request.return_status == "REJECTED" %}
+            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold bg-red-400/20 text-red-200 border border-red-300/20 shadow-inner backdrop-blur-sm">
+              <span class="w-2 h-2 rounded-full bg-red-400"></span> Rejected
+            </span>
+          {% endif %}
+        </div>
       </div>
     </div>
 
     <!-- 3. MAIN GRID LAYOUT -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      
       <!-- LEFT SIDE CONTENT (70%) -->
-      <div class="lg:col-span-8 flex flex-col gap-6">
+      <div class="xl:col-span-2 flex flex-col gap-5">
 
         <!-- ORDER INFO & CUSTOMER INFO -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
           <!-- ORDER INFO CARD -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 md:p-6">
-            <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Order Info</h2>
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 hover:shadow-md transition-shadow duration-300">
+            <div class="flex items-center gap-3 border-b border-gray-50 pb-4 mb-4">
+              <div class="w-9 h-9 rounded-xl bg-sage-50 flex items-center justify-center">
+                <svg class="w-5 h-5 text-sage-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+              </div>
+              <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest">Order Info</h2>
+            </div>
+            
             <div class="space-y-3">
-              <div class="flex justify-between">
-                <span class="text-[13px] text-gray-500">Return ID</span>
-                <span class="text-[13px] font-mono font-medium text-gray-900">#RET-{{ return_request.id }}</span>
+              <div class="flex justify-between items-center text-sm">
+                <span class="text-gray-400 font-medium">Return ID</span>
+                <span class="font-bold text-gray-900 font-mono text-xs bg-gray-50 px-2 py-1 rounded-lg">#RET-{{ return_request.id }}</span>
               </div>
-              <div class="flex justify-between">
-                <span class="text-[13px] text-gray-500">Order ID</span>
-                <span class="text-[13px] font-mono font-medium text-gray-900">#{{ return_request.order_item.order.order_number }}</span>
+              <div class="flex justify-between items-center text-sm">
+                <span class="text-gray-400 font-medium">Order ID</span>
+                <a href="{% url 'admin_order_detail' return_request.order_item.order.id %}" class="font-bold text-sage-600 hover:text-sage-700 font-mono text-xs bg-sage-50 px-2 py-1 rounded-lg transition-colors">#{{ return_request.order_item.order.order_number }}</a>
               </div>
-              <div class="flex justify-between">
-                <span class="text-[13px] text-gray-500">Requested On</span>
-                <span class="text-[13px] font-medium text-gray-900">{{ return_request.created_at|date:"M d, Y" }}</span>
+              <div class="flex justify-between items-center text-sm">
+                <span class="text-gray-400 font-medium">Requested On</span>
+                <span class="font-bold text-gray-900">{{ return_request.created_at|date:"M d, Y" }}</span>
               </div>
-              <div class="flex justify-between items-baseline">
-                <span class="text-[13px] text-gray-500">Refund Amount</span>
-                <div class="text-right">
-                  <span class="text-[15px] font-bold text-green-600 block">&#8377;{{ calculated_refund|floatformat:2 }}</span>
-                  <span class="text-[10px] text-gray-400 font-medium uppercase tracking-tighter">Effective Refund</span>
-                </div>
-              </div>
+              
               {% if return_request.pickup_date %}
-              <div class="flex justify-between items-center mt-2 pt-2 border-t border-gray-100">
-                <span class="text-[13px] text-gray-500 flex items-center gap-1.5"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> Pickup Scheduled</span>
-                <span class="text-[13px] font-medium text-blue-600">{{ return_request.pickup_date|date:"M d, Y" }}</span>
+              <div class="flex justify-between items-center text-sm">
+                <span class="text-blue-500 font-medium flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> Pickup</span>
+                <span class="font-bold text-blue-600">{{ return_request.pickup_date|date:"M d, Y" }}</span>
               </div>
               {% endif %}
               {% if return_request.picked_at %}
-              <div class="flex justify-between mt-1 pt-1">
-                <span class="text-[13px] text-gray-500">Picked Up</span>
-                <span class="text-[13px] font-medium text-purple-600">{{ return_request.picked_at|date:"M d, Y h:i A" }}</span>
+              <div class="flex justify-between items-center text-sm">
+                <span class="text-purple-500 font-medium flex items-center gap-1.5"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Picked Up</span>
+                <span class="font-bold text-purple-600">{{ return_request.picked_at|date:"M d, Y h:i A" }}</span>
               </div>
               {% endif %}
+
+              <div class="flex justify-between items-center bg-sage-50 p-3 rounded-xl mt-4">
+                <span class="text-sage-700 font-semibold text-sm">Refund Amount</span>
+                <span class="font-black text-sage-700 text-lg">₹{{ calculated_refund|floatformat:2 }}</span>
+              </div>
             </div>
           </div>
 
-          <!-- CUSTOMER INFO -->
-          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 md:p-6">
-            <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Customer Info</h2>
-            <div class="flex items-center gap-4">
-              <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-bold text-lg border border-gray-200 shrink-0">
+          <!-- CUSTOMER INFO CARD -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 hover:shadow-md transition-shadow duration-300">
+            <div class="flex items-center gap-3 border-b border-gray-50 pb-4 mb-4">
+              <div class="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+              </div>
+              <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest">Customer Info</h2>
+            </div>
+            
+            <a href="{% url 'user_detail' return_request.user.id %}" class="flex items-center gap-4 hover:bg-gray-50 p-3 -mx-3 rounded-xl transition-colors duration-200 group">
+              <div class="w-12 h-12 rounded-full bg-sage-50 text-sage-600 flex items-center justify-center font-bold text-lg border-2 border-sage-100 shrink-0 shadow-inner overflow-hidden">
                 {{ return_request.user.full_name|first|upper }}
               </div>
-              <div class="overflow-hidden">
-                <p class="text-[14px] font-semibold text-gray-900 truncate">{{ return_request.user.full_name }}</p>
-                <p class="text-[13px] text-gray-500 truncate">{{ return_request.user.email }}</p>
+              <div class="flex flex-col gap-0.5 min-w-0 flex-1">
+                <p class="font-bold text-gray-900 text-sm truncate group-hover:text-sage-600 transition-colors">{{ return_request.user.full_name }}</p>
+                <p class="text-xs font-medium text-gray-400 truncate">{{ return_request.user.email }}</p>
+              </div>
+              <svg class="w-4 h-4 text-gray-300 group-hover:text-sage-500 shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- PRODUCT DETAILS CARD -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300">
+          <div class="px-6 md:px-8 py-5 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+              </div>
+              <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest">Product Details</h2>
+            </div>
+          </div>
+          <div class="p-6 md:p-8 flex items-center gap-6">
+            <div class="w-24 h-24 bg-white rounded-2xl overflow-hidden shrink-0 border border-gray-100 shadow-sm relative">
+              {% if return_request.order_item.variant.product.images.first %}
+                <img src="{{ return_request.order_item.variant.product.images.first.image.url }}" alt="{{ return_request.order_item.variant.product.name }}" class="w-full h-full object-cover">
+              {% else %}
+                <div class="w-full h-full flex items-center justify-center bg-gray-50">
+                  <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/></svg>
+                </div>
+              {% endif %}
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="font-bold text-gray-900 text-lg leading-tight truncate" style="font-family:'Playfair Display',serif;">{{ return_request.order_item.variant.product.name }}</p>
+              <div class="flex items-center gap-1.5 mt-2">
+                <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Quantity returned:</span>
+                <span class="bg-gray-100 px-2 py-0.5 rounded-md border border-gray-200 text-[10px] font-bold text-gray-700">{{ return_request.quantity }}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- PRODUCT DETAILS -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 md:p-6">
-            <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Product Details</h2>
-            <div class="flex items-center gap-4">
-              <div class="w-16 h-16 rounded-xl bg-gray-50 border border-gray-100 flex-shrink-0 overflow-hidden">
-                {% if return_request.order_item.variant.product.images.first %}
-                  <img src="{{ return_request.order_item.variant.product.images.first.image.url }}" alt="{{ return_request.order_item.variant.product.name }}" class="w-full h-full object-cover">
-                {% else %}
-                  <div class="w-full h-full flex items-center justify-center">
-                    <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/></svg>
-                  </div>
-                {% endif %}
-              </div>
-              <div class="flex-1 min-w-0">
-                <p class="text-[14px] font-semibold text-gray-900 truncate">{{ return_request.order_item.variant.product.name }}</p>
-                <p class="text-[13px] text-gray-500 mt-1">Quantity: <span class="font-medium text-gray-900">{{ return_request.quantity }}</span></p>
-              </div>
+        <!-- RETURN DETAILS CARD -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 hover:shadow-md transition-shadow duration-300">
+          <div class="flex items-center gap-3 border-b border-gray-50 pb-4 mb-6">
+            <div class="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center">
+              <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
             </div>
-        </div>
+            <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest">Reason & Condition</h2>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+              <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Reason</span>
+              <span class="block text-sm font-bold text-gray-900">{{ return_request.reason }}</span>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+              <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Condition</span>
+              <span class="block text-sm font-bold text-gray-900">{{ return_request.item_condition }}</span>
+            </div>
+          </div>
 
-        <!-- RETURN DETAILS -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 md:p-6">
-            <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Return Details</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
-                <div>
-                    <span class="block text-[13px] text-gray-500 mb-1">Reason</span>
-                    <span class="block text-[13px] font-medium text-gray-900 bg-gray-50 px-3 py-2.5 rounded-lg border border-gray-200 truncate" title="{{ return_request.reason }}">{{ return_request.reason }}</span>
-                </div>
-                <div>
-                    <span class="block text-[13px] text-gray-500 mb-1">Condition</span>
-                    <span class="block text-[13px] font-medium text-gray-900 bg-gray-50 px-3 py-2.5 rounded-lg border border-gray-200 truncate" title="{{ return_request.item_condition }}">{{ return_request.item_condition }}</span>
-                </div>
+          <div>
+            <span class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Customer Description</span>
+            <div class="bg-sage-50/50 p-5 rounded-xl border border-sage-100/50 relative">
+              <svg class="w-8 h-8 text-sage-200 absolute top-3 left-3 opacity-50" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/></svg>
+              <p class="text-sm text-gray-700 font-medium italic leading-relaxed relative z-10 pl-8">
+                {% if return_request.description %}
+                  {{ return_request.description }}
+                {% else %}
+                  <span class="text-gray-400">No additional description provided.</span>
+                {% endif %}
+              </p>
             </div>
-            <div>
-                <span class="block text-[13px] text-gray-500 mb-1">Description</span>
-                <p class="text-[13px] text-gray-700 bg-gray-50 p-4 rounded-lg border border-gray-200 min-h-[80px] italic leading-relaxed">
-                    {% if return_request.description %}
-                        "{{ return_request.description }}"
-                    {% else %}
-                        No additional description provided.
-                    {% endif %}
-                </p>
-            </div>
+          </div>
         </div>
 
         <!-- IMAGES SECTION -->
         {% if images %}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 md:p-6">
-            <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Evidence Images</h2>
-            <div class="flex flex-wrap gap-4">
-                {% for img in images %}
-                <a href="{{ img.image.url }}" target="_blank" class="block rounded-xl overflow-hidden border border-gray-200 hover:border-gray-400 hover:shadow-md transition duration-200 bg-gray-50 h-20 w-20 flex-shrink-0">
-                    <img src="{{ img.image.url }}" class="w-full h-full object-cover">
-                </a>
-                {% endfor %}
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 hover:shadow-md transition-shadow duration-300">
+          <div class="flex items-center gap-3 border-b border-gray-50 pb-4 mb-6">
+            <div class="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center">
+              <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             </div>
+            <h2 class="text-xs font-bold text-gray-700 uppercase tracking-widest">Evidence Images</h2>
+          </div>
+          <div class="flex flex-wrap gap-4">
+            {% for img in images %}
+            <a href="{{ img.image.url }}" target="_blank" class="block rounded-xl overflow-hidden border-2 border-transparent hover:border-sage-400 hover:shadow-lg transition-all duration-300 bg-gray-50 h-28 w-28 flex-shrink-0 group relative">
+              <img src="{{ img.image.url }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+              <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                <svg class="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/></svg>
+              </div>
+            </a>
+            {% endfor %}
+          </div>
         </div>
         {% endif %}
 
       </div>
 
-      <!-- RIGHT SIDE - ACTION PANEL (30%) -->
-      <div class="lg:col-span-4">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 md:p-6 sticky top-6">
-            <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-5">Admin Actions</h2>
-            
+      <!-- RIGHT SIDE - ACTION PANEL -->
+      <div class="xl:col-span-1">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 xl:sticky xl:top-8 overflow-hidden hover:shadow-md transition-shadow">
+          <div class="bg-gradient-to-r from-[#1e3a2f] to-[#2d5a3d] px-6 py-5">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+              </div>
+              <h2 class="text-xs font-bold text-white uppercase tracking-widest">Admin Actions</h2>
+            </div>
+          </div>
+          
+          <div class="p-6 md:p-8">
             {% if messages %}
-                <div class="mb-5 space-y-2">
+                <div class="mb-6 space-y-3">
                     {% for message in messages %}
-                        <div class="p-3 text-[13px] font-medium rounded-lg {% if message.tags == 'error' %}bg-red-50 text-red-600 border border-red-100{% else %}bg-green-50 text-green-700 border border-green-100{% endif %}">
-                            {{ message }}
+                        <div class="p-4 text-sm font-bold rounded-xl flex items-start gap-3 {% if message.tags == 'error' %}bg-red-50 text-red-600 border border-red-100{% else %}bg-green-50 text-green-700 border border-green-100{% endif %}">
+                            {% if message.tags == 'error' %}
+                            <svg class="w-5 h-5 shrink-0 mt-0.5 text-red-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01"></path></svg>
+                            {% else %}
+                            <svg class="w-5 h-5 shrink-0 mt-0.5 text-green-500" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            {% endif %}
+                            <span>{{ message }}</span>
                         </div>
                     {% endfor %}
                 </div>
             {% endif %}
 
-            <div class="space-y-3">
+            <div class="space-y-4">
                 {% if return_request.return_status == "REQUESTED" %}
                     <form method="POST" action="{% url 'approve_return' return_request.id %}">
                         {% csrf_token %}
-                        <button type="submit" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-500 hover:bg-green-600 text-white text-[13px] font-semibold rounded-lg shadow-sm transition active:scale-[0.98]">
+                        <button type="submit" class="w-full flex items-center justify-center gap-2 px-6 py-4 bg-sage-600 hover:bg-sage-700 text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg shadow-sage-600/20 transition-all hover:-translate-y-0.5 active:scale-[0.98]">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                            Approve
+                            Approve Return
                         </button>
                     </form>
                     <form method="POST" action="{% url 'reject_return' return_request.id %}">
                         {% csrf_token %}
-                        <button type="submit" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-red-200 hover:bg-red-50 hover:border-red-300 text-red-600 text-[13px] font-semibold rounded-lg transition active:scale-[0.98]">
+                        <button type="submit" class="w-full flex items-center justify-center gap-2 px-6 py-4 bg-white border-2 border-red-100 hover:bg-red-50 hover:border-red-200 text-red-600 text-xs font-black uppercase tracking-widest rounded-xl transition-all active:scale-[0.98]">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                             Reject
                         </button>
                     </form>
 
                 {% elif return_request.return_status == "APPROVED" %}
-                    <form method="POST" action="{% url 'schedule_pickup' return_request.id %}" class="space-y-3">
+                    <form method="POST" action="{% url 'schedule_pickup' return_request.id %}" class="bg-gray-50 p-5 rounded-2xl border border-gray-100">
                         {% csrf_token %}
-                        <div>
-                            <label class="block text-[12px] font-semibold text-gray-700 mb-1.5">Select Pickup Date</label>
-                            <input type="date" name="pickup_date" required class="w-full text-[13px] px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <div class="mb-4">
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Select Pickup Date</label>
+                            <input type="date" name="pickup_date" required class="w-full text-sm font-bold text-gray-900 px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-sage-400 focus:ring-2 focus:ring-sage-100 transition-all shadow-sm">
                         </div>
-                        <button type="submit" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white text-[13px] font-semibold rounded-lg shadow-sm transition active:scale-[0.98]">
+                        <button type="submit" class="w-full flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg shadow-blue-600/20 transition-all hover:-translate-y-0.5 active:scale-[0.98]">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                             Schedule Pickup
                         </button>
@@ -226,41 +309,55 @@
                 {% elif return_request.return_status == "PICKUP_SCHEDULED" %}
                     <form method="POST" action="{% url 'mark_picked' return_request.id %}">
                         {% csrf_token %}
-                        <button type="submit" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-semibold rounded-lg shadow-sm transition active:scale-[0.98]">
+                        <button type="submit" class="w-full flex items-center justify-center gap-2 px-6 py-4 bg-purple-600 hover:bg-purple-700 text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg shadow-purple-600/20 transition-all hover:-translate-y-0.5 active:scale-[0.98]">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                            Mark as Picked
+                            Mark as Picked Up
                         </button>
                     </form>
 
                 {% elif return_request.return_status == "PICKED_UP" %}
                     <!-- Refund amount calculated: price × qty -->
-                    <div class="p-3 bg-green-50 border border-green-100 rounded-lg mb-3">
-                        <p class="text-[12px] font-semibold text-green-700 mb-0.5">Wallet Refund Ready</p>
-                        <p class="text-[15px] font-bold text-green-800">&#8377;{{ calculated_refund|floatformat:2 }}</p>
-                        <p class="text-[11px] text-green-600 mt-0.5">Calculated pro-rata (discount applied, shipping non-refundable)</p>
+                    <div class="p-5 bg-sage-50 border border-sage-100 rounded-2xl mb-4 text-center">
+                        <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm mx-auto mb-3">
+                            <svg class="w-5 h-5 text-sage-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                        </div>
+                        <p class="text-[10px] font-bold text-sage-600 uppercase tracking-widest mb-1">Wallet Refund Ready</p>
+                        <p class="text-3xl font-black text-sage-700 tracking-tighter">&#8377;{{ calculated_refund|floatformat:2 }}</p>
+                        <p class="text-[10px] text-sage-500 mt-2 italic px-2">Calculated pro-rata (discount applied, shipping non-refundable)</p>
                     </div>
                     <form method="POST" action="{% url 'complete_return' return_request.id %}">
                         {% csrf_token %}
-                        <button type="submit" class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white text-[13px] font-semibold rounded-lg shadow-sm transition active:scale-[0.98]">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                            Complete Return &amp; Refund to Wallet
+                        <button type="submit" class="w-full flex flex-col items-center justify-center gap-1 px-6 py-4 bg-sage-600 hover:bg-sage-700 text-white rounded-xl shadow-lg shadow-sage-600/20 transition-all hover:-translate-y-0.5 active:scale-[0.98]">
+                            <span class="text-xs font-black uppercase tracking-widest flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Complete Return
+                            </span>
+                            <span class="text-[9px] text-sage-200 font-medium uppercase tracking-widest">& Issue Refund</span>
                         </button>
                     </form>
 
                 {% elif return_request.return_status == "REJECTED" %}
-                    <div class="p-4 bg-red-50 border border-red-100 rounded-lg text-center text-[13px] font-medium text-red-600">
-                        This return has been rejected.
+                    <div class="p-6 bg-red-50 border border-red-100 rounded-2xl text-center">
+                        <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm mx-auto mb-3">
+                            <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <p class="text-sm font-black text-red-600 uppercase tracking-widest">Rejected</p>
+                        <p class="text-xs text-red-500 mt-2 font-medium">This return request has been rejected.</p>
                     </div>
 
                 {% elif return_request.return_status == "COMPLETED" %}
-                    <div class="p-4 bg-green-50 border border-green-100 rounded-lg text-center">
-                        <svg class="w-5 h-5 text-green-600 mx-auto mb-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        <p class="text-[13px] font-semibold text-green-700">Return Completed</p>
-                        <p class="text-[12px] text-green-600 mt-1">&#8377;{{ calculated_refund|floatformat:2 }} refunded to customer&rsquo;s Glow&eacute; Wallet</p>
+                    <div class="p-6 bg-sage-50 border border-sage-100 rounded-2xl text-center">
+                        <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm mx-auto mb-3">
+                            <svg class="w-6 h-6 text-sage-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <p class="text-sm font-black text-sage-600 uppercase tracking-widest">Return Completed</p>
+                        <p class="text-xs text-sage-600 mt-2 font-bold bg-white px-3 py-1.5 rounded-lg border border-sage-100 shadow-sm inline-block">&#8377;{{ calculated_refund|floatformat:2 }} Refunded</p>
+                        <p class="text-[10px] text-sage-500 mt-2">Processed to customer's Glowé Wallet</p>
                     </div>
                 {% endif %}
             </div>
             
+          </div>
         </div>
       </div>
 
