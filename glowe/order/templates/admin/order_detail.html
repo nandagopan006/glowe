@@ -357,10 +357,12 @@
 
           <!-- STATUS UPDATE CONTROL -->
           {% if can_update %}
-          <div class="bg-gradient-to-br from-[#1e3a2f] to-[#2d5a3d] rounded-2xl p-6 md:p-8 shadow-xl relative overflow-hidden group mb-8">
+          <div class="bg-gradient-to-br from-[#1e3a2f] to-[#2d5a3d] rounded-2xl p-6 md:p-8 shadow-xl relative group mb-8">
             <!-- Decorative background elements -->
-            <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-white opacity-5 mix-blend-overlay"></div>
-            <div class="absolute bottom-0 left-0 -ml-16 -mb-16 w-48 h-48 rounded-full bg-sage-500 opacity-20 mix-blend-overlay blur-2xl"></div>
+            <div class="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+              <div class="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-white opacity-5 mix-blend-overlay"></div>
+              <div class="absolute bottom-0 left-0 -ml-16 -mb-16 w-48 h-48 rounded-full bg-sage-500 opacity-20 mix-blend-overlay blur-2xl"></div>
+            </div>
             
             <div class="relative z-10 flex items-center gap-3 border-b border-white/10 pb-4 mb-6">
               <div class="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/10 shadow-inner">
@@ -724,6 +726,16 @@
       const options = document.querySelectorAll('.select-option');
 
       if (!trigger) return;
+
+      // Initialize selected color and text
+      if (nativeSelect.value) {
+        const selectedOptionBtn = document.querySelector(`.select-option[data-value="${nativeSelect.value}"]`);
+        if (selectedOptionBtn) {
+          const initialColorClass = selectedOptionBtn.querySelector('span').className;
+          dotLabel.className = initialColorClass;
+          textLabel.textContent = selectedOptionBtn.textContent.trim();
+        }
+      }
 
       // Toggle dropdown
       trigger.addEventListener('click', (e) => {
