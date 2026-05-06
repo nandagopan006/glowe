@@ -156,6 +156,10 @@
                 class="modern-date-picker w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-3 text-xs font-bold text-gray-700 focus:bg-white focus:ring-2 focus:ring-[#4a9050]/20 focus:border-[#4a9050] outline-none transition-all cursor-pointer">
             </div>
           </div>
+          <div id="date-error" class="hidden items-center gap-2 bg-red-50 text-red-600 px-4 py-2.5 rounded-xl border border-red-100 text-[11px] font-bold mt-2 fade-in">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span id="date-error-text"></span>
+          </div>
           <button type="submit" class="w-full bg-[#4a9050] text-white text-[11px] font-bold uppercase tracking-widest py-4 rounded-2xl hover:bg-[#3d7a42] transition-all shadow-xl shadow-emerald-200/50 mt-2 active:scale-95">
             Update Report
           </button>
@@ -898,6 +902,10 @@ document.addEventListener('DOMContentLoaded', function(){
   });
 })();
 
+{% endif %}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
 function toggleCustomDate(e) {
   if(e) e.stopPropagation();
   const modal = document.getElementById('custom-date-picker');
@@ -917,10 +925,14 @@ document.addEventListener('click', function(e) {
 document.getElementById('customDateForm').addEventListener('submit', function(e) {
     const startDateInput = document.getElementById('start_date');
     const endDateInput = document.getElementById('end_date');
+    const errorDiv = document.getElementById('date-error');
+    const errorText = document.getElementById('date-error-text');
     
     // Clear previous error styles
     startDateInput.style.borderColor = '';
     endDateInput.style.borderColor = '';
+    errorDiv.classList.add('hidden');
+    errorDiv.classList.remove('flex');
     
     const startVal = startDateInput.value;
     const endVal = endDateInput.value;
@@ -934,20 +946,20 @@ document.getElementById('customDateForm').addEventListener('submit', function(e)
             // Highlight both fields to indicate range error
             startDateInput.style.borderColor = '#ef4444';
             endDateInput.style.borderColor = '#ef4444';
-            alert('Start Date cannot be greater than End Date.');
+            // Show modern UI error
+            errorText.innerText = 'Start Date cannot be greater than End Date.';
+            errorDiv.classList.remove('hidden');
+            errorDiv.classList.add('flex');
             return false;
         }
     } else {
         e.preventDefault();
-        alert('Please select both Start and End Dates.');
+        errorText.innerText = 'Please select both Start and End Dates.';
+        errorDiv.classList.remove('hidden');
+        errorDiv.classList.add('flex');
         return false;
     }
 });
-
-{% endif %}
-</script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script>
 document.addEventListener("DOMContentLoaded", function() {
     // Initialize Flatpickr for date inputs
     flatpickr(".modern-date-picker", {

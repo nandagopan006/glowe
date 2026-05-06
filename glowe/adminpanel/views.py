@@ -1109,9 +1109,17 @@ def export_sales_excel(request):
                     hour=23, minute=59, second=59
                 )
                 # Validation
-                if end_date < start_date or start_date > now or end_date > now:
-                    start_date, end_date = now.replace(day=1, hour=0, minute=0, second=0,), now
+                if start_date > end_date:
+                    messages.error(request, "Invalid Date Range: Start date cannot be after end date.")
+                    filter_type = "month"
+                    start_date, end_date = now.replace(day=1, hour=0, minute=0, second=0), now
+                elif start_date > now or end_date > now:
+                    messages.error(request, "Invalid Date Range: Dates cannot be in the future.")
+                    filter_type = "month"
+                    start_date, end_date = now.replace(day=1, hour=0, minute=0, second=0), now
             except Exception:
+                messages.error(request, "Invalid date format provided.")
+                filter_type = "month"
                 start_date, end_date = now.replace(day=1, hour=0, minute=0, second=0), now
         else:
             start_date, end_date = now.replace(day=1, hour=0, minute=0, second=0), now
@@ -1234,9 +1242,18 @@ def export_sales_pdf(request):
                 end_date = make_aware(datetime.strptime(end, "%Y-%m-%d")).replace(
                     hour=23, minute=59, second=59
                 )
-                if end_date < start_date or start_date > now or end_date > now:
+                # Validation
+                if start_date > end_date:
+                    messages.error(request, "Invalid Date Range: Start date cannot be after end date.")
+                    filter_type = "month"
+                    start_date, end_date = now.replace(day=1, hour=0, minute=0, second=0), now
+                elif start_date > now or end_date > now:
+                    messages.error(request, "Invalid Date Range: Dates cannot be in the future.")
+                    filter_type = "month"
                     start_date, end_date = now.replace(day=1, hour=0, minute=0, second=0), now
             except Exception:
+                messages.error(request, "Invalid date format provided.")
+                filter_type = "month"
                 start_date, end_date = now.replace(day=1, hour=0, minute=0, second=0), now
         else:
             start_date, end_date = now.replace(day=1, hour=0, minute=0, second=0), now
