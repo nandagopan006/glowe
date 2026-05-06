@@ -38,14 +38,26 @@
       box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important; 
       border: 1px solid #f3f4f6 !important; 
       border-radius: 1rem !important; 
-      padding: 10px !important;
+      width: 280px !important;
+      padding-bottom: 8px !important;
+    }
+    .flatpickr-innerContainer, .flatpickr-rContainer, .dayContainer, .flatpickr-days {
+      width: 100% !important;
+      min-width: 100% !important;
+      max-width: 100% !important;
     }
     .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange, .flatpickr-day.selected.inRange, .flatpickr-day.startRange.inRange, .flatpickr-day.endRange.inRange, .flatpickr-day.selected:focus, .flatpickr-day.startRange:focus, .flatpickr-day.endRange:focus, .flatpickr-day.selected:hover, .flatpickr-day.startRange:hover, .flatpickr-day.endRange:hover, .flatpickr-day.selected.prevMonthDay, .flatpickr-day.startRange.prevMonthDay, .flatpickr-day.endRange.prevMonthDay, .flatpickr-day.selected.nextMonthDay, .flatpickr-day.startRange.nextMonthDay, .flatpickr-day.endRange.nextMonthDay { 
       background: #3a7a3e !important; 
       border-color: #3a7a3e !important; 
       border-radius: 8px !important;
     }
-    .flatpickr-day { border-radius: 8px !important; }
+    .flatpickr-day { 
+      border-radius: 8px !important; 
+      max-width: 34px !important;
+      height: 34px !important;
+      line-height: 34px !important;
+      margin: 1px 2px !important;
+    }
     .flatpickr-day:hover { 
       background: #e2f0e2 !important; 
       border-color: #e2f0e2 !important; 
@@ -319,13 +331,14 @@
                     </form>
 
                 {% elif return_request.return_status == "APPROVED" %}
-                    <form method="POST" action="{% url 'schedule_pickup' return_request.id %}" class="bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                    <form id="pickup-schedule-form" method="POST" action="{% url 'schedule_pickup' return_request.id %}" class="bg-gray-50 p-5 rounded-2xl border border-gray-100">
                         {% csrf_token %}
-                        <div class="mb-4">
+                        <div class="mb-4 relative">
                             <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Select Pickup Date</label>
                             <input type="text" id="modern-date-picker" name="pickup_date" placeholder="Select a date..." required class="w-full text-sm font-bold text-gray-900 px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-sage-400 focus:ring-2 focus:ring-sage-100 transition-all shadow-sm cursor-pointer">
+                            <p id="pickup-date-error" class="hidden absolute -bottom-5 left-1 text-[10px] font-bold text-red-500">Pickup date is required.</p>
                         </div>
-                        <button type="submit" class="w-full flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg shadow-blue-600/20 transition-all hover:-translate-y-0.5 active:scale-[0.98]">
+                        <button type="submit" class="w-full mt-3 flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black uppercase tracking-widest rounded-xl shadow-lg shadow-blue-600/20 transition-all hover:-translate-y-0.5 active:scale-[0.98]">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                             Schedule Pickup
                         </button>
@@ -393,14 +406,40 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", function() {
-    if (document.getElementById("modern-date-picker")) {
-      flatpickr("#modern-date-picker", {
+    const datePickerInput = document.getElementById("modern-date-picker");
+    const scheduleForm = document.getElementById("pickup-schedule-form");
+    const dateError = document.getElementById("pickup-date-error");
+
+    if (datePickerInput) {
+      flatpickr(datePickerInput, {
         altInput: true,
         altFormat: "F j, Y",
         dateFormat: "Y-m-d",
         minDate: "today",
+        maxDate: new Date().fp_incr(5), // Limits selection to 5 days from today
         disableMobile: "true", // Forces modern UI even on mobile devices
+        monthSelectorType: "static", // Replaces ugly native dropdown with clean static text + arrows
+        onChange: function(selectedDates, dateStr, instance) {
+          if (dateError) dateError.classList.add("hidden");
+          const altInput = instance.altInput;
+          if (altInput) altInput.classList.remove("border-red-400", "ring-1", "ring-red-400");
+        }
       });
+
+      if (scheduleForm) {
+        scheduleForm.addEventListener("submit", function(e) {
+          if (!datePickerInput.value) {
+            e.preventDefault(); // Stop form submission
+            if (dateError) dateError.classList.remove("hidden");
+            // Add error styling to the visible alternative input flatpickr creates
+            const altInput = scheduleForm.querySelector(".flatpickr-input[type='text']:not([type='hidden'])");
+            if (altInput) {
+              altInput.classList.add("border-red-400", "ring-1", "ring-red-400");
+              altInput.focus();
+            }
+          }
+        });
+      }
     }
   });
 </script>

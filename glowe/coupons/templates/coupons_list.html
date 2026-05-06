@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Glowé Admin — Coupons</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <style>
         /* Custom Scrollbar for modern dropdowns */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
@@ -46,6 +48,41 @@
             font-weight: 700;
             border-left: 3px solid #2f6232;
         }
+
+        /* Modern Custom Flatpickr Theme */
+        .flatpickr-calendar { 
+            font-family: inherit !important; 
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important; 
+            border: 1px solid #f3f4f6 !important; 
+            border-radius: 1rem !important; 
+            width: 280px !important;
+            padding-bottom: 8px !important;
+        }
+        .flatpickr-innerContainer, .flatpickr-rContainer, .dayContainer, .flatpickr-days {
+            width: 100% !important;
+            min-width: 100% !important;
+            max-width: 100% !important;
+        }
+        .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange, .flatpickr-day.selected.inRange, .flatpickr-day.startRange.inRange, .flatpickr-day.endRange.inRange, .flatpickr-day.selected:focus, .flatpickr-day.startRange:focus, .flatpickr-day.endRange:focus, .flatpickr-day.selected:hover, .flatpickr-day.startRange:hover, .flatpickr-day.endRange:hover, .flatpickr-day.selected.prevMonthDay, .flatpickr-day.startRange.prevMonthDay, .flatpickr-day.endRange.prevMonthDay, .flatpickr-day.selected.nextMonthDay, .flatpickr-day.startRange.nextMonthDay, .flatpickr-day.endRange.nextMonthDay { 
+            background: #3a7a3e !important; 
+            border-color: #3a7a3e !important; 
+            border-radius: 8px !important;
+        }
+        .flatpickr-day { 
+            border-radius: 8px !important; 
+            max-width: 34px !important;
+            height: 34px !important;
+            line-height: 34px !important;
+            margin: 1px 2px !important;
+        }
+        .flatpickr-day:hover { 
+            background: #e2f0e2 !important; 
+            border-color: #e2f0e2 !important; 
+            color: #2f6232 !important; 
+        }
+        .flatpickr-months .flatpickr-prev-month:hover svg, .flatpickr-months .flatpickr-next-month:hover svg { fill: #3a7a3e !important; }
+        .flatpickr-current-month .flatpickr-monthDropdown-months:hover { background: transparent !important; }
+        .flatpickr-current-month .numInputWrapper:hover { background: transparent !important; }
 
         /* ── PAGINATION ── */
         .pg-btn {
@@ -319,12 +356,12 @@
                                                     <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Validity Window</label>
                                                     <div class="flex items-center gap-4">
                                                         <div class="relative flex-1">
-                                                            <input type="date" name="start_date" value="{{ coupon.start_date|date:'Y-m-d' }}" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[13px] font-bold uppercase outline-none cursor-pointer">
+                                                            <input type="text" name="start_date" placeholder="Start Date" value="{{ coupon.start_date|date:'Y-m-d' }}" class="modern-date-picker w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[13px] font-bold uppercase outline-none cursor-pointer">
                                                             <div class="error-message text-[12px] font-semibold text-red-600 ml-2 mt-1.5 hidden" id="edit_error_start_date_{{ coupon.id }}"></div>
                                                         </div>
                                                         <span class="text-gray-300 font-bold">—</span>
                                                         <div class="relative flex-1">
-                                                            <input type="date" name="end_date" value="{{ coupon.end_date|date:'Y-m-d' }}" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[13px] font-bold uppercase outline-none cursor-pointer">
+                                                            <input type="text" name="end_date" placeholder="End Date" value="{{ coupon.end_date|date:'Y-m-d' }}" class="modern-date-picker w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[13px] font-bold uppercase outline-none cursor-pointer">
                                                             <div class="error-message text-[12px] font-semibold text-red-600 ml-2 mt-1.5 hidden" id="edit_error_end_date_{{ coupon.id }}"></div>
                                                         </div>
                                                     </div>
@@ -538,12 +575,12 @@
                     <label class="text-[13px] font-bold text-gray-700 uppercase tracking-wider ml-1">Validity Window</label>
                     <div class="flex items-center gap-4">
                         <div class="relative flex-1">
-                            <input type="date" id="addStartDate" name="start_date" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[13px] font-bold uppercase outline-none cursor-pointer">
+                            <input type="text" id="addStartDate" name="start_date" placeholder="Start Date" class="modern-date-picker w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[13px] font-bold uppercase outline-none cursor-pointer">
                             <div class="error-message text-[12px] font-semibold text-red-600 ml-2 mt-1.5 hidden" id="error_start_date"></div>
                         </div>
                         <span class="text-gray-300 font-bold">—</span>
                         <div class="relative flex-1">
-                            <input type="date" id="addEndDate" name="end_date" class="w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[13px] font-bold uppercase outline-none cursor-pointer">
+                            <input type="text" id="addEndDate" name="end_date" placeholder="End Date" class="modern-date-picker w-full px-6 py-4 bg-gray-50/50 border border-transparent rounded-[20px] focus:bg-white focus:border-[#2f6232] focus:ring-4 focus:ring-[#2f6232]/5 transition-all text-[13px] font-bold uppercase outline-none cursor-pointer">
                             <div class="error-message text-[12px] font-semibold text-red-600 ml-2 mt-1.5 hidden" id="error_end_date"></div>
                         </div>
                     </div>
@@ -960,6 +997,15 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        // Initialize Flatpickr for date inputs
+        flatpickr(".modern-date-picker", {
+            altInput: true,
+            altFormat: "F j, Y",
+            dateFormat: "Y-m-d",
+            disableMobile: "true",
+            monthSelectorType: "static"
+        });
+
         // Search Clear Logic
         const searchInput = document.getElementById('searchInput');
         const clearBtn = document.getElementById('clearBtn');

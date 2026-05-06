@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Glowé Admin — Product Reviews</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <style>
         /* Custom Scrollbar */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
@@ -54,6 +56,41 @@
         /* Row Highlighting */
         .row-low-rating { background-color: #fef2f2 !important; }
         .row-low-rating:hover { background-color: #fee2e2 !important; }
+
+        /* Modern Custom Flatpickr Theme */
+        .flatpickr-calendar { 
+            font-family: inherit !important; 
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important; 
+            border: 1px solid #f3f4f6 !important; 
+            border-radius: 1rem !important; 
+            width: 280px !important;
+            padding-bottom: 8px !important;
+        }
+        .flatpickr-innerContainer, .flatpickr-rContainer, .dayContainer, .flatpickr-days {
+            width: 100% !important;
+            min-width: 100% !important;
+            max-width: 100% !important;
+        }
+        .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange, .flatpickr-day.selected.inRange, .flatpickr-day.startRange.inRange, .flatpickr-day.endRange.inRange, .flatpickr-day.selected:focus, .flatpickr-day.startRange:focus, .flatpickr-day.endRange:focus, .flatpickr-day.selected:hover, .flatpickr-day.startRange:hover, .flatpickr-day.endRange:hover, .flatpickr-day.selected.prevMonthDay, .flatpickr-day.startRange.prevMonthDay, .flatpickr-day.endRange.prevMonthDay, .flatpickr-day.selected.nextMonthDay, .flatpickr-day.startRange.nextMonthDay, .flatpickr-day.endRange.nextMonthDay { 
+            background: #3a7a3e !important; 
+            border-color: #3a7a3e !important; 
+            border-radius: 8px !important;
+        }
+        .flatpickr-day { 
+            border-radius: 8px !important; 
+            max-width: 34px !important;
+            height: 34px !important;
+            line-height: 34px !important;
+            margin: 1px 2px !important;
+        }
+        .flatpickr-day:hover { 
+            background: #e2f0e2 !important; 
+            border-color: #e2f0e2 !important; 
+            color: #2f6232 !important; 
+        }
+        .flatpickr-months .flatpickr-prev-month:hover svg, .flatpickr-months .flatpickr-next-month:hover svg { fill: #3a7a3e !important; }
+        .flatpickr-current-month .flatpickr-monthDropdown-months:hover { background: transparent !important; }
+        .flatpickr-current-month .numInputWrapper:hover { background: transparent !important; }
     </style>
 </head>
 <body class="bg-[#F6F7F5]">
@@ -172,11 +209,11 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-[13px] font-bold text-gray-700 mb-2">Start Date</label>
-                                <input type="date" name="start_date" value="{{ start_date|default:'' }}" class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-[14px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#111827]">
+                                <input type="text" name="start_date" value="{{ start_date|default:'' }}" class="modern-date-picker w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-[14px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#111827]">
                             </div>
                             <div>
                                 <label class="block text-[13px] font-bold text-gray-700 mb-2">End Date</label>
-                                <input type="date" name="end_date" value="{{ end_date|default:'' }}" class="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-[14px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#111827]">
+                                <input type="text" name="end_date" value="{{ end_date|default:'' }}" class="modern-date-picker w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl text-[14px] text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#111827]">
                             </div>
                         </div>
                     </div>
@@ -666,6 +703,15 @@ function handleModalAction(e, isApprove, rowId) {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
+    // Initialize Flatpickr for date inputs
+    flatpickr(".modern-date-picker", {
+        altInput: true,
+        altFormat: "F j, Y",
+        dateFormat: "Y-m-d",
+        disableMobile: "true",
+        monthSelectorType: "static"
+    });
+
     // Existing forms for inline quick approve/reject on the main table
     const forms = document.querySelectorAll('td .ajax-action-form');
     
