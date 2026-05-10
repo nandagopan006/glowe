@@ -44,11 +44,11 @@
   <!-- ── LEFT PANEL ── -->
   <div class="left-panel relative hidden md:block w-1/2 h-screen flex-shrink-0 overflow-hidden bg-white">
     <img
-      src="{% static 'accounts/images/c8941f3d3a8e47f34a5dfab99edc8aea.jpg' %}"
+      src="{% static 'accounts/images/c8941f3d3a8e47f34a5dfab99edc8aea.webp' %}"
       alt="Glowé Women"
       class="w-full h-full object-cover"
       style="object-fit: cover; object-position: center 40%; image-rendering: -webkit-optimize-contrast; backface-visibility: hidden; transform: translateZ(0);"
-      loading="lazy"
+      fetchpriority="high"
       decoding="async"
     />
   </div>
@@ -207,7 +207,7 @@
       <form method="post" action="{% provider_login_url 'google' %}" class="w-full">
         {% csrf_token %}
         <button type="submit"
-          class="w-full py-[11px] px-5 bg-white hover:bg-[#f9f6f2] border border-[#e2dbd4] cursor-pointer flex items-center justify-center gap-[10px] transition-colors duration-200 rounded"
+          class="google-btn-hover w-full py-[11px] px-5 bg-white hover:bg-[#f9f6f2] border border-[#e2dbd4] cursor-pointer flex items-center justify-center gap-[10px] transition-colors duration-200 rounded"
           style="border-radius:4px;">
           <svg width="17" height="17" viewBox="0 0 48 48" style="flex-shrink:0;">
             <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.16 7.09-10.29 7.09-17.65z"/>

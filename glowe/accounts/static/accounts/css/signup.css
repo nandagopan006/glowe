@@ -91,3 +91,22 @@ input::-webkit-credentials-auto-fill-button {
 .loader span:nth-child(3) { animation-delay: 0.4s; }
 
 #submit-btn:disabled { opacity: 0.9; cursor: not-allowed; }
+
+/* ── PREMIUM MICRO-ANIMATIONS ── */
+button[type="submit"] {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, box-shadow;
+}
+button[type="submit"]:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(42, 31, 20, 0.12);
+}
+button[type="submit"]:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(42, 31, 20, 0.1);
+}
+
+.google-btn-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06) !important;
+}

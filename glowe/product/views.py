@@ -987,7 +987,7 @@ def product_listing(request):
 
 
 # --- Helper Functions for product_detail_view ---
-# These small functions handle specific tasks to keep the main view clean and easy to read.
+
 
 
 def get_variant_offer_data(variant, product):

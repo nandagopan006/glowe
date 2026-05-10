@@ -53,8 +53,8 @@
   HERO
 ══════════════════════════════════ -->
 <section class="relative w-full overflow-hidden h-[100svh] min-h-[600px] md:h-[calc(100vh-64px)] md:min-h-[580px] md:max-h-[820px]">
-  <img src="{% static 'core/images/homepage_banner.jpg' %}"
-       alt="Hero" class="absolute inset-0 w-full h-full object-cover object-[center_20%]"/>
+  <img src="{% static 'core/images/homepage_banner.webp' %}"
+       alt="Hero" fetchpriority="high" class="absolute inset-0 w-full h-full object-cover object-[center_20%]"/>
   <div class="absolute inset-0 hidden md:block" style="background:linear-gradient(to right,rgba(14,9,3,0.38) 0%,rgba(14,9,3,0.12) 44%,transparent 66%);"></div>
   <div class="absolute inset-0 md:hidden" style="background:linear-gradient(to top,rgba(8,4,0,0.80) 0%,rgba(8,4,0,0.35) 35%,transparent 58%);"></div>
   <div class="relative z-10 h-full hidden md:flex items-center" style="padding-left:8%;">
@@ -113,7 +113,7 @@
         
         <!-- Image 2 (Middle Small Foreground) -->
         <a href="{% url 'product_detail_view' 'wet-n-wild-lip-oil' %}" class="absolute bottom-[-2%] left-[22.5%] md:left-[28%] w-[55%] md:w-[44%] h-[45%] md:h-[48%] rounded-[24px] md:rounded-[40px] overflow-hidden shadow-[0_40px_80px_rgba(26,18,8,0.25)] transition-all duration-[1.2s] ease-out delay-75 group-hover:translate-y-4 group-hover:scale-[1.06] z-20 block">
-          <img src="{% static 'core/images/lip.jpg' %}" alt="Philosophy Highlight" class="w-full h-full object-cover transition-transform duration-[2.5s] group-hover:scale-[1.12]"/>
+          <img src="{% static 'core/images/lip.webp' %}" alt="Philosophy Highlight" loading="lazy" class="w-full h-full object-cover transition-transform duration-[2.5s] group-hover:scale-[1.12]"/>
         </a>
         
         <!-- Decorative Glow / Shadow behind the group -->
@@ -211,8 +211,9 @@
 
     <!-- Left col: Visual -->
     <div class="seas-col-l relative overflow-hidden h-full">
-      <img src="{% static 'core/images/lip.jpg' %}"
+      <img src="{% static 'core/images/lip.webp' %}"
            alt="Glow Ritual"
+           loading="lazy"
            class="w-full h-full object-cover object-top"
            style="transform:scale(1.08); display:block;"/>
       

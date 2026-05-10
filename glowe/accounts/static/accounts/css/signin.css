@@ -185,3 +185,44 @@ input::-webkit-credentials-auto-fill-button {
   transform-origin: left;
   animation: progressShrink 3s linear forwards;
 }
+
+/* ── PREMIUM MICRO-ANIMATIONS ── */
+button[type="submit"] {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, box-shadow;
+}
+button[type="submit"]:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(42, 31, 20, 0.12);
+}
+button[type="submit"]:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(42, 31, 20, 0.1);
+}
+
+.google-btn-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* ── LOADER ── */
+.btn-loader {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.btn-loader.hidden {
+  display: none !important;
+}
+.btn-loader span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #f5f2ed;
+  display: inline-block;
+  animation: pulseDot 1.2s ease-in-out infinite;
+}
+.btn-loader span:nth-child(1) { animation-delay: 0s; }
+.btn-loader span:nth-child(2) { animation-delay: 0.2s; }
+.btn-loader span:nth-child(3) { animation-delay: 0.4s; }
